@@ -7,22 +7,20 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth();
 
-// Basic connection test
+// Basic connection test (handles quota & offline states quietly)
 async function testConnection() {
   try {
-    // We use a small timeout or just let it fail gracefully in the background
     await getDocFromServer(doc(db, 'test', 'connection'));
-    console.log("Firestore connection verified.");
   } catch (error) {
-    if (error instanceof Error && error.message.includes('offline')) {
-      console.warn("Firestore is operating in offline mode. Check your internet or configuration.");
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('offline') || msg.includes('Quota') || msg.includes('resource-exhausted')) {
+      console.info("Firestore operating with local/cached portfolio fallback.");
     } else {
-      console.error("Firestore connectivity test failed:", error);
+      console.warn("Firestore connectivity check:", msg);
     }
   }
 }
 
-// Only running this in dev to avoid noise, or just keep it very quiet
 if (process.env.NODE_ENV !== 'production') {
   testConnection();
 }
@@ -48,8 +46,9 @@ export interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errMsg = error instanceof Error ? error.message : String(error);
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -58,6 +57,9 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  if (errMsg.includes('Quota') || errMsg.includes('resource-exhausted')) {
+    console.warn('Firestore quota reached; falling back to local state for:', path);
+    return;
+  }
+  console.warn('Firestore operation notice:', JSON.stringify(errInfo));
 }

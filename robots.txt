@@ -1,0 +1,27 @@
+# robots.txt for BS Homez Luxury Real Estate Portal (Bangalore)
+# https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/
+
+User-agent: *
+Allow: /
+Allow: /?project=*
+Allow: /?corridor=*
+Allow: /?tab=*
+Allow: /sitemap.xml
+
+# Protect internal API endpoints and admin view from crawl indexing
+Disallow: /api/
+Disallow: /?tab=admin
+
+# Googlebot specific rules
+User-agent: Googlebot
+Allow: /
+Allow: /?project=*
+Allow: /?corridor=*
+Allow: /?tab=*
+Allow: /sitemap.xml
+
+# Crawl Delay & Host
+Host: ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app
+
+# Dynamic XML Sitemap Index for Google Search Console & Googlebot
+Sitemap: https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/sitemap.xml

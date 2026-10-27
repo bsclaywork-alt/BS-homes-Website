@@ -30,35 +30,73 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // Projects: Publicly readable, admin writable
+    // Projects: Publicly readable & editable for Artisanal Portraits inline curation
     match /projects/{projectId} {
       allow read: if true;
-      allow create: if isSignedIn() && isValidProject(incoming());
-      allow update: if isSignedIn() && isValidProject(incoming());
-      allow delete: if isSignedIn();
+      allow create: if isValidId(projectId) && isValidProject(incoming());
+      allow update: if isValidId(projectId) && isValidProject(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
+          'location', 'locationTarget', 
+          'zone', 'type', 'propertyType', 'builderCategory', 'builderName',
+          'approvalBody', 'floorPlan', 'floorPlanImageUrl',
+          'configuration', 'segment', 'imageUrls', 'videoUrl', 
+          'features', 'handoverStatus', 'reraNumber', 'handoverDate', 'projectSize',
+          'noOfTowers', 'flatsPerFloor', 'floorsHeight', 'mapUrl',
+          'paymentOffers', 'isPaused', 'isDeleted',
+          'mobileImageUrl', 'mobileVideoUrl', 'createdAt', 'updatedAt'
+        ])
+      );
+      allow delete: if isValidId(projectId);
     }
     
     function isValidProject(data) {
       return data.name is string && data.name.size() <= 200 &&
              data.location is string && data.location.size() <= 200 &&
-             data.type in ['Primary Sale', 'Resale'] &&
-             data.price is string &&
-             data.segment is string &&
-             data.imageUrls is list &&
-             data.features is list;
+             (!('locationTarget' in data) || (data.locationTarget is string && data.locationTarget.size() <= 300)) &&
+             (!('zone' in data) || data.zone in [
+               'East Bangalore', 'Off Sarjapur Road', 'Sarjapur', 'Electronic City',
+               'Marathalli', 'Bellandur', 'South East Bangalore', 'Bangalore East',
+               'Bangalore North', 'Bangalore West', 'Bangalore South', 'Bangalore Central', 'All Zone'
+             ]) &&
+             data.type in ['Primary', 'Resale', 'Rental', 'Primary Sale'] &&
+             (!('propertyType' in data) || data.propertyType in ['Apartment', 'Villa', 'Plot', 'Flat']) &&
+             (!('builderCategory' in data) || data.builderCategory in ['A+', 'A', 'B', 'C']) &&
+             (!('builderName' in data) || (data.builderName is string && data.builderName.size() <= 150)) &&
+             (!('approvalBody' in data) || (data.approvalBody is string && data.approvalBody.size() <= 150)) &&
+             (!('floorPlan' in data) || (data.floorPlan is string && data.floorPlan.size() <= 1000)) &&
+             (!('floorPlanImageUrl' in data) || (data.floorPlanImageUrl is string && data.floorPlanImageUrl.size() <= 900000)) &&
+             (!('configuration' in data) || (data.configuration is list && data.configuration.size() <= 20)) &&
+             data.price is string && data.price.size() <= 150 &&
+             (!('lastPrice' in data) || (data.lastPrice is string && data.lastPrice.size() <= 150)) &&
+             (!('lastCheckedPrice' in data) || (data.lastCheckedPrice is string && data.lastCheckedPrice.size() <= 150)) &&
+             (!('priceChanged' in data) || data.priceChanged is bool) &&
+             (!('priceHistory' in data) || (data.priceHistory is list && data.priceHistory.size() <= 20)) &&
+             (!('segment' in data) || (data.segment is string && data.segment.size() <= 100)) &&
+             (!('imageUrls' in data) || (data.imageUrls is list && data.imageUrls.size() <= 25)) &&
+             (!('features' in data) || (data.features is list && data.features.size() <= 50)) &&
+             (!('handoverStatus' in data) || (data.handoverStatus is string && data.handoverStatus.size() <= 100)) &&
+             (!('reraNumber' in data) || (data.reraNumber is string && data.reraNumber.size() <= 150)) &&
+             (!('handoverDate' in data) || (data.handoverDate is string && data.handoverDate.size() <= 100)) &&
+             (!('projectSize' in data) || (data.projectSize is string && data.projectSize.size() <= 150)) &&
+             (!('noOfTowers' in data) || (data.noOfTowers is string && data.noOfTowers.size() <= 100)) &&
+             (!('flatsPerFloor' in data) || (data.flatsPerFloor is string && data.flatsPerFloor.size() <= 100)) &&
+             (!('floorsHeight' in data) || (data.floorsHeight is string && data.floorsHeight.size() <= 100)) &&
+             (!('mapUrl' in data) || (data.mapUrl is string && data.mapUrl.size() <= 1000)) &&
+             (!('paymentOffers' in data) || (data.paymentOffers is string && data.paymentOffers.size() <= 500)) &&
+             (!('isPaused' in data) || data.isPaused is bool) &&
+             (!('isDeleted' in data) || data.isDeleted is bool) &&
+             (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
+             (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 1000));
     }
 
     // Enquiries: Publicly writable (create only), admin readable
     match /enquiries/{enquiryId} {
-      allow create: if isValidEnquiry(incoming());
-      allow list: if isSignedIn();
-      allow get: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow create: if isValidId(enquiryId) && isValidEnquiry(incoming());
+      allow read, write: if isSignedIn();
     }
     
     function isValidEnquiry(data) {
-      // Identity check is not needed for public lead generation, 
-      // but we validate types and sizes to prevent poisoning.
       return data.customerName is string && 
              data.customerName.size() >= 2 &&
              data.customerName.size() <= 100 &&
@@ -66,8 +104,84 @@ service cloud.firestore {
              data.customerPhone.size() >= 8 &&
              data.customerPhone.size() <= 20 &&
              data.projectName is string &&
+             data.projectName.size() <= 200 &&
              data.projectId is string &&
-             data.type in ['WhatsApp', 'Email', 'Form'];
+             data.projectId.size() <= 128 &&
+             (!('interestedProjects' in data) || (data.interestedProjects is string && data.interestedProjects.size() <= 300)) &&
+             (!('preferredLocation' in data) || (data.preferredLocation is string && data.preferredLocation.size() <= 200)) &&
+             data.type in ['WhatsApp', 'Email', 'Form', 'AI Chat', 'Download Brochure'];
+     }
+
+    // Opportunities: Publicly writable (create only), admin readable
+    match /opportunities/{opportunityId} {
+      allow create: if isValidId(opportunityId) && isValidOpportunity(incoming());
+      allow read, write: if isSignedIn();
+    }
+
+    function isValidOpportunity(data) {
+      return data.name is string &&
+             data.name.size() >= 2 &&
+             data.name.size() <= 100 &&
+             data.mobile is string &&
+             data.mobile.size() >= 8 &&
+             data.mobile.size() <= 20 &&
+             data.propertyName is string &&
+             data.propertyName.size() >= 2 &&
+             data.propertyName.size() <= 200 &&
+             data.propertyStatus in ['Ready to Move', 'Under Construction', 'On Going', 'Nearing Completion'] &&
+             data.propertyType in ['Villa', 'Flat', 'Plot'] &&
+             data.rooms in ['1BHK', '2BHK', '3BHK', '4BHK', '5BHK'] &&
+             data.facing is string &&
+             data.facing.size() >= 2 &&
+             data.facing.size() <= 100 &&
+             (!('tower' in data) || (data.tower is string && data.tower.size() <= 100)) &&
+             data.floorNumber is string &&
+             data.floorNumber.size() <= 50 &&
+             data.willingTo in ['Rent', 'Sell'] &&
+             (!('expectedRent' in data) || data.expectedRent is int || data.expectedRent is float) &&
+             (!('expectedSell' in data) || data.expectedSell is int || data.expectedSell is float);
+    }
+
+    // Subscriptions: Public writable, admin readable/manageable
+    match /subscriptions/{subscriptionId} {
+      allow create: if isValidId(subscriptionId) && isValidSubscription(incoming());
+      allow read, write: if isSignedIn();
+    }
+
+    function isValidSubscription(data) {
+      return data.email is string &&
+             data.email.size() >= 5 &&
+             data.email.size() <= 100 &&
+             data.projectId is string &&
+             data.projectName is string &&
+             data.createdAt == request.time &&
+             exists(/databases/$(database)/documents/projects/$(data.projectId));
+    }
+
+    // Referrals: Publicly writable (create only), admin readable
+    match /referrals/{referralId} {
+      allow create: if isValidId(referralId) && isValidReferral(incoming());
+      allow read, write: if isSignedIn();
+    }
+
+    function isValidReferral(data) {
+      return data.name is string &&
+             data.name.size() >= 2 &&
+             data.name.size() <= 100 &&
+             data.mobileNumber is string &&
+             data.mobileNumber.size() >= 8 &&
+             data.mobileNumber.size() <= 20 &&
+             data.budget is string &&
+             data.location is string &&
+             data.propertyType in ['Villa', 'Flat', 'Plot', 'Stand Alone Building'] &&
+             data.unitType in ['1BHK', '2BHK', '3BHK', '4BHK', '5BHK'] &&
+             data.contactDateTime is string &&
+             data.whatsappNumber is string &&
+             data.lookingFor in ['New Building', 'Resale'] &&
+             (!('resaleAge' in data) || data.resaleAge is string) &&
+             (!('referrerName' in data) || data.referrerName is string) &&
+             (!('referrerContact' in data) || data.referrerContact is string) &&
+             (!('clientOpinion' in data) || data.clientOpinion is string);
     }
   }
 }

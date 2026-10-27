@@ -6,21 +6,45 @@
       "type": "object",
       "properties": {
         "name": { "type": "string", "description": "Project name" },
-        "description": { "type": "string", "description": "Short description" },
+        "description": { "type": "string", "description": "Short description / writeup" },
         "price": { "type": "string", "description": "Price range" },
-        "location": { "type": "string", "description": "Location in Bangalore" },
-        "type": { "type": "string", "enum": ["Primary Sale", "Resale"], "description": "Type of sale" },
+        "location": { "type": "string", "description": "Micro-location name" },
+        "locationTarget": { "type": "string", "description": "Specific landmark or target area" },
+        "zone": { "type": "string", "enum": ["East Bangalore", "Off Sarjapur Road", "Sarjapur", "Electronic City", "Marathalli", "Bellandur", "South East Bangalore", "Bangalore East", "Bangalore North", "Bangalore West", "Bangalore South", "Bangalore Central", "All Zone"], "description": "Market zone in Bangalore" },
+        "type": { "type": "string", "enum": ["Primary", "Resale", "Rental", "Primary Sale"], "description": "Type of portfolio (Primary, Resale, Rental)" },
+        "propertyType": { "type": "string", "enum": ["Apartment", "Villa", "Plot", "Flat"], "description": "Type of property" },
+        "builderCategory": { "type": "string", "enum": ["A+", "A", "B", "C"], "description": "Builder tier category" },
+        "builderName": { "type": "string", "description": "Name of developer / builder" },
+        "approvalBody": { "type": "string", "description": "Statutory approval body (BBMP, BDA, BMRDA, STRR, BIAPA, DTCP)" },
+        "floorPlan": { "type": "string", "description": "Floor plan specifications and SBA/Carpet area details" },
+        "floorPlanImageUrl": { "type": "string", "description": "Optional floor plan image URL" },
+        "configuration": { "type": "array", "items": { "type": "string" }, "description": "Available configurations" },
         "segment": { "type": "string", "description": "Luxury, Premium, Budget, etc." },
+        "handoverStatus": { "type": "string", "enum": ["EOI", "Under Construction", "Ready to Move", "Handed Over", "Nearing Completion", "Prelaunch", "Official Launch"], "description": "Construction / handover status" },
+        "reraNumber": { "type": "string", "description": "RERA Registration Number" },
+        "handoverDate": { "type": "string", "description": "Expected or completed Hand Over Date" },
+        "projectSize": { "type": "string", "description": "Total project land area and unit count" },
+        "noOfTowers": { "type": "string", "description": "Number of residential towers" },
+        "flatsPerFloor": { "type": "string", "description": "Number of flats per floor" },
+        "floorsHeight": { "type": "string", "description": "Number of floors / building height" },
+        "mapUrl": { "type": "string", "description": "Google Maps embed or location URL" },
+        "paymentOffers": { "type": "string", "description": "Payment offers text" },
         "imageUrls": { "type": "array", "items": { "type": "string" }, "description": "Gallery images" },
+        "mobileImageUrl": { "type": "string", "description": "Gallery image optimal for mobile view" },
         "videoUrl": { "type": "string", "description": "YouTube or Drive video link" },
+        "mobileVideoUrl": { "type": "string", "description": "Gallery video optimal for mobile view" },
         "features": { "type": "array", "items": { "type": "string" }, "description": "Key amenities" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "priceChanged": { "type": "boolean", "description": "Flag indicating a significant price change" },
+        "lastCheckedPrice": { "type": "string", "description": "The price at the last check" },
+        "isPaused": { "type": "boolean", "description": "Flag to temporarily unpublish the project from visitor feeds" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "location", "type"]
     },
     "Enquiry": {
       "title": "Enquiry",
-      "description": "Customer enquiry for a project",
+      "description": "Customer enquiry or brochure download request for a project",
       "type": "object",
       "properties": {
         "projectId": { "type": "string" },
@@ -28,11 +52,68 @@
         "customerName": { "type": "string" },
         "customerEmail": { "type": "string" },
         "customerPhone": { "type": "string" },
+        "interestedProjects": { "type": "string" },
+        "preferredLocation": { "type": "string" },
         "message": { "type": "string" },
-        "type": { "type": "string", "enum": ["WhatsApp", "Email", "Form"] },
+        "type": { "type": "string", "enum": ["WhatsApp", "Email", "Form", "AI Chat", "Download Brochure"] },
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["customerName", "customerPhone", "projectName"]
+    },
+    "Opportunity": {
+      "title": "Opportunity",
+      "description": "User property submitted for selling or renting",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "mobile": { "type": "string" },
+        "propertyName": { "type": "string" },
+        "propertyStatus": { "type": "string", "enum": ["Ready to Move", "Under Construction", "On Going", "Nearing Completion"] },
+        "propertyType": { "type": "string", "enum": ["Villa", "Flat", "Plot"] },
+        "rooms": { "type": "string", "enum": ["1BHK", "2BHK", "3BHK", "4BHK", "5BHK"] },
+        "facing": { "type": "string" },
+        "tower": { "type": "string" },
+        "floorNumber": { "type": "string" },
+        "willingTo": { "type": "string", "enum": ["Rent", "Sell"] },
+        "expectedRent": { "type": "number" },
+        "expectedSell": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "mobile", "propertyName", "propertyStatus", "propertyType", "rooms", "facing", "floorNumber", "willingTo"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "Subscription for price changes on a property",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string", "description": "ID of the target property/project" },
+        "projectName": { "type": "string", "description": "Name of the target property/project" },
+        "email": { "type": "string", "description": "Subscribed email address" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["projectId", "projectName", "email"]
+    },
+    "Referral": {
+      "title": "Referral",
+      "description": "Referral registry for friends & family purchasing properties",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Referred friend or family member name" },
+        "mobileNumber": { "type": "string", "description": "Contact number" },
+        "budget": { "type": "string", "description": "Price range (Min to Max)" },
+        "location": { "type": "string", "description": "Target location" },
+        "propertyType": { "type": "string", "enum": ["Villa", "Flat", "Plot", "Stand Alone Building"] },
+        "unitType": { "type": "string", "enum": ["1BHK", "2BHK", "3BHK", "4BHK", "5BHK"] },
+        "contactDateTime": { "type": "string", "description": "Preferred time and date to connect" },
+        "whatsappNumber": { "type": "string", "description": "WhatsApp contact" },
+        "lookingFor": { "type": "string", "enum": ["New Building", "Resale"] },
+        "resaleAge": { "type": "string", "description": "Age of property if Resale selected" },
+        "referrerName": { "type": "string", "description": "Person making the referral" },
+        "referrerContact": { "type": "string", "description": "Contact information (email or phone) of referrer" },
+        "clientOpinion": { "type": "string", "description": "Additional notes or description" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "mobileNumber", "budget", "location", "propertyType", "unitType", "contactDateTime", "whatsappNumber", "lookingFor"]
     }
   },
   "firestore": {
@@ -43,6 +124,18 @@
     "enquiries": {
       "schema": "Enquiry",
       "description": "Customer enquiries submitted via the website"
+    },
+    "opportunities": {
+      "schema": "Opportunity",
+      "description": "Opportunities submitted by users to sell or rent properties"
+    },
+    "subscriptions": {
+      "schema": "Subscription",
+      "description": "Subscriptions for price updates on real estate listings"
+    },
+    "referrals": {
+      "schema": "Referral",
+      "description": "Referrals submitted by users for friends and family"
     }
   }
 }
