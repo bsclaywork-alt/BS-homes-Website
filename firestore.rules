@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Collections ---
+
+    // Connectivity Test
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Projects: Publicly readable, admin writable
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidProject(incoming());
+      allow update: if isSignedIn() && isValidProject(incoming());
+      allow delete: if isSignedIn();
+    }
+    
+    function isValidProject(data) {
+      return data.name is string && data.name.size() <= 200 &&
+             data.location is string && data.location.size() <= 200 &&
+             data.type in ['Primary Sale', 'Resale'] &&
+             data.price is string &&
+             data.segment is string &&
+             data.imageUrls is list &&
+             data.features is list;
+    }
+
+    // Enquiries: Publicly writable (create only), admin readable
+    match /enquiries/{enquiryId} {
+      allow create: if isValidEnquiry(incoming());
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+    
+    function isValidEnquiry(data) {
+      // Identity check is not needed for public lead generation, 
+      // but we validate types and sizes to prevent poisoning.
+      return data.customerName is string && 
+             data.customerName.size() >= 2 &&
+             data.customerName.size() <= 100 &&
+             data.customerPhone is string &&
+             data.customerPhone.size() >= 8 &&
+             data.customerPhone.size() <= 20 &&
+             data.projectName is string &&
+             data.projectId is string &&
+             data.type in ['WhatsApp', 'Email', 'Form'];
+    }
+  }
+}

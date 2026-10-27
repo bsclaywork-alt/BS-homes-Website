@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "Real estate project listing",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Project name" },
+        "description": { "type": "string", "description": "Short description" },
+        "price": { "type": "string", "description": "Price range" },
+        "location": { "type": "string", "description": "Location in Bangalore" },
+        "type": { "type": "string", "enum": ["Primary Sale", "Resale"], "description": "Type of sale" },
+        "segment": { "type": "string", "description": "Luxury, Premium, Budget, etc." },
+        "imageUrls": { "type": "array", "items": { "type": "string" }, "description": "Gallery images" },
+        "videoUrl": { "type": "string", "description": "YouTube or Drive video link" },
+        "features": { "type": "array", "items": { "type": "string" }, "description": "Key amenities" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "location", "type"]
+    },
+    "Enquiry": {
+      "title": "Enquiry",
+      "description": "Customer enquiry for a project",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "projectName": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["WhatsApp", "Email", "Form"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["customerName", "customerPhone", "projectName"]
+    }
+  },
+  "firestore": {
+    "projects": {
+      "schema": "Project",
+      "description": "Collection of real estate projects"
+    },
+    "enquiries": {
+      "schema": "Enquiry",
+      "description": "Customer enquiries submitted via the website"
+    }
+  }
+}

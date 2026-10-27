@@ -1,0 +1,8 @@
+{
+  "name": "BS Homez",
+  "description": "Premium Real Estate services in Bangalore. Specializing in primary sales and resale with expert matching and zero service fees for primary sales.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
