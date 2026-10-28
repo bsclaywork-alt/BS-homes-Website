@@ -417,7 +417,7 @@ const Navbar = ({
 
         {/* Dedicated Multi-Tab Navigation Bar (Separate Tabs - No Single Scrolling) */}
         <div className="w-full overflow-x-auto no-scrollbar border-t border-white/10 pt-2.5">
-          <div className="flex items-center gap-1.5 min-w-max pb-1">
+          <div className="flex items-center gap-2 min-w-max pb-1">
             {links.map(link => {
               const isActive = activeMainTab === link.id;
               return (
@@ -426,15 +426,16 @@ const Navbar = ({
                   type="button"
                   onClick={() => handleTabClick(link.id)}
                   className={cn(
-                    "px-4 py-2 rounded-sm text-[10px] uppercase tracking-[0.18em] font-black transition-all whitespace-nowrap cursor-pointer border",
+                    "px-4 py-2.5 rounded-sm text-[11px] sm:text-xs uppercase tracking-wider font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5",
                     isActive
                       ? "bg-art-gold text-black border-art-gold shadow-[0_0_20px_rgba(197,160,89,0.35)]"
                       : link.isSpecial
                       ? "bg-art-gold/10 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
-                      : "bg-white/[0.03] text-white/65 border-white/10 hover:text-white hover:border-white/30 hover:bg-white/[0.08]"
+                      : "bg-white/[0.05] text-white/80 border-white/15 hover:text-white hover:border-white/35 hover:bg-white/[0.1]"
                   )}
                 >
-                  {link.name}
+                  {link.id === 'overview' && <Home size={13} className="shrink-0" />}
+                  <span>{link.name}</span>
                 </button>
               );
             })}
@@ -473,11 +474,14 @@ const Navbar = ({
                     className={cn(
                       "p-4 rounded-sm text-left font-serif italic text-xl transition-all border cursor-pointer flex items-center justify-between",
                       isActive
-                        ? "bg-art-gold text-black border-art-gold font-bold"
+                        ? "bg-art-gold text-black border-art-gold font-bold shadow-lg"
                         : "bg-white/5 text-white border-white/10 hover:border-art-gold hover:text-art-gold"
                     )}
                   >
-                    <span>{link.name}</span>
+                    <span className="flex items-center gap-2.5">
+                      {link.id === 'overview' && <Home size={20} className={isActive ? "text-black" : "text-art-gold"} />}
+                      <span>{link.name}</span>
+                    </span>
                     <ChevronRight size={16} />
                   </button>
                 );
@@ -1249,7 +1253,7 @@ const ProjectCard: React.FC<{
       whileHover={{ 
         y: isEditingCard ? 0 : -8,
         scale: isEditingCard ? 1 : 1.015,
-        boxShadow: "0 30px 60px -12px rgba(212, 175, 55, 0.25), 0 20px 45px rgba(0, 0, 0, 0.85)"
+        boxShadow: "0 30px 60px -12px rgba(255, 255, 255, 0.12), 0 20px 45px rgba(0, 0, 0, 0.9)"
       }}
       transition={{ 
         type: "spring", 
@@ -1257,10 +1261,10 @@ const ProjectCard: React.FC<{
         damping: 20,
         opacity: { duration: 0.5 }
       }}
-      className="group relative flex flex-col bg-white/[0.015] border border-white/[0.08] hover:border-art-gold/60 transition-all duration-300 overflow-hidden rounded-sm hover:shadow-[0_25px_50px_rgba(0,0,0,0.8)]"
+      className="group relative flex flex-col bg-[#101010] border-2 border-white hover:border-white transition-all duration-300 overflow-hidden rounded-md shadow-[0_4px_20px_rgba(255,255,255,0.1),0_15px_40px_rgba(0,0,0,0.9)] hover:shadow-[0_20px_45px_rgba(255,255,255,0.2)] w-full max-w-full box-border"
     >
       {project.priceChanged && (
-         <div className="absolute top-4 left-4 z-20 bg-red-600/90 text-white text-[9px] font-black uppercase px-2 py-1 rounded-sm shadow-md">
+         <div className="absolute top-4 left-4 z-20 bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm shadow-md">
             Price Alert
          </div>
       )}
@@ -1355,19 +1359,14 @@ const ProjectCard: React.FC<{
         )}
       </AnimatePresence>
 
-      {/* Top Status, Builder Category & Corridor Header Banner */}
-      <div className="px-5 py-3.5 bg-black/70 border-b border-white/10 flex items-center justify-between gap-2 flex-wrap">
+      {/* Top Status & Corridor Header Banner */}
+      <div className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-black/85 border-b border-white/20 flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[9px] font-black uppercase tracking-[0.22em] px-2.5 py-0.5 bg-art-gold text-black rounded-sm">
+          <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 bg-art-gold text-black rounded-sm shadow-sm">
             {displayType}
           </span>
-          {project.builderCategory && (
-            <span className="text-[9px] font-mono font-black uppercase tracking-widest px-2 py-0.5 bg-white/10 text-art-gold border border-art-gold/30 rounded-sm">
-              Cat {project.builderCategory} Builder
-            </span>
-          )}
-          <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/90 flex items-center gap-1">
-            <MapPin size={10} className="text-art-gold" />
+          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+            <MapPin size={11} className="text-art-gold shrink-0" />
             {displayZone}
           </span>
         </div>
@@ -1381,10 +1380,10 @@ const ProjectCard: React.FC<{
                 onToggleCompare(project);
               }}
               className={cn(
-                "px-2.5 py-1 rounded-sm text-[8.5px] uppercase tracking-widest font-black border transition-all flex items-center gap-1 cursor-pointer",
+                "px-2.5 py-1 rounded-sm text-[10px] sm:text-xs uppercase tracking-wider font-bold border transition-all flex items-center gap-1 cursor-pointer",
                 isCompared
                   ? "bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.3)]"
-                  : "bg-white/5 hover:bg-white/15 text-white/70 hover:text-white border-white/20"
+                  : "bg-white/10 hover:bg-white/20 text-white hover:text-white border-white/25"
               )}
               title={isCompared ? "Remove from comparison" : "Add to side-by-side comparison (up to 3)"}
             >
@@ -1734,125 +1733,101 @@ const ProjectCard: React.FC<{
         </div>
       ) : (
         <>
-          {/* Project Name & Builder Pedigree Header */}
-          <div className="px-6 pt-5 pb-4 bg-white/[0.01] border-b border-white/5">
+          {/* Project Name & Segment Header */}
+          <div className="px-3.5 sm:px-5 pt-3.5 pb-3 bg-white/[0.02] border-b border-white/10">
             <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
-              <span className="text-art-gold text-[9px] uppercase tracking-[0.3em] font-black">
-                {displayPropertyType} {project.builderName ? `• By ${project.builderName}` : `• ${project.segment}`}
+              <span className="text-art-gold text-[10px] sm:text-xs uppercase tracking-wider font-extrabold">
+                {displayPropertyType} {project.segment ? `• ${project.segment}` : ''}
               </span>
               {project.configuration && project.configuration.length > 0 && (
-                <span className="text-white/55 text-[9px] font-mono uppercase tracking-wider">{project.configuration.join(' | ')}</span>
+                <span className="text-white/80 text-[10px] sm:text-xs font-mono font-semibold uppercase tracking-wider">{project.configuration.join(' | ')}</span>
               )}
             </div>
             <div className="flex items-baseline justify-between gap-3 flex-wrap">
-              <h3 className="text-2xl sm:text-3xl font-serif text-white italic group-hover:text-art-gold transition-colors duration-300">
+              <h3 className="text-xl sm:text-2xl font-serif text-white font-bold italic group-hover:text-art-gold transition-colors duration-300">
                 {project.name}
               </h3>
               <div className="text-right">
-                <span className="text-lg sm:text-xl font-serif italic text-art-gold font-bold block">
+                <span className="text-xl sm:text-2xl font-sans font-black text-white tracking-tight block drop-shadow-sm">
                   {formattedMainPrice}
                 </span>
-                <span className="text-[8px] uppercase tracking-[0.18em] text-white/45 font-mono block">
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/70 font-mono font-medium block">
                   * Conditions Apply
                 </span>
               </div>
             </div>
 
-            {/* Prominent Location Name Badge */}
-            <div className="mt-3 p-2.5 bg-white/[0.03] border border-white/10 rounded-sm flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-start gap-2">
-                <MapPin size={13} className="text-art-gold shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-[8px] uppercase tracking-[0.22em] text-art-gold font-black block">
-                    Location Name • {displayZone} Corridor
-                  </span>
-                  <span className="text-xs font-bold text-white block mt-0.5">
-                    {project.location}
-                  </span>
-                  {project.locationTarget && (
-                    <span className="text-[10px] text-white/60 block mt-0.5">
-                      {project.locationTarget}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <a
-                href={googleMapsSearchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[9px] uppercase tracking-widest text-art-gold hover:text-white flex items-center gap-1 font-mono transition-colors px-2 py-1 bg-art-gold/10 border border-art-gold/30 rounded-sm"
-              >
-                <ExternalLink size={10} /> Map
-              </a>
-            </div>
-
-            {/* Auto-Updated Last Price & Handover Date Highlight Bar */}
-            <div className="grid grid-cols-2 gap-2 mt-2.5 p-2.5 bg-art-gold/[0.06] border border-art-gold/25 rounded-sm">
-              <div className="flex flex-col">
-                <span className="text-[8px] uppercase tracking-[0.2em] text-white/45 font-bold flex items-center gap-1">
-                  <Sparkles size={9} className="text-art-gold" /> Last Price (Updated)
+            {/* Compact Unified Location, Last Price & Handover Strip */}
+            <div className="mt-2.5 p-2.5 bg-white/[0.04] border border-white/15 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-1.5 truncate">
+                <MapPin size={12} className="text-art-gold shrink-0" />
+                <span className="text-xs sm:text-sm font-semibold text-white truncate">
+                  {project.location}
                 </span>
-                <span className="text-[11px] font-mono font-bold text-art-gold truncate mt-0.5" title={`${effectiveLastPrice} (* Conditions Apply)`}>
+                <a
+                  href={googleMapsSearchUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[9.5px] sm:text-[10px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-1 font-mono font-bold transition-colors px-2 py-0.5 bg-art-gold/15 border border-art-gold/40 rounded-sm shrink-0"
+                >
+                  <ExternalLink size={10} /> Map
+                </a>
+              </div>
+
+              <div className="flex items-center gap-2 text-[10.5px] sm:text-xs font-mono shrink-0 border-t sm:border-t-0 sm:border-l border-white/15 pt-1 sm:pt-0 sm:pl-2.5">
+                <span className="text-white font-black tracking-tight" title="Last Verified Price">
                   {effectiveLastPrice}
                 </span>
-                <span className="text-[7px] uppercase tracking-widest text-white/40 font-mono">
-                  * Conditions Apply
-                </span>
-              </div>
-              <div className="flex flex-col border-l border-white/10 pl-2.5">
-                <span className="text-[8px] uppercase tracking-[0.2em] text-white/45 font-bold flex items-center gap-1">
-                  <Calendar size={9} className="text-art-gold" /> Handover Date
-                </span>
-                <span className="text-[11px] font-mono font-bold text-white/90 truncate mt-0.5">
+                <span className="text-white/40">•</span>
+                <span className="text-white/85 font-semibold">
                   {effectiveHandoverDate}
-                </span>
-                <span className="text-[7px] uppercase tracking-widest text-white/40 font-mono">
-                  {project.reraNumber ? 'RERA Verified' : 'Verified Schedule'}
                 </span>
               </div>
             </div>
           </div>
           
-          {/* Writeup (Including Nearby Schools, Hospitals, IT Hubs, Malls, Bus Stop with kms), Floor Plans & Specifications */}
-          <div className="p-6 sm:p-8 flex flex-col flex-grow relative z-20 space-y-4">
-            <div className="bg-white/[0.02] p-3.5 rounded-sm border border-white/10">
-              <span className="text-[8px] uppercase tracking-[0.22em] text-art-gold font-black block mb-1.5">
-                Project Write-Up & Nearby Landmarks (in kms) — {project.location}
-              </span>
-              <p className={cn("text-xs text-white/85 leading-relaxed font-sans whitespace-pre-line", isExpanded ? "" : "line-clamp-5")}>
+          {/* Small & Compact Project Info Box, Floor Plans & Specifications */}
+          <div className="p-3.5 sm:p-4 flex flex-col flex-grow relative z-20 space-y-3">
+            <div className="bg-white/[0.03] p-3 rounded-sm border border-white/15">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="text-[9.5px] sm:text-xs uppercase tracking-wider text-art-gold font-extrabold">
+                  Project Overview & Landmarks — {project.location}
+                </span>
+                {project.description && project.description.length > 100 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsExpanded(prev => !prev)}
+                    className="text-[10px] sm:text-xs uppercase tracking-wider text-art-gold hover:text-white font-bold cursor-pointer transition-colors px-2 py-0.5 rounded bg-white/5"
+                  >
+                    {isExpanded ? 'Less ▲' : 'More ▼'}
+                  </button>
+                )}
+              </div>
+              <p className={cn("text-xs sm:text-sm text-white/95 leading-relaxed font-sans", isExpanded ? "whitespace-pre-line" : "line-clamp-2")}>
                 {project.description}
               </p>
-              {project.description && project.description.length > 180 && (
-                <button
-                  type="button"
-                  onClick={() => setIsExpanded(prev => !prev)}
-                  className="text-[9px] uppercase tracking-widest text-art-gold hover:text-white font-black mt-2 cursor-pointer"
-                >
-                  {isExpanded ? 'Show Less' : 'Read Full Write-Up & Nearby Kms'}
-                </button>
-              )}
             </div>
 
-            {/* Key Project Specifications (RERA, Approval Body, Scale, Towers, Elevation) */}
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-[10px]">
-              <div className="bg-white/[0.02] p-2.5 rounded-sm border border-white/5">
-                <span className="text-[8px] uppercase tracking-widest text-white/40 block">RERA & Approval Body</span>
-                <span className="text-white/90 font-mono truncate block" title={`${project.approvalBody || ''} | ${project.reraNumber || ''}`}>
-                  {project.approvalBody || 'BBMP / BDA / RERA'}
+            {/* Compact Key Specifications */}
+            <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-white/[0.025] p-2.5 rounded-sm border border-white/15">
+              <div className="truncate">
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/70 font-semibold block">Approval & RERA</span>
+                <span className="text-white font-bold text-[11px] sm:text-xs truncate block" title={project.reraNumber || project.approvalBody}>
+                  {project.approvalBody || 'RERA Verified'}
                 </span>
                 {project.reraNumber && (
-                  <span className="text-[8px] text-art-gold/80 font-mono truncate block mt-0.5" title={project.reraNumber}>
+                  <span className="text-[10px] sm:text-[11px] text-art-gold font-bold truncate block mt-0.5" title={project.reraNumber}>
                     {project.reraNumber}
                   </span>
                 )}
               </div>
-              <div className="bg-white/[0.02] p-2.5 rounded-sm border border-white/5">
-                <span className="text-[8px] uppercase tracking-widest text-white/40 block">Project Scale & Elevation</span>
-                <span className="text-white/90 font-mono truncate block">
-                  {project.projectSize || 'Luxury Enclave'} {project.noOfTowers ? `• ${project.noOfTowers}` : ''}
+              <div className="truncate">
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/70 font-semibold block">Scale & Elevation</span>
+                <span className="text-white font-bold text-[11px] sm:text-xs truncate block">
+                  {project.projectSize || 'Gated Enclave'} {project.noOfTowers ? `• ${project.noOfTowers}` : ''}
                 </span>
                 {(project.floorsHeight || project.flatsPerFloor) && (
-                  <span className="text-[8px] text-white/55 font-mono truncate block mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] text-white/80 font-medium truncate block mt-0.5">
                     {[project.floorsHeight, project.flatsPerFloor].filter(Boolean).join(' • ')}
                   </span>
                 )}
@@ -1860,20 +1835,18 @@ const ProjectCard: React.FC<{
             </div>
 
             {project.floorPlan && (
-              <div className="bg-white/[0.025] px-3 py-2.5 rounded-sm border border-art-gold/20 text-[10px]">
-                <span className="text-[8px] uppercase tracking-widest text-art-gold font-black block mb-1 flex items-center gap-1.5">
-                  <Layers size={10} /> Verified Floor Plan & SBA Breakdown
-                </span>
-                <p className="text-white/85 font-mono text-[10px] leading-relaxed">{project.floorPlan}</p>
+              <div className="px-2.5 py-2 bg-white/[0.03] rounded-sm border border-art-gold/30 text-[10px] sm:text-xs flex items-center gap-2">
+                <Layers size={11} className="text-art-gold shrink-0" />
+                <span className="text-white font-mono font-medium truncate">{project.floorPlan}</span>
               </div>
             )}
 
             {project.features && project.features.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {project.features.slice(0, 4).map((feat, idx) => (
+              <div className="flex flex-wrap gap-1.5">
+                {project.features.slice(0, 3).map((feat, idx) => (
                   <span
                     key={idx}
-                    className="text-[8px] uppercase tracking-wider font-mono px-2 py-1 bg-white/[0.03] border border-white/10 text-white/70 rounded-sm"
+                    className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-mono font-semibold px-2 py-1 bg-white/10 border border-white/20 text-white rounded-sm"
                   >
                     {feat}
                   </span>
@@ -1881,40 +1854,40 @@ const ProjectCard: React.FC<{
               </div>
             )}
 
-            {/* Quick Action Footer with ROI Calculator, Alerts, Brochure & Enquire */}
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap mt-auto">
-              <div className="flex items-center gap-2 flex-wrap">
+            {/* Sleek Action Footer with accessible touch targets */}
+            <div className="pt-2.5 border-t border-white/15 flex items-center justify-between gap-2 flex-wrap mt-auto">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setIsCalculatorOpen(true)}
-                  className="px-3 py-2 rounded-sm text-[9px] uppercase tracking-widest font-black border bg-white/5 hover:bg-white/15 text-white/80 border-white/15 transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white/20 text-white border-white/20 transition-all flex items-center gap-1 cursor-pointer min-h-[34px]"
                 >
-                  <Calculator size={12} className="text-art-gold" />
-                  ROI Model
+                  <Calculator size={11} className="text-art-gold" />
+                  ROI
                 </button>
                 {onToggleCompare && (
                   <button
                     type="button"
                     onClick={() => onToggleCompare(project)}
                     className={cn(
-                      "px-2.5 py-2 rounded-sm text-[9px] uppercase tracking-widest font-black border transition-all flex items-center gap-1 cursor-pointer",
+                      "px-2.5 py-1.5 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold border transition-all flex items-center gap-1 cursor-pointer min-h-[34px]",
                       isCompared
-                        ? "bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.3)]"
-                        : "bg-white/5 hover:bg-white/15 text-white/70 hover:text-white border-white/15"
+                        ? "bg-art-gold text-black border-art-gold shadow-[0_0_10px_rgba(197,160,89,0.3)]"
+                        : "bg-white/10 hover:bg-white/20 text-white border-white/20"
                     )}
                     title="Compare specifications side-by-side"
                   >
                     <ArrowLeftRight size={11} className={isCompared ? "text-black" : "text-art-gold"} />
-                    <span>{isCompared ? "In Compare" : "Compare"}</span>
+                    <span>{isCompared ? "Added" : "Compare"}</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => setIsSubscribeOpen(true)}
-                  className="p-2 rounded-sm border bg-white/5 hover:bg-art-gold/20 text-art-gold border-white/15 transition-all cursor-pointer"
+                  className="p-2 rounded-sm border bg-white/10 hover:bg-art-gold/20 text-art-gold border-white/20 transition-all cursor-pointer min-h-[34px] min-w-[34px] flex items-center justify-center"
                   title="Subscribe to Price Alerts"
                 >
-                  <Bell size={12} />
+                  <Bell size={11} />
                 </button>
                 <SocialShareButtons 
                   propertyTitle={project.name}
@@ -1923,11 +1896,11 @@ const ProjectCard: React.FC<{
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => onDownload(project)}
-                  className="px-3 py-2 rounded-sm text-[9px] uppercase tracking-widest font-black border bg-white/5 hover:bg-white hover:text-black text-white border-white/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white hover:text-black text-white border-white/25 transition-all flex items-center gap-1 cursor-pointer min-h-[34px]"
                 >
                   <Download size={11} />
                   Brochure
@@ -1935,11 +1908,11 @@ const ProjectCard: React.FC<{
                 <button
                   type="button"
                   onClick={() => onEnquire(project)}
-                  className="relative px-3.5 py-2 rounded-sm text-[9px] uppercase tracking-widest font-black bg-art-gold hover:bg-white text-black transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_2px_12px_rgba(197,160,89,0.3)]"
+                  className="relative px-3.5 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase tracking-wider font-black bg-art-gold hover:bg-white text-black transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_2px_12px_rgba(197,160,89,0.35)] min-h-[34px]"
                   title={`${inquiriesSocialCount} verified buyer inquiries on ${project.name}`}
                 >
-                  <span>Inquire Now</span>
-                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8px] font-mono font-bold bg-black text-art-gold rounded-full border border-black/20 shadow-sm">
+                  <span>Inquire</span>
+                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8.5px] font-mono font-bold bg-black text-art-gold rounded-full border border-black/20">
                     {inquiriesSocialCount}
                   </span>
                 </button>
@@ -1955,7 +1928,7 @@ const ProjectCard: React.FC<{
 
 const ProjectCardSkeleton = () => {
   return (
-    <div className="group relative flex flex-col bg-white/[0.01] border border-white/[0.05] overflow-hidden rounded-sm">
+    <div className="group relative flex flex-col bg-[#101010] border-2 border-white/60 overflow-hidden rounded-md w-full max-w-full box-border">
       <div className="p-6 flex flex-col flex-grow space-y-4">
         <div className="bg-white/10 h-6 w-3/4 rounded-sm shimmer-bg" />
         <div className="bg-white/[0.04] h-16 w-full rounded-sm shimmer-bg" />
@@ -2022,7 +1995,7 @@ const DownloadBrochureModal = ({
       `PROJECT OVERVIEW`,
       `--------------------------------------------------------------------`,
       `Project Name           : ${proj.name}`,
-      `Developer / Builder    : ${proj.builderName || 'Verified Premier Builder'} (Category ${proj.builderCategory || 'A'})`,
+      `Property Segment       : ${proj.segment || 'Luxury Residences'}`,
       `Portfolio Category     : ${proj.type === 'Primary Sale' ? 'Primary' : proj.type}`,
       `Property Type          : ${proj.propertyType === 'Flat' ? 'Apartment' : proj.propertyType}`,
       `Corridor / Zone        : ${proj.zone === 'Bangalore East' ? 'East Bangalore' : proj.zone}`,
@@ -2432,8 +2405,6 @@ const ProjectGrid = ({
       }
     }
 
-    if (selectedBuilderCat !== 'All' && p.builderCategory !== selectedBuilderCat) return false;
-
     const normalizedPropType = p.propertyType === 'Flat' ? 'Apartment' : p.propertyType;
     if (selectedPropType !== 'All' && normalizedPropType !== selectedPropType) return false;
 
@@ -2454,12 +2425,11 @@ const ProjectGrid = ({
     return true;
   });
 
-  const [activeFilterTab, setActiveFilterTab] = useState<'portfolio' | 'corridor' | 'builder' | 'asset' | 'status'>('portfolio');
+  const [activeFilterTab, setActiveFilterTab] = useState<'portfolio' | 'corridor' | 'asset' | 'status'>('portfolio');
 
   const activeFiltersCount = [
     selectedType !== 'All',
     selectedCorridor !== 'All',
-    selectedBuilderCat !== 'All',
     selectedPropType !== 'All',
     selectedHeaderStatus !== 'All',
     selectedTag !== 'All'
@@ -2556,9 +2526,8 @@ const ProjectGrid = ({
               {[
                 { id: 'portfolio', label: `01. Portfolio Type (${selectedType})` },
                 { id: 'corridor', label: `02. Location Corridor (${selectedCorridor})` },
-                { id: 'builder', label: `03. Builder Cat (${selectedBuilderCat === 'All' ? 'All' : `Cat ${selectedBuilderCat}`})` },
-                { id: 'asset', label: `04. Property Type (${selectedPropType === 'All' ? 'All' : selectedPropType === 'Plot' ? 'Plots' : selectedPropType === 'Apartment' ? 'Apartments' : 'Villas'})` },
-                { id: 'status', label: `05. Present Status (${selectedHeaderStatus})` }
+                { id: 'asset', label: `03. Property Type (${selectedPropType === 'All' ? 'All' : selectedPropType === 'Plot' ? 'Plots' : selectedPropType === 'Apartment' ? 'Apartments' : 'Villas'})` },
+                { id: 'status', label: `04. Present Status (${selectedHeaderStatus})` }
               ].map((tabItem) => (
                 <button
                   key={tabItem.id}
@@ -2600,7 +2569,6 @@ const ProjectGrid = ({
                   onClick={() => {
                     setSelectedType('All');
                     setSelectedCorridor('All');
-                    setSelectedBuilderCat('All');
                     setSelectedPropType('All');
                     setSelectedHeaderStatus('All');
                     setSelectedTag('All');
@@ -2659,31 +2627,6 @@ const ProjectGrid = ({
                       )}
                     >
                       {corridor === 'All' ? 'All Corridors' : corridor}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeFilterTab === 'builder' && (
-              <div>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black block mb-3">
-                  Select Builder Tier (Cat A+ · Cat A · Cat B · Cat C)
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {builderCategories.map(cat => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setSelectedBuilderCat(cat)}
-                      className={cn(
-                        "px-5 py-2.5 text-[10px] uppercase tracking-[0.18em] font-black rounded-sm border transition-all cursor-pointer whitespace-nowrap",
-                        selectedBuilderCat === cat
-                          ? "bg-art-gold text-black border-art-gold shadow-[0_0_15px_rgba(197,160,89,0.3)]"
-                          : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:border-white/30"
-                      )}
-                    >
-                      {cat === 'All' ? 'All Builders' : `Category ${cat} Builders`}
                     </button>
                   ))}
                 </div>
@@ -5176,12 +5119,12 @@ const AdminView = ({
                   </div>
                 )}
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-[9px] text-art-gold font-black uppercase tracking-widest">{p.type} • Cat {p.builderCategory || 'A'}</span>
+                  <span className="text-[9px] text-art-gold font-black uppercase tracking-widest">{p.type} {p.segment ? `• ${p.segment}` : ''}</span>
                   <span className="text-[9px] text-white/50 font-mono uppercase">{p.handoverStatus}</span>
                 </div>
                 <h4 className="text-white font-serif text-lg mb-1 truncate">{p.name}</h4>
                 <p className="text-[10px] text-white/60 uppercase tracking-widest mb-1">{p.location} ({p.zone})</p>
-                <p className="text-[9px] text-white/45 font-mono mb-2 truncate">{p.builderName || 'Verified Builder'} • {p.approvalBody || 'RERA Approved'}</p>
+                <p className="text-[9px] text-white/45 font-mono mb-2 truncate">{p.propertyType || 'Apartment'} • {p.approvalBody || 'RERA Approved'}</p>
                 <p className="text-[9px] text-emerald-400 font-mono mb-4">
                   Last Price: {p.lastPrice || p.price} • Handover: {p.handoverDate || 'Immediate'}
                 </p>
@@ -7675,7 +7618,7 @@ export default function App() {
         return 'projects';
       }
     } catch {}
-    return 'projects';
+    return 'overview';
   });
 
   const [isSeoModalOpen, setIsSeoModalOpen] = useState(false);
@@ -7751,7 +7694,7 @@ export default function App() {
       const propertyParam = encodeURIComponent(activeProjectTarget.id || activeProjectTarget.name);
       const canonicalUrl = `${baseUrl}/?project=${propertyParam}`;
       const pageTitle = `${activeProjectTarget.name} in ${activeProjectTarget.zone}, Bangalore | Price, Floor Plans – BS Homez`;
-      const pageDesc = `${activeProjectTarget.name} by ${activeProjectTarget.builderName || 'Verified Builder'} in ${activeProjectTarget.location}, Bangalore. Price: ${activeProjectTarget.price}. Handover: ${activeProjectTarget.handoverDate || 'Immediate'}. RERA: ${activeProjectTarget.reraNumber || 'Verified'}. 0% buyer brokerage with BS Homez.`;
+      const pageDesc = `${activeProjectTarget.name} in ${activeProjectTarget.location}, Bangalore. Price: ${activeProjectTarget.price}. Handover: ${activeProjectTarget.handoverDate || 'Immediate'}. RERA: ${activeProjectTarget.reraNumber || 'Verified'}. 0% buyer brokerage with BS Homez.`;
       const propertyImage = activeProjectTarget.imageUrls?.[0] || defaultImage;
 
       // 1. Update Document Title
@@ -7759,7 +7702,7 @@ export default function App() {
 
       // 2. Standard Meta Tags
       setMetaTag('name', 'description', pageDesc);
-      setMetaTag('name', 'keywords', `${activeProjectTarget.name}, ${activeProjectTarget.location}, ${activeProjectTarget.zone} properties, Buy ${activeProjectTarget.propertyType} Bangalore, ${activeProjectTarget.builderName}, BS Homez`);
+      setMetaTag('name', 'keywords', `${activeProjectTarget.name}, ${activeProjectTarget.location}, ${activeProjectTarget.zone} properties, Buy ${activeProjectTarget.propertyType} Bangalore, BS Homez`);
       setCanonical(canonicalUrl);
 
       // 3. OpenGraph / Meta Social Tags
