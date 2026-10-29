@@ -71,7 +71,9 @@ import {
   Globe,
   ArrowLeftRight,
   Scale,
-  Clock
+  Clock,
+  FileText,
+  MoreVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -98,6 +100,8 @@ import { InvestmentCalculator } from './components/InvestmentCalculator';
 import { ProjectComparisonModal } from './components/ProjectComparisonModal';
 import { SocialShareButtons } from './components/SocialShareButtons';
 import { SEOPreviewModal } from './components/SEOPreviewModal';
+import { MediaUploadCompressor } from './components/MediaUploadCompressor';
+import { MediaViewerModal } from './components/MediaViewerModal';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -381,12 +385,12 @@ const Navbar = ({
   return (
     <>
       <nav className={cn(
-        "fixed top-0 w-full z-50 px-4 sm:px-6 md:px-10 transition-all duration-300 flex flex-col gap-3 max-w-[100vw]",
+        "fixed top-0 w-full z-50 px-3 sm:px-6 md:px-8 transition-all duration-300 flex flex-col gap-1.5 sm:gap-2 max-w-[100vw]",
         scrolled
-          ? "py-3 bg-art-dark/95 backdrop-blur-md border-b border-white/15 shadow-xl"
-          : "py-4 bg-art-dark/95 backdrop-blur-md border-b border-white/10"
+          ? "py-1.5 sm:py-2 bg-art-dark/95 backdrop-blur-md border-b border-white/15 shadow-xl"
+          : "py-2 sm:py-2.5 bg-art-dark/95 backdrop-blur-md border-b border-white/10"
       )}>
-        <div className="flex justify-between items-center w-full gap-4">
+        <div className="flex justify-between items-center w-full gap-3">
           <button
             type="button"
             onClick={() => handleTabClick('overview')}
@@ -395,29 +399,29 @@ const Navbar = ({
             <Logo />
           </button>
 
-          <div className="relative z-10 flex items-center gap-4 sm:gap-6 shrink-0">
+          <div className="relative z-10 flex items-center gap-3 sm:gap-4 shrink-0">
             <button
               type="button"
               onClick={onInquire}
-              className="px-4 py-2 bg-art-gold text-black text-[10px] uppercase tracking-[0.25em] font-black hover:bg-white transition-colors whitespace-nowrap cursor-pointer rounded-sm"
+              className="px-3.5 py-1.5 bg-art-gold text-black text-[9.5px] sm:text-[10px] uppercase tracking-[0.2em] font-black hover:bg-white transition-colors whitespace-nowrap cursor-pointer rounded-sm"
             >
               Inquire Now
             </button>
             <button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex xl:hidden items-center gap-2.5 group cursor-pointer p-1"
-              aria-label="Toggle navigation menu"
+              className="flex items-center justify-center p-2 rounded-sm bg-white/5 hover:bg-white/10 border border-white/15 hover:border-art-gold/50 transition-all cursor-pointer group"
+              aria-label="Navigation Tabs Menu"
+              title="Open Navigation Tabs"
             >
-              <span className="text-white text-[9px] uppercase tracking-[0.3em] font-bold hidden sm:block">All Tabs</span>
-              <Menu className="text-white" size={22} />
+              <MoreVertical className="text-art-gold group-hover:text-white transition-colors" size={20} />
             </button>
           </div>
         </div>
 
-        {/* Dedicated Multi-Tab Navigation Bar (Separate Tabs - No Single Scrolling) */}
-        <div className="w-full overflow-x-auto no-scrollbar border-t border-white/10 pt-2.5">
-          <div className="flex items-center gap-2 min-w-max pb-1">
+        {/* Dedicated Multi-Tab Navigation Bar - Visible on desktop, removed on mobile */}
+        <div className="w-full overflow-x-auto no-scrollbar border-t border-white/10 pt-1.5 hidden md:block">
+          <div className="flex items-center gap-1.5 min-w-max pb-0.5">
             {links.map(link => {
               const isActive = activeMainTab === link.id;
               return (
@@ -426,15 +430,15 @@ const Navbar = ({
                   type="button"
                   onClick={() => handleTabClick(link.id)}
                   className={cn(
-                    "px-4 py-2.5 rounded-sm text-[11px] sm:text-xs uppercase tracking-wider font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5",
+                    "px-3 py-1.5 rounded-sm text-[10px] sm:text-[11px] uppercase tracking-wider font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5",
                     isActive
-                      ? "bg-art-gold text-black border-art-gold shadow-[0_0_20px_rgba(197,160,89,0.35)]"
+                      ? "bg-art-gold text-black border-art-gold shadow-[0_0_15px_rgba(197,160,89,0.35)]"
                       : link.isSpecial
                       ? "bg-art-gold/10 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
                       : "bg-white/[0.05] text-white/80 border-white/15 hover:text-white hover:border-white/35 hover:bg-white/[0.1]"
                   )}
                 >
-                  {link.id === 'overview' && <Home size={13} className="shrink-0" />}
+                  {link.id === 'overview' && <Home size={12} className="shrink-0" />}
                   <span>{link.name}</span>
                 </button>
               );
@@ -453,14 +457,20 @@ const Navbar = ({
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-0 z-[60] bg-art-dark flex flex-col p-8 sm:p-12 overflow-y-auto select-none"
           >
-            <div className="flex justify-between items-center mb-10">
-              <Logo />
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/10">
+              <div>
+                <Logo />
+                <span className="text-[9px] uppercase tracking-[0.3em] text-art-gold font-bold block mt-1">
+                  Navigation Tabs Directory
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsMenuOpen(false)}
-                className="text-art-gold hover:text-white transition-colors duration-300 cursor-pointer"
+                className="text-art-gold hover:text-white transition-colors duration-300 cursor-pointer p-2 rounded-sm bg-white/5 hover:bg-white/10 border border-white/10"
+                aria-label="Close Tabs Directory"
               >
-                <X size={32} />
+                <X size={26} />
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-12">
@@ -519,7 +529,7 @@ const Hero = ({ onConsult, onExplorePortfolios }: { onConsult?: () => void; onEx
   };
 
   return (
-    <section className="w-full relative flex items-center py-10 sm:py-16 md:py-20 overflow-hidden bg-art-dark">
+    <section className="w-full relative flex items-center py-6 sm:py-16 md:py-20 overflow-hidden bg-art-dark">
       {/* Cinematic Backdrop */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-art-dark/85 z-10" />
@@ -533,54 +543,62 @@ const Hero = ({ onConsult, onExplorePortfolios }: { onConsult?: () => void; onEx
         </div>
       </div>
 
-      <div className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-end">
+      <div className="relative z-20 w-full max-w-7xl mx-auto px-3 sm:px-6 md:px-12">
+        <div className="grid lg:grid-cols-12 gap-6 lg:gap-12 items-end">
           <div className="lg:col-span-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, ease: [0.19, 1, 0.22, 1] }}
+              transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
             >
-              <span className="text-art-gold tracking-[0.3em] sm:tracking-[0.5em] uppercase block mb-4 sm:mb-6 flex items-center gap-3 sm:gap-4 font-bold text-xs sm:text-sm leading-relaxed">
-                <span className="w-8 sm:w-12 h-[1px] bg-art-gold/40" />
-                {getISTGreeting()} • Primary, Resale & Rental Advisory
-              </span>
-              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-serif text-white leading-none tracking-tighter mb-6 sm:mb-8 italic whitespace-nowrap">
-                Legacy <span className="not-italic text-art-gold/80">Refined.</span>
+              <div className="text-art-gold tracking-wider sm:tracking-[0.25em] uppercase mb-3 sm:mb-5 flex items-center flex-wrap gap-2 sm:gap-3 font-bold text-[10.5px] sm:text-xs leading-normal">
+                <span className="w-5 sm:w-10 h-[1px] bg-art-gold/50 shrink-0" />
+                <span>{getISTGreeting()} • Primary, Resale & Rental Advisory</span>
+              </div>
+              <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-serif text-white leading-tight sm:leading-none tracking-tight mb-4 sm:mb-8 italic break-words">
+                Legacy <span className="not-italic text-art-gold/90">Refined.</span>
               </h1>
 
               {/* Highly Prominent Brokerage Message */}
               <motion.div 
-                 initial={{ opacity: 0, y: 20 }}
+                 initial={{ opacity: 0, y: 15 }}
                  animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: 0.3, duration: 0.8 }}
-                 className="mb-8 sm:mb-10 inline-flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-5 sm:p-6 md:p-8 border border-art-gold/15 bg-white/[0.02] backdrop-blur-md relative overflow-hidden group w-full sm:w-auto rounded-sm"
+                 transition={{ delay: 0.2, duration: 0.7 }}
+                 className="mb-6 sm:mb-10 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 p-4 sm:p-6 md:p-8 border border-art-gold/25 bg-white/[0.03] backdrop-blur-md relative overflow-hidden group w-full rounded-sm"
               >
                 <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-art-gold/40 to-transparent" />
-                <span className="text-5xl sm:text-6xl md:text-7xl font-serif text-art-gold italic leading-none">0%</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-4xl sm:text-6xl md:text-7xl font-serif text-art-gold italic leading-none font-bold">0%</span>
+                  <span className="sm:hidden text-lg font-serif tracking-wide italic text-white font-light">Brokerage Fee</span>
+                </div>
                 <div className="flex flex-col">
-                  <span className="text-xl sm:text-2xl md:text-3xl font-serif tracking-widest italic font-light text-white">Brokerage Fee</span>
-                  <span className="text-art-gold/70 text-[8px] uppercase tracking-[0.25em] sm:tracking-[0.4em] font-black mt-1.5">On All Primary Market Portfolio Acquisitions</span>
-                  <span className="text-white/40 text-[8px] uppercase tracking-[0.2em] font-bold mt-1">Resale: 2% Commission • Rental: 1 Month Rent Commission</span>
+                  <span className="hidden sm:block text-xl sm:text-2xl md:text-3xl font-serif tracking-wide sm:tracking-widest italic font-light text-white">Brokerage Fee</span>
+                  <span className="text-art-gold text-[9.5px] sm:text-[10.5px] uppercase tracking-wider sm:tracking-[0.2em] font-black mt-0.5 sm:mt-1.5">
+                    On All Primary Market Portfolio Acquisitions
+                  </span>
+                  <span className="text-white/70 text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold mt-1">
+                    Resale: 2% Commission • Rental: 1 Month Rent Commission
+                  </span>
                 </div>
               </motion.div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 sm:gap-10">
-                <p className="text-white/50 max-w-xs sm:max-w-sm text-[11px] leading-[1.8] font-medium uppercase tracking-[0.18em]">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 sm:gap-8 mb-4 sm:mb-0">
+                <p className="text-white/60 max-w-sm text-[11px] sm:text-xs leading-relaxed font-medium uppercase tracking-wider">
                   Strategically curating high-performance Primary, Resale, and Rental residential portfolios across Bangalore's exclusive corridors.
                 </p>
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 w-full sm:w-auto shrink-0">
                   <motion.button 
                     type="button"
                     onClick={onExplorePortfolios}
                     whileHover={{ scale: 1.02 }}
-                    className="bg-art-gold text-black px-8 sm:px-10 py-4 text-[10px] uppercase font-black tracking-[0.25em] sm:tracking-[0.3em] text-center w-full sm:w-auto cursor-pointer rounded-sm"
+                    className="bg-art-gold hover:bg-white text-black px-6 sm:px-8 py-3 sm:py-3.5 text-[10px] sm:text-[11px] uppercase font-black tracking-widest text-center w-full sm:w-auto cursor-pointer rounded-sm shadow-lg transition-all"
                   >
                     Open Portfolios Tab
                   </motion.button>
                   <button 
+                    type="button"
                     onClick={onConsult} 
-                    className="text-white text-[10px] uppercase font-black tracking-[0.25em] sm:tracking-[0.3em] border-b border-white/20 pb-1 hover:border-art-gold transition-all text-center sm:text-left cursor-pointer w-full sm:w-auto"
+                    className="text-white hover:text-art-gold text-[10px] sm:text-[11px] uppercase font-black tracking-widest border border-white/20 sm:border-0 sm:border-b sm:border-white/30 py-2.5 sm:py-1 px-4 sm:px-0 hover:border-art-gold transition-all text-center rounded-sm sm:rounded-none cursor-pointer w-full sm:w-auto"
                   >
                     Private Consultation
                   </button>
@@ -589,21 +607,20 @@ const Hero = ({ onConsult, onExplorePortfolios }: { onConsult?: () => void; onEx
             </motion.div>
           </div>
 
-          {/* Right Column Metrics Window */}
-          <div className="lg:col-span-4 flex flex-col lg:items-end justify-end gap-6 pt-6 lg:pt-0 border-t lg:border-t-0 border-white/10">
-            <div className="flex flex-col lg:items-end gap-1 lg:text-right">
-              <span className="text-white text-3xl sm:text-4xl font-serif">100%</span>
-              <span className="text-[9px] uppercase tracking-widest text-art-gold font-bold">Verified Direct Inventory</span>
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="flex flex-col lg:items-end gap-1">
-                <span className="text-[10px] text-white font-bold tracking-widest">EAST & SOUTH-EAST</span>
-                <span className="text-[8px] text-white/40 uppercase tracking-[0.2em]">Primary Jurisdiction</span>
+          {/* Right Column Metrics Window - Mobile Friendly Non-Merging Grid */}
+          <div className="lg:col-span-4 flex flex-col lg:items-end justify-end gap-3 sm:gap-5 pt-4 lg:pt-0 border-t lg:border-t-0 border-white/10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2.5 sm:gap-4 w-full lg:w-auto">
+              <div className="bg-white/[0.03] p-2.5 sm:p-3 rounded-sm border border-white/10 lg:bg-transparent lg:p-0 lg:border-0 lg:text-right">
+                <span className="text-white text-2xl sm:text-3xl font-serif block font-bold">100%</span>
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-art-gold font-bold block mt-0.5">Verified Direct Inventory</span>
               </div>
-              <div className="w-[1px] h-10 bg-white/10" />
-              <div className="flex flex-col lg:items-end gap-1">
-                <span className="text-[10px] text-white font-bold tracking-widest">PRIMARY • RESALE • RENTAL</span>
-                <span className="text-[8px] text-white/40 uppercase tracking-[0.2em]">Complete Lifecycle Stages</span>
+              <div className="bg-white/[0.03] p-2.5 sm:p-3 rounded-sm border border-white/10 lg:bg-transparent lg:p-0 lg:border-0 lg:text-right">
+                <span className="text-[11px] sm:text-xs text-white font-bold tracking-wider block">EAST & SOUTH-EAST</span>
+                <span className="text-[8.5px] sm:text-[9px] text-white/60 uppercase tracking-wider block mt-0.5">Primary Jurisdiction</span>
+              </div>
+              <div className="col-span-2 sm:col-span-1 bg-white/[0.03] p-2.5 sm:p-3 rounded-sm border border-white/10 lg:bg-transparent lg:p-0 lg:border-0 lg:text-right">
+                <span className="text-[11px] sm:text-xs text-white font-bold tracking-wider block">PRIMARY • RESALE • RENTAL</span>
+                <span className="text-[8.5px] sm:text-[9px] text-white/60 uppercase tracking-wider block mt-0.5">Complete Lifecycle Stages</span>
               </div>
             </div>
           </div>
@@ -988,7 +1005,6 @@ const ProjectCard: React.FC<{
   onDeleteProject, 
   onTogglePause 
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
@@ -998,6 +1014,7 @@ const ProjectCard: React.FC<{
   const [subscribeError, setSubscribeError] = useState('');
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isMediaViewerOpen, setIsMediaViewerOpen] = useState(false);
 
   // Inline Editing State (Primary: Entire Project Edit + Save/Discard; Resale & Rental: Edit & Upload Images + Save/Discard)
   const [isEditingCard, setIsEditingCard] = useState(false);
@@ -1232,6 +1249,8 @@ const ProjectCard: React.FC<{
   }
 
   const displayType = project.type === 'Primary Sale' ? 'Primary' : project.type;
+  const isPrimary = project.type === 'Primary' || project.type === 'Primary Sale' || (!project.type && project.type !== 'Rental' && project.type !== 'Resale');
+  const canViewProjectImages = !isPrimary || isAdmin;
   const displayZone = project.zone === 'Bangalore East' ? 'East Bangalore' : project.zone;
   const displayPropertyType = project.propertyType === 'Flat' ? 'Apartment' : project.propertyType;
   const formattedMainPrice = formatPriceWithCondition(project.price);
@@ -1360,13 +1379,13 @@ const ProjectCard: React.FC<{
       </AnimatePresence>
 
       {/* Top Status & Corridor Header Banner */}
-      <div className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-black/85 border-b border-white/20 flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 bg-art-gold text-black rounded-sm shadow-sm">
+      <div className="px-3 py-1.5 bg-black/85 border-b border-white/20 flex items-center justify-between gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-art-gold text-black rounded-sm shadow-sm">
             {displayType}
           </span>
-          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
-            <MapPin size={11} className="text-art-gold shrink-0" />
+          <span className="text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider text-white flex items-center gap-1">
+            <MapPin size={10} className="text-art-gold shrink-0" />
             {displayZone}
           </span>
         </div>
@@ -1734,21 +1753,21 @@ const ProjectCard: React.FC<{
       ) : (
         <>
           {/* Project Name & Segment Header */}
-          <div className="px-3.5 sm:px-5 pt-3.5 pb-3 bg-white/[0.02] border-b border-white/10">
-            <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
-              <span className="text-art-gold text-[10px] sm:text-xs uppercase tracking-wider font-extrabold">
+          <div className="px-3 sm:px-4 pt-2.5 pb-2 bg-white/[0.02] border-b border-white/10">
+            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+              <span className="text-art-gold text-[9.5px] sm:text-[10.5px] uppercase tracking-wider font-extrabold">
                 {displayPropertyType} {project.segment ? `• ${project.segment}` : ''}
               </span>
               {project.configuration && project.configuration.length > 0 && (
-                <span className="text-white/80 text-[10px] sm:text-xs font-mono font-semibold uppercase tracking-wider">{project.configuration.join(' | ')}</span>
+                <span className="text-white/80 text-[9.5px] sm:text-[10.5px] font-mono font-semibold uppercase tracking-wider">{project.configuration.join(' | ')}</span>
               )}
             </div>
-            <div className="flex items-baseline justify-between gap-3 flex-wrap">
-              <h3 className="text-xl sm:text-2xl font-serif text-white font-bold italic group-hover:text-art-gold transition-colors duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1.5 sm:gap-3">
+              <h3 className="text-xl sm:text-2xl font-serif text-white font-bold italic leading-tight group-hover:text-art-gold transition-colors duration-300 tracking-tight">
                 {project.name}
               </h3>
-              <div className="text-right">
-                <span className="text-xl sm:text-2xl font-sans font-black text-white tracking-tight block drop-shadow-sm">
+              <div className="text-left sm:text-right shrink-0">
+                <span className="text-xl sm:text-2xl font-sans font-black text-white tracking-tight leading-tight block drop-shadow-md">
                   {formattedMainPrice}
                 </span>
                 <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/70 font-mono font-medium block">
@@ -1758,23 +1777,23 @@ const ProjectCard: React.FC<{
             </div>
 
             {/* Compact Unified Location, Last Price & Handover Strip */}
-            <div className="mt-2.5 p-2.5 bg-white/[0.04] border border-white/15 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="mt-1.5 p-1.5 sm:p-2 bg-white/[0.04] border border-white/15 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[11px] sm:text-xs">
               <div className="flex items-center gap-1.5 truncate">
-                <MapPin size={12} className="text-art-gold shrink-0" />
-                <span className="text-xs sm:text-sm font-semibold text-white truncate">
+                <MapPin size={11} className="text-art-gold shrink-0" />
+                <span className="text-xs sm:text-[13px] font-semibold text-white truncate">
                   {project.location}
                 </span>
                 <a
                   href={googleMapsSearchUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[9.5px] sm:text-[10px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-1 font-mono font-bold transition-colors px-2 py-0.5 bg-art-gold/15 border border-art-gold/40 rounded-sm shrink-0"
+                  className="text-[9px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-1 font-mono font-bold transition-colors px-1.5 py-0.5 bg-art-gold/15 border border-art-gold/40 rounded-sm shrink-0"
                 >
-                  <ExternalLink size={10} /> Map
+                  <ExternalLink size={9} /> Map
                 </a>
               </div>
 
-              <div className="flex items-center gap-2 text-[10.5px] sm:text-xs font-mono shrink-0 border-t sm:border-t-0 sm:border-l border-white/15 pt-1 sm:pt-0 sm:pl-2.5">
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono shrink-0 border-t sm:border-t-0 sm:border-l border-white/15 pt-0.5 sm:pt-0 sm:pl-2">
                 <span className="text-white font-black tracking-tight" title="Last Verified Price">
                   {effectiveLastPrice}
                 </span>
@@ -1787,47 +1806,120 @@ const ProjectCard: React.FC<{
           </div>
           
           {/* Small & Compact Project Info Box, Floor Plans & Specifications */}
-          <div className="p-3.5 sm:p-4 flex flex-col flex-grow relative z-20 space-y-3">
-            <div className="bg-white/[0.03] p-3 rounded-sm border border-white/15">
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-[9.5px] sm:text-xs uppercase tracking-wider text-art-gold font-extrabold">
-                  Project Overview & Landmarks — {project.location}
-                </span>
-                {project.description && project.description.length > 100 && (
+          <div className="p-2.5 sm:p-3 flex flex-col flex-grow relative z-20 space-y-2">
+            {/* Media Badges: Compressed Photos & Video Walkthrough */}
+            {((canViewProjectImages && project.imageUrls && project.imageUrls.length > 0) || project.videoUrl || project.availableFrom) && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {canViewProjectImages && project.imageUrls && project.imageUrls.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setIsExpanded(prev => !prev)}
-                    className="text-[10px] sm:text-xs uppercase tracking-wider text-art-gold hover:text-white font-bold cursor-pointer transition-colors px-2 py-0.5 rounded bg-white/5"
+                    onClick={() => setIsMediaViewerOpen(true)}
+                    className="px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] font-mono font-bold bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                    title={isAdmin && isPrimary ? "Admin View: High-Definition Photos (Hidden from Online Browsers)" : "View High-Definition Compressed Photos"}
                   >
-                    {isExpanded ? 'Less ▲' : 'More ▼'}
+                    <span>📷</span>
+                    <span>{project.imageUrls.length} HD Photos {isAdmin && isPrimary ? '(Admin Only)' : ''}</span>
                   </button>
                 )}
+                {(project.videoUrl || project.mobileVideoUrl) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsMediaViewerOpen(true)}
+                    className="px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] font-mono font-bold bg-purple-500/15 hover:bg-purple-500 text-purple-300 hover:text-black border border-purple-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                    title="Watch Verified Video Walkthrough"
+                  >
+                    <span>🎥</span>
+                    <span>Video Tour</span>
+                  </button>
+                )}
+                {project.availableFrom && (
+                  <span className="px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+                    <span>🗓️</span>
+                    <span>From {project.availableFrom}</span>
+                  </span>
+                )}
               </div>
-              <p className={cn("text-xs sm:text-sm text-white/95 leading-relaxed font-sans", isExpanded ? "whitespace-pre-line" : "line-clamp-2")}>
+            )}
+
+            {/* Dedicated Rental Specifications Box */}
+            {project.type === 'Rental' && (
+              <div className="p-2.5 bg-cyan-950/20 border border-cyan-500/30 rounded-sm space-y-1 font-mono text-[9.5px]">
+                <div className="flex justify-between items-center text-cyan-300 font-bold border-b border-cyan-500/20 pb-1">
+                  <span>Rental Lease Terms:</span>
+                  <span className="text-white font-bold">{project.monthlyRental || project.price}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-white/70">
+                  <span>Advance: <strong className="text-white font-medium">{project.advance || 'Negotiable'}</strong></span>
+                  <span>Maint: <strong className="text-white font-medium">{project.maintenance || 'Nominal'}</strong></span>
+                  <span>Residence: <strong className="text-white font-medium">{project.residenceType || '2BHK'}</strong></span>
+                  <span>Tenant: <strong className="text-white font-medium">{project.tenantType || 'Family'}</strong></span>
+                  <span>Furnish: <strong className="text-white font-medium">{project.furnishType || 'Semi Furnished'}</strong></span>
+                  <span>Pets: <strong className="text-white font-medium">{project.petFriendly || 'Yes'}</strong></span>
+                  {project.suba && <span>SUBA: <strong className="text-white font-medium">{project.suba}</strong></span>}
+                  <span>Parking: <strong className="text-white font-medium">{project.carCloseParking || 1} Covered</strong></span>
+                </div>
+              </div>
+            )}
+
+            {/* Dedicated Resale Specifications Box */}
+            {project.type === 'Resale' && (
+              <div className="p-2.5 bg-amber-950/20 border border-amber-500/30 rounded-sm space-y-1 font-mono text-[9.5px]">
+                <div className="flex justify-between items-center text-amber-300 font-bold border-b border-amber-500/20 pb-1">
+                  <span>Resale Property Mandate:</span>
+                  <span className="text-white font-bold">{project.price}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-white/70">
+                  <span>SUBA: <strong className="text-white font-medium">{project.suba || '1650 Sq.Ft.'}</strong></span>
+                  <span>Carpet: <strong className="text-white font-medium">{project.carpetArea || '1280 Sq.Ft.'}</strong></span>
+                  <span>Authority: <strong className="text-amber-300 font-bold">{project.approvedAuthority || project.approvalBody || 'BDA'}</strong></span>
+                  <span>Status: <strong className="text-white font-medium">{project.registrationStatus || 'Clear Title'}</strong></span>
+                  <span>Tower/Floor: <strong className="text-white font-medium">{project.tower || 'Block A'} / {project.floor || 'High'}</strong></span>
+                  <span>Parking: <strong className="text-white font-medium">{project.carCloseParking || 1} Covered</strong></span>
+                  {project.balcony && <span>Balcony: <strong className="text-white font-medium">{project.balcony}</strong></span>}
+                  {project.mainDoorFacing && <span>Facing: <strong className="text-white font-medium">{project.mainDoorFacing}</strong></span>}
+                </div>
+              </div>
+            )}
+            <div className="bg-white/[0.03] p-2 sm:p-2.5 rounded-sm border border-white/15">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-art-gold font-extrabold truncate">
+                  Overview & Landmarks — {project.location}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onEnquire(project)}
+                  className="text-[9px] sm:text-[10px] uppercase tracking-wider text-art-gold hover:text-black font-black cursor-pointer transition-all px-2 py-0.5 rounded bg-art-gold/15 hover:bg-art-gold border border-art-gold/40 flex items-center gap-1 shrink-0"
+                  title="Inquire to fill form with preferred contact time and receive detailed floor plans"
+                >
+                  <span>More &amp; Inquire</span>
+                  <ChevronRight size={10} />
+                </button>
+              </div>
+              <p className="text-xs text-white/90 leading-snug font-sans line-clamp-2">
                 {project.description}
               </p>
             </div>
 
             {/* Compact Key Specifications */}
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-white/[0.025] p-2.5 rounded-sm border border-white/15">
+            <div className="grid grid-cols-2 gap-1.5 text-xs font-mono bg-white/[0.025] p-2 rounded-sm border border-white/15">
               <div className="truncate">
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/70 font-semibold block">Approval & RERA</span>
-                <span className="text-white font-bold text-[11px] sm:text-xs truncate block" title={project.reraNumber || project.approvalBody}>
+                <span className="text-[8.5px] sm:text-[9.5px] uppercase tracking-wider text-white/70 font-semibold block">Approval & RERA</span>
+                <span className="text-white font-bold text-[10.5px] sm:text-xs truncate block" title={project.reraNumber || project.approvalBody}>
                   {project.approvalBody || 'RERA Verified'}
                 </span>
                 {project.reraNumber && (
-                  <span className="text-[10px] sm:text-[11px] text-art-gold font-bold truncate block mt-0.5" title={project.reraNumber}>
+                  <span className="text-[9.5px] sm:text-[10px] text-art-gold font-bold truncate block mt-0.5" title={project.reraNumber}>
                     {project.reraNumber}
                   </span>
                 )}
               </div>
               <div className="truncate">
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/70 font-semibold block">Scale & Elevation</span>
-                <span className="text-white font-bold text-[11px] sm:text-xs truncate block">
+                <span className="text-[8.5px] sm:text-[9.5px] uppercase tracking-wider text-white/70 font-semibold block">Scale & Elevation</span>
+                <span className="text-white font-bold text-[10.5px] sm:text-xs truncate block">
                   {project.projectSize || 'Gated Enclave'} {project.noOfTowers ? `• ${project.noOfTowers}` : ''}
                 </span>
                 {(project.floorsHeight || project.flatsPerFloor) && (
-                  <span className="text-[10px] sm:text-[11px] text-white/80 font-medium truncate block mt-0.5">
+                  <span className="text-[9.5px] sm:text-[10px] text-white/80 font-medium truncate block mt-0.5">
                     {[project.floorsHeight, project.flatsPerFloor].filter(Boolean).join(' • ')}
                   </span>
                 )}
@@ -1835,18 +1927,18 @@ const ProjectCard: React.FC<{
             </div>
 
             {project.floorPlan && (
-              <div className="px-2.5 py-2 bg-white/[0.03] rounded-sm border border-art-gold/30 text-[10px] sm:text-xs flex items-center gap-2">
-                <Layers size={11} className="text-art-gold shrink-0" />
+              <div className="px-2 py-1 bg-white/[0.03] rounded-sm border border-art-gold/30 text-[9.5px] sm:text-[10px] flex items-center gap-1.5">
+                <Layers size={10} className="text-art-gold shrink-0" />
                 <span className="text-white font-mono font-medium truncate">{project.floorPlan}</span>
               </div>
             )}
 
             {project.features && project.features.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1">
                 {project.features.slice(0, 3).map((feat, idx) => (
                   <span
                     key={idx}
-                    className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-mono font-semibold px-2 py-1 bg-white/10 border border-white/20 text-white rounded-sm"
+                    className="text-[9px] uppercase tracking-wider font-mono font-semibold px-1.5 py-0.5 bg-white/10 border border-white/20 text-white rounded-sm"
                   >
                     {feat}
                   </span>
@@ -1855,14 +1947,14 @@ const ProjectCard: React.FC<{
             )}
 
             {/* Sleek Action Footer with accessible touch targets */}
-            <div className="pt-2.5 border-t border-white/15 flex items-center justify-between gap-2 flex-wrap mt-auto">
-              <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="pt-2 border-t border-white/15 flex items-center justify-between gap-1.5 flex-wrap mt-auto">
+              <div className="flex items-center gap-1 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setIsCalculatorOpen(true)}
-                  className="px-2.5 py-1.5 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white/20 text-white border-white/20 transition-all flex items-center gap-1 cursor-pointer min-h-[34px]"
+                  className="px-2 py-1 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white/20 text-white border-white/20 transition-all flex items-center gap-1 cursor-pointer min-h-[30px]"
                 >
-                  <Calculator size={11} className="text-art-gold" />
+                  <Calculator size={10} className="text-art-gold" />
                   ROI
                 </button>
                 {onToggleCompare && (
@@ -1870,24 +1962,24 @@ const ProjectCard: React.FC<{
                     type="button"
                     onClick={() => onToggleCompare(project)}
                     className={cn(
-                      "px-2.5 py-1.5 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold border transition-all flex items-center gap-1 cursor-pointer min-h-[34px]",
+                      "px-2 py-1 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border transition-all flex items-center gap-1 cursor-pointer min-h-[30px]",
                       isCompared
                         ? "bg-art-gold text-black border-art-gold shadow-[0_0_10px_rgba(197,160,89,0.3)]"
                         : "bg-white/10 hover:bg-white/20 text-white border-white/20"
                     )}
                     title="Compare specifications side-by-side"
                   >
-                    <ArrowLeftRight size={11} className={isCompared ? "text-black" : "text-art-gold"} />
+                    <ArrowLeftRight size={10} className={isCompared ? "text-black" : "text-art-gold"} />
                     <span>{isCompared ? "Added" : "Compare"}</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => setIsSubscribeOpen(true)}
-                  className="p-2 rounded-sm border bg-white/10 hover:bg-art-gold/20 text-art-gold border-white/20 transition-all cursor-pointer min-h-[34px] min-w-[34px] flex items-center justify-center"
+                  className="p-1.5 rounded-sm border bg-white/10 hover:bg-art-gold/20 text-art-gold border-white/20 transition-all cursor-pointer min-h-[30px] min-w-[30px] flex items-center justify-center"
                   title="Subscribe to Price Alerts"
                 >
-                  <Bell size={11} />
+                  <Bell size={10} />
                 </button>
                 <SocialShareButtons 
                   propertyTitle={project.name}
@@ -1896,23 +1988,23 @@ const ProjectCard: React.FC<{
                 />
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => onDownload(project)}
-                  className="px-2.5 py-1.5 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white hover:text-black text-white border-white/25 transition-all flex items-center gap-1 cursor-pointer min-h-[34px]"
+                  className="px-2 py-1 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white hover:text-black text-white border-white/25 transition-all flex items-center gap-1 cursor-pointer min-h-[30px]"
                 >
-                  <Download size={11} />
+                  <Download size={10} />
                   Brochure
                 </button>
                 <button
                   type="button"
                   onClick={() => onEnquire(project)}
-                  className="relative px-3.5 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase tracking-wider font-black bg-art-gold hover:bg-white text-black transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_2px_12px_rgba(197,160,89,0.35)] min-h-[34px]"
+                  className="relative px-3 py-1 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-black bg-art-gold hover:bg-white text-black transition-all cursor-pointer flex items-center gap-1 shadow-[0_2px_12px_rgba(197,160,89,0.35)] min-h-[30px]"
                   title={`${inquiriesSocialCount} verified buyer inquiries on ${project.name}`}
                 >
                   <span>Inquire</span>
-                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8.5px] font-mono font-bold bg-black text-art-gold rounded-full border border-black/20">
+                  <span className="inline-flex items-center justify-center px-1.5 py-0.2 text-[8px] font-mono font-bold bg-black text-art-gold rounded-full border border-black/20">
                     {inquiriesSocialCount}
                   </span>
                 </button>
@@ -1921,6 +2013,14 @@ const ProjectCard: React.FC<{
           </div>
         </>
       )}
+
+      <MediaViewerModal
+        isOpen={isMediaViewerOpen}
+        onClose={() => setIsMediaViewerOpen(false)}
+        project={project}
+        isAdmin={isAdmin}
+        onEnquire={onEnquire}
+      />
     </motion.div>
   );
 };
@@ -1928,17 +2028,15 @@ const ProjectCard: React.FC<{
 
 const ProjectCardSkeleton = () => {
   return (
-    <div className="group relative flex flex-col bg-[#101010] border-2 border-white/60 overflow-hidden rounded-md w-full max-w-full box-border">
-      <div className="p-6 flex flex-col flex-grow space-y-4">
-        <div className="bg-white/10 h-6 w-3/4 rounded-sm shimmer-bg" />
-        <div className="bg-white/[0.04] h-16 w-full rounded-sm shimmer-bg" />
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white/[0.03] h-12 rounded-sm shimmer-bg" />
-          <div className="bg-white/[0.03] h-12 rounded-sm shimmer-bg" />
-          <div className="bg-white/[0.03] h-12 rounded-sm shimmer-bg" />
-          <div className="bg-white/[0.03] h-12 rounded-sm shimmer-bg" />
+    <div className="group relative flex flex-col bg-[#101010] border-2 border-white overflow-hidden rounded-md w-full max-w-full box-border">
+      <div className="p-3 flex flex-col flex-grow space-y-2.5">
+        <div className="bg-white/10 h-5 w-3/4 rounded-sm shimmer-bg" />
+        <div className="bg-white/[0.04] h-10 w-full rounded-sm shimmer-bg" />
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-white/[0.03] h-9 rounded-sm shimmer-bg" />
+          <div className="bg-white/[0.03] h-9 rounded-sm shimmer-bg" />
         </div>
-        <div className="bg-art-gold/20 h-10 w-full rounded-sm shimmer-bg" />
+        <div className="bg-art-gold/20 h-8 w-full rounded-sm shimmer-bg" />
       </div>
     </div>
   );
@@ -2122,11 +2220,14 @@ const DownloadBrochureModal = ({
         className="relative bg-art-dark w-full max-w-xl border border-art-gold/30 rounded-sm shadow-2xl p-6 sm:p-10 overflow-y-auto max-h-[92vh] my-auto z-20 font-sans"
       >
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 text-white/40 hover:text-white transition-colors"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 px-3 py-1.5 rounded-full bg-white text-black hover:bg-art-gold font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer z-30 border border-white"
           aria-label="Close modal"
+          title="Close (Esc)"
         >
-          <X size={20} />
+          <X size={15} className="stroke-[3]" />
+          <span className="font-mono text-[10px]">CLOSE</span>
         </button>
 
         {submittedData ? (
@@ -2283,23 +2384,32 @@ const DownloadBrochureModal = ({
                 </datalist>
               </div>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-art-gold hover:bg-white text-black py-4 rounded-sm uppercase tracking-[0.25em] text-[11px] font-black transition-all disabled:opacity-50 mt-2 shadow-xl flex items-center justify-center gap-2 cursor-pointer"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 size={15} className="animate-spin" />
-                    Validating & Dispatching...
-                  </>
-                ) : (
-                  <>
-                    <Download size={15} />
-                    Submit & Download Brochure
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="py-4 px-5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-sm uppercase tracking-[0.2em] text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <X size={14} /> Close Window
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 bg-art-gold hover:bg-white text-black py-4 rounded-sm uppercase tracking-[0.25em] text-[11px] font-black transition-all disabled:opacity-50 shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" />
+                      Validating & Dispatching...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={15} />
+                      Submit & Download Brochure
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           </div>
         )}
@@ -2341,6 +2451,7 @@ const ProjectGrid = ({
   onOpenNewProjectModal: () => void;
   isLoading?: boolean;
 }) => {
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedType, setSelectedType] = useState<'All' | 'Primary' | 'Resale' | 'Rental'>('All');
   const [selectedCorridor, setSelectedCorridor] = useState<string>('All');
   const [selectedBuilderCat, setSelectedBuilderCat] = useState<'All' | 'A+' | 'A' | 'B' | 'C'>('All');
@@ -2389,6 +2500,26 @@ const ProjectGrid = ({
     if (p.isDeleted) return false;
     if (!(isAdmin && showHidden) && p.isPaused) return false;
 
+    // Live search query matching across all relevant property attributes
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesName = p.name?.toLowerCase().includes(q);
+      const matchesLocation = p.location?.toLowerCase().includes(q);
+      const matchesZone = p.zone?.toLowerCase().includes(q);
+      const matchesDesc = p.description?.toLowerCase().includes(q);
+      const matchesConfig = p.configuration?.some(c => c.toLowerCase().includes(q));
+      const matchesFeatures = p.features?.some(f => f.toLowerCase().includes(q));
+      const matchesPropType = p.propertyType?.toLowerCase().includes(q);
+      const matchesType = p.type?.toLowerCase().includes(q);
+      const matchesRera = p.reraNumber?.toLowerCase().includes(q);
+      const matchesApproval = p.approvalBody?.toLowerCase().includes(q);
+      const matchesFloorPlan = p.floorPlan?.toLowerCase().includes(q);
+      const matchesStatus = p.handoverStatus?.toLowerCase().includes(q);
+      if (!matchesName && !matchesLocation && !matchesZone && !matchesDesc && !matchesConfig && !matchesFeatures && !matchesPropType && !matchesType && !matchesRera && !matchesApproval && !matchesFloorPlan && !matchesStatus) {
+        return false;
+      }
+    }
+
     const normalizedType = p.type === 'Primary Sale' ? 'Primary' : p.type;
     if (selectedType !== 'All' && normalizedType !== selectedType) return false;
 
@@ -2428,6 +2559,7 @@ const ProjectGrid = ({
   const [activeFilterTab, setActiveFilterTab] = useState<'portfolio' | 'corridor' | 'asset' | 'status'>('portfolio');
 
   const activeFiltersCount = [
+    Boolean(searchQuery.trim()),
     selectedType !== 'All',
     selectedCorridor !== 'All',
     selectedPropType !== 'All',
@@ -2436,56 +2568,97 @@ const ProjectGrid = ({
   ].filter(Boolean).length;
 
   return (
-    <section id="projects" className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 md:px-12 bg-art-dark relative">
+    <section id="projects" className="pt-3 sm:pt-5 pb-16 px-3 sm:px-6 md:px-10 bg-art-dark relative">
       <div className="absolute left-12 top-0 w-px h-full bg-white/5 hidden lg:block" />
       
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 lg:gap-12 mb-10 sm:mb-14">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 lg:gap-8 mb-5 sm:mb-6">
           <div>
-            <span className="text-art-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Archive / Portfolios</span>
-            <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white tracking-tight italic whitespace-nowrap">
+            <span className="text-art-gold text-[9.5px] sm:text-[10px] uppercase tracking-[0.35em] sm:tracking-[0.5em] font-black block mb-2 sm:mb-3">Archive / Portfolios</span>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-serif text-white tracking-tight italic whitespace-nowrap">
               Artisanal <span className="not-italic text-art-gold">Portraits.</span>
             </h2>
           </div>
-          <div className="flex flex-col sm:items-end gap-4 pb-4 sm:pb-6 border-b border-art-gold/20">
-            <p className="text-white/60 uppercase tracking-[0.18em] sm:tracking-[0.22em] font-bold text-xs text-right">
+          <div className="flex flex-col sm:items-end gap-2 pb-2 sm:pb-3 border-b border-art-gold/20">
+            <p className="text-white/60 uppercase tracking-[0.16em] sm:tracking-[0.2em] font-bold text-[10.5px] sm:text-xs text-left sm:text-right">
               Whitefield · Hoskote · Varthur · Gunjur · Hosa Road · Kasavanahalli · Sarjapur · Electronic City · Marathalli · Bellandur
             </p>
             {isAdmin && (
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 {onToggleShowHidden && (
                   <button
                     type="button"
                     onClick={onToggleShowHidden}
                     className={cn(
-                      "px-4 py-3.5 rounded-sm text-[10px] uppercase tracking-[0.2em] font-black border transition-all cursor-pointer",
+                      "px-3 py-2 rounded-sm text-[9.5px] uppercase tracking-[0.18em] font-black border transition-all cursor-pointer",
                       showHidden
                         ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
                         : "bg-white/5 text-white/60 border-white/15 hover:text-white"
                     )}
                   >
-                    {showHidden ? `Hide Hidden (${hiddenCount})` : `Show Hidden Projects (${hiddenCount})`}
+                    {showHidden ? `Hide Hidden (${hiddenCount})` : `Show Hidden (${hiddenCount})`}
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={onOpenNewProjectModal}
-                  className="bg-art-gold hover:bg-white text-black px-6 py-3.5 rounded-sm text-[10px] uppercase tracking-[0.25em] font-black transition-all shadow-[0_0_25px_rgba(197,160,89,0.3)] flex items-center gap-2 cursor-pointer w-max"
+                  className="bg-art-gold hover:bg-white text-black px-4 py-2 rounded-sm text-[9.5px] uppercase tracking-[0.2em] font-black transition-all shadow-[0_0_20px_rgba(197,160,89,0.3)] flex items-center gap-1.5 cursor-pointer w-max"
                 >
-                  <Sparkles size={14} />
-                  + Add New Project (Auto-Check Online)
+                  <Sparkles size={13} />
+                  + Add Project
                 </button>
               </div>
             )}
           </div>
         </div>
 
+        {/* Portfolios Top Search Bar */}
+        <div className="mb-4 p-2.5 sm:p-3.5 bg-black/80 border border-white/20 rounded-md shadow-[0_4px_25px_rgba(0,0,0,0.6)]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="relative flex-1 flex items-center">
+              <Search size={16} className="absolute left-3 text-art-gold shrink-0 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search portfolios by project name, corridor (Whitefield, Hoskote...), 2/3/4 BHK, amenities, RERA..."
+                className="w-full bg-white/[0.05] border border-white/20 focus:border-art-gold text-white placeholder-white/40 text-xs sm:text-sm pl-9 pr-8 py-2 sm:py-2.5 rounded-sm outline-none transition-all font-sans"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 text-white/50 hover:text-white transition-colors p-1 cursor-pointer"
+                  title="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-mono font-bold px-2.5 py-1.5 bg-white/5 border border-white/15 text-white/80 rounded-sm">
+                <span className="text-art-gold font-black">{displayedProjects.length}</span> Portfolios
+              </span>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="text-[9.5px] uppercase tracking-wider text-art-gold hover:text-white font-mono cursor-pointer px-2.5 py-1.5 border border-art-gold/30 rounded-sm bg-art-gold/10 transition-colors"
+                >
+                  Clear Search
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Quick-Filter Tag Bar under #projects */}
-        <div className="mb-6 p-4 sm:p-5 bg-black/60 border border-white/10 rounded-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <Sparkles size={13} className="text-art-gold" />
-              <span className="text-[10px] uppercase tracking-[0.25em] text-art-gold font-bold">
+        <div className="mb-4 p-3 sm:p-3.5 bg-black/60 border border-white/10 rounded-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles size={12} className="text-art-gold" />
+              <span className="text-[9.5px] sm:text-[10px] uppercase tracking-[0.2em] text-art-gold font-bold">
                 Quick-Filter Portfolio Attributes (Sea-view · Corner Units · Vastu-Compliant · Penthouses)
               </span>
             </div>
@@ -2499,16 +2672,16 @@ const ProjectGrid = ({
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {quickProjectTags.map(tag => (
               <button
                 key={tag.id}
                 type="button"
                 onClick={() => setSelectedTag(tag.id)}
                 className={cn(
-                  "px-3.5 py-2 text-[10px] uppercase tracking-wider font-mono font-bold rounded-sm border transition-all cursor-pointer whitespace-nowrap",
+                  "px-3 py-1.5 text-[9.5px] uppercase tracking-wider font-mono font-bold rounded-sm border transition-all cursor-pointer whitespace-nowrap",
                   selectedTag === tag.id
-                    ? "bg-art-gold text-black border-art-gold shadow-[0_0_15px_rgba(197,160,89,0.4)] scale-[1.02]"
+                    ? "bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.4)] scale-[1.02]"
                     : "bg-white/[0.03] text-white/70 border-white/10 hover:border-art-gold/50 hover:text-white"
                 )}
               >
@@ -2567,6 +2740,7 @@ const ProjectGrid = ({
                 <button
                   type="button"
                   onClick={() => {
+                    setSearchQuery('');
                     setSelectedType('All');
                     setSelectedCorridor('All');
                     setSelectedPropType('All');
@@ -2854,12 +3028,25 @@ const ProjectGrid = ({
 const EnquiryModal = ({ 
   project, 
   onClose,
-  enquiryType = 'Acquire'
+  enquiryType = 'Acquire',
+  initialCategory
 }: { 
   project: Project | null; 
   onClose: () => void;
-  enquiryType?: 'Acquire' | 'Consult' | 'Inquire';
+  enquiryType?: 'Acquire' | 'Consult' | 'Inquire' | 'Loan';
+  initialCategory?: 'Primary' | 'Rental' | 'Resale' | 'Home Loan';
 }) => {
+  const defaultCategory: 'Primary' | 'Rental' | 'Resale' | 'Home Loan' = 
+    initialCategory || 
+    (project?.type === 'Rental' 
+      ? 'Rental' 
+      : project?.type === 'Resale' 
+      ? 'Resale' 
+      : enquiryType === 'Loan' 
+      ? 'Home Loan' 
+      : 'Primary');
+
+  const [selectedCategory, setSelectedCategory] = useState<'Primary' | 'Rental' | 'Resale' | 'Home Loan'>(defaultCategory);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -2878,7 +3065,7 @@ const EnquiryModal = ({
         return 'General Portfolio Inquiry';
       case 'Acquire':
       default:
-        return project ? `Acquire ${project.name}` : 'Priority Access Request';
+        return project ? `${project.name} (${selectedCategory})` : 'Priority Access Request';
     }
   };
 
@@ -2890,24 +3077,26 @@ const EnquiryModal = ({
         return 'Direct Intelligence Group';
       case 'Acquire':
       default:
-        return 'Exclusively Verified Direct Inventory';
+        return `${selectedCategory} • Exclusively Verified Direct Inventory`;
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!project) return;
+    const targetProject = project || { id: 'general_inquiry', name: 'BS Homez General Portfolio' };
     setSubmitting(true);
     try {
       const enquiry: Enquiry = {
-        projectId: project.id || 'unknown',
-        projectName: project.name,
+        projectId: targetProject.id || 'general_inquiry',
+        projectName: targetProject.name,
         customerName: formData.name,
         customerEmail: formData.email,
         customerPhone: formData.phone,
         preferredContactTime: formData.preferredContactTime,
-        message: formData.message || `No custom requirements filed for type: ${enquiryType}`,
+        message: formData.message || `No custom requirements filed for type: ${enquiryType} (${selectedCategory})`,
         type: 'Form',
+        enquiryCategory: selectedCategory,
+        propertyCategory: selectedCategory === 'Rental' ? 'Rent' : selectedCategory,
         timestamp: serverTimestamp()
       };
       await addDoc(collection(db, 'enquiries'), enquiry);
@@ -2950,15 +3139,46 @@ const EnquiryModal = ({
           </div>
         ) : (
           <>
-            <button onClick={onClose} className="absolute top-8 right-8 p-2 hover:bg-white/10 transition-colors text-white/50 hover:text-white z-30">
-              <X size={20} />
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 px-3 py-1.5 rounded-full bg-white text-black hover:bg-art-gold font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer z-30 border border-white"
+              aria-label="Close modal"
+              title="Close Window (Esc)"
+            >
+              <X size={15} className="stroke-[3]" />
+              <span className="font-mono text-[10px]">CLOSE</span>
             </button>
 
             <div className="font-sans">
-              <div className="mb-8 pb-5 border-b border-white/10">
+              <div className="mb-6 pb-4 border-b border-white/10">
                 <span className="text-art-gold uppercase tracking-[0.4em] text-[10px] mb-2 block font-bold">{getSubTitle()}</span>
                 <p className="text-md text-white/60 font-mono text-xs uppercase mb-1">Connecting with respect to:</p>
                 <h3 className="text-2xl sm:text-3xl font-serif text-white italic">{getTitle()}</h3>
+              </div>
+
+              {/* Category Segment Selector */}
+              <div className="mb-5 space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold block">
+                  Inquiry Category Queue
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(['Primary', 'Rental', 'Resale', 'Home Loan'] as const).map(cat => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat)}
+                      className={cn(
+                        "py-2 px-2 text-[10px] font-bold uppercase tracking-wider rounded-sm border transition-all cursor-pointer text-center",
+                        selectedCategory === cat
+                          ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                          : "bg-white/5 text-white/50 border-white/10 hover:border-white/20 hover:text-white"
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -3025,12 +3245,22 @@ const EnquiryModal = ({
                   />
                 </div>
 
-                <button 
-                  disabled={submitting}
-                  className="w-full bg-art-gold text-black py-4.5 rounded-sm uppercase tracking-[0.3em] text-[11px] font-black hover:bg-white transition-all disabled:opacity-50 mt-2 shadow-xl cursor-pointer"
-                >
-                  {submitting ? 'RECORDING INQUIRY...' : 'SUBMIT SECURED INQUIRY'}
-                </button>
+                <div className="flex items-center gap-3 mt-4">
+                  <button 
+                    type="button"
+                    onClick={onClose}
+                    className="py-4 px-5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-sm uppercase tracking-[0.2em] text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <X size={14} /> Close Window
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 bg-art-gold text-black py-4 rounded-sm uppercase tracking-[0.25em] text-[11px] font-black hover:bg-white transition-all disabled:opacity-50 shadow-xl cursor-pointer"
+                  >
+                    {submitting ? 'RECORDING INQUIRY...' : 'SUBMIT SECURED INQUIRY'}
+                  </button>
+                </div>
               </form>
             </div>
           </>
@@ -3211,13 +3441,26 @@ const FileDropzone = ({
 
 const ProjectForm = ({
   project,
+  initialInventoryType = 'Primary',
   onClose,
-  onProjectSaved
+  onProjectSaved,
+  onOpenEnquiry
 }: {
   project?: Project | null;
+  initialInventoryType?: 'Primary' | 'Rental' | 'Resale';
   onClose: () => void;
   onProjectSaved?: (savedProject: Project) => void;
+  onOpenEnquiry?: (p: Project) => void;
 }) => {
+  const resolvedInitialType: 'Primary' | 'Rental' | 'Resale' =
+    project?.type === 'Rental' 
+      ? 'Rental' 
+      : project?.type === 'Resale' 
+      ? 'Resale' 
+      : initialInventoryType || 'Primary';
+
+  const [inventoryMode, setInventoryMode] = useState<'Primary' | 'Rental' | 'Resale'>(resolvedInitialType);
+
   const [formData, setFormData] = useState<Partial<Project>>({
     name: project?.name || '',
     description: project?.description || '',
@@ -3226,15 +3469,15 @@ const ProjectForm = ({
     location: project?.location || '',
     locationTarget: project?.locationTarget || '',
     zone: project?.zone || 'Whitefield',
-    type: project?.type || 'Primary',
-    propertyType: project?.propertyType === 'Flat' ? 'Apartment' : (project?.propertyType || 'Apartment'),
+    type: resolvedInitialType,
+    propertyType: (project?.propertyType as any) || 'Apartment',
     builderCategory: project?.builderCategory || 'A',
     builderName: project?.builderName || '',
     approvalBody: project?.approvalBody || 'BBMP / BDA & RERA Approved',
     floorPlan: project?.floorPlan || '',
     configuration: project?.configuration && project.configuration.length > 0 ? project.configuration : ['2 BHK', '3 BHK'],
-    segment: project?.segment || 'Luxury',
-    handoverStatus: project?.handoverStatus || 'Under Construction',
+    segment: project?.segment || (resolvedInitialType === 'Rental' ? 'Verified Rental' : 'Luxury'),
+    handoverStatus: project?.handoverStatus || (resolvedInitialType === 'Rental' ? 'Ready to Move' : 'Under Construction'),
     reraNumber: project?.reraNumber || '',
     handoverDate: project?.handoverDate || '',
     projectSize: project?.projectSize || '',
@@ -3246,13 +3489,36 @@ const ProjectForm = ({
     imageUrls:
       project?.imageUrls && project.imageUrls.filter(Boolean).length > 0
         ? project.imageUrls
-        : getSmartProjectImages(project?.zone || 'Whitefield', project?.type || 'Primary', project?.builderCategory || 'A', project?.propertyType || 'Apartment'),
+        : getSmartProjectImages(project?.zone || 'Whitefield', resolvedInitialType, project?.builderCategory || 'A', project?.propertyType || 'Apartment'),
     mobileImageUrl: project?.mobileImageUrl || '',
     videoUrl: project?.videoUrl || '',
     mobileVideoUrl: project?.mobileVideoUrl || '',
     features: project?.features && project.features.filter(Boolean).length > 0 ? project.features : ['Grand Clubhouse', 'Swimming Pool', '24/7 Security'],
-    isPaused: project?.isPaused || false
+    isPaused: project?.isPaused || false,
+
+    // Rental & Resale Inventory Specific Properties
+    availableFrom: project?.availableFrom || '',
+    mainDoorFacing: project?.mainDoorFacing || 'East',
+    tower: project?.tower || '',
+    floor: project?.floor || '',
+    residenceType: project?.residenceType || '2BHK',
+    tenantType: project?.tenantType || 'Family',
+    amenitiesAvailability: project?.amenitiesAvailability || 'Yes',
+    petFriendly: project?.petFriendly || 'Yes',
+    furnishType: project?.furnishType || 'Semi Furnished',
+    advance: project?.advance || '',
+    monthlyRental: project?.monthlyRental || '',
+    maintenance: project?.maintenance || '',
+    suba: project?.suba || '',
+    carpetArea: project?.carpetArea || '',
+    carCloseParking: project?.carCloseParking || '1',
+    balcony: project?.balcony || '1',
+    comments: project?.comments || '',
+    handedOverDate: project?.handedOverDate || '',
+    registrationStatus: project?.registrationStatus || 'Ready for Registration',
+    approvedAuthority: project?.approvedAuthority || 'BDA'
   });
+
   const [submitting, setSubmitting] = useState(false);
   const [isAutoChecking, setIsAutoChecking] = useState(false);
   const [autoCheckBanner, setAutoCheckBanner] = useState<string | null>(null);
@@ -3327,10 +3593,11 @@ const ProjectForm = ({
     setSubmitting(true);
     setError(null);
     try {
-      let currentData = { ...formData };
+      let currentData = { ...formData, type: inventoryMode };
 
-      // Automatically check online & populate Last Price, Handover Date, Writeup, Floor Plan, RERA, Approval Body if missing
+      // Automatically check online for Primary projects if basic details missing
       if (
+        inventoryMode === 'Primary' &&
         currentData.name?.trim() &&
         (!currentData.description?.trim() ||
           !currentData.price?.trim() ||
@@ -3358,19 +3625,43 @@ const ProjectForm = ({
         }
       }
 
-      const defaultHandover =
-        currentData.handoverStatus === 'Ready to Move' || currentData.handoverStatus === 'Handed Over'
-          ? 'Immediate Possession (OC Received)'
-          : 'December 2027';
+      // Configure pricing and descriptions tailored to inventory mode
+      let finalPrice = '';
+      let finalLastPrice = '';
+      let finalHandoverDate = '';
 
-      const finalPrice = formatPriceWithCondition(currentData.price?.trim() || 'Rs. 1.75 Cr onwards*');
-      const finalLastPrice = formatPriceWithCondition(currentData.lastPrice?.trim() || finalPrice);
-      const finalHandoverDate = currentData.handoverDate?.trim() || defaultHandover;
+      if (inventoryMode === 'Rental') {
+        const rentDisplay = currentData.monthlyRental?.trim() 
+          ? (currentData.monthlyRental.toLowerCase().includes('mo') ? currentData.monthlyRental : `${currentData.monthlyRental}/month*`)
+          : (currentData.price?.trim() || 'Rs. 35,000/mo*');
+        finalPrice = rentDisplay;
+        finalLastPrice = rentDisplay;
+        finalHandoverDate = currentData.availableFrom ? `Available from ${currentData.availableFrom}` : 'Immediate Available';
+      } else if (inventoryMode === 'Resale') {
+        finalPrice = formatPriceWithCondition(currentData.price?.trim() || 'Rs. 1.85 Cr onwards*');
+        finalLastPrice = formatPriceWithCondition(currentData.lastPrice?.trim() || finalPrice);
+        finalHandoverDate = currentData.handedOverDate || currentData.availableFrom ? `Ready / From ${currentData.availableFrom || currentData.handedOverDate}` : 'Immediate Possession';
+      } else {
+        const defaultHandover =
+          currentData.handoverStatus === 'Ready to Move' || currentData.handoverStatus === 'Handed Over'
+            ? 'Immediate Possession (OC Received)'
+            : 'December 2027';
+        finalPrice = formatPriceWithCondition(currentData.price?.trim() || 'Rs. 1.75 Cr onwards*');
+        finalLastPrice = formatPriceWithCondition(currentData.lastPrice?.trim() || finalPrice);
+        finalHandoverDate = currentData.handoverDate?.trim() || defaultHandover;
+      }
+
       const validImages = (currentData.imageUrls || []).map(u => u.trim()).filter(Boolean);
+
+      const generatedDescription = inventoryMode === 'Rental'
+        ? `${currentData.name} - Premium ${currentData.residenceType || '2BHK'} ${currentData.propertyType || 'Apartment'} available for rent in ${currentData.location || 'Bangalore'}. Advance: ${currentData.advance || 'Standard'}, Monthly Rent: ${currentData.monthlyRental || finalPrice}, Maintenance: ${currentData.maintenance || 'Nominal'}, Tenant: ${currentData.tenantType || 'Family'}, Pets: ${currentData.petFriendly || 'Allowed'}. ${currentData.comments || ''}`
+        : inventoryMode === 'Resale'
+        ? `${currentData.name} - Verified Resale ${currentData.residenceType || '3BHK'} ${currentData.propertyType || 'Apartment'} in ${currentData.location || 'Bangalore'}. SUBA: ${currentData.suba || 'Spacious'}, Carpet Area: ${currentData.carpetArea || 'Optimal'}, Approved Authority: ${currentData.approvedAuthority || 'BDA/BBMP'}, RERA: ${currentData.reraNumber || 'Verified'}. ${currentData.comments || ''}`
+        : (currentData.description || `${currentData.name} in ${currentData.location || currentData.zone}, featuring bespoke residences and verified RERA compliance.`).trim();
 
       const data: any = {
         ...currentData,
-        name: (currentData.name || 'New Artisanal Portrait').trim(),
+        name: (currentData.name || (inventoryMode === 'Rental' ? 'Curated Rental Residence' : inventoryMode === 'Resale' ? 'Curated Resale Residence' : 'New Artisanal Portrait')).trim(),
         price: finalPrice,
         lastPrice: finalLastPrice,
         lastCheckedPrice: project?.price && project.price !== finalPrice ? formatPriceWithCondition(project.price) : finalLastPrice,
@@ -3378,18 +3669,41 @@ const ProjectForm = ({
         location: (currentData.location || `${currentData.zone || 'Whitefield'}, Bangalore`).trim(),
         locationTarget: (currentData.locationTarget || `Prime Corridor in ${currentData.zone || 'Whitefield'}`).trim(),
         zone: currentData.zone || 'Whitefield',
-        type: currentData.type || 'Primary',
-        propertyType: currentData.propertyType === 'Flat' ? 'Apartment' : (currentData.propertyType || 'Apartment'),
+        type: inventoryMode,
+        propertyType: currentData.propertyType || 'Apartment',
         builderCategory: currentData.builderCategory || 'A',
-        builderName: (currentData.builderName || 'Verified Premier Builder').trim(),
-        approvalBody: (currentData.approvalBody || 'BBMP / BDA & Karnataka RERA Approved').trim(),
-        floorPlan: (currentData.floorPlan || 'Vaastu Compliant Luxury Floor Plans').trim(),
-        reraNumber: (currentData.reraNumber || 'PRM/KA/RERA/1251/446/PR/Verified').trim(),
-        segment: (currentData.segment || 'Luxury').trim(),
-        description: (currentData.description || `${currentData.name} in ${currentData.location || currentData.zone}, featuring bespoke residences, curated lifestyle amenities, and verified RERA compliance.`).trim(),
-        imageUrls: validImages.length > 0 ? validImages : getSmartProjectImages(currentData.zone, currentData.type, currentData.builderCategory, currentData.propertyType),
+        builderName: (currentData.builderName || (inventoryMode === 'Rental' ? 'Private Landlord' : 'Verified Premier Builder')).trim(),
+        approvalBody: (currentData.approvedAuthority || currentData.approvalBody || 'BBMP / BDA & Karnataka RERA Approved').trim(),
+        floorPlan: (currentData.floorPlan || (currentData.suba ? `${currentData.residenceType || ''} (${currentData.suba})` : 'Vaastu Compliant Luxury Floor Plans')).trim(),
+        reraNumber: (currentData.reraNumber || 'PRM/KA/RERA/Verified').trim(),
+        segment: (currentData.segment || (inventoryMode === 'Rental' ? 'Verified Rental' : inventoryMode === 'Resale' ? 'Prime Resale' : 'Luxury')).trim(),
+        description: generatedDescription.trim(),
+        imageUrls: validImages.length > 0 ? validImages : getSmartProjectImages(currentData.zone, inventoryMode, currentData.builderCategory, currentData.propertyType),
         features: (currentData.features || []).map(f => f.trim()).filter(Boolean),
-        configuration: (currentData.configuration || []).filter(Boolean),
+        configuration: (currentData.configuration && currentData.configuration.length > 0 ? currentData.configuration : [currentData.residenceType || '2 BHK']),
+        
+        // Exact User Inventory Fields (Rental & Resale)
+        availableFrom: currentData.availableFrom || '',
+        mainDoorFacing: currentData.mainDoorFacing || 'East',
+        tower: currentData.tower || '',
+        floor: currentData.floor || '',
+        residenceType: currentData.residenceType || '2BHK',
+        tenantType: currentData.tenantType || 'Family',
+        amenitiesAvailability: currentData.amenitiesAvailability || 'Yes',
+        petFriendly: currentData.petFriendly || 'Yes',
+        furnishType: currentData.furnishType || 'Semi Furnished',
+        advance: currentData.advance || '',
+        monthlyRental: currentData.monthlyRental || '',
+        maintenance: currentData.maintenance || '',
+        suba: currentData.suba || '',
+        carpetArea: currentData.carpetArea || '',
+        carCloseParking: currentData.carCloseParking || '1',
+        balcony: currentData.balcony || '1',
+        comments: currentData.comments || '',
+        handedOverDate: currentData.handedOverDate || '',
+        registrationStatus: currentData.registrationStatus || 'Ready for Registration',
+        approvedAuthority: currentData.approvedAuthority || 'BDA',
+
         isPaused: Boolean(currentData.isPaused),
         isDeleted: false,
         createdAt: project?.createdAt || serverTimestamp(),
@@ -3406,7 +3720,7 @@ const ProjectForm = ({
           if (onProjectSaved) onProjectSaved({ ...data, id: docRef.id });
         }
       } catch (dbErr) {
-        console.warn('Firestore quota/write fallback: saving project locally', dbErr);
+        console.warn('Firestore write fallback: saving project locally', dbErr);
         const savedLocal = { ...data, id: localFallbackId, createdAt: Date.now(), updatedAt: Date.now() };
         try {
           const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
@@ -3432,31 +3746,89 @@ const ProjectForm = ({
       <motion.div 
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="relative bg-art-dark border border-art-gold/30 p-6 sm:p-10 max-w-5xl w-full max-h-[92vh] overflow-y-auto rounded-sm shadow-2xl z-10"
+        className="relative bg-art-dark border-2 border-white p-6 sm:p-10 max-w-5xl w-full max-h-[92vh] overflow-y-auto rounded-md shadow-2xl z-10 text-left"
       >
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-white/10">
           <div>
             <span className="text-[9px] uppercase tracking-[0.35em] text-art-gold font-black block mb-1">
-              Artisanal Portraits • Online Auto-Discovery & Curation
+              Admin Vault • Portfolio &amp; Inventory Management
             </span>
             <h3 className="text-2xl sm:text-3xl font-serif text-white italic">
-              {project ? 'Edit Portfolio Archive' : 'Add New Project (Auto-Check Online)'}
+              {project ? `Edit ${inventoryMode} Inventory` : `Add ${inventoryMode} Project to Inventory`}
             </h3>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleAutoCheckOnline()}
-              disabled={isAutoChecking}
-              className="bg-art-gold/20 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/50 px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-black transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            {inventoryMode === 'Primary' && (
+              <button
+                type="button"
+                onClick={() => handleAutoCheckOnline()}
+                disabled={isAutoChecking}
+                className="bg-art-gold/20 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/50 px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-black transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isAutoChecking ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                {isAutoChecking ? 'Checking Online...' : 'Auto-Fetch Details'}
+              </button>
+            )}
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="px-3 py-1.5 rounded-full bg-white text-black hover:bg-art-gold font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer border border-white"
+              aria-label="Close Project Form"
+              title="Close (Esc)"
             >
-              {isAutoChecking ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-              {isAutoChecking ? 'Checking Online...' : 'Auto-Fetch Online Details'}
-            </button>
-            <button type="button" onClick={onClose} className="text-white/40 hover:text-white p-2 cursor-pointer">
-              <X />
+              <X size={15} className="stroke-[3]" />
+              <span className="font-mono text-[10px]">CLOSE</span>
             </button>
           </div>
+        </div>
+
+        {/* Dedicated Inventory Mode Selector Tabs */}
+        <div className="flex flex-wrap gap-2 mb-6 p-1.5 bg-[#141414] border border-white/15 rounded-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setInventoryMode('Primary');
+              setFormData(prev => ({ ...prev, type: 'Primary' }));
+            }}
+            className={cn(
+              "flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-sm transition-all cursor-pointer text-center",
+              inventoryMode === 'Primary'
+                ? "bg-art-gold text-black shadow-lg font-black"
+                : "text-white/60 hover:text-white hover:bg-white/5"
+            )}
+          >
+            Primary Portfolios
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setInventoryMode('Rental');
+              setFormData(prev => ({ ...prev, type: 'Rental', propertyType: prev.propertyType || 'Apartment' }));
+            }}
+            className={cn(
+              "flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-sm transition-all cursor-pointer text-center",
+              inventoryMode === 'Rental'
+                ? "bg-cyan-500 text-black shadow-lg font-black"
+                : "text-white/60 hover:text-white hover:bg-white/5"
+            )}
+          >
+            Rental Inventory
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setInventoryMode('Resale');
+              setFormData(prev => ({ ...prev, type: 'Resale', propertyType: prev.propertyType || 'Apartment' }));
+            }}
+            className={cn(
+              "flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-sm transition-all cursor-pointer text-center",
+              inventoryMode === 'Resale'
+                ? "bg-amber-500 text-black shadow-lg font-black"
+                : "text-white/60 hover:text-white hover:bg-white/5"
+            )}
+          >
+            Resale Inventory
+          </button>
         </div>
 
         {autoCheckBanner && (
@@ -3466,17 +3838,626 @@ const ProjectForm = ({
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid lg:grid-cols-2 gap-10 text-left">
-            {/* Left Column: Basic Info */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          
+          {/* ======================================================== */}
+          {/* RENTAL INVENTORY SPECIFIC FIELDS                        */}
+          {/* ======================================================== */}
+          {inventoryMode === 'Rental' && (
             <div className="space-y-5">
+              <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-sm text-xs text-cyan-300 font-mono flex items-center justify-between">
+                <span>Rental Inventory Entry • Direct Lease &amp; Tenant Verification Desk</span>
+                <span className="font-bold uppercase tracking-wider text-[10px]">Rental Vault Active</span>
+              </div>
+
+              {/* Row 1: Project Name & Location */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">Project Name *</label>
-                  <div className="flex gap-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Project Name *</label>
+                  <input 
+                    required
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm"
+                    value={formData.name || ''}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Sobha Dream Acres, Brigade Cosmopolis..."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Project Location *</label>
+                  <input 
+                    required
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm"
+                    value={formData.location || ''}
+                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="e.g., Panathur, Whitefield, Sarjapur Road..."
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Available From (Calendar) & Property Type */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400 flex items-center gap-1.5">
+                    <Calendar size={12} /> Available From * (Select via Calendar)
+                  </label>
+                  <input 
+                    required
+                    type="date"
+                    className="w-full bg-black/60 border border-cyan-500/40 p-3.5 text-cyan-300 text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono cursor-pointer"
+                    value={formData.availableFrom || ''}
+                    onChange={e => setFormData({ ...formData, availableFrom: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Property Type *</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer"
+                    value={formData.propertyType || 'Apartment'}
+                    onChange={e => setFormData({ ...formData, propertyType: e.target.value as any })}
+                  >
+                    <option value="Villa">Villa</option>
+                    <option value="Apartment">Apartments</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Stand Alone Building">Stand Alone Building</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 3: Main Door Facing, Tower, Floor */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Main Door Facing</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.mainDoorFacing || 'East'}
+                    onChange={e => setFormData({ ...formData, mainDoorFacing: e.target.value })}
+                  >
+                    <option value="East">East</option>
+                    <option value="North">North</option>
+                    <option value="West">West</option>
+                    <option value="South">South</option>
+                    <option value="North-East">North-East</option>
+                    <option value="North-West">North-West</option>
+                    <option value="South-East">South-East</option>
+                    <option value="South-West">South-West</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Tower</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm"
+                    value={formData.tower || ''}
+                    onChange={e => setFormData({ ...formData, tower: e.target.value })}
+                    placeholder="e.g., Tower 3 / Block B"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Floor</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm"
+                    value={formData.floor || ''}
+                    onChange={e => setFormData({ ...formData, floor: e.target.value })}
+                    placeholder="e.g., 7th Floor of 24"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Residence Type & Tenant Type */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Residence Type *</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono font-bold"
+                    value={formData.residenceType || '2BHK'}
+                    onChange={e => setFormData({ ...formData, residenceType: e.target.value })}
+                  >
+                    <option value="Studio">Studio</option>
+                    <option value="1BHK">1BHK</option>
+                    <option value="2BHK">2BHK</option>
+                    <option value="3BHK">3BHK</option>
+                    <option value="4BHK">4BHK</option>
+                    <option value="5BHK">5BHK</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Tenant Type *</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.tenantType || 'Family'}
+                    onChange={e => setFormData({ ...formData, tenantType: e.target.value })}
+                  >
+                    <option value="Family">Family</option>
+                    <option value="Bachelors">Bachelors</option>
+                    <option value="Spinsters">Spinsters</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 5: Amenities Availability, Pet Friendly, Furnish Type */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Amenities Availability</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.amenitiesAvailability || 'Yes'}
+                    onChange={e => setFormData({ ...formData, amenitiesAvailability: e.target.value })}
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Pet Friendly</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.petFriendly || 'Yes'}
+                    onChange={e => setFormData({ ...formData, petFriendly: e.target.value })}
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Furnish Type</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.furnishType || 'Semi Furnished'}
+                    onChange={e => setFormData({ ...formData, furnishType: e.target.value })}
+                  >
+                    <option value="Unfurnished">Unfurnished</option>
+                    <option value="Semi Furnished">Semi Furnished</option>
+                    <option value="Full Furnished">Full Furnished</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 6: Advance, Monthly Rental, Maintenance */}
+              <div className="grid md:grid-cols-3 gap-4 p-4 bg-white/[0.02] border border-white/10 rounded-sm">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Advance (Deposit) *</label>
+                  <input 
+                    required
+                    className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
+                    value={formData.advance || ''}
+                    onChange={e => setFormData({ ...formData, advance: e.target.value })}
+                    placeholder="e.g., ₹2,50,000"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Monthly Rental *</label>
+                  <input 
+                    required
+                    className="w-full bg-black/50 border border-cyan-500/40 p-3 text-cyan-300 text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono font-bold"
+                    value={formData.monthlyRental || ''}
+                    onChange={e => setFormData({ ...formData, monthlyRental: e.target.value, price: e.target.value })}
+                    placeholder="e.g., ₹42,000/mo"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Maintenance</label>
+                  <input 
+                    className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
+                    value={formData.maintenance || ''}
+                    onChange={e => setFormData({ ...formData, maintenance: e.target.value })}
+                    placeholder="e.g., ₹4,000/mo"
+                  />
+                </div>
+              </div>
+
+              {/* Row 7: SUBA, Car Close Parking, Balcony */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">SUBA (Super Built-up Area)</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
+                    value={formData.suba || ''}
+                    onChange={e => setFormData({ ...formData, suba: e.target.value })}
+                    placeholder="e.g., 1,420 Sq.Ft."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Car Close Parking</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.carCloseParking || '1'}
+                    onChange={e => setFormData({ ...formData, carCloseParking: e.target.value })}
+                  >
+                    <option value="1">1 Car Covered Parking</option>
+                    <option value="2">2 Car Covered Parking</option>
+                    <option value="3">3 Car Covered Parking</option>
+                    <option value="4">4 Car Covered Parking</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Balcony</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
+                    value={formData.balcony || '1'}
+                    onChange={e => setFormData({ ...formData, balcony: e.target.value })}
+                    placeholder="e.g., 2 Balconies"
+                  />
+                </div>
+              </div>
+
+              {/* Row 8: Comments */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Comments &amp; Lease Specifications</label>
+                <textarea 
+                  rows={3}
+                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-cyan-400 transition-all text-xs leading-relaxed rounded-sm"
+                  value={formData.comments || ''}
+                  onChange={e => setFormData({ ...formData, comments: e.target.value, description: e.target.value })}
+                  placeholder="Details on lock-in period, society restrictions, view from balcony, power backup..."
+                />
+              </div>
+
+              {/* Media Compression & Uploads (Photos & Walkthrough Video) */}
+              <MediaUploadCompressor
+                accentColor="cyan"
+                title="Rental Photos & Video Walkthrough (Auto-Compressed HD)"
+                images={formData.imageUrls || []}
+                onImagesChange={(imgs) => setFormData(prev => ({ ...prev, imageUrls: imgs }))}
+                videoUrl={formData.videoUrl || ''}
+                onVideoChange={(vUrl, poster) => setFormData(prev => ({ 
+                  ...prev, 
+                  videoUrl: vUrl, 
+                  mobileVideoUrl: vUrl,
+                  mobileImageUrl: poster || prev.mobileImageUrl 
+                }))}
+              />
+
+              {/* Inquiry Action Card */}
+              <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest font-black text-cyan-300 block mb-0.5">
+                    Rental Client Inquiry Integration
+                  </span>
+                  <p className="text-xs text-white/70">
+                    Open the inquiry submission form directly for this rental listing.
+                  </p>
+                </div>
+                {onOpenEnquiry && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenEnquiry({
+                        ...(formData as Project),
+                        type: 'Rental',
+                        price: formData.monthlyRental ? `${formData.monthlyRental}/mo` : formData.price || '₹35,000/mo*'
+                      });
+                    }}
+                    className="px-4 py-2.5 bg-cyan-500 hover:bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-sm transition-all whitespace-nowrap cursor-pointer shadow-md"
+                  >
+                    Fill Rental Inquiry Form
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* RESALE INVENTORY SPECIFIC FIELDS                         */}
+          {/* ======================================================== */}
+          {inventoryMode === 'Resale' && (
+            <div className="space-y-5">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-sm text-xs text-amber-300 font-mono flex items-center justify-between">
+                <span>Resale Inventory Entry • Title Verification &amp; Approved Authority Registry</span>
+                <span className="font-bold uppercase tracking-wider text-[10px]">Resale Vault Active</span>
+              </div>
+
+              {/* Row 1: Project Name & Location */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Project Name *</label>
+                  <input 
+                    required
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm"
+                    value={formData.name || ''}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Prestige Lakeside Habitat, Godrej Air..."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Project Location *</label>
+                  <input 
+                    required
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm"
+                    value={formData.location || ''}
+                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="e.g., Varthur, Whitefield, Sarjapur Road..."
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Property Type & Main Door Facing */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Property Type *</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer"
+                    value={formData.propertyType || 'Apartment'}
+                    onChange={e => setFormData({ ...formData, propertyType: e.target.value as any })}
+                  >
+                    <option value="Villa">Villa</option>
+                    <option value="Apartment">Apartments</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Stand Alone Building">Stand Alone Building</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Main Door Facing</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.mainDoorFacing || 'East'}
+                    onChange={e => setFormData({ ...formData, mainDoorFacing: e.target.value })}
+                  >
+                    <option value="East">East</option>
+                    <option value="North">North</option>
+                    <option value="West">West</option>
+                    <option value="South">South</option>
+                    <option value="North-East">North-East</option>
+                    <option value="North-West">North-West</option>
+                    <option value="South-East">South-East</option>
+                    <option value="South-West">South-West</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 3: Tower, Floor, Residence Type */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Tower</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm"
+                    value={formData.tower || ''}
+                    onChange={e => setFormData({ ...formData, tower: e.target.value })}
+                    placeholder="e.g., Tower 4"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Floor</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm"
+                    value={formData.floor || ''}
+                    onChange={e => setFormData({ ...formData, floor: e.target.value })}
+                    placeholder="e.g., 14th Floor"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Residence Type *</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono font-bold"
+                    value={formData.residenceType || '3BHK'}
+                    onChange={e => setFormData({ ...formData, residenceType: e.target.value })}
+                  >
+                    <option value="Studio">Studio</option>
+                    <option value="1BHK">1BHK</option>
+                    <option value="2BHK">2BHK</option>
+                    <option value="3BHK">3BHK</option>
+                    <option value="4BHK">4BHK</option>
+                    <option value="5BHK">5BHK</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 4: Amenities Availability & Furnish Type */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Amenities Availability</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.amenitiesAvailability || 'Yes'}
+                    onChange={e => setFormData({ ...formData, amenitiesAvailability: e.target.value })}
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Furnish Type</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.furnishType || 'Semi Furnished'}
+                    onChange={e => setFormData({ ...formData, furnishType: e.target.value })}
+                  >
+                    <option value="Unfurnished">Unfurnished</option>
+                    <option value="Semi Furnished">Semi Furnished</option>
+                    <option value="Full Furnished">Full Furnished</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 5: SUBA, Carpet Area & Indicative Price */}
+              <div className="grid md:grid-cols-3 gap-4 p-4 bg-white/[0.02] border border-white/10 rounded-sm">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">SUBA (Super Built-up Area) *</label>
+                  <input 
+                    required
+                    className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.suba || ''}
+                    onChange={e => setFormData({ ...formData, suba: e.target.value })}
+                    placeholder="e.g., 1,650 Sq.Ft."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Carpet Area *</label>
+                  <input 
+                    required
+                    className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.carpetArea || ''}
+                    onChange={e => setFormData({ ...formData, carpetArea: e.target.value })}
+                    placeholder="e.g., 1,280 Sq.Ft."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Indicative Resale Price *</label>
+                  <input 
+                    required
+                    className="w-full bg-black/50 border border-amber-500/40 p-3 text-amber-300 text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono font-bold"
+                    value={formData.price || ''}
+                    onChange={e => setFormData({ ...formData, price: e.target.value, lastPrice: e.target.value })}
+                    placeholder="e.g., ₹1.85 Cr onwards*"
+                  />
+                </div>
+              </div>
+
+              {/* Row 6: Car Close Parking, Balcony, RERA */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Car Close Parking</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono"
+                    value={formData.carCloseParking || '1'}
+                    onChange={e => setFormData({ ...formData, carCloseParking: e.target.value })}
+                  >
+                    <option value="1">1 Car Covered Parking</option>
+                    <option value="2">2 Car Covered Parking</option>
+                    <option value="3">3 Car Covered Parking</option>
+                    <option value="4">4 Car Covered Parking</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Balcony</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.balcony || '1'}
+                    onChange={e => setFormData({ ...formData, balcony: e.target.value })}
+                    placeholder="e.g., 2 Balconies"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">RERA Number</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.reraNumber || ''}
+                    onChange={e => setFormData({ ...formData, reraNumber: e.target.value })}
+                    placeholder="PRM/KA/RERA/..."
+                  />
+                </div>
+              </div>
+
+              {/* Row 7: Handed Over Date, Registration Status, Approved Authority */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Handed Over Date</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.handedOverDate || ''}
+                    onChange={e => setFormData({ ...formData, handedOverDate: e.target.value })}
+                    placeholder="e.g., March 2024 / Ready"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Registration Status</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.registrationStatus || 'Ready for Registration'}
+                    onChange={e => setFormData({ ...formData, registrationStatus: e.target.value })}
+                    placeholder="Ready for Registration / OC Received"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Approved Authority *</label>
+                  <select
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-amber-300 text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono font-bold"
+                    value={formData.approvedAuthority || 'BDA'}
+                    onChange={e => setFormData({ ...formData, approvedAuthority: e.target.value })}
+                  >
+                    <option value="BDA">BDA (Bangalore Development Authority)</option>
+                    <option value="BBMP">BBMP (Bruhat Bengaluru Mahanagara Palike)</option>
+                    <option value="BMRDA">BMRDA</option>
+                    <option value="STRR">STRR (Satellite Town Ring Road)</option>
+                    <option value="DTCP">DTCP</option>
+                    <option value="MPA">MPA</option>
+                    <option value="SPA">SPA</option>
+                    <option value="BIAPPA">BIAPPA (Bangalore International Airport Area)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 8: Available From (Calendar) */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400 flex items-center gap-1.5">
+                  <Calendar size={12} /> Available From * (Select via Calendar)
+                </label>
+                <input 
+                  required
+                  type="date"
+                  className="w-full bg-black/60 border border-amber-500/40 p-3.5 text-amber-300 text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono cursor-pointer"
+                  value={formData.availableFrom || ''}
+                  onChange={e => setFormData({ ...formData, availableFrom: e.target.value })}
+                />
+              </div>
+
+              {/* Row 9: Comments */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Comments &amp; Resale Disclosures</label>
+                <textarea 
+                  rows={3}
+                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-amber-400 transition-all text-xs leading-relaxed rounded-sm"
+                  value={formData.comments || ''}
+                  onChange={e => setFormData({ ...formData, comments: e.target.value, description: e.target.value })}
+                  placeholder="Khata status, loan clearance, occupancy certificate details, furnishing specifications..."
+                />
+              </div>
+
+              {/* Media Compression & Uploads (Photos & Walkthrough Video) */}
+              <MediaUploadCompressor
+                accentColor="amber"
+                title="Resale Photos & Video Walkthrough (Auto-Compressed HD)"
+                images={formData.imageUrls || []}
+                onImagesChange={(imgs) => setFormData(prev => ({ ...prev, imageUrls: imgs }))}
+                videoUrl={formData.videoUrl || ''}
+                onVideoChange={(vUrl, poster) => setFormData(prev => ({ 
+                  ...prev, 
+                  videoUrl: vUrl, 
+                  mobileVideoUrl: vUrl,
+                  mobileImageUrl: poster || prev.mobileImageUrl 
+                }))}
+              />
+
+              {/* Inquiry Action Card */}
+              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest font-black text-amber-300 block mb-0.5">
+                    Resale Client Inquiry Integration
+                  </span>
+                  <p className="text-xs text-white/70">
+                    Open the inquiry submission form directly for this resale listing.
+                  </p>
+                </div>
+                {onOpenEnquiry && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenEnquiry({
+                        ...(formData as Project),
+                        type: 'Resale',
+                        price: formData.price || '₹1.85 Cr*'
+                      });
+                    }}
+                    className="px-4 py-2.5 bg-amber-500 hover:bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-sm transition-all whitespace-nowrap cursor-pointer shadow-md"
+                  >
+                    Fill Resale Inquiry Form
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* PRIMARY PORTFOLIO SPECIFIC FIELDS                        */}
+          {/* ======================================================== */}
+          {inventoryMode === 'Primary' && (
+            <div className="grid lg:grid-cols-2 gap-10 text-left">
+              {/* Left Column: Basic Info */}
+              <div className="space-y-5">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">Project Name *</label>
                     <input 
                       required
-                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all"
+                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
                       onBlur={() => {
@@ -3487,344 +4468,354 @@ const ProjectForm = ({
                       placeholder="e.g., Prestige Somerville, Sobha Galera..."
                     />
                   </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Indicative Price / Rental * (* Conditions Apply)</label>
-                  <input 
-                    required
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all"
-                    value={formData.price}
-                    onChange={e => setFormData({...formData, price: e.target.value, lastPrice: e.target.value})}
-                    placeholder="Rs. 2.45 Cr onwards* or Rs. 85,000/mo*"
-                  />
-                </div>
-              </div>
-
-              {/* Highlighted Auto-Updated Last Price & Handover Date */}
-              <div className="grid md:grid-cols-2 gap-4 p-3.5 bg-art-gold/[0.06] border border-art-gold/30 rounded-sm">
-                <div className="space-y-1.5">
-                  <label className="text-[9px] uppercase font-black tracking-widest text-art-gold flex items-center gap-1.5">
-                    <Sparkles size={11} /> Last Price * (Auto-Updated)
-                  </label>
-                  <input 
-                    className="w-full bg-black/50 border border-art-gold/30 p-3 text-art-gold font-mono text-xs outline-none focus:border-art-gold transition-all"
-                    value={formData.lastPrice || formData.price || ''}
-                    onChange={e => setFormData({...formData, lastPrice: e.target.value})}
-                    placeholder="Auto-updated Last Price*"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[9px] uppercase font-black tracking-widest text-art-gold flex items-center gap-1.5">
-                    <Calendar size={11} /> Hand Over Date (Auto-Updated)
-                  </label>
-                  <input 
-                    className="w-full bg-black/50 border border-art-gold/30 p-3 text-white font-mono text-xs outline-none focus:border-art-gold transition-all"
-                    value={formData.handoverDate || ''}
-                    onChange={e => setFormData({...formData, handoverDate: e.target.value})}
-                    placeholder="December 2027 / Immediate"
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Corridor / Zone</label>
-                  <select 
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer"
-                    value={formData.zone}
-                    onChange={e => {
-                      const nextZone = e.target.value as any;
-                      setFormData({
-                        ...formData,
-                        zone: nextZone,
-                        imageUrls: getSmartProjectImages(nextZone, formData.type, formData.builderCategory, formData.propertyType)
-                      });
-                    }}
-                  >
-                    <option value="Whitefield">Whitefield</option>
-                    <option value="Hoskote">Hoskote</option>
-                    <option value="Varthur">Varthur</option>
-                    <option value="Gunjur">Gunjur</option>
-                    <option value="Hosa Road">Hosa Road</option>
-                    <option value="Kasavanahalli">Kasavanahalli</option>
-                    <option value="East Bangalore">East Bangalore</option>
-                    <option value="Off Sarjapur Road">Off Sarjapur Road</option>
-                    <option value="Sarjapur">Sarjapur</option>
-                    <option value="Electronic City">Electronic City</option>
-                    <option value="Marathalli">Marathalli</option>
-                    <option value="Bellandur">Bellandur</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Micro-Location</label>
-                  <input 
-                    required
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all"
-                    value={formData.location}
-                    onChange={e => setFormData({...formData, location: e.target.value})}
-                    placeholder="Whitefield, Hoskote, Varthur, Gunjur, Hosa Road, Kasavanahalli..."
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Portfolio Type</label>
-                  <select 
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer"
-                    value={formData.type === 'Primary Sale' ? 'Primary' : formData.type}
-                    onChange={e => {
-                      const nextType = e.target.value as any;
-                      setFormData({
-                        ...formData,
-                        type: nextType,
-                        imageUrls: getSmartProjectImages(formData.zone, nextType, formData.builderCategory, formData.propertyType)
-                      });
-                    }}
-                  >
-                    <option value="Primary">Primary</option>
-                    <option value="Resale">Resale</option>
-                    <option value="Rental">Rental</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Property Type</label>
-                  <select 
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer"
-                    value={formData.propertyType === 'Flat' ? 'Apartment' : formData.propertyType}
-                    onChange={e => {
-                      const nextProp = e.target.value as any;
-                      setFormData({
-                        ...formData,
-                        propertyType: nextProp,
-                        imageUrls: getSmartProjectImages(formData.zone, formData.type, formData.builderCategory, nextProp)
-                      });
-                    }}
-                  >
-                    <option value="Apartment">Apartment</option>
-                    <option value="Villa">Villa</option>
-                    <option value="Plot">Plot</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Present Status</label>
-                  <select 
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer"
-                    value={formData.handoverStatus}
-                    onChange={e => {
-                      const nextStatus = e.target.value as any;
-                      const autoHandoverDate =
-                        nextStatus === 'Ready to Move' || nextStatus === 'Handed Over'
-                          ? 'Immediate Possession (OC Received)'
-                          : nextStatus === 'EOI'
-                          ? 'December 2028'
-                          : 'December 2027';
-                      setFormData({
-                        ...formData,
-                        handoverStatus: nextStatus,
-                        handoverDate: formData.handoverDate || autoHandoverDate
-                      });
-                    }}
-                  >
-                    <option value="EOI">EOI</option>
-                    <option value="Under Construction">Under .Construction</option>
-                    <option value="Ready to Move">Ready To Move</option>
-                    <option value="Handed Over">Handed Over</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Builder Category & Name</label>
-                  <div className="flex gap-2">
-                    <select
-                      value={formData.builderCategory || 'A'}
-                      onChange={e => {
-                        const nextCat = e.target.value as any;
-                        setFormData({
-                          ...formData,
-                          builderCategory: nextCat,
-                          segment: nextCat === 'A+' ? 'Ultra-Luxury' : nextCat === 'A' ? 'Premium Luxury' : nextCat === 'B' ? 'Value Luxury' : 'Smart Boutique',
-                          imageUrls: getSmartProjectImages(formData.zone, formData.type, nextCat, formData.propertyType)
-                        });
-                      }}
-                      className="bg-art-dark border border-white/15 p-3.5 text-xs text-art-gold font-bold outline-none focus:border-art-gold"
-                    >
-                      <option value="A+">Cat A+</option>
-                      <option value="A">Cat A</option>
-                      <option value="B">Cat B</option>
-                      <option value="C">Cat C</option>
-                    </select>
-                    <input
-                      className="flex-1 bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold"
-                      value={formData.builderName || ''}
-                      onChange={e => setFormData({ ...formData, builderName: e.target.value })}
-                      placeholder="Builder Name"
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Indicative Price * (* Conditions Apply)</label>
+                    <input 
+                      required
+                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
+                      value={formData.price}
+                      onChange={e => setFormData({...formData, price: e.target.value, lastPrice: e.target.value})}
+                      placeholder="Rs. 2.45 Cr onwards*"
                     />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Approval Body</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all"
-                    value={formData.approvalBody || ''}
-                    onChange={e => setFormData({...formData, approvalBody: e.target.value})}
-                    placeholder="BBMP / BDA / BMRDA & RERA"
-                  />
-                </div>
-              </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">RERA Number</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all font-mono text-xs"
-                    value={formData.reraNumber || ''}
-                    onChange={e => setFormData({...formData, reraNumber: e.target.value})}
-                    placeholder="PRM/KA/RERA/1251/446/PR/..."
-                  />
+                {/* Highlighted Auto-Updated Last Price & Handover Date */}
+                <div className="grid md:grid-cols-2 gap-4 p-3.5 bg-art-gold/[0.06] border border-art-gold/30 rounded-sm">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] uppercase font-black tracking-widest text-art-gold flex items-center gap-1.5">
+                      <Sparkles size={11} /> Last Price * (Auto-Updated)
+                    </label>
+                    <input 
+                      className="w-full bg-black/50 border border-art-gold/30 p-3 text-art-gold font-mono text-xs outline-none focus:border-art-gold transition-all rounded-sm"
+                      value={formData.lastPrice || formData.price || ''}
+                      onChange={e => setFormData({...formData, lastPrice: e.target.value})}
+                      placeholder="Auto-updated Last Price*"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] uppercase font-black tracking-widest text-art-gold flex items-center gap-1.5">
+                      <Calendar size={11} /> Hand Over Date (Auto-Updated)
+                    </label>
+                    <input 
+                      className="w-full bg-black/50 border border-art-gold/30 p-3 text-white font-mono text-xs outline-none focus:border-art-gold transition-all rounded-sm"
+                      value={formData.handoverDate || ''}
+                      onChange={e => setFormData({...formData, handoverDate: e.target.value})}
+                      placeholder="December 2027 / Immediate"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Project Size</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all"
-                    value={formData.projectSize || ''}
-                    onChange={e => setFormData({...formData, projectSize: e.target.value})}
-                    placeholder="21 Acres (1,368 Units)"
-                  />
-                </div>
-              </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Floor Plan & SBA Specifications</label>
-                <input 
-                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all"
-                  value={formData.floorPlan || ''}
-                  onChange={e => setFormData({...formData, floorPlan: e.target.value})}
-                  placeholder="2 BHK (1250 Sq.Ft.) | 3 BHK (1780 Sq.Ft.) | 4 BHK (2450 Sq.Ft.)"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Amenities (Comma Separated)</label>
-                <input 
-                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs"
-                  value={(formData.features || []).join(', ')}
-                  onChange={e => setFormData({...formData, features: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
-                  placeholder="Sky Clubhouse, Heated Infinity Pool, Co-working Lounge, Tennis Court..."
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Project Writeup (Max 2000 chars)</label>
-                <textarea 
-                  required
-                  rows={4}
-                  maxLength={2000}
-                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs leading-relaxed"
-                  value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
-                  placeholder="Writeup detailing architectural excellence, connectivity, and lifestyle..."
-                />
-              </div>
-            </div>
-
-            {/* Right Column: Uploads & Specs */}
-            <div className="space-y-6">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-[9px] uppercase font-bold tracking-widest text-white/40">No. Of Towers</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3 text-white outline-none focus:border-art-gold transition-all text-xs"
-                    value={formData.noOfTowers || ''}
-                    onChange={e => setFormData({...formData, noOfTowers: e.target.value})}
-                    placeholder="10 Towers"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[9px] uppercase font-bold tracking-widest text-white/40">Flats Per Floor</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3 text-white outline-none focus:border-art-gold transition-all text-xs"
-                    value={formData.flatsPerFloor || ''}
-                    onChange={e => setFormData({...formData, flatsPerFloor: e.target.value})}
-                    placeholder="4 Flats / Floor"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[9px] uppercase font-bold tracking-widest text-white/40">Floors Height</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3 text-white outline-none focus:border-art-gold transition-all text-xs"
-                    value={formData.floorsHeight || ''}
-                    onChange={e => setFormData({...formData, floorsHeight: e.target.value})}
-                    placeholder="2B + G + 29 Floors"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/40">Units Configuration (Select Multiple)</label>
-                <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5">
-                  {['Studio', '1 BHK', '2 BHK', '3 BHK', '4 BHK', '5 BHK', 'Plots'].map(config => (
-                    <button
-                      key={config}
-                      type="button"
-                      onClick={() => {
-                        const current = formData.configuration || [];
-                        const updated = current.includes(config) 
-                          ? current.filter(c => c !== config)
-                          : [...current, config];
-                        setFormData({...formData, configuration: updated});
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Corridor / Zone</label>
+                    <select 
+                      className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm"
+                      value={formData.zone}
+                      onChange={e => {
+                        const nextZone = e.target.value as any;
+                        setFormData({
+                          ...formData,
+                          zone: nextZone,
+                          imageUrls: getSmartProjectImages(nextZone, formData.type, formData.builderCategory, formData.propertyType)
+                        });
                       }}
-                      className={cn(
-                        "p-2.5 text-[9px] border transition-all uppercase tracking-widest text-center cursor-pointer",
-                        formData.configuration?.includes(config) 
-                          ? "bg-art-gold border-art-gold text-black font-black" 
-                          : "bg-white/5 border-white/10 text-white/40"
-                      )}
                     >
-                      {config}
-                    </button>
-                  ))}
+                      <option value="Whitefield">Whitefield</option>
+                      <option value="Hoskote">Hoskote</option>
+                      <option value="Varthur">Varthur</option>
+                      <option value="Gunjur">Gunjur</option>
+                      <option value="Hosa Road">Hosa Road</option>
+                      <option value="Kasavanahalli">Kasavanahalli</option>
+                      <option value="East Bangalore">East Bangalore</option>
+                      <option value="Off Sarjapur Road">Off Sarjapur Road</option>
+                      <option value="Sarjapur">Sarjapur</option>
+                      <option value="Electronic City">Electronic City</option>
+                      <option value="Marathalli">Marathalli</option>
+                      <option value="Bellandur">Bellandur</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Micro-Location</label>
+                    <input 
+                      required
+                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
+                      value={formData.location}
+                      onChange={e => setFormData({...formData, location: e.target.value})}
+                      placeholder="Whitefield, Hoskote, Varthur, Gunjur, Hosa Road..."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Property Type</label>
+                    <select 
+                      className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm"
+                      value={formData.propertyType || 'Apartment'}
+                      onChange={e => {
+                        const nextProp = e.target.value as any;
+                        setFormData({
+                          ...formData,
+                          propertyType: nextProp,
+                          imageUrls: getSmartProjectImages(formData.zone, formData.type, formData.builderCategory, nextProp)
+                        });
+                      }}
+                    >
+                      <option value="Apartment">Apartment</option>
+                      <option value="Villa">Villa</option>
+                      <option value="Plot">Plot</option>
+                      <option value="Commercial">Commercial</option>
+                      <option value="Stand Alone Building">Stand Alone Building</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Present Status</label>
+                    <select 
+                      className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm"
+                      value={formData.handoverStatus}
+                      onChange={e => {
+                        const nextStatus = e.target.value as any;
+                        const autoHandoverDate =
+                          nextStatus === 'Ready to Move' || nextStatus === 'Handed Over'
+                            ? 'Immediate Possession (OC Received)'
+                            : nextStatus === 'EOI'
+                            ? 'December 2028'
+                            : 'December 2027';
+                        setFormData({
+                          ...formData,
+                          handoverStatus: nextStatus,
+                          handoverDate: formData.handoverDate || autoHandoverDate
+                        });
+                      }}
+                    >
+                      <option value="EOI">EOI</option>
+                      <option value="Under Construction">Under Construction</option>
+                      <option value="Ready to Move">Ready To Move</option>
+                      <option value="Handed Over">Handed Over</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Builder Category &amp; Name</label>
+                    <div className="flex gap-2">
+                      <select
+                        value={formData.builderCategory || 'A'}
+                        onChange={e => {
+                          const nextCat = e.target.value as any;
+                          setFormData({
+                            ...formData,
+                            builderCategory: nextCat,
+                            segment: nextCat === 'A+' ? 'Ultra-Luxury' : nextCat === 'A' ? 'Premium Luxury' : nextCat === 'B' ? 'Value Luxury' : 'Smart Boutique',
+                            imageUrls: getSmartProjectImages(formData.zone, formData.type, nextCat, formData.propertyType)
+                          });
+                        }}
+                        className="bg-art-dark border border-white/15 p-3.5 text-xs text-art-gold font-bold outline-none focus:border-art-gold rounded-sm"
+                      >
+                        <option value="A+">Cat A+</option>
+                        <option value="A">Cat A</option>
+                        <option value="B">Cat B</option>
+                        <option value="C">Cat C</option>
+                      </select>
+                      <input
+                        className="flex-1 bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold rounded-sm"
+                        value={formData.builderName || ''}
+                        onChange={e => setFormData({ ...formData, builderName: e.target.value })}
+                        placeholder="Builder Name"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Approval Body</label>
+                    <input 
+                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
+                      value={formData.approvalBody || ''}
+                      onChange={e => setFormData({...formData, approvalBody: e.target.value})}
+                      placeholder="BBMP / BDA / BMRDA & RERA"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">RERA Number</label>
+                    <input 
+                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all font-mono text-xs rounded-sm"
+                      value={formData.reraNumber || ''}
+                      onChange={e => setFormData({...formData, reraNumber: e.target.value})}
+                      placeholder="PRM/KA/RERA/..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Project Size</label>
+                    <input 
+                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
+                      value={formData.projectSize || ''}
+                      onChange={e => setFormData({...formData, projectSize: e.target.value})}
+                      placeholder="21 Acres (1,368 Units)"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Floor Plan &amp; SBA Specifications</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
+                    value={formData.floorPlan || ''}
+                    onChange={e => setFormData({...formData, floorPlan: e.target.value})}
+                    placeholder="2 BHK (1250 Sq.Ft.) | 3 BHK (1780 Sq.Ft.) | 4 BHK (2450 Sq.Ft.)"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Amenities (Comma Separated)</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm"
+                    value={(formData.features || []).join(', ')}
+                    onChange={e => setFormData({...formData, features: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
+                    placeholder="Sky Clubhouse, Heated Infinity Pool, Co-working Lounge, Tennis Court..."
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Project Writeup (Max 2000 chars)</label>
+                  <textarea 
+                    required
+                    rows={4}
+                    maxLength={2000}
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs leading-relaxed rounded-sm"
+                    value={formData.description}
+                    onChange={e => setFormData({...formData, description: e.target.value})}
+                    placeholder="Writeup detailing architectural excellence, connectivity, and lifestyle..."
+                  />
                 </div>
               </div>
 
-              <div className="p-4 bg-art-gold/[0.05] border border-art-gold/25 rounded-sm space-y-2">
-                <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black block">
-                  Production Data-First Mode Enabled
-                </span>
-                <p className="text-xs text-white/75 leading-relaxed">
-                  Image options are disabled for production. All verified project data — including Builder Category (A+, A, B, C), Location Name, Last Price (*), Handover Date, RERA Number, Approval Body, Floor Plan & SBA, and Nearby Connectivity (Schools, Hospitals, IT Hubs, Malls & Bus Stop in kms) — is automatically displayed.
-                </p>
-              </div>
+              {/* Right Column: Uploads & Specs */}
+              <div className="space-y-6">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/40">No. Of Towers</label>
+                    <input 
+                      className="w-full bg-white/5 border border-white/15 p-3 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm"
+                      value={formData.noOfTowers || ''}
+                      onChange={e => setFormData({...formData, noOfTowers: e.target.value})}
+                      placeholder="10 Towers"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/40">Flats Per Floor</label>
+                    <input 
+                      className="w-full bg-white/5 border border-white/15 p-3 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm"
+                      value={formData.flatsPerFloor || ''}
+                      onChange={e => setFormData({...formData, flatsPerFloor: e.target.value})}
+                      placeholder="4 Flats / Floor"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/40">Floors Height</label>
+                    <input 
+                      className="w-full bg-white/5 border border-white/15 p-3 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm"
+                      value={formData.floorsHeight || ''}
+                      onChange={e => setFormData({...formData, floorsHeight: e.target.value})}
+                      placeholder="2B + G + 29 Floors"
+                    />
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3.5 rounded-sm">
-                <input 
-                  type="checkbox"
-                  id="formIsPaused"
-                  checked={formData.isPaused || false}
-                  onChange={e => setFormData({...formData, isPaused: e.target.checked})}
-                  className="w-4 h-4 accent-art-gold rounded bg-white/5 border-white/10 outline-none cursor-pointer"
-                />
-                <label htmlFor="formIsPaused" className="text-[10px] uppercase font-bold tracking-widest text-white/80 cursor-pointer select-none">
-                  Hide / Pause Project (Removes from main visitor portal)
-                </label>
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/40">Units Configuration (Select Multiple)</label>
+                  <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5">
+                    {['Studio', '1 BHK', '2 BHK', '3 BHK', '4 BHK', '5 BHK', 'Plots'].map(config => (
+                      <button
+                        key={config}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.configuration || [];
+                          const updated = current.includes(config) 
+                            ? current.filter(c => c !== config)
+                            : [...current, config];
+                          setFormData({...formData, configuration: updated});
+                        }}
+                        className={cn(
+                          "p-2.5 text-[9px] border transition-all uppercase tracking-widest text-center cursor-pointer rounded-sm",
+                          formData.configuration?.includes(config) 
+                            ? "bg-art-gold border-art-gold text-black font-black" 
+                            : "bg-white/5 border-white/10 text-white/40"
+                        )}
+                      >
+                        {config}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-4 bg-art-gold/[0.05] border border-art-gold/25 rounded-sm space-y-2">
+                  <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black block">
+                    Verified Curation Active
+                  </span>
+                  <p className="text-xs text-white/75 leading-relaxed">
+                    Primary project configurations automatically integrate pricing brackets, RERA credentials, builder ratings, and corridor connectivity matrices.
+                  </p>
+                </div>
+
+                {/* Inquiry Action Card */}
+                {onOpenEnquiry && (
+                  <div className="p-4 bg-art-gold/10 border border-art-gold/30 rounded-sm flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-widest font-black text-art-gold block">
+                        Direct Inquiry Form Filling
+                      </span>
+                      <p className="text-xs text-white/60">Test or file a client inquiry for this project.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onOpenEnquiry(formData as Project)}
+                      className="px-4 py-2 bg-art-gold text-black text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-white transition-colors cursor-pointer whitespace-nowrap shadow-sm"
+                    >
+                      Fill Inquiry Form
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3.5 rounded-sm">
+                  <input 
+                    type="checkbox"
+                    id="formIsPaused"
+                    checked={formData.isPaused || false}
+                    onChange={e => setFormData({...formData, isPaused: e.target.checked})}
+                    className="w-4 h-4 accent-art-gold rounded bg-white/5 border-white/10 outline-none cursor-pointer"
+                  />
+                  <label htmlFor="formIsPaused" className="text-[10px] uppercase font-bold tracking-widest text-white/80 cursor-pointer select-none">
+                    Hide / Pause Project (Removes from main visitor portal)
+                  </label>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex flex-col sm:flex-row gap-4">
+          {/* Bottom Actions */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-white/10">
             <button 
               type="submit"
               disabled={submitting || isAutoChecking}
-              className="flex-1 bg-art-gold text-black py-5 uppercase tracking-[0.35em] text-xs font-black hover:bg-white transition-all shadow-xl disabled:opacity-50 cursor-pointer"
+              className={cn(
+                "flex-1 py-4 uppercase tracking-[0.3em] text-xs font-black transition-all shadow-xl disabled:opacity-50 cursor-pointer rounded-sm text-black",
+                inventoryMode === 'Rental' 
+                  ? "bg-cyan-400 hover:bg-white" 
+                  : inventoryMode === 'Resale' 
+                  ? "bg-amber-400 hover:bg-white" 
+                  : "bg-art-gold hover:bg-white"
+              )}
             >
-              {submitting ? 'AUTO-UPDATING & SAVING...' : project ? 'SAVE & AUTO-UPDATE PROJECT' : 'PUBLISH NEW PROJECT TO PORTFOLIO'}
+              {submitting ? 'SAVING TO INVENTORY...' : project ? `SAVE ${inventoryMode.toUpperCase()} CHANGES` : `PUBLISH ${inventoryMode.toUpperCase()} TO INVENTORY`}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-8 py-5 bg-white/5 hover:bg-white/10 text-white/70 border border-white/15 uppercase tracking-widest text-xs font-bold transition-all cursor-pointer"
+              className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white/70 border border-white/15 uppercase tracking-widest text-xs font-bold transition-all cursor-pointer rounded-sm"
             >
               Cancel
             </button>
@@ -4567,7 +5558,9 @@ const AdminView = ({
   setShowProjectModal, 
   editingProject, 
   setEditingProject,
-  onOpenSeoPreview
+  onOpenSeoPreview,
+  onOpenNewProjectWithMode,
+  onOpenEnquiry
 }: { 
   enquiries: Enquiry[], 
   projects: Project[], 
@@ -4577,13 +5570,69 @@ const AdminView = ({
   setShowProjectModal: (val: boolean) => void, 
   editingProject: Project | null, 
   setEditingProject: (p: Project | null) => void,
-  onOpenSeoPreview?: () => void
+  onOpenSeoPreview?: () => void,
+  onOpenNewProjectWithMode?: (mode: 'Primary' | 'Rental' | 'Resale') => void,
+  onOpenEnquiry?: (p: Project) => void
 }) => {
   const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals'>('leads');
+  const [enquiryCategoryFilter, setEnquiryCategoryFilter] = useState<'all' | 'Primary' | 'Rental' | 'Resale' | 'Home Loan'>('all');
+  const [inventoryTab, setInventoryTab] = useState<'all' | 'Primary' | 'Rental' | 'Resale'>('all');
+
+  const resolveEnquiryCategory = (enq: Enquiry): 'Primary' | 'Rental' | 'Resale' | 'Home Loan' => {
+    if (enq.enquiryCategory) {
+      if (enq.enquiryCategory === 'Rental' || (enq.enquiryCategory as any) === 'Rent') return 'Rental';
+      return enq.enquiryCategory;
+    }
+    if (enq.propertyCategory) {
+      if (enq.propertyCategory === 'Rent') return 'Rental';
+      return enq.propertyCategory as any;
+    }
+    const pMatch = projects.find(p => p.id === enq.projectId || (p.name && enq.projectName && p.name.toLowerCase() === enq.projectName.toLowerCase()));
+    if (pMatch) {
+      if (pMatch.type === 'Rental') return 'Rental';
+      if (pMatch.type === 'Resale') return 'Resale';
+      return 'Primary';
+    }
+    const text = `${enq.projectName || ''} ${enq.message || ''} ${enq.interestedProjects || ''}`.toLowerCase();
+    if (text.includes('loan') || text.includes('emi') || text.includes('finance') || text.includes('capital financing') || text.includes('advisory desk')) return 'Home Loan';
+    if (text.includes('rent') || text.includes('lease') || text.includes('tenant')) return 'Rental';
+    if (text.includes('resale') || text.includes('pre-owned') || text.includes('used')) return 'Resale';
+    return 'Primary';
+  };
+
+  const primaryEnqs = enquiries.filter(e => resolveEnquiryCategory(e) === 'Primary');
+  const rentalEnqs = enquiries.filter(e => resolveEnquiryCategory(e) === 'Rental');
+  const resaleEnqs = enquiries.filter(e => resolveEnquiryCategory(e) === 'Resale');
+  const homeLoanEnqs = enquiries.filter(e => resolveEnquiryCategory(e) === 'Home Loan');
+
+  const displayedEnquiries = enquiryCategoryFilter === 'all'
+    ? enquiries
+    : enquiryCategoryFilter === 'Primary'
+    ? primaryEnqs
+    : enquiryCategoryFilter === 'Rental'
+    ? rentalEnqs
+    : enquiryCategoryFilter === 'Resale'
+    ? resaleEnqs
+    : homeLoanEnqs;
+
+  const validProjects = projects.filter(p => !LEGACY_PROJECT_NAMES.includes(p.name) && !p.isDeleted);
+  const primaryProjects = validProjects.filter(p => p.type === 'Primary' || p.type === 'Primary Sale' || !p.type);
+  const rentalProjects = validProjects.filter(p => p.type === 'Rental');
+  const resaleProjects = validProjects.filter(p => p.type === 'Resale');
+
+  const displayedProjects = inventoryTab === 'all'
+    ? validProjects
+    : inventoryTab === 'Primary'
+    ? primaryProjects
+    : inventoryTab === 'Rental'
+    ? rentalProjects
+    : resaleProjects;
 
   const exportEnquiriesExcel = () => {
+    const listToExport = displayedEnquiries;
     const headers = [
       'Order',
+      'Category',
       'Date & Time Enquired',
       'Customer Name',
       'Phone',
@@ -4595,8 +5644,9 @@ const AdminView = ({
       'Communication Channel',
       'Intelligence / Message'
     ];
-    const rows = enquiries.map((enq, index) => [
+    const rows = listToExport.map((enq, index) => [
       index + 1,
+      resolveEnquiryCategory(enq),
       formatDateTime(enq.timestamp),
       enq.customerName,
       enq.customerPhone,
@@ -4787,79 +5837,131 @@ const AdminView = ({
             </div>
             <button 
               onClick={exportEnquiriesExcel}
-              className="flex items-center gap-2 bg-art-gold/10 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/30 px-5 py-3 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all"
+              className="flex items-center gap-2 bg-art-gold/10 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/30 px-5 py-3 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all cursor-pointer"
             >
               <FileSpreadsheet size={14} />
-              Export to Excel
+              Export {enquiryCategoryFilter === 'all' ? 'All' : enquiryCategoryFilter} to Excel
             </button>
+          </div>
+
+          {/* Dedicated Sub-Tabs for Enquiry Segregation: Primary, Rental, Resale, Home Loan */}
+          <div className="flex flex-wrap gap-2 p-1.5 bg-[#141414] border border-white/10 rounded-sm">
+            {[
+              { id: 'all', label: 'All Inquiries', count: enquiries.length, color: 'text-white' },
+              { id: 'Primary', label: 'Primary Portfolios', count: primaryEnqs.length, color: 'text-art-gold' },
+              { id: 'Rental', label: 'Rental Inquiries', count: rentalEnqs.length, color: 'text-cyan-400' },
+              { id: 'Resale', label: 'Resale Inquiries', count: resaleEnqs.length, color: 'text-amber-400' },
+              { id: 'Home Loan', label: 'Home Loan Desk', count: homeLoanEnqs.length, color: 'text-emerald-400' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setEnquiryCategoryFilter(tab.id as any)}
+                className={cn(
+                  "py-2.5 px-4 text-[10px] font-black uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex items-center gap-2",
+                  enquiryCategoryFilter === tab.id
+                    ? "bg-white text-black border-white shadow-md"
+                    : "bg-white/5 text-white/55 border-transparent hover:text-white hover:bg-white/10"
+                )}
+              >
+                <span>{tab.label}</span>
+                <span className={cn(
+                  "px-1.5 py-0.2 rounded text-[9px] font-mono",
+                  enquiryCategoryFilter === tab.id ? "bg-black/15 text-black font-black" : "bg-white/10 text-white/70"
+                )}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-sm overflow-hidden overflow-x-auto">
             <table className="w-full text-left">
                <thead className="bg-white/10 text-[10px] uppercase tracking-[0.2em] font-black text-art-gold">
                  <tr>
-                   <th className="px-8 py-6">Identity</th>
-                   <th className="px-8 py-6">Enquired At</th>
-                   <th className="px-8 py-6">Preferred Callback Time</th>
-                   <th className="px-8 py-6">Portfolio Interests & Preferred Location</th>
-                   <th className="px-8 py-6">Communication</th>
-                   <th className="px-8 py-6">Intelligence</th>
-                   <th className="px-8 py-6">Origin</th>
+                   <th className="px-6 py-5">Identity</th>
+                   <th className="px-6 py-5">Category</th>
+                   <th className="px-6 py-5">Enquired At</th>
+                   <th className="px-6 py-5">Preferred Callback Time</th>
+                   <th className="px-6 py-5">Portfolio Interests &amp; Preferred Location</th>
+                   <th className="px-6 py-5">Communication</th>
+                   <th className="px-6 py-5">Intelligence</th>
+                   <th className="px-6 py-5">Origin</th>
                  </tr>
                </thead>
                <tbody className="divide-y divide-white/5">
-                 {enquiries.length === 0 && (
+                 {displayedEnquiries.length === 0 && (
                    <tr>
-                     <td colSpan={7} className="px-10 py-20 text-center text-white/20 italic tracking-widest">No intelligence recorded in current session.</td>
+                     <td colSpan={8} className="px-10 py-20 text-center text-white/30 italic tracking-widest text-xs font-mono">
+                       No inquiries recorded under "{enquiryCategoryFilter}" queue.
+                     </td>
                    </tr>
                  )}
-                 {enquiries.map((enq) => (
-                   <tr key={enq.id} className="hover:bg-white/5 transition-colors group">
-                     <td className="px-8 py-6 font-serif text-lg text-white">{enq.customerName}</td>
-                     <td className="px-8 py-6 text-[11px] font-mono text-white/60">
-                       {formatDateTime(enq.timestamp)}
-                     </td>
-                     <td className="px-8 py-6">
-                       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-art-gold/10 border border-art-gold/30 rounded-sm text-art-gold font-mono text-[10px] whitespace-nowrap">
-                         <Clock size={12} className="text-art-gold shrink-0" />
-                         <span>{enq.preferredContactTime || 'Standard Hours'}</span>
-                       </div>
-                     </td>
-                     <td className="px-8 py-6">
-                       <div className="flex flex-col gap-1">
-                         <span className="text-art-gold font-mono text-sm uppercase tracking-tighter">
-                           {enq.interestedProjects || enq.projectName}
+                 {displayedEnquiries.map((enq) => {
+                   const category = resolveEnquiryCategory(enq);
+                   return (
+                     <tr key={enq.id} className="hover:bg-white/5 transition-colors group">
+                       <td className="px-6 py-5 font-serif text-base text-white">{enq.customerName}</td>
+                       <td className="px-6 py-5">
+                         <span className={cn(
+                           "text-[9px] px-2.5 py-1 rounded-sm uppercase font-black tracking-widest whitespace-nowrap border font-mono",
+                           category === 'Primary' 
+                             ? "bg-art-gold/15 text-art-gold border-art-gold/30"
+                             : category === 'Rental'
+                             ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/30"
+                             : category === 'Resale'
+                             ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                             : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                         )}>
+                           {category}
                          </span>
-                         {enq.preferredLocation && (
-                           <span className="text-[10px] text-white/50 font-mono">
-                             Pref. Location: {enq.preferredLocation}
+                       </td>
+                       <td className="px-6 py-5 text-[11px] font-mono text-white/60">
+                         {formatDateTime(enq.timestamp)}
+                       </td>
+                       <td className="px-6 py-5">
+                         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-art-gold/10 border border-art-gold/30 rounded-sm text-art-gold font-mono text-[10px] whitespace-nowrap">
+                           <Clock size={12} className="text-art-gold shrink-0" />
+                           <span>{enq.preferredContactTime || 'Standard Hours'}</span>
+                         </div>
+                       </td>
+                       <td className="px-6 py-5">
+                         <div className="flex flex-col gap-1">
+                           <span className="text-art-gold font-mono text-xs uppercase tracking-tighter font-bold">
+                             {enq.interestedProjects || enq.projectName}
                            </span>
-                         )}
-                       </div>
-                     </td>
-                     <td className="px-8 py-6 text-[11px] font-mono">
-                       <div className="flex flex-col gap-1.5">
-                         <span className="text-white">{enq.customerPhone}</span>
-                         <span className="text-white/40">{enq.customerEmail}</span>
-                       </div>
-                     </td>
-                     <td className="px-8 py-6 text-[11px] text-white/50 italic max-w-sm line-clamp-2 leading-relaxed">
-                       {enq.message ? `"${enq.message}"` : 'NO CONTEXT PROVIDED'}
-                     </td>
-                     <td className="px-8 py-6">
-                       <span className={cn(
-                         "text-[9px] px-3 py-1 rounded-sm uppercase font-black tracking-widest whitespace-nowrap",
-                         enq.type === 'WhatsApp'
-                           ? "bg-green-500/20 text-green-500 border border-green-500/20"
-                           : enq.type === 'Download Brochure'
-                           ? "bg-art-gold/20 text-art-gold border border-art-gold/30"
-                           : "bg-blue-500/20 text-blue-500 border border-blue-500/20"
-                       )}>
-                         {enq.type}
-                       </span>
-                     </td>
-                   </tr>
-                 ))}
+                           {enq.preferredLocation && (
+                             <span className="text-[10px] text-white/50 font-mono">
+                               Pref. Location: {enq.preferredLocation}
+                             </span>
+                           )}
+                         </div>
+                       </td>
+                       <td className="px-6 py-5 text-[11px] font-mono">
+                         <div className="flex flex-col gap-1.5">
+                           <a href={`tel:${enq.customerPhone}`} className="text-white hover:text-art-gold transition-colors font-bold">
+                             {enq.customerPhone}
+                           </a>
+                           <span className="text-white/40">{enq.customerEmail}</span>
+                         </div>
+                       </td>
+                       <td className="px-6 py-5 text-[11px] text-white/70 italic max-w-sm line-clamp-2 leading-relaxed">
+                         {enq.message ? `"${enq.message}"` : 'NO CONTEXT PROVIDED'}
+                       </td>
+                       <td className="px-6 py-5">
+                         <span className={cn(
+                           "text-[9px] px-3 py-1 rounded-sm uppercase font-black tracking-widest whitespace-nowrap",
+                           enq.type === 'WhatsApp'
+                             ? "bg-green-500/20 text-green-500 border border-green-500/20"
+                             : enq.type === 'Download Brochure'
+                             ? "bg-art-gold/20 text-art-gold border border-art-gold/30"
+                             : "bg-blue-500/20 text-blue-500 border border-blue-500/20"
+                         )}>
+                           {enq.type}
+                         </span>
+                       </td>
+                     </tr>
+                   );
+                 })}
                </tbody>
             </table>
           </div>
@@ -5101,81 +6203,298 @@ const AdminView = ({
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <button 
-              onClick={() => { setEditingProject(null); setShowProjectModal(true); }}
-              className="bg-art-gold text-black px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Plus size={16} /> Curate New Project
-            </button>
+          {/* Sub-Tabs for Projects Inventory: All, Primary, Rental, Resale */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-2 bg-[#141414] border border-white/10 rounded-sm">
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'all', label: 'All Projects', count: validProjects.length, color: 'text-white' },
+                { id: 'Primary', label: 'Primary Portfolios', count: primaryProjects.length, color: 'text-art-gold' },
+                { id: 'Rental', label: 'Rental Inventory', count: rentalProjects.length, color: 'text-cyan-400' },
+                { id: 'Resale', label: 'Resale Inventory', count: resaleProjects.length, color: 'text-amber-400' }
+              ].map(sub => (
+                <button
+                  key={sub.id}
+                  onClick={() => setInventoryTab(sub.id as any)}
+                  className={cn(
+                    "py-2 px-3.5 text-[10px] font-black uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex items-center gap-2",
+                    inventoryTab === sub.id
+                      ? "bg-white text-black border-white shadow-md"
+                      : "bg-white/5 text-white/55 border-transparent hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  <span>{sub.label}</span>
+                  <span className={cn(
+                    "px-1.5 py-0.2 rounded text-[9px] font-mono",
+                    inventoryTab === sub.id ? "bg-black/15 text-black font-black" : "bg-white/10 text-white/70"
+                  )}>
+                    {sub.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Quick Action Creation Buttons */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button 
+                onClick={() => {
+                  setEditingProject(null);
+                  if (onOpenNewProjectWithMode) {
+                    onOpenNewProjectWithMode('Primary');
+                  } else {
+                    setShowProjectModal(true);
+                  }
+                }}
+                className="bg-art-gold hover:bg-white text-black px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <Plus size={13} /> + Primary
+              </button>
+              <button 
+                onClick={() => {
+                  setEditingProject(null);
+                  if (onOpenNewProjectWithMode) {
+                    onOpenNewProjectWithMode('Rental');
+                  } else {
+                    setShowProjectModal(true);
+                  }
+                }}
+                className="bg-cyan-500 hover:bg-white text-black px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <Plus size={13} /> + Rental
+              </button>
+              <button 
+                onClick={() => {
+                  setEditingProject(null);
+                  if (onOpenNewProjectWithMode) {
+                    onOpenNewProjectWithMode('Resale');
+                  } else {
+                    setShowProjectModal(true);
+                  }
+                }}
+                className="bg-amber-500 hover:bg-white text-black px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <Plus size={13} /> + Resale
+              </button>
+            </div>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {projects.filter(p => !LEGACY_PROJECT_NAMES.includes(p.name) && !p.isDeleted).map((p) => (
-              <div key={p.id || p.name} className="bg-white/5 border border-white/10 p-6 rounded-sm group relative">
-                {p.isPaused && (
-                  <div className="absolute top-4 right-4 z-20 bg-amber-500 text-black text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-sm shadow-lg">
-                    Hidden
-                  </div>
-                )}
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-[9px] text-art-gold font-black uppercase tracking-widest">{p.type} {p.segment ? `• ${p.segment}` : ''}</span>
-                  <span className="text-[9px] text-white/50 font-mono uppercase">{p.handoverStatus}</span>
-                </div>
-                <h4 className="text-white font-serif text-lg mb-1 truncate">{p.name}</h4>
-                <p className="text-[10px] text-white/60 uppercase tracking-widest mb-1">{p.location} ({p.zone})</p>
-                <p className="text-[9px] text-white/45 font-mono mb-2 truncate">{p.propertyType || 'Apartment'} • {p.approvalBody || 'RERA Approved'}</p>
-                <p className="text-[9px] text-emerald-400 font-mono mb-4">
-                  Last Price: {p.lastPrice || p.price} • Handover: {p.handoverDate || 'Immediate'}
-                </p>
-                {p.id && (
-                  <div className="flex gap-2">
-                     <button 
-                       onClick={() => { setEditingProject(p); setShowProjectModal(true); }}
-                       className="flex-1 bg-white/10 hover:bg-white/20 p-3 flex justify-center text-white transition-all rounded-sm cursor-pointer"
-                       title="Edit project"
-                     >
-                       <Edit size={14} />
-                     </button>
-                     <button 
-                       onClick={async () => {
-                         if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
-                           try {
-                             await updateDoc(doc(db, 'projects', p.id), { isPaused: !p.isPaused });
-                           } catch (err) {
-                             console.warn(err);
-                           }
-                         }
-                       }}
-                       className={cn(
-                         "p-3 flex justify-center transition-all rounded-sm cursor-pointer",
-                         p.isPaused 
-                           ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400" 
-                           : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500"
-                       )}
-                       title={p.isPaused ? "Resume project (mark active)" : "Pause project (hide from main page)"}
-                     >
-                       {p.isPaused ? <Play size={14} /> : <Pause size={14} />}
-                     </button>
-                     <button 
-                       onClick={async () => {
-                         if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
-                           try {
-                             await deleteDoc(doc(db, 'projects', p.id));
-                           } catch (err) {
-                             console.warn(err);
-                           }
-                         }
-                       }}
-                       className="bg-red-500/10 hover:bg-red-500/20 p-3 flex justify-center text-red-500 transition-all rounded-sm cursor-pointer"
-                       title="Delete project"
-                     >
-                       <Trash size={14} />
-                     </button>
-                  </div>
-                )}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {displayedProjects.length === 0 && (
+              <div className="col-span-full py-20 text-center text-white/30 italic font-mono text-xs border border-dashed border-white/10 rounded-sm">
+                No inventory listed under "{inventoryTab}" inventory tab.
               </div>
-            ))}
+            )}
+            {displayedProjects.map((p) => {
+              const isRental = p.type === 'Rental';
+              const isResale = p.type === 'Resale';
+
+              return (
+                <div 
+                  key={p.id || p.name} 
+                  className={cn(
+                    "bg-[#111111] border-2 p-5 rounded-md group relative flex flex-col justify-between transition-all",
+                    isRental 
+                      ? "border-cyan-500/40 hover:border-cyan-400" 
+                      : isResale 
+                      ? "border-amber-500/40 hover:border-amber-400" 
+                      : "border-white hover:border-art-gold"
+                  )}
+                >
+                  {p.isPaused && (
+                    <div className="absolute top-3 right-3 z-20 bg-amber-500 text-black text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-lg">
+                      Paused / Hidden
+                    </div>
+                  )}
+
+                  <div>
+                    {/* Header: Category Badge & Status */}
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className={cn(
+                        "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm font-mono border",
+                        isRental 
+                          ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/30" 
+                          : isResale 
+                          ? "bg-amber-500/15 text-amber-300 border-amber-500/30" 
+                          : "bg-art-gold/15 text-art-gold border-art-gold/30"
+                      )}>
+                        {p.type || 'Primary'} {p.propertyType ? `• ${p.propertyType}` : ''}
+                      </span>
+                      <span className="text-[8px] text-white/50 font-mono uppercase">
+                        {p.handoverStatus || (isRental ? 'Ready to Lease' : 'Available')}
+                      </span>
+                    </div>
+
+                    <h4 className="text-white font-serif text-lg mb-0.5 truncate font-bold">{p.name}</h4>
+                    <p className="text-[10px] text-white/70 uppercase tracking-wider mb-2 font-mono flex items-center gap-1">
+                      <MapPin size={10} className={isRental ? "text-cyan-400" : isResale ? "text-amber-400" : "text-art-gold"} />
+                      <span>{p.location} {p.zone ? `(${p.zone})` : ''}</span>
+                    </p>
+
+                    {/* Media Badges: Photos & Video */}
+                    <div className="flex items-center gap-2 mb-3">
+                      {p.imageUrls && p.imageUrls.length > 0 && (
+                        <span className="text-[8px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          📷 {p.imageUrls.length} HD Photo{p.imageUrls.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {(p.videoUrl || p.mobileVideoUrl) && (
+                        <span className="text-[8px] font-mono text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+                          🎥 Video Tour
+                        </span>
+                      )}
+                      {p.availableFrom && (
+                        <span className="text-[8px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                          🗓️ From {p.availableFrom}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Specific Fields Display */}
+                    {isRental ? (
+                      <div className="p-3 bg-white/[0.02] border border-cyan-500/20 rounded-sm space-y-1 mb-3 text-[9px] font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Monthly Rent:</span>
+                          <span className="text-cyan-300 font-bold">{p.monthlyRental || p.price}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Advance:</span>
+                          <span className="text-white/80">{p.advance || 'Negotiable'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Maintenance:</span>
+                          <span className="text-white/80">{p.maintenance || 'Nominal'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Residence / Tenant:</span>
+                          <span className="text-white/80">{p.residenceType || '2BHK'} • {p.tenantType || 'Family'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Furnish / Pets:</span>
+                          <span className="text-white/80">{p.furnishType || 'Semi'} • Pets: {p.petFriendly || 'Yes'}</span>
+                        </div>
+                        {p.suba && (
+                          <div className="flex justify-between">
+                            <span className="text-white/40">SUBA / Parking:</span>
+                            <span className="text-white/80">{p.suba} • {p.carCloseParking || 1} Car</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : isResale ? (
+                      <div className="p-3 bg-white/[0.02] border border-amber-500/20 rounded-sm space-y-1 mb-3 text-[9px] font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Resale Price:</span>
+                          <span className="text-amber-300 font-bold">{p.price}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">SUBA / Carpet:</span>
+                          <span className="text-white/80">{p.suba || '1650 Sq.Ft.'} / {p.carpetArea || '1280 Sq.Ft.'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Authority:</span>
+                          <span className="text-amber-300 font-bold">{p.approvedAuthority || p.approvalBody || 'BDA'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">RERA / Reg.:</span>
+                          <span className="text-white/80">{p.reraNumber ? 'Verified' : 'Ready'} • {p.registrationStatus || 'Clear'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Tower / Floor:</span>
+                          <span className="text-white/80">{p.tower || 'Block A'} • {p.floor || 'High Floor'}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-white/[0.02] border border-art-gold/20 rounded-sm space-y-1 mb-3 text-[9px] font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Indicative Price:</span>
+                          <span className="text-art-gold font-bold">{p.lastPrice || p.price}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Handover Date:</span>
+                          <span className="text-emerald-400 font-bold">{p.handoverDate || 'Immediate'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">RERA / Approval:</span>
+                          <span className="text-white/80">{p.approvalBody || 'BDA & RERA'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Builder:</span>
+                          <span className="text-white/80">Cat {p.builderCategory || 'A'} • {p.builderName || 'Verified'}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions & Direct Inquiry Trigger */}
+                  <div className="space-y-2 pt-2 border-t border-white/10">
+                    {/* Inquiry Form Button for Form Filling & Submit */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onOpenEnquiry) {
+                          onOpenEnquiry(p);
+                        }
+                      }}
+                      className={cn(
+                        "w-full py-2 px-3 text-[9px] font-black uppercase tracking-wider rounded-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm",
+                        isRental 
+                          ? "bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border border-cyan-500/40" 
+                          : isResale 
+                          ? "bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black border border-amber-500/40" 
+                          : "bg-art-gold/20 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40"
+                      )}
+                    >
+                      <FileText size={11} /> Fill &amp; Submit Inquiry
+                    </button>
+
+                    {p.id && (
+                      <div className="flex gap-2">
+                         <button 
+                           onClick={() => { setEditingProject(p); setShowProjectModal(true); }}
+                           className="flex-1 bg-white/10 hover:bg-white/20 p-2.5 flex justify-center text-white transition-all rounded-sm cursor-pointer"
+                           title="Edit project"
+                         >
+                           <Edit size={13} />
+                         </button>
+                         <button 
+                           onClick={async () => {
+                             if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
+                               try {
+                                 await updateDoc(doc(db, 'projects', p.id), { isPaused: !p.isPaused });
+                               } catch (err) {
+                                 console.warn(err);
+                               }
+                             }
+                           }}
+                           className={cn(
+                             "p-2.5 flex justify-center transition-all rounded-sm cursor-pointer",
+                             p.isPaused 
+                               ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400" 
+                               : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500"
+                           )}
+                           title={p.isPaused ? "Resume project (mark active)" : "Pause project (hide from main page)"}
+                         >
+                           {p.isPaused ? <Play size={13} /> : <Pause size={13} />}
+                         </button>
+                         <button 
+                           onClick={async () => {
+                             if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
+                               try {
+                                 await deleteDoc(doc(db, 'projects', p.id));
+                               } catch (err) {
+                                 console.warn(err);
+                               }
+                             }
+                           }}
+                           className="bg-red-500/10 hover:bg-red-500/20 p-2.5 flex justify-center text-red-500 transition-all rounded-sm cursor-pointer"
+                           title="Delete project"
+                         >
+                           <Trash size={13} />
+                         </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -7530,6 +8849,7 @@ export default function App() {
   });
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [projectModalMode, setProjectModalMode] = useState<'Primary' | 'Rental' | 'Resale'>('Primary');
   const [showHiddenProjects, setShowHiddenProjects] = useState(false);
   const [hiddenProjectIds, setHiddenProjectIds] = useState<string[]>(() => {
     try {
@@ -8345,9 +9665,9 @@ export default function App() {
         onInquire={handleGeneralInquiry}
       />
       
-      <main className="flex-grow pt-28 sm:pt-32">
+      <main className="flex-grow pt-[58px] sm:pt-[64px] md:pt-[104px] lg:pt-[96px]">
         {activeMainTab === 'overview' && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-12">
+          <div className="max-w-7xl mx-auto px-2.5 sm:px-6 md:px-12 pb-10 sm:pb-12">
             {/* Framed Home Window */}
             <div className="border border-white/10 bg-white/[0.01] rounded-sm overflow-hidden shadow-2xl">
               <Hero
@@ -8355,58 +9675,64 @@ export default function App() {
                 onExplorePortfolios={() => setActiveMainTab('projects')}
               />
               {/* Quick Tab Directory Cards inside the Home Window */}
-              <section className="py-10 sm:py-12 px-4 sm:px-8 md:px-12 bg-art-dark/90 border-t border-white/10">
-                <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <section className="py-6 sm:py-10 px-3 sm:px-8 md:px-12 bg-art-dark/95 border-t border-white/10">
+                <div className="mb-5 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 sm:gap-4">
                   <div>
-                    <span className="text-art-gold text-[10px] uppercase tracking-[0.4em] font-black block mb-2">
+                    <span className="text-art-gold text-[9.5px] sm:text-[10px] uppercase tracking-[0.25em] sm:tracking-[0.4em] font-black block mb-1.5 sm:mb-2">
                       Dedicated Workspace Tabs
                     </span>
-                    <h2 className="text-2xl sm:text-4xl font-serif text-white italic">
+                    <h2 className="text-xl sm:text-3xl md:text-4xl font-serif text-white italic">
                       Explore by <span className="not-italic text-art-gold">Dedicated Tab.</span>
                     </h2>
                   </div>
-                  <p className="text-[11px] text-white/50 uppercase tracking-widest">
-                    Select any tab below to open its dedicated view.
+                  <p className="text-[10px] sm:text-[11px] text-white/60 uppercase tracking-wider">
+                    Select any tab below to switch to its dedicated view.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
                   {[
-                    { id: 'projects' as MainAppTab, title: 'Artisanal Portraits', sub: 'Primary, Resale & Rental Portfolios' },
-                    { id: 'services' as MainAppTab, title: 'Property Intelligence', sub: '0% Primary, Resale & Rental Services' },
-                    { id: 'why-choose' as MainAppTab, title: 'Philosophy', sub: 'Sales, Resale & Rental Pillars of Trust' },
-                    { id: 'insights' as MainAppTab, title: 'Market Vault & Metrics', sub: 'East Corridor Capital Velocity' },
-                    { id: 'opportunity' as MainAppTab, title: 'Offer Your Asset', sub: 'List Property for Sale or Rent' },
-                    { id: 'referral' as MainAppTab, title: 'Referral Program', sub: 'Introduce Friends & Family' },
-                    { id: 'loans' as MainAppTab, title: 'Home Loan Hub', sub: 'EMI & Tier-1 Banking Concierge' },
-                    { id: 'testimonials' as MainAppTab, title: 'Client Voices', sub: 'Verified Homebuyer & Tenant Stories' },
-                    { id: 'faq' as MainAppTab, title: 'Advisory FAQ', sub: 'RERA, Khata, Resale & Rental Answers' },
-                    { id: 'about' as MainAppTab, title: 'Guided Excellence', sub: '100+ Tied Builders Across Bangalore' }
-                  ].map(card => (
-                    <button
-                      key={card.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveMainTab(card.id);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      className="p-5 bg-white/[0.02] hover:bg-art-gold/10 border border-white/10 hover:border-art-gold rounded-sm text-left transition-all group cursor-pointer flex flex-col justify-between"
-                    >
-                      <div>
-                        <span className="text-[8px] uppercase tracking-[0.25em] text-art-gold font-black block mb-1.5">
-                          Open Tab
-                        </span>
-                        <h3 className="text-lg font-serif italic text-white group-hover:text-art-gold transition-colors leading-snug">
-                          {card.title}
-                        </h3>
-                        <p className="text-[10px] text-white/50 mt-1 leading-relaxed">{card.sub}</p>
-                      </div>
-                      <div className="mt-4 pt-2.5 border-t border-white/5 flex items-center justify-between text-[8px] uppercase tracking-widest text-white/60 group-hover:text-art-gold font-bold">
-                        <span>Switch Tab</span>
-                        <ChevronRight size={13} className="group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </button>
-                  ))}
+                    { id: 'projects' as MainAppTab, title: 'Artisanal Portraits', sub: 'Primary, Resale & Rental Portfolios', icon: Building2 },
+                    { id: 'services' as MainAppTab, title: 'Property Intelligence', sub: '0% Primary, Resale & Rental Services', icon: ShieldCheck },
+                    { id: 'why-choose' as MainAppTab, title: 'Philosophy', sub: 'Sales, Resale & Rental Pillars of Trust', icon: Compass },
+                    { id: 'insights' as MainAppTab, title: 'Market Vault & Metrics', sub: 'East Corridor Capital Velocity', icon: TrendingUp },
+                    { id: 'opportunity' as MainAppTab, title: 'Offer Your Asset', sub: 'List Property for Sale or Rent', icon: Target },
+                    { id: 'referral' as MainAppTab, title: 'Referral Program', sub: 'Introduce Friends & Family', icon: Handshake },
+                    { id: 'loans' as MainAppTab, title: 'Home Loan Hub', sub: 'EMI & Tier-1 Banking Concierge', icon: CreditCard },
+                    { id: 'testimonials' as MainAppTab, title: 'Client Voices', sub: 'Verified Homebuyer & Tenant Stories', icon: MessageCircle },
+                    { id: 'faq' as MainAppTab, title: 'Advisory FAQ', sub: 'RERA, Khata, Resale & Rental Answers', icon: Info },
+                    { id: 'about' as MainAppTab, title: 'Guided Excellence', sub: '100+ Tied Builders Across Bangalore', icon: Star }
+                  ].map(card => {
+                    const CardIcon = card.icon;
+                    return (
+                      <button
+                        key={card.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveMainTab(card.id);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="p-3.5 sm:p-4 bg-white/[0.025] hover:bg-art-gold/10 border border-white/10 hover:border-art-gold rounded-sm text-left transition-all group cursor-pointer flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="text-[8.5px] uppercase tracking-wider text-art-gold font-black">
+                              Open Tab
+                            </span>
+                            <CardIcon size={14} className="text-art-gold/60 group-hover:text-art-gold transition-colors" />
+                          </div>
+                          <h3 className="text-base sm:text-lg font-serif italic text-white group-hover:text-art-gold transition-colors leading-snug">
+                            {card.title}
+                          </h3>
+                          <p className="text-[10px] text-white/55 mt-1 leading-relaxed">{card.sub}</p>
+                        </div>
+                        <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[8.5px] uppercase tracking-wider text-white/60 group-hover:text-art-gold font-bold">
+                          <span>Switch Tab</span>
+                          <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
             </div>
@@ -8488,6 +9814,15 @@ export default function App() {
             editingProject={editingProject}
             setEditingProject={setEditingProject}
             onOpenSeoPreview={() => setIsSeoModalOpen(true)}
+            onOpenNewProjectWithMode={(mode) => {
+              setProjectModalMode(mode);
+              setEditingProject(null);
+              setShowProjectModal(true);
+            }}
+            onOpenEnquiry={(proj) => {
+              setSelectedProject(proj);
+              setEnquiryType('Acquire');
+            }}
           />
         )}
 
@@ -8575,9 +9910,14 @@ export default function App() {
         {showProjectModal && (
           <ProjectForm 
             project={editingProject} 
+            initialInventoryType={projectModalMode}
             onClose={() => {
               setShowProjectModal(false);
               setEditingProject(null);
+            }}
+            onOpenEnquiry={(proj) => {
+              setSelectedProject(proj);
+              setEnquiryType('Acquire');
             }}
             onProjectSaved={(savedProject) => {
               setProjects(prev => {

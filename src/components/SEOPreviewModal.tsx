@@ -57,11 +57,15 @@ export const SEOPreviewModal: React.FC<SEOPreviewModalProps> = ({
     : `https://bshomez.co.in › ${activeTab}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto"
+      onClick={onClose}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
+        onClick={e => e.stopPropagation()}
         className="bg-[#121212] border border-art-gold/30 rounded-lg max-w-4xl w-full shadow-[0_25px_60px_rgba(0,0,0,0.95)] overflow-hidden my-auto text-art-light relative"
       >
         {/* Header */}

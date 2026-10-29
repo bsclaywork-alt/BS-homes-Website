@@ -158,10 +158,12 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
         </div>
         <button 
           onClick={onClose}
-          className="text-white/40 hover:text-white transition-colors p-2 z-50 rounded-full hover:bg-white/5 cursor-pointer"
+          className="px-3 py-1.5 rounded-full bg-white text-black hover:bg-art-gold font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all cursor-pointer z-50 border border-white"
           aria-label="Close Calculator"
+          title="Close (Esc)"
         >
-          <X size={16} />
+          <X size={14} className="stroke-[3]" />
+          <span className="font-mono text-[10px]">CLOSE</span>
         </button>
       </div>
 
@@ -325,13 +327,22 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
           <span className="text-[7.5px] text-white/25 uppercase tracking-widest font-mono">Estimated Future Value</span>
           <span className="text-xs text-art-gold font-bold">{formatINRCurrency(finalValue)}</span>
         </div>
-        <button
-          onClick={onClose}
-          className="flex items-center gap-2 px-5 py-3 bg-art-gold text-black hover:bg-white hover:text-black font-black text-[9px] uppercase tracking-[0.2em] rounded-sm transition-all shadow-[0_0_15px_rgba(212,175,55,0.2)] cursor-pointer outline-none"
-        >
-          Acquire Portfolio
-          <ArrowUpRight size={12} className="stroke-[2.5]" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-[9px] uppercase tracking-[0.18em] rounded-sm transition-all border border-white/20 cursor-pointer"
+          >
+            Close
+          </button>
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 px-5 py-3 bg-art-gold text-black hover:bg-white hover:text-black font-black text-[9px] uppercase tracking-[0.2em] rounded-sm transition-all shadow-[0_0_15px_rgba(212,175,55,0.2)] cursor-pointer outline-none"
+          >
+            Acquire Portfolio
+            <ArrowUpRight size={12} className="stroke-[2.5]" />
+          </button>
+        </div>
       </div>
     </motion.div>
   );

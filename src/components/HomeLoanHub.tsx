@@ -21,8 +21,13 @@ import {
   Clock,
   Compass,
   MapPin,
-  CheckCircle2
+  CheckCircle2,
+  X,
+  Send
 } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { Enquiry } from '../types';
 
 interface BankRate {
   bankName: string;
@@ -419,10 +424,78 @@ export const HomeLoanHub: React.FC = () => {
     ? bangaloreNewsArticles 
     : bangaloreNewsArticles.filter(art => art.category === newsFilter);
 
-  // Build high-affinity contact routes
-  const emailMailto = activeTab === 'eligibility'
-    ? `mailto:advisory@bshomez.com?subject=BS%20Homez%20-%20Loan%20Eligibility%20Sanction%20Advisory&body=Dear%20BS%20Homez%20Advisory%20Desk%2C%0D%0A%0D%0AI%20am%20evaluating%20my%20home%20loan%20eligibility%20via%20your%20digital%20suite.%20Please%20assign%20a%20partner%20advisory%20expert%20to%20verify%20my%20financing%20and%20eligibility%20options.%0D%0A%0D%0A---%20ESTIMATED%20METRICS%20---%0D%0AApplicant%20Age%3A%20${applicantAge}%20Years%0D%0AMonthly%20Income%3A%20${formatINR(monthlyIncome)}%0D%0AExisting%20EMIs%3A%20${formatINR(existingEMIs)}%0D%0AEligible%20Tenure%3A%20${effectiveEligibilityTenure}%20Years%0D%0AMaximum%20Estimated%20Loan%20Sanction%3A%20${formatINR(eligibilityAmount)}%0D%0AEstimated%20Property%20Budget%3A%20${formatINR(propertyBudget)}%0D%0AAnticipated%20Interest%3A%20${interestRate}%25%0D%0A%0D%0APlease%20reach%20back%20at%20your%20earliest%20convenience.`
-    : `mailto:advisory@bshomez.com?subject=BS%20Homez%20-%20Premium%20Home%20Loan%20Advisory&body=Dear%20BS%20Homez%20Advisory%20Desk%2C%0D%0A%0D%0AI%20am%20researching%20real%20estate%20capital%20allocations%20via%20your%20digital%20suite.%20Please%20assign%20a%20partner%20advisory%20expert%20to%20verify%20my%20financing%20options.%0D%0A%0D%0A---%20ESTIMATED%20METRICS%20---%0D%0AEstimated%20Loan%20Amount%3A%20${formatINR(loanAmount)}%0D%0AExpected%20Tenure%3A%20${tenureYears}%20Years%0D%0AAnticipated%20Interest%3A%20${interestRate}%25%0D%0AEstimated%20Monthly%20EMI%3A%20INR%20${Math.round(monthlyEMI).toLocaleString('en-IN')}%2Fmonth%0D%0A%0D%0APlease%20reach%20back%20at%20your%20earliest%20convenience.`;
+  // Inquiry Modal State (Primary, Resale, Rent, Home Loan)
+  const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
+  const [inquiryCategory, setInquiryCategory] = useState<'Primary' | 'Resale' | 'Rent' | 'Home Loan'>('Home Loan');
+  const [inquiryForm, setInquiryForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    preferredContactTime: 'Morning (9:00 AM - 12:00 PM)',
+    message: ''
+  });
+  const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
+  const [inquirySuccess, setInquirySuccess] = useState(false);
+  const [inquiryError, setInquiryError] = useState<string | null>(null);
+
+  const handleInquirySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingInquiry(true);
+    setInquiryError(null);
+
+    const mappedCategory = inquiryCategory === 'Rent' ? 'Rental' : inquiryCategory;
+    const computedMetricsSummary = activeTab === 'eligibility'
+      ? `Eligible Loan: ${formatINR(eligibilityAmount)}, Monthly Income: ${formatINR(monthlyIncome)}, Existing EMIs: ${formatINR(existingEMIs)}, Age: ${applicantAge} Yrs`
+      : `Loan Amount: ${formatINR(loanAmount)}, Tenure: ${tenureYears} Yrs, Interest: ${interestRate}%, EMI: INR ${Math.round(monthlyEMI).toLocaleString('en-IN')}/mo`;
+
+    const enquiryPayload: Enquiry = {
+      projectId: 'home_loan_advisory',
+      projectName: inquiryCategory === 'Home Loan' ? 'Home Loan & Capital Advisory' : `${inquiryCategory} Property Advisory`,
+      customerName: inquiryForm.name.trim(),
+      customerPhone: inquiryForm.phone.trim(),
+      customerEmail: inquiryForm.email.trim() || 'advisory-lead@bshomez.com',
+      preferredContactTime: inquiryForm.preferredContactTime,
+      enquiryCategory: mappedCategory as any,
+      propertyCategory: inquiryCategory,
+      message: `${inquiryForm.message ? inquiryForm.message + '\n\n' : ''}[Advisory Parameters: ${computedMetricsSummary}]`,
+      type: 'Form',
+      timestamp: serverTimestamp()
+    };
+
+    try {
+      await addDoc(collection(db, 'enquiries'), enquiryPayload);
+      setInquirySuccess(true);
+      setTimeout(() => {
+        setIsInquiryModalOpen(false);
+        setInquirySuccess(false);
+        setInquiryForm({
+          name: '',
+          phone: '',
+          email: '',
+          preferredContactTime: 'Morning (9:00 AM - 12:00 PM)',
+          message: ''
+        });
+      }, 2200);
+    } catch (err: any) {
+      console.warn('Enquiry fallback save:', err);
+      // Fallback locally
+      try {
+        const localEnquiries = JSON.parse(localStorage.getItem('bs_homez_local_enquiries') || '[]');
+        localEnquiries.unshift({ ...enquiryPayload, id: `local_enq_${Date.now()}`, timestamp: new Date().toISOString() });
+        localStorage.setItem('bs_homez_local_enquiries', JSON.stringify(localEnquiries));
+        setInquirySuccess(true);
+        setTimeout(() => {
+          setIsInquiryModalOpen(false);
+          setInquirySuccess(false);
+        }, 2200);
+      } catch (localErr) {
+        handleFirestoreError(err, OperationType.WRITE, 'enquiries');
+        setInquiryError('Submission encountered a network delay. Please try again.');
+      }
+    } finally {
+      setIsSubmittingInquiry(false);
+    }
+  };
 
   return (
     <section id="loan-advisor" className="py-24 md:py-32 px-6 md:px-12 bg-[#090909] border-t border-white/5 relative overflow-hidden">
@@ -1383,14 +1456,14 @@ export const HomeLoanHub: React.FC = () => {
 
               {/* High Affinity Touch Actions */}
               <div className="flex flex-col gap-2.5 w-full max-w-xs mx-auto">
-                {/* Email Trigger */}
-                <a
-                  href={emailMailto}
+                <button
+                  type="button"
+                  onClick={() => setIsInquiryModalOpen(true)}
                   className="flex items-center justify-center gap-2.5 w-full h-11 bg-art-gold hover:bg-white text-black text-[10px] uppercase tracking-[0.2em] font-extrabold rounded-sm transition-all shadow-[0_4px_15px_rgba(197,160,89,0.2)] outline-none cursor-pointer"
                 >
-                  <Mail size={13} className="shrink-0" />
-                  Inquire Loan Eligibility Details
-                </a>
+                  <FileText size={13} className="shrink-0" />
+                  Submit Inquiry Form
+                </button>
               </div>
             </div>
 
@@ -1399,6 +1472,170 @@ export const HomeLoanHub: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Interactive Integrated Inquiry Modal */}
+      <AnimatePresence>
+        {isInquiryModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsInquiryModalOpen(false)}
+              className="fixed inset-0 bg-black/95 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative bg-[#101010] w-full max-w-xl border-2 border-white rounded-md shadow-2xl p-6 sm:p-8 overflow-y-auto max-h-[90vh] my-auto z-20"
+            >
+              <button 
+                type="button"
+                onClick={() => setIsInquiryModalOpen(false)} 
+                className="absolute top-5 right-5 p-2 hover:bg-white/10 transition-colors text-white/50 hover:text-white rounded-full cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+
+              {inquirySuccess ? (
+                <div className="py-10 text-center space-y-4">
+                  <div className="w-16 h-16 bg-art-gold/15 border border-art-gold/30 rounded-full flex items-center justify-center mx-auto text-art-gold">
+                    <CheckCircle2 size={36} />
+                  </div>
+                  <h3 className="text-2xl font-serif text-white italic">Inquiry Successfully Transmitted</h3>
+                  <p className="text-xs text-white/60 tracking-wider">
+                    Our verified Relationship Manager for <strong className="text-art-gold">{inquiryCategory}</strong> will connect with you during your chosen contact time.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleInquirySubmit} className="space-y-5 text-left">
+                  <div className="border-b border-white/10 pb-4">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-art-gold/15 border border-art-gold/30 rounded-full mb-2">
+                      <Sparkles size={10} className="text-art-gold" />
+                      <span className="text-[8px] font-mono uppercase tracking-widest text-art-gold font-bold">Priority Advisory Desk</span>
+                    </div>
+                    <h3 className="text-2xl font-serif italic text-white">Direct Intelligence &amp; Advisory</h3>
+                    <p className="text-[11px] text-white/50 mt-1">Select your property or loan inquiry category below to connect with a senior advisor.</p>
+                  </div>
+
+                  {/* Category Option Selector: Primary, Resale, Rent, Home Loan */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold block">
+                      Select Inquiry Category *
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {(['Primary', 'Resale', 'Rent', 'Home Loan'] as const).map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setInquiryCategory(cat)}
+                          className={`py-2.5 px-2 text-[10px] font-bold uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                            inquiryCategory === cat
+                              ? 'bg-art-gold text-black border-art-gold shadow-md font-black'
+                              : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30 hover:text-white'
+                          }`}
+                        >
+                          <span>{cat}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Form Inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">Full Name *</label>
+                      <input
+                        required
+                        type="text"
+                        value={inquiryForm.name}
+                        onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
+                        placeholder="Your Full Name"
+                        className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">Phone / Mobile Number *</label>
+                      <input
+                        required
+                        type="tel"
+                        value={inquiryForm.phone}
+                        onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
+                        placeholder="+91 Mobile Number"
+                        className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">Email Address (Optional)</label>
+                      <input
+                        type="email"
+                        value={inquiryForm.email}
+                        onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+                        placeholder="you@example.com"
+                        className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] uppercase font-bold tracking-widest text-art-gold block">Preferred Contact Time</label>
+                      <select
+                        value={inquiryForm.preferredContactTime}
+                        onChange={(e) => setInquiryForm({ ...inquiryForm, preferredContactTime: e.target.value })}
+                        className="w-full bg-[#181818] border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all font-mono"
+                      >
+                        <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM – 12:00 PM)</option>
+                        <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM – 4:00 PM)</option>
+                        <option value="Evening (4:00 PM - 8:00 PM)">Evening (4:00 PM – 8:00 PM)</option>
+                        <option value="Weekend Anytime">Weekend Anytime</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">
+                      Specific Inquiries &amp; Capital Requirement
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={inquiryForm.message}
+                      onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
+                      placeholder={`Provide any specific property preferences or financing details for ${inquiryCategory}...`}
+                      className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all resize-none"
+                    />
+                  </div>
+
+                  {inquiryError && (
+                    <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded text-[10px] text-red-400 font-mono">
+                      {inquiryError}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSubmittingInquiry}
+                      className="flex-1 bg-art-gold hover:bg-white text-black py-3.5 px-4 text-xs font-black uppercase tracking-widest rounded-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      <Send size={13} />
+                      {isSubmittingInquiry ? 'Transmitting...' : `Submit ${inquiryCategory} Inquiry`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsInquiryModalOpen(false)}
+                      className="px-5 py-3.5 bg-white/5 hover:bg-white/10 text-white/60 border border-white/15 text-xs font-bold uppercase tracking-wider rounded-sm transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

@@ -17,10 +17,46 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
   const shareMessage = `Check out this property: ${propertyTitle}\n\nHighlights:\n${propertyHighlights.map(h => `- ${h}`).join('\n')}\n\nView here: ${propertyLink}`;
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(shareMessage).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(shareMessage)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(() => {
+          try {
+            const textArea = document.createElement("textarea");
+            textArea.value = shareMessage;
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          } catch {
+            setCopied(false);
+          }
+        });
+    } else {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = shareMessage;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        setCopied(false);
+      }
+    }
   };
 
 

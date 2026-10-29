@@ -26,7 +26,7 @@ export interface Project {
     | 'Bangalore Central'
     | 'All Zone';
   type: 'Primary' | 'Resale' | 'Rental' | 'Primary Sale';
-  propertyType: 'Apartment' | 'Villa' | 'Plot' | 'Flat';
+  propertyType: 'Apartment' | 'Villa' | 'Plot' | 'Flat' | 'Commercial' | 'Stand Alone Building';
   builderCategory?: 'A+' | 'A' | 'B' | 'C';
   builderName?: string;
   approvalBody?: string;
@@ -54,6 +54,38 @@ export interface Project {
   priceHistory?: { period: string; price: number; displayPrice: string }[];
   isPaused?: boolean;
   isDeleted?: boolean;
+
+  // Specific Rental & Resale Inventory Fields
+  availableFrom?: string;
+  mainDoorFacing?: string;
+  tower?: string;
+  floor?: string;
+  residenceType?: 'Studio' | '1BHK' | '2BHK' | '3BHK' | '4BHK' | '5BHK' | string;
+  tenantType?: 'Bachelors' | 'Spinsters' | 'Family' | string;
+  amenitiesAvailability?: 'Yes' | 'No' | string;
+  petFriendly?: 'Yes' | 'No' | string;
+  furnishType?: 'Unfurnished' | 'Semi Furnished' | 'Full Furnished' | string;
+  advance?: string;
+  monthlyRental?: string;
+  maintenance?: string;
+  suba?: string;
+  carpetArea?: string;
+  carCloseParking?: '1' | '2' | '3' | '4' | string;
+  balcony?: string;
+  comments?: string;
+  handedOverDate?: string;
+  registrationStatus?: string;
+  approvedAuthority?: 'BDA' | 'BBMP' | 'BMRDA' | 'STRR' | 'DTCP' | 'MPA' | 'SPA' | 'BIAPPA' | string;
+
+  // SEO & Social Optimization
+  metaTitle?: string;
+  metaDescription?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+  seoKeywords?: string[];
+  seoLastSyncedAt?: string;
+  seoSyncSource?: string;
+
   createdAt: any;
   updatedAt?: any;
 }
@@ -70,6 +102,8 @@ export interface Enquiry {
   preferredContactTime?: string;
   message: string;
   type: 'WhatsApp' | 'Email' | 'Form' | 'AI Chat' | 'Download Brochure';
+  enquiryCategory?: 'Primary' | 'Rental' | 'Resale' | 'Home Loan';
+  propertyCategory?: 'Primary' | 'Resale' | 'Rent' | 'Home Loan';
   timestamp: any;
 }
 
