@@ -181,6 +181,11 @@ export const ProjectComparisonModal: React.FC<ProjectComparisonModalProps> = ({
                                   {p.propertyType}
                                 </span>
                               </div>
+                              {/* BS Homez Image Watermark */}
+                              <div className="pointer-events-none absolute bottom-1.5 right-1.5 z-20 flex items-center gap-1 px-1.5 py-0.5 bg-black/75 backdrop-blur-sm rounded-sm border border-art-gold/30 text-white text-[8px] font-black tracking-widest font-mono shadow-md select-none">
+                                <span className="w-1 h-1 rounded-full bg-art-gold" />
+                                <span>BS Homez</span>
+                              </div>
                             </div>
 
                             {/* Name & Builder */}

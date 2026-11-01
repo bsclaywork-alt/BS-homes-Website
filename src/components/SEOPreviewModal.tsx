@@ -51,10 +51,10 @@ export const SEOPreviewModal: React.FC<SEOPreviewModalProps> = ({
     setTimeout(() => setCopiedUrl(false), 2500);
   };
 
-  const domain = "ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app";
+  const domain = "www.bshomez.in";
   const displayUrl = selectedProject 
-    ? `https://bshomez.co.in › project › ${selectedProject.name.toLowerCase().replace(/\s+/g, '-')}`
-    : `https://bshomez.co.in › ${activeTab}`;
+    ? `https://www.bshomez.in › project › ${selectedProject.name.toLowerCase().replace(/\s+/g, '-')}`
+    : `https://www.bshomez.in › ${activeTab}`;
 
   return (
     <div 
@@ -333,7 +333,7 @@ export const SEOPreviewModal: React.FC<SEOPreviewModalProps> = ({
 
                 <div className="p-4 bg-black border-t border-white/10">
                   <span className="text-xs text-neutral-500 font-mono block mb-1">
-                    bshomez.co.in
+                    www.bshomez.in
                   </span>
                   <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 mb-1">
                     {currentTitle}

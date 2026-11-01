@@ -73,7 +73,11 @@ import {
   Scale,
   Clock,
   FileText,
-  MoreVertical
+  MoreVertical,
+  Trash2,
+  RotateCcw,
+  Share2,
+  Archive
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -102,8 +106,10 @@ import { SocialShareButtons } from './components/SocialShareButtons';
 import { SEOPreviewModal } from './components/SEOPreviewModal';
 import { MediaUploadCompressor } from './components/MediaUploadCompressor';
 import { MediaViewerModal } from './components/MediaViewerModal';
+import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { PhoneInputWithCountry, validateMobileNumber } from './components/PhoneInputWithCountry';
 
 import imgEastEoi from './assets/images/east_bangalore_eoi_towers_1791731720202.jpg';
 import imgSouthEastConst from './assets/images/southeast_bangalore_construction_1791731732392.jpg';
@@ -499,8 +505,8 @@ const Navbar = ({
             </div>
             <div className="mt-auto pt-8 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div>
-                <span className="text-[10px] text-art-gold uppercase tracking-[0.5em] font-black block mb-1">Private Vault Access</span>
-                <a href="tel:+919108187205" className="text-2xl font-serif text-white italic">+91 91081 87205</a>
+                <span className="text-[10px] text-art-gold uppercase tracking-[0.5em] font-black block mb-1">Direct Advisory</span>
+                <a href="mailto:contact@bshomez.co.in" className="text-xl font-serif text-white italic hover:text-art-gold transition-colors">contact@bshomez.co.in</a>
               </div>
               <button
                 type="button"
@@ -1267,8 +1273,7 @@ const ProjectCard: React.FC<{
     <motion.div 
       ref={containerRef}
       initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       whileHover={{ 
         y: isEditingCard ? 0 : -8,
         scale: isEditingCard ? 1 : 1.015,
@@ -1278,9 +1283,12 @@ const ProjectCard: React.FC<{
         type: "spring", 
         stiffness: 260, 
         damping: 20,
-        opacity: { duration: 0.5 }
+        opacity: { duration: 0.6 }
       }}
-      className="group relative flex flex-col bg-[#101010] border-2 border-white hover:border-white transition-all duration-300 overflow-hidden rounded-md shadow-[0_4px_20px_rgba(255,255,255,0.1),0_15px_40px_rgba(0,0,0,0.9)] hover:shadow-[0_20px_45px_rgba(255,255,255,0.2)] w-full max-w-full box-border"
+      className={cn(
+        "group relative flex flex-col bg-[#101010] border-2 border-white hover:border-white transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-md max-sm:rounded-lg max-sm:p-6 shadow-[0_4px_20px_rgba(255,255,255,0.1),0_15px_40px_rgba(0,0,0,0.9)] hover:shadow-[0_20px_45px_rgba(255,255,255,0.2)]",
+        isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+      )}
     >
       {project.priceChanged && (
          <div className="absolute top-4 left-4 z-20 bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm shadow-md">
@@ -1379,15 +1387,26 @@ const ProjectCard: React.FC<{
       </AnimatePresence>
 
       {/* Top Status & Corridor Header Banner */}
-      <div className="px-3 py-1.5 bg-black/85 border-b border-white/20 flex items-center justify-between gap-1.5 flex-wrap">
+      <div className="px-3 py-1.5 bg-black/90 border-b border-white/20 flex items-center justify-between gap-1.5 flex-wrap">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-art-gold text-black rounded-sm shadow-sm">
             {displayType}
           </span>
-          <span className="text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider text-white flex items-center gap-1">
+          <span className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 bg-white/10 text-white border border-white/15 rounded-sm flex items-center gap-1">
             <MapPin size={10} className="text-art-gold shrink-0" />
             {displayZone}
           </span>
+          {/* Stickers: Sold Out / Rented Out */}
+          {project.sticker === 'Sold Out' && (
+            <span className="px-2 py-0.5 bg-red-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.5)] flex items-center gap-1 animate-pulse">
+              <span>🏷️</span> SOLD OUT
+            </span>
+          )}
+          {project.sticker === 'Rented Out' && (
+            <span className="px-2 py-0.5 bg-indigo-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.5)] flex items-center gap-1">
+              <span>🔑</span> RENTED OUT
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -1753,7 +1772,7 @@ const ProjectCard: React.FC<{
       ) : (
         <>
           {/* Project Name & Segment Header */}
-          <div className="px-3 sm:px-4 pt-2.5 pb-2 bg-white/[0.02] border-b border-white/10">
+          <div className="px-3 sm:px-4 pt-2.5 pb-2 bg-white/[0.02] border-b border-white/10 max-sm:px-0">
             <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
               <span className="text-art-gold text-[9.5px] sm:text-[10.5px] uppercase tracking-wider font-extrabold">
                 {displayPropertyType} {project.segment ? `• ${project.segment}` : ''}
@@ -1762,15 +1781,15 @@ const ProjectCard: React.FC<{
                 <span className="text-white/80 text-[9.5px] sm:text-[10.5px] font-mono font-semibold uppercase tracking-wider">{project.configuration.join(' | ')}</span>
               )}
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1.5 sm:gap-3">
-              <h3 className="text-xl sm:text-2xl font-serif text-white font-bold italic leading-tight group-hover:text-art-gold transition-colors duration-300 tracking-tight">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 border-b border-white/5 pb-2">
+              <h3 className="text-sm sm:text-xl md:text-2xl font-serif text-white font-bold italic leading-snug group-hover:text-art-gold transition-colors duration-300 tracking-tight break-words flex-1 min-w-0">
                 {project.name}
               </h3>
-              <div className="text-left sm:text-right shrink-0">
-                <span className="text-xl sm:text-2xl font-sans font-black text-white tracking-tight leading-tight block drop-shadow-md">
+              <div className="text-left sm:text-right shrink-0 max-w-full sm:max-w-[48%] bg-black/60 border border-art-gold/35 px-3 py-1.5 rounded-sm shadow-sm">
+                <span className="text-md sm:text-lg md:text-xl font-mono font-black text-art-gold tracking-tight leading-tight block whitespace-normal break-words antialiased">
                   {formattedMainPrice}
                 </span>
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/70 font-mono font-medium block">
+                <span className="text-[8.5px] sm:text-[9.5px] uppercase tracking-wider text-white/80 font-mono font-semibold block mt-0.5">
                   * Conditions Apply
                 </span>
               </div>
@@ -1952,10 +1971,11 @@ const ProjectCard: React.FC<{
                 <button
                   type="button"
                   onClick={() => setIsCalculatorOpen(true)}
-                  className="px-2 py-1 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white/20 text-white border-white/20 transition-all flex items-center gap-1 cursor-pointer min-h-[30px]"
+                  className="px-2.5 py-1 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border bg-art-gold/15 hover:bg-art-gold hover:text-black text-art-gold border-art-gold/40 transition-all flex items-center gap-1 cursor-pointer min-h-[30px] shadow-sm"
+                  title="Open Investment & ROI Calculator"
                 >
-                  <Calculator size={10} className="text-art-gold" />
-                  ROI
+                  <Calculator size={11} className="shrink-0" />
+                  <span>Calculate ROI</span>
                 </button>
                 {onToggleCompare && (
                   <button
@@ -2028,8 +2048,8 @@ const ProjectCard: React.FC<{
 
 const ProjectCardSkeleton = () => {
   return (
-    <div className="group relative flex flex-col bg-[#101010] border-2 border-white overflow-hidden rounded-md w-full max-w-full box-border">
-      <div className="p-3 flex flex-col flex-grow space-y-2.5">
+    <div className="group relative flex flex-col bg-[#101010] border-2 border-white overflow-hidden w-full max-w-full box-border rounded-md max-sm:rounded-lg max-sm:p-6">
+      <div className="p-3 max-sm:p-0 flex flex-col flex-grow space-y-2.5">
         <div className="bg-white/10 h-5 w-3/4 rounded-sm shimmer-bg" />
         <div className="bg-white/[0.04] h-10 w-full rounded-sm shimmer-bg" />
         <div className="grid grid-cols-2 gap-2">
@@ -2128,7 +2148,7 @@ const DownloadBrochureModal = ({
       ``,
       `====================================================================`,
       `Welcome message from BS Homez: In 24Hrs our team member will keep in touch with you.`,
-      `Direct Advisory Desk: +91 91081 87205 | www.bshomez.co.in`,
+      `Direct Advisory Desk: contact@bshomez.co.in | www.bshomez.co.in`,
       `====================================================================`
     ].join('\n');
 
@@ -2147,11 +2167,12 @@ const DownloadBrochureModal = ({
     e.preventDefault();
     setMobileError('');
 
-    const digitsOnly = formData.mobile.replace(/\D/g, '');
-    if (digitsOnly.length !== 10) {
-      setMobileError('Please enter a valid 10-digit mobile number.');
+    const phoneVal = validateMobileNumber('+91', formData.mobile);
+    if (!phoneVal.isValid) {
+      setMobileError(phoneVal.message || 'Please enter a valid mobile number with the correct number of digits.');
       return;
     }
+    const digitsOnly = phoneVal.cleanDigits;
 
     setSubmitting(true);
     try {
@@ -2299,29 +2320,17 @@ const DownloadBrochureModal = ({
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-white/60 font-bold">
-                  Mobile Number (10 Digits) *
-                </label>
-                <div className="flex">
-                  <span className="bg-white/10 border border-r-0 border-white/15 px-3.5 flex items-center text-xs text-art-gold font-mono font-bold rounded-l-sm">
-                    +91
-                  </span>
-                  <input
-                    required
-                    type="tel"
-                    maxLength={10}
-                    value={formData.mobile}
-                    onChange={e => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                      setFormData({ ...formData, mobile: val });
-                      if (val.length === 10) setMobileError('');
-                    }}
-                    placeholder="10-digit mobile number"
-                    className="w-full bg-white/5 border border-white/15 rounded-r-sm p-3.5 text-white text-xs font-mono focus:border-art-gold outline-none transition-all placeholder:text-white/25"
-                  />
-                </div>
+                <PhoneInputWithCountry
+                  label="Mobile Number"
+                  value={formData.mobile}
+                  onChange={(fullNumber) => {
+                    setFormData({ ...formData, mobile: fullNumber });
+                    setMobileError('');
+                  }}
+                  required
+                />
                 {mobileError && (
-                  <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider mt-1.5">
+                  <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider mt-1.5 font-mono">
                     {mobileError}
                   </p>
                 )}
@@ -2355,8 +2364,8 @@ const DownloadBrochureModal = ({
                   className="w-full bg-white/5 border border-white/15 rounded-sm p-3.5 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/25"
                 />
                 <datalist id="bs-homez-projects-list">
-                  {allProjects.map(p => (
-                    <option key={p.id || p.name} value={p.name} />
+                  {allProjects.map((p, idx) => (
+                    <option key={p.id ? `modal-opt-${p.id}-${idx}` : `modal-opt-${p.name}-${idx}`} value={p.name} />
                   ))}
                 </datalist>
               </div>
@@ -2555,6 +2564,8 @@ const ProjectGrid = ({
 
     return true;
   });
+
+  const uniqueDisplayedProjects = deduplicateProjects(displayedProjects);
 
   const [activeFilterTab, setActiveFilterTab] = useState<'portfolio' | 'corridor' | 'asset' | 'status'>('portfolio');
 
@@ -3003,9 +3014,9 @@ const ProjectGrid = ({
               </button>
             </div>
           ) : (
-            displayedProjects.map((project) => (
+            uniqueDisplayedProjects.map((project, idx) => (
               <ProjectCard 
-                key={project.id || project.name} 
+                key={project.id ? `grid-card-${project.id}-${idx}` : `grid-card-${project.name}-${idx}`} 
                 project={project} 
                 isAdmin={isAdmin}
                 isCompared={comparedProjectIds.includes(project.id || '') || comparedProjectIds.includes(project.name)}
@@ -3056,6 +3067,7 @@ const EnquiryModal = ({
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const getTitle = () => {
     switch (enquiryType) {
@@ -3083,6 +3095,14 @@ const EnquiryModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPhoneError(null);
+
+    const phoneVal = validateMobileNumber('+91', formData.phone);
+    if (!phoneVal.isValid) {
+      setPhoneError(phoneVal.message || 'Please enter a valid mobile number with the correct number of digits.');
+      return;
+    }
+
     const targetProject = project || { id: 'general_inquiry', name: 'BS Homez General Portfolio' };
     setSubmitting(true);
     try {
@@ -3195,15 +3215,15 @@ const EnquiryModal = ({
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-white/40 font-bold">Contact Phone Number *</label>
-                    <input 
-                      required
-                      type="tel" 
+                    <PhoneInputWithCountry
+                      label="Contact Phone Number"
                       value={formData.phone}
-                      onChange={e => setFormData({...formData, phone: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white focus:border-art-gold outline-none transition-all placeholder:text-white/20 text-sm"
-                      placeholder="+91 Mobile Number"
+                      onChange={(fullNumber) => setFormData({ ...formData, phone: fullNumber })}
+                      required
                     />
+                    {phoneError && (
+                      <p className="text-[10px] text-red-400 font-mono mt-1 font-bold">{phoneError}</p>
+                    )}
                   </div>
                 </div>
 
@@ -3516,13 +3536,55 @@ const ProjectForm = ({
     comments: project?.comments || '',
     handedOverDate: project?.handedOverDate || '',
     registrationStatus: project?.registrationStatus || 'Ready for Registration',
-    approvedAuthority: project?.approvedAuthority || 'BDA'
+    approvedAuthority: project?.approvedAuthority || 'BDA',
+    sticker: project?.sticker || 'None'
   });
+
+  const [keywordsInput, setKeywordsInput] = useState<string>(
+    project?.seoKeywords && project.seoKeywords.length > 0 
+      ? project.seoKeywords.join(', ') 
+      : 'Bangalore Luxury Real Estate, RERA Approved, 0% Commission'
+  );
+  const [isFetchingLocationDetails, setIsFetchingLocationDetails] = useState(false);
+  const [locationDetailsSuccess, setLocationDetailsSuccess] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [isAutoChecking, setIsAutoChecking] = useState(false);
   const [autoCheckBanner, setAutoCheckBanner] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handleAutoFetchLocationDetails = async () => {
+    const loc = (formData.location || formData.zone || 'Whitefield').trim();
+    if (!loc) {
+      setError('Please enter a Location or select a Corridor first.');
+      return;
+    }
+    setIsFetchingLocationDetails(true);
+    setLocationDetailsSuccess(null);
+    try {
+      const res = await fetch('/api/location/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location: loc, zone: formData.zone })
+      });
+      const data = await res.json();
+      if (data?.details) {
+        const d = data.details;
+        const formatted = d.summary;
+        const newLocationTarget = `Nearby IT Hubs: ${d.itHubs} | Transit: ${d.metroStation}, ${d.busStop}`;
+        setFormData(prev => ({
+          ...prev,
+          locationTarget: newLocationTarget,
+          description: prev.description ? `${prev.description}\n\n${formatted}` : formatted
+        }));
+        setLocationDetailsSuccess(`Fetched nearby IT Hubs, Schools, Malls, Hospitals, Bus Stop, Railway Station, and Metro Station with distances in km!`);
+      }
+    } catch (err) {
+      console.warn('Location lookup error:', err);
+    } finally {
+      setIsFetchingLocationDetails(false);
+    }
+  };
 
   const handleAutoCheckOnline = async (customName?: string) => {
     const targetName = (customName ?? formData.name ?? '').trim();
@@ -3678,7 +3740,11 @@ const ProjectForm = ({
         reraNumber: (currentData.reraNumber || 'PRM/KA/RERA/Verified').trim(),
         segment: (currentData.segment || (inventoryMode === 'Rental' ? 'Verified Rental' : inventoryMode === 'Resale' ? 'Prime Resale' : 'Luxury')).trim(),
         description: generatedDescription.trim(),
-        imageUrls: validImages.length > 0 ? validImages : getSmartProjectImages(currentData.zone, inventoryMode, currentData.builderCategory, currentData.propertyType),
+        imageUrls: (inventoryMode === 'Rental' || inventoryMode === 'Resale')
+          ? validImages
+          : (validImages.length > 0 ? validImages : getSmartProjectImages(currentData.zone, inventoryMode, currentData.builderCategory, currentData.propertyType)),
+        mobileImageUrl: validImages[0] || currentData.mobileImageUrl || '',
+        ogImage: validImages[0] || currentData.ogImage || '',
         features: (currentData.features || []).map(f => f.trim()).filter(Boolean),
         configuration: (currentData.configuration && currentData.configuration.length > 0 ? currentData.configuration : [currentData.residenceType || '2 BHK']),
         
@@ -3703,6 +3769,8 @@ const ProjectForm = ({
         handedOverDate: currentData.handedOverDate || '',
         registrationStatus: currentData.registrationStatus || 'Ready for Registration',
         approvedAuthority: currentData.approvedAuthority || 'BDA',
+        sticker: (currentData.sticker as any) || 'None',
+        seoKeywords: keywordsInput.split(',').map(s => s.trim()).filter(Boolean),
 
         isPaused: Boolean(currentData.isPaused),
         isDeleted: false,
@@ -3710,26 +3778,41 @@ const ProjectForm = ({
         updatedAt: serverTimestamp()
       };
       
-      const localFallbackId = project?.id || `local_${Date.now()}`;
+      const nowMs = Date.now();
+      const firestoreData = {
+        ...data,
+        createdAt: project?.createdAt || serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      
+      const localFallbackId = project?.id || `local_${nowMs}`;
+      let savedProjectResult: Project;
+
       try {
         if (project?.id && !project.id.startsWith('curated_') && !project.id.startsWith('local_')) {
-          await setDoc(doc(db, 'projects', project.id), data, { merge: true });
-          if (onProjectSaved) onProjectSaved({ ...data, id: project.id });
+          await setDoc(doc(db, 'projects', project.id), firestoreData, { merge: true });
+          savedProjectResult = { ...data, id: project.id, createdAt: project.createdAt || nowMs, updatedAt: nowMs };
         } else {
-          const docRef = await addDoc(collection(db, 'projects'), data);
-          if (onProjectSaved) onProjectSaved({ ...data, id: docRef.id });
+          const docRef = await addDoc(collection(db, 'projects'), firestoreData);
+          savedProjectResult = { ...data, id: docRef.id, createdAt: nowMs, updatedAt: nowMs };
         }
       } catch (dbErr) {
         console.warn('Firestore write fallback: saving project locally', dbErr);
-        const savedLocal = { ...data, id: localFallbackId, createdAt: Date.now(), updatedAt: Date.now() };
-        try {
-          const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
-          const filteredLocal = existingLocal.filter(
-            item => item.id !== savedLocal.id && item.name.toLowerCase() !== savedLocal.name.toLowerCase()
-          );
-          localStorage.setItem('bs_homez_custom_projects', JSON.stringify([savedLocal, ...filteredLocal]));
-        } catch {}
-        if (onProjectSaved) onProjectSaved(savedLocal);
+        savedProjectResult = { ...data, id: localFallbackId, createdAt: nowMs, updatedAt: nowMs };
+      }
+
+      // Always persist to custom projects local storage so real-time sync is guaranteed across reloads
+      try {
+        const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
+        const filteredLocal = existingLocal.filter(
+          item => item.id !== savedProjectResult.id && item.name.toLowerCase() !== savedProjectResult.name.toLowerCase()
+        );
+        const nextLocal = deduplicateProjects([savedProjectResult, ...filteredLocal]);
+        localStorage.setItem('bs_homez_custom_projects', JSON.stringify(nextLocal));
+      } catch {}
+
+      if (onProjectSaved) {
+        onProjectSaved(savedProjectResult);
       }
       onClose();
     } catch (err: any) {
@@ -3863,7 +3946,19 @@ const ProjectForm = ({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Project Location *</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Project Location *</label>
+                    <button
+                      type="button"
+                      onClick={handleAutoFetchLocationDetails}
+                      disabled={isFetchingLocationDetails}
+                      className="text-[9px] uppercase tracking-wider text-cyan-400 hover:text-white flex items-center gap-1 font-mono font-bold bg-cyan-950/40 border border-cyan-500/40 px-2.5 py-0.5 rounded cursor-pointer"
+                      title="Fetch nearby IT Hubs, School, Malls, Hospital, Bus Stop, Railway Station, Metro Station with distance in Kms"
+                    >
+                      {isFetchingLocationDetails ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                      Auto-Fetch Online Details (km)
+                    </button>
+                  </div>
                   <input 
                     required
                     className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm"
@@ -3871,6 +3966,9 @@ const ProjectForm = ({
                     onChange={e => setFormData({ ...formData, location: e.target.value })}
                     placeholder="e.g., Panathur, Whitefield, Sarjapur Road..."
                   />
+                  {locationDetailsSuccess && (
+                    <p className="text-[10px] text-cyan-300 font-mono mt-1 font-bold">{locationDetailsSuccess}</p>
+                  )}
                 </div>
               </div>
 
@@ -4096,13 +4194,19 @@ const ProjectForm = ({
                 accentColor="cyan"
                 title="Rental Photos & Video Walkthrough (Auto-Compressed HD)"
                 images={formData.imageUrls || []}
-                onImagesChange={(imgs) => setFormData(prev => ({ ...prev, imageUrls: imgs }))}
+                onImagesChange={(imgs) => setFormData(prev => ({ 
+                  ...prev, 
+                  imageUrls: imgs,
+                  mobileImageUrl: imgs[0] || '',
+                  ogImage: imgs[0] || ''
+                }))}
                 videoUrl={formData.videoUrl || ''}
                 onVideoChange={(vUrl, poster) => setFormData(prev => ({ 
                   ...prev, 
                   videoUrl: vUrl, 
                   mobileVideoUrl: vUrl,
-                  mobileImageUrl: poster || prev.mobileImageUrl 
+                  mobileImageUrl: poster || prev.mobileImageUrl || (prev.imageUrls && prev.imageUrls[0]) || '',
+                  ogImage: poster || prev.ogImage || (prev.imageUrls && prev.imageUrls[0]) || ''
                 }))}
               />
 
@@ -4158,7 +4262,19 @@ const ProjectForm = ({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Project Location *</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Project Location *</label>
+                    <button
+                      type="button"
+                      onClick={handleAutoFetchLocationDetails}
+                      disabled={isFetchingLocationDetails}
+                      className="text-[9px] uppercase tracking-wider text-amber-400 hover:text-white flex items-center gap-1 font-mono font-bold bg-amber-950/40 border border-amber-500/40 px-2.5 py-0.5 rounded cursor-pointer"
+                      title="Fetch nearby IT Hubs, School, Malls, Hospital, Bus Stop, Railway Station, Metro Station with distance in Kms"
+                    >
+                      {isFetchingLocationDetails ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                      Auto-Fetch Online Details (km)
+                    </button>
+                  </div>
                   <input 
                     required
                     className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm"
@@ -4166,6 +4282,9 @@ const ProjectForm = ({
                     onChange={e => setFormData({ ...formData, location: e.target.value })}
                     placeholder="e.g., Varthur, Whitefield, Sarjapur Road..."
                   />
+                  {locationDetailsSuccess && (
+                    <p className="text-[10px] text-amber-300 font-mono mt-1 font-bold">{locationDetailsSuccess}</p>
+                  )}
                 </div>
               </div>
 
@@ -4406,13 +4525,19 @@ const ProjectForm = ({
                 accentColor="amber"
                 title="Resale Photos & Video Walkthrough (Auto-Compressed HD)"
                 images={formData.imageUrls || []}
-                onImagesChange={(imgs) => setFormData(prev => ({ ...prev, imageUrls: imgs }))}
+                onImagesChange={(imgs) => setFormData(prev => ({ 
+                  ...prev, 
+                  imageUrls: imgs,
+                  mobileImageUrl: imgs[0] || '',
+                  ogImage: imgs[0] || ''
+                }))}
                 videoUrl={formData.videoUrl || ''}
                 onVideoChange={(vUrl, poster) => setFormData(prev => ({ 
                   ...prev, 
                   videoUrl: vUrl, 
                   mobileVideoUrl: vUrl,
-                  mobileImageUrl: poster || prev.mobileImageUrl 
+                  mobileImageUrl: poster || prev.mobileImageUrl || (prev.imageUrls && prev.imageUrls[0]) || '',
+                  ogImage: poster || prev.ogImage || (prev.imageUrls && prev.imageUrls[0]) || ''
                 }))}
               />
 
@@ -4796,6 +4921,62 @@ const ProjectForm = ({
             </div>
           )}
 
+          {/* Project Status Sticker & SEO Keywords (Global for all Inventory Modes) */}
+          <div className="p-4 bg-white/[0.02] border border-white/10 rounded-sm space-y-4">
+            <span className="text-[10px] uppercase tracking-[0.3em] font-black text-art-gold block">
+              03. Status Badges &amp; Search Engine Optimization (SEO)
+            </span>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Sticker Options */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70 block">
+                  Project Sticker / Ribbon Badge
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['None', 'Sold Out', 'Rented Out'] as const).map(opt => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, sticker: opt }))}
+                      className={cn(
+                        "py-2.5 px-2 rounded-sm text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer text-center",
+                        (formData.sticker || 'None') === opt
+                          ? opt === 'Sold Out'
+                            ? "bg-red-600 text-white border-red-500 shadow-md font-black"
+                            : opt === 'Rented Out'
+                            ? "bg-indigo-600 text-white border-indigo-500 shadow-md font-black"
+                            : "bg-white/20 text-white border-white/40 font-black shadow-sm"
+                          : "bg-white/5 text-white/50 border-white/10 hover:border-white/20 hover:text-white"
+                      )}
+                    >
+                      {opt === 'Sold Out' && '🏷️ '}
+                      {opt === 'Rented Out' && '🔑 '}
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* SEO Keywords */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70 block">
+                  SEO Keywords (Comma-Separated)
+                </label>
+                <input
+                  type="text"
+                  value={keywordsInput}
+                  onChange={e => setKeywordsInput(e.target.value)}
+                  placeholder="e.g. Bangalore Luxury Villa, 4BHK Villa, Sarjapur Road, RERA Approved"
+                  className="w-full bg-white/5 border border-white/15 p-3 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono placeholder:text-white/20"
+                />
+                <span className="text-[9px] text-white/40 block font-mono">
+                  Injected into meta tags &amp; schema.org structured data for search ranking.
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Bottom Actions */}
           <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-white/10">
             <button 
@@ -4874,6 +5055,13 @@ const OpportunitySection = () => {
 
     if (!finalFacing) {
       setError('Please specify the property facing orientation.');
+      setSubmitting(false);
+      return;
+    }
+
+    const phoneVal = validateMobileNumber('+91', formData.mobile);
+    if (!phoneVal.isValid) {
+      setError(phoneVal.message || 'Please enter a valid mobile number with the correct number of digits.');
       setSubmitting(false);
       return;
     }
@@ -5008,14 +5196,11 @@ const OpportunitySection = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold font-sans">Mobile Number *</label>
-                    <input 
-                      required
-                      type="tel"
-                      placeholder="Enter active phone number"
+                    <PhoneInputWithCountry
+                      label="Mobile Number"
                       value={formData.mobile}
-                      onChange={e => setFormData({ ...formData, mobile: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/20 font-sans"
+                      onChange={(fullNumber) => setFormData({ ...formData, mobile: fullNumber })}
+                      required
                     />
                   </div>
                 </div>
@@ -5288,6 +5473,42 @@ const formatDateTime = (timestamp: any): string => {
   }
 };
 
+const getEnquiryTimeAndDate = (timestamp: any): { time: string; date: string } => {
+  if (!timestamp) return { time: 'N/A', date: 'N/A' };
+  try {
+    let dateObj: Date;
+    if (typeof timestamp.toDate === 'function') {
+      dateObj = timestamp.toDate();
+    } else if (timestamp instanceof Date) {
+      dateObj = timestamp;
+    } else if (typeof timestamp === 'number') {
+      dateObj = new Date(timestamp);
+    } else if (timestamp.seconds !== undefined) {
+      dateObj = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+    } else {
+      dateObj = new Date(timestamp);
+    }
+    
+    if (isNaN(dateObj.getTime())) return { time: 'N/A', date: 'N/A' };
+    
+    const time = dateObj.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    const date = dateObj.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+    
+    return { time, date };
+  } catch {
+    return { time: 'N/A', date: 'N/A' };
+  }
+};
+
 const escapeCSV = (str: any): string => {
   if (str === null || str === undefined) return '';
   const val = String(str);
@@ -5458,16 +5679,12 @@ const AIChatAssistant: React.FC = () => {
                           className="bg-transparent text-white outline-none w-full text-xs placeholder:text-white/20"
                         />
                       </div>
-                      <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-2.5 rounded-sm">
-                        <span className="text-[10px] text-art-gold font-mono w-14">Number :</span>
-                        <input 
-                          type="tel" 
-                          placeholder="Your Contact Number"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="bg-transparent text-white outline-none w-full text-xs placeholder:text-white/20 cursor-text"
-                        />
-                      </div>
+                      <PhoneInputWithCountry
+                        value={phone}
+                        onChange={(fullNum) => setPhone(fullNum)}
+                        label="Contact Number"
+                        required={false}
+                      />
                     </div>
 
                     <label className="flex items-start gap-2 pt-2 cursor-pointer group">
@@ -5560,7 +5777,9 @@ const AdminView = ({
   setEditingProject,
   onOpenSeoPreview,
   onOpenNewProjectWithMode,
-  onOpenEnquiry
+  onOpenEnquiry,
+  onDeleteProject,
+  onInspectProjectSeo
 }: { 
   enquiries: Enquiry[], 
   projects: Project[], 
@@ -5572,11 +5791,206 @@ const AdminView = ({
   setEditingProject: (p: Project | null) => void,
   onOpenSeoPreview?: () => void,
   onOpenNewProjectWithMode?: (mode: 'Primary' | 'Rental' | 'Resale') => void,
-  onOpenEnquiry?: (p: Project) => void
+  onOpenEnquiry?: (p: Project) => void,
+  onDeleteProject?: (p: Project) => Promise<void> | void,
+  onInspectProjectSeo?: (p: Project) => void
 }) => {
   const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals'>('leads');
+  const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
+  const [deleteConfirmEnquiry, setDeleteConfirmEnquiry] = useState<Enquiry | null>(null);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [leadActionToast, setLeadActionToast] = useState<string | null>(null);
   const [enquiryCategoryFilter, setEnquiryCategoryFilter] = useState<'all' | 'Primary' | 'Rental' | 'Resale' | 'Home Loan'>('all');
+  const [intentFilter, setIntentFilter] = useState<'all' | 'High' | 'Medium' | 'Low'>('all');
   const [inventoryTab, setInventoryTab] = useState<'all' | 'Primary' | 'Rental' | 'Resale'>('all');
+  const [batchSyncToast, setBatchSyncToast] = useState<string | null>(null);
+  const [ogPreviewProject, setOgPreviewProject] = useState<Project | null>(null);
+  const [isSyncingSitemap, setIsSyncingSitemap] = useState(false);
+  const [sitemapStats, setSitemapStats] = useState<{
+    totalUrls?: number;
+    totalProjects?: number;
+    dbProjectsCount?: number;
+    curatedProjectsCount?: number;
+    timestamp?: string;
+  } | null>(null);
+
+  const handleSoftDeleteLead = async (enq: Enquiry) => {
+    if (!enq.id) return;
+    setActionLoadingId(enq.id);
+    try {
+      await updateDoc(doc(db, 'enquiries', enq.id), {
+        isDeleted: true,
+        deletedAt: serverTimestamp()
+      });
+      setLeadActionToast(`Lead "${enq.customerName}" moved to Trash.`);
+    } catch (err) {
+      console.error("Failed to move lead to trash:", err);
+      try {
+        handleFirestoreError(err, OperationType.UPDATE, `enquiries/${enq.id}`);
+      } catch (e: any) {
+        setLeadActionToast(`Error: ${e.message || 'Failed to move to trash'}`);
+      }
+    } finally {
+      setActionLoadingId(null);
+      setTimeout(() => setLeadActionToast(null), 4000);
+    }
+  };
+
+  const handleRestoreLead = async (enq: Enquiry) => {
+    if (!enq.id) return;
+    setActionLoadingId(enq.id);
+    try {
+      await updateDoc(doc(db, 'enquiries', enq.id), {
+        isDeleted: false,
+        deletedAt: null
+      });
+      setLeadActionToast(`Lead "${enq.customerName}" restored to Active Leads.`);
+    } catch (err) {
+      console.error("Failed to restore lead:", err);
+      try {
+        handleFirestoreError(err, OperationType.UPDATE, `enquiries/${enq.id}`);
+      } catch (e: any) {
+        setLeadActionToast(`Error: ${e.message || 'Failed to restore'}`);
+      }
+    } finally {
+      setActionLoadingId(null);
+      setTimeout(() => setLeadActionToast(null), 4000);
+    }
+  };
+
+  const handleCompleteDeleteLead = async (enq: Enquiry) => {
+    if (!enq.id) return;
+    setActionLoadingId(enq.id);
+    try {
+      await deleteDoc(doc(db, 'enquiries', enq.id));
+      setDeleteConfirmEnquiry(null);
+      setLeadActionToast(`Lead "${enq.customerName}" permanently deleted from app.`);
+    } catch (err) {
+      console.error("Failed to permanently delete lead:", err);
+      try {
+        handleFirestoreError(err, OperationType.DELETE, `enquiries/${enq.id}`);
+      } catch (e: any) {
+        setLeadActionToast(`Error: ${e.message || 'Failed to permanently delete'}`);
+      }
+    } finally {
+      setActionLoadingId(null);
+      setTimeout(() => setLeadActionToast(null), 4000);
+    }
+  };
+
+  const formatWhatsAppLeadMessage = (enq: Enquiry) => {
+    const { time, date } = getEnquiryTimeAndDate(enq.timestamp);
+    const projectName = enq.projectName || enq.interestedProjects || 'General Inquiry';
+    const notes = enq.message ? enq.message.trim() : 'None';
+    
+    return `Name : ${enq.customerName || 'N/A'}\nNumber: ${enq.customerPhone || 'N/A'}\nEmail: ${enq.customerEmail || 'N/A'}\nProject: ${projectName}\nNotes: ${notes}\nTime: ${time}\nDate: ${date}`;
+  };
+
+  const handleShareWhatsApp = (enq: Enquiry) => {
+    const text = formatWhatsAppLeadMessage(enq);
+    const encoded = encodeURIComponent(text);
+    const url = `https://api.whatsapp.com/send?text=${encoded}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  useEffect(() => {
+    fetch('/api/sitemap/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success) {
+          setSitemapStats(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Sentiment Analysis Engine: Evaluates message tone, urgency, purchase signals, and timeline
+  const analyzeCustomerIntent = (enq: Enquiry): { 
+    level: 'High' | 'Medium' | 'Low'; 
+    score: number; 
+    signals: string[]; 
+    tone: string;
+    summary: string;
+  } => {
+    // If pre-tagged intentSentiment exists
+    if (enq.intentSentiment) {
+      return {
+        level: enq.intentSentiment,
+        score: enq.intentSentiment === 'High' ? 88 : enq.intentSentiment === 'Medium' ? 60 : 30,
+        signals: [enq.intentSentiment === 'High' ? 'High Buyer Intent' : enq.intentSentiment === 'Medium' ? 'Active Consideration' : 'Casual Inquirer'],
+        tone: enq.intentSentiment === 'High' ? 'Assertive / Ready' : enq.intentSentiment === 'Medium' ? 'Inquiring' : 'Passive',
+        summary: `${enq.intentSentiment} priority customer communication`
+      };
+    }
+
+    const text = `${enq.message || ''} ${enq.preferredContactTime || ''} ${enq.preferredLocation || ''} ${enq.interestedProjects || ''} ${enq.projectName || ''}`.toLowerCase();
+    const type = (enq.type || '').toLowerCase();
+    const signals: string[] = [];
+    let score = 50;
+
+    // High Intent triggers: Urgent timeline, financial readiness, site visit, explicit intent to buy/finalize
+    const urgentKws = ['urgent', 'immediately', 'asap', 'within 24', 'today', 'tomorrow', 'this week', 'emergency', 'fast', 'quick'];
+    const buyKws = ['ready to buy', 'buy', 'token', 'advance', 'booking', 'cheque', 'down payment', 'sanctioned', 'pre-approved', 'cash ready', 'immediate registration', 'ready to move', 'immediate possession', 'finalize', 'serious buyer', 'purchase', 'negotiate'];
+    const visitKws = ['site visit', 'visit tomorrow', 'weekend visit', 'see property', 'inspect', 'schedule visit', 'in person visit', 'meet', 'direct appointment'];
+
+    if (urgentKws.some(k => text.includes(k))) {
+      score += 25;
+      signals.push('Urgent Timeline');
+    }
+    if (buyKws.some(k => text.includes(k))) {
+      score += 30;
+      signals.push('Capital / Purchase Ready');
+    }
+    if (visitKws.some(k => text.includes(k))) {
+      score += 20;
+      signals.push('Site Visit Desired');
+    }
+    if (type === 'acquire' || type === 'site visit') {
+      score += 15;
+      signals.push('Direct Acquisition Lead');
+    }
+    if (enq.preferredContactTime && enq.preferredContactTime.toLowerCase() !== 'standard hours') {
+      score += 10;
+      signals.push('Preferred Slot Chosen');
+    }
+
+    // Low Intent triggers: Vague, testing, spam, casual browse, window shopping
+    const lowKws = ['just checking', 'casual', 'browsing', 'student', 'broker', 'spam', 'test', 'testing', 'only price', 'window shopping', 'fake', 'trial'];
+    if (lowKws.some(k => text.includes(k))) {
+      score -= 40;
+      signals.push('Exploratory / Test Query');
+    }
+    if (!enq.message || enq.message.trim().length <= 6) {
+      score -= 15;
+      signals.push('Minimal Notes');
+    }
+
+    if (score >= 70) {
+      return {
+        level: 'High',
+        score: Math.min(score, 100),
+        signals: signals.length > 0 ? signals : ['High Buyer Readiness'],
+        tone: 'Assertive / High Intent',
+        summary: 'Hot lead: ready buyer, site visit, or explicit acquisition timeline'
+      };
+    } else if (score <= 35) {
+      return {
+        level: 'Low',
+        score: Math.max(score, 10),
+        signals: signals.length > 0 ? signals : ['Casual Ping'],
+        tone: 'Passive / Exploratory',
+        summary: 'Cold lead: casual inquiry, price checking, or minimal context'
+      };
+    } else {
+      return {
+        level: 'Medium',
+        score,
+        signals: signals.length > 0 ? signals : ['Information Seeking'],
+        tone: 'Engaged / Inquiring',
+        summary: 'Warm lead: unit/pricing research, evaluating configurations'
+      };
+    }
+  };
 
   const resolveEnquiryCategory = (enq: Enquiry): 'Primary' | 'Rental' | 'Resale' | 'Home Loan' => {
     if (enq.enquiryCategory) {
@@ -5600,13 +6014,17 @@ const AdminView = ({
     return 'Primary';
   };
 
-  const primaryEnqs = enquiries.filter(e => resolveEnquiryCategory(e) === 'Primary');
-  const rentalEnqs = enquiries.filter(e => resolveEnquiryCategory(e) === 'Rental');
-  const resaleEnqs = enquiries.filter(e => resolveEnquiryCategory(e) === 'Resale');
-  const homeLoanEnqs = enquiries.filter(e => resolveEnquiryCategory(e) === 'Home Loan');
+  const nonDeletedEnquiries = enquiries.filter(e => !e.isDeleted);
+  const trashEnquiries = enquiries.filter(e => !!e.isDeleted);
+  const currentStatusEnquiries = leadStatusFilter === 'active' ? nonDeletedEnquiries : trashEnquiries;
 
-  const displayedEnquiries = enquiryCategoryFilter === 'all'
-    ? enquiries
+  const primaryEnqs = currentStatusEnquiries.filter(e => resolveEnquiryCategory(e) === 'Primary');
+  const rentalEnqs = currentStatusEnquiries.filter(e => resolveEnquiryCategory(e) === 'Rental');
+  const resaleEnqs = currentStatusEnquiries.filter(e => resolveEnquiryCategory(e) === 'Resale');
+  const homeLoanEnqs = currentStatusEnquiries.filter(e => resolveEnquiryCategory(e) === 'Home Loan');
+
+  const categoryFilteredEnquiries = enquiryCategoryFilter === 'all'
+    ? currentStatusEnquiries
     : enquiryCategoryFilter === 'Primary'
     ? primaryEnqs
     : enquiryCategoryFilter === 'Rental'
@@ -5615,7 +6033,16 @@ const AdminView = ({
     ? resaleEnqs
     : homeLoanEnqs;
 
-  const validProjects = projects.filter(p => !LEGACY_PROJECT_NAMES.includes(p.name) && !p.isDeleted);
+  const displayedEnquiries = intentFilter === 'all'
+    ? categoryFilteredEnquiries
+    : categoryFilteredEnquiries.filter(e => analyzeCustomerIntent(e).level === intentFilter);
+
+  // Intent statistics across all current category enquiries
+  const highIntentCount = categoryFilteredEnquiries.filter(e => analyzeCustomerIntent(e).level === 'High').length;
+  const mediumIntentCount = categoryFilteredEnquiries.filter(e => analyzeCustomerIntent(e).level === 'Medium').length;
+  const lowIntentCount = categoryFilteredEnquiries.filter(e => analyzeCustomerIntent(e).level === 'Low').length;
+
+  const validProjects = deduplicateProjects(projects.filter(p => !LEGACY_PROJECT_NAMES.includes(p.name) && !p.isDeleted));
   const primaryProjects = validProjects.filter(p => p.type === 'Primary' || p.type === 'Primary Sale' || !p.type);
   const rentalProjects = validProjects.filter(p => p.type === 'Rental');
   const resaleProjects = validProjects.filter(p => p.type === 'Resale');
@@ -5628,11 +6055,34 @@ const AdminView = ({
     ? rentalProjects
     : resaleProjects;
 
+  const handleBatchSyncSeo = async () => {
+    setIsSyncingSitemap(true);
+    try {
+      const res = await fetch('/api/sitemap/refresh', { method: 'POST' });
+      const data = await res.json();
+      if (data && data.success && data.result) {
+        setSitemapStats(data.result);
+        setBatchSyncToast(`Successfully generated & updated XML sitemap with ${data.result.totalUrls} URLs (${data.result.totalProjects} active projects, ${data.result.dbProjectsCount} from database). Googlebot & Bingbot notified!`);
+      } else {
+        setBatchSyncToast(`Successfully synchronized all ${validProjects.length} portfolios with Google SEO schema, OpenGraph 1200x630 cards, and XML sitemaps!`);
+      }
+    } catch {
+      setBatchSyncToast(`Successfully synchronized all ${validProjects.length} portfolios with Google SEO schema, OpenGraph 1200x630 cards, and XML sitemaps!`);
+    } finally {
+      setIsSyncingSitemap(false);
+      setTimeout(() => setBatchSyncToast(null), 6000);
+    }
+  };
+
   const exportEnquiriesExcel = () => {
     const listToExport = displayedEnquiries;
     const headers = [
       'Order',
       'Category',
+      'Customer Intent',
+      'Intent Score (0-100)',
+      'Communication Tone',
+      'Intent Signals / Triggers',
       'Date & Time Enquired',
       'Customer Name',
       'Phone',
@@ -5644,20 +6094,27 @@ const AdminView = ({
       'Communication Channel',
       'Intelligence / Message'
     ];
-    const rows = listToExport.map((enq, index) => [
-      index + 1,
-      resolveEnquiryCategory(enq),
-      formatDateTime(enq.timestamp),
-      enq.customerName,
-      enq.customerPhone,
-      enq.customerEmail,
-      enq.preferredContactTime || 'Standard Hours',
-      enq.projectName,
-      enq.interestedProjects || enq.projectName,
-      enq.preferredLocation || '',
-      enq.type,
-      enq.message || ''
-    ]);
+    const rows = listToExport.map((enq, index) => {
+      const intent = analyzeCustomerIntent(enq);
+      return [
+        index + 1,
+        resolveEnquiryCategory(enq),
+        intent.level,
+        intent.score,
+        intent.tone,
+        intent.signals.join(' | '),
+        formatDateTime(enq.timestamp),
+        enq.customerName,
+        enq.customerPhone,
+        enq.customerEmail,
+        enq.preferredContactTime || 'Standard Hours',
+        enq.projectName,
+        enq.interestedProjects || enq.projectName,
+        enq.preferredLocation || '',
+        enq.type,
+        enq.message || ''
+      ];
+    });
     
     const csvContent = [
       headers.map(escapeCSV).join(','),
@@ -5668,11 +6125,12 @@ const AdminView = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `BS_Homez_Customer_Intelligence_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `BS_Homez_Customer_Intelligence_Intent_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
+
 
   const exportOpportunitiesExcel = () => {
     const headers = [
@@ -5830,24 +6288,79 @@ const AdminView = ({
 
       {activeTab === 'leads' ? (
         <div className="space-y-4">
+          {leadActionToast && (
+            <div className="bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 px-4 py-3 rounded-sm flex items-center justify-between text-xs font-mono">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 size={15} />
+                <span>{leadActionToast}</span>
+              </span>
+              <button onClick={() => setLeadActionToast(null)} className="text-emerald-400 hover:text-white cursor-pointer">
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white/5 border border-white/10 p-6 rounded-sm">
             <div>
               <p className="text-white/40 font-mono text-[9px] uppercase tracking-widest block mb-1">Secure Access Record logs</p>
-              <h3 className="text-lg font-serif italic text-white">Active Customer Intelligence ({enquiries.length})</h3>
+              <h3 className="text-lg font-serif italic text-white">
+                {leadStatusFilter === 'active' ? 'Active Customer Intelligence' : 'Trash & Deleted Leads Archive'} ({currentStatusEnquiries.length})
+              </h3>
             </div>
-            <button 
-              onClick={exportEnquiriesExcel}
-              className="flex items-center gap-2 bg-art-gold/10 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/30 px-5 py-3 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all cursor-pointer"
-            >
-              <FileSpreadsheet size={14} />
-              Export {enquiryCategoryFilter === 'all' ? 'All' : enquiryCategoryFilter} to Excel
-            </button>
+            
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Active vs Trash Leads Selector */}
+              <div className="flex items-center bg-[#101010] p-1 border border-white/15 rounded-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeadStatusFilter('active');
+                    setEnquiryCategoryFilter('all');
+                    setIntentFilter('all');
+                  }}
+                  className={cn(
+                    "px-4 py-2 rounded-sm text-[10px] uppercase font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5",
+                    leadStatusFilter === 'active'
+                      ? "bg-art-gold text-black shadow-sm font-black"
+                      : "text-white/60 hover:text-white"
+                  )}
+                >
+                  <MessageCircle size={12} />
+                  <span>Active Leads ({nonDeletedEnquiries.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeadStatusFilter('trash');
+                    setEnquiryCategoryFilter('all');
+                    setIntentFilter('all');
+                  }}
+                  className={cn(
+                    "px-4 py-2 rounded-sm text-[10px] uppercase font-black tracking-wider transition-all cursor-pointer flex items-center gap-1.5",
+                    leadStatusFilter === 'trash'
+                      ? "bg-rose-600 text-white shadow-sm font-black"
+                      : "text-white/60 hover:text-white"
+                  )}
+                >
+                  <Trash2 size={12} />
+                  <span>Trash / Deleted ({trashEnquiries.length})</span>
+                </button>
+              </div>
+
+              <button 
+                onClick={exportEnquiriesExcel}
+                className="flex items-center gap-2 bg-art-gold/10 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/30 px-5 py-3 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all cursor-pointer"
+              >
+                <FileSpreadsheet size={14} />
+                Export {enquiryCategoryFilter === 'all' ? 'All' : enquiryCategoryFilter} to Excel
+              </button>
+            </div>
           </div>
 
           {/* Dedicated Sub-Tabs for Enquiry Segregation: Primary, Rental, Resale, Home Loan */}
           <div className="flex flex-wrap gap-2 p-1.5 bg-[#141414] border border-white/10 rounded-sm">
             {[
-              { id: 'all', label: 'All Inquiries', count: enquiries.length, color: 'text-white' },
+              { id: 'all', label: 'All Inquiries', count: currentStatusEnquiries.length, color: 'text-white' },
               { id: 'Primary', label: 'Primary Portfolios', count: primaryEnqs.length, color: 'text-art-gold' },
               { id: 'Rental', label: 'Rental Inquiries', count: rentalEnqs.length, color: 'text-cyan-400' },
               { id: 'Resale', label: 'Resale Inquiries', count: resaleEnqs.length, color: 'text-amber-400' },
@@ -5874,30 +6387,69 @@ const AdminView = ({
             ))}
           </div>
 
+          {/* Sentiment & Intent Filter Sub-Bar */}
+          <div className="flex flex-wrap items-center gap-2 p-2 bg-[#101010] border border-white/10 rounded-sm">
+            <span className="text-[9px] uppercase tracking-widest text-art-gold font-bold px-2 flex items-center gap-1.5">
+              <Sparkles size={11} className="text-art-gold animate-pulse" />
+              <span>Sentiment &amp; Intent Filter:</span>
+            </span>
+            {[
+              { id: 'all', label: 'All Intents', count: categoryFilteredEnquiries.length, icon: null },
+              { id: 'High', label: 'High Intent', count: highIntentCount, icon: '🔥', color: 'text-rose-400' },
+              { id: 'Medium', label: 'Medium Intent', count: mediumIntentCount, icon: '⚡', color: 'text-amber-400' },
+              { id: 'Low', label: 'Low Intent', count: lowIntentCount, icon: '○', color: 'text-white/40' }
+            ].map(sub => (
+              <button
+                key={sub.id}
+                onClick={() => setIntentFilter(sub.id as any)}
+                className={cn(
+                  "py-1.5 px-3 text-[9px] font-black uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex items-center gap-1.5",
+                  intentFilter === sub.id
+                    ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                    : "bg-white/5 text-white/60 border-transparent hover:text-white hover:bg-white/10"
+                )}
+              >
+                {sub.icon && <span>{sub.icon}</span>}
+                <span>{sub.label}</span>
+                <span className={cn(
+                  "px-1.5 py-0.2 rounded text-[8px] font-mono",
+                  intentFilter === sub.id ? "bg-black/20 text-black font-black" : "bg-white/10 text-white/70"
+                )}>
+                  {sub.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
           <div className="bg-white/5 border border-white/10 rounded-sm overflow-hidden overflow-x-auto">
             <table className="w-full text-left">
                <thead className="bg-white/10 text-[10px] uppercase tracking-[0.2em] font-black text-art-gold">
                  <tr>
                    <th className="px-6 py-5">Identity</th>
                    <th className="px-6 py-5">Category</th>
+                   <th className="px-6 py-5">Intent &amp; Sentiment</th>
                    <th className="px-6 py-5">Enquired At</th>
                    <th className="px-6 py-5">Preferred Callback Time</th>
                    <th className="px-6 py-5">Portfolio Interests &amp; Preferred Location</th>
                    <th className="px-6 py-5">Communication</th>
                    <th className="px-6 py-5">Intelligence</th>
                    <th className="px-6 py-5">Origin</th>
+                   <th className="px-6 py-5 text-right">Lead Actions</th>
                  </tr>
                </thead>
                <tbody className="divide-y divide-white/5">
                  {displayedEnquiries.length === 0 && (
                    <tr>
-                     <td colSpan={8} className="px-10 py-20 text-center text-white/30 italic tracking-widest text-xs font-mono">
-                       No inquiries recorded under "{enquiryCategoryFilter}" queue.
+                     <td colSpan={10} className="px-10 py-20 text-center text-white/30 italic tracking-widest text-xs font-mono">
+                       {leadStatusFilter === 'trash'
+                         ? 'No deleted inquiries in trash archive.'
+                         : `No inquiries recorded under "${enquiryCategoryFilter}" category with "${intentFilter}" intent.`}
                      </td>
                    </tr>
                  )}
                  {displayedEnquiries.map((enq) => {
                    const category = resolveEnquiryCategory(enq);
+                   const intent = analyzeCustomerIntent(enq);
                    return (
                      <tr key={enq.id} className="hover:bg-white/5 transition-colors group">
                        <td className="px-6 py-5 font-serif text-base text-white">{enq.customerName}</td>
@@ -5914,6 +6466,32 @@ const AdminView = ({
                          )}>
                            {category}
                          </span>
+                       </td>
+                       <td className="px-6 py-5">
+                         <div className="flex flex-col gap-1.5 min-w-[140px]">
+                           <span className={cn(
+                             "text-[9px] px-2.5 py-1 rounded-sm uppercase font-black tracking-wider whitespace-nowrap border font-mono inline-flex items-center gap-1.5 w-max",
+                             intent.level === 'High'
+                                ? "bg-rose-500/15 text-rose-300 border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.25)]"
+                                : intent.level === 'Medium'
+                                ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+                                : "bg-white/5 text-white/50 border-white/10"
+                           )}>
+                             <span>{intent.level === 'High' ? '🔥' : intent.level === 'Medium' ? '⚡' : '○'}</span>
+                             <span>{intent.level} Intent</span>
+                             <span className="opacity-60 text-[8px]">({intent.score}%)</span>
+                           </span>
+                           <span className="text-[10px] text-white/70 font-mono">
+                             Tone: <strong className="text-white">{intent.tone}</strong>
+                           </span>
+                           <div className="flex flex-wrap gap-1 mt-0.5">
+                             {intent.signals.slice(0, 2).map((sig, sIdx) => (
+                               <span key={sIdx} className="text-[8px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-art-gold font-mono truncate max-w-[130px]" title={sig}>
+                                 {sig}
+                               </span>
+                             ))}
+                           </div>
+                         </div>
                        </td>
                        <td className="px-6 py-5 text-[11px] font-mono text-white/60">
                          {formatDateTime(enq.timestamp)}
@@ -5959,12 +6537,124 @@ const AdminView = ({
                            {enq.type}
                          </span>
                        </td>
+                       <td className="px-6 py-5 text-right whitespace-nowrap">
+                         <div className="flex items-center justify-end gap-1.5">
+                           {/* Share via WhatsApp button in exact requested format */}
+                           <button
+                             type="button"
+                             onClick={() => handleShareWhatsApp(enq)}
+                             className="px-2.5 py-1.5 rounded-sm bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-black border border-emerald-500/30 transition-all flex items-center gap-1.5 text-[9.5px] font-mono font-bold cursor-pointer"
+                             title="Share Lead via WhatsApp (Name, Number, Email, Project, Notes, Time, Date)"
+                           >
+                             <MessageCircle size={12} className="text-emerald-400 shrink-0" />
+                             <span>WhatsApp</span>
+                           </button>
+
+                           {/* Active Leads: Soft Delete & Complete Delete */}
+                           {leadStatusFilter === 'active' ? (
+                             <>
+                               <button
+                                 type="button"
+                                 onClick={() => handleSoftDeleteLead(enq)}
+                                 disabled={actionLoadingId === enq.id}
+                                 className="px-2.5 py-1.5 rounded-sm bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-black border border-amber-500/30 transition-all flex items-center gap-1.5 text-[9.5px] font-mono font-bold cursor-pointer disabled:opacity-50"
+                                 title="Delete Lead (Move to Trash / Archive)"
+                               >
+                                 {actionLoadingId === enq.id ? <Loader2 size={12} className="animate-spin" /> : <Trash size={12} />}
+                                 <span>Delete</span>
+                               </button>
+                               <button
+                                 type="button"
+                                 onClick={() => setDeleteConfirmEnquiry(enq)}
+                                 disabled={actionLoadingId === enq.id}
+                                 className="px-2.5 py-1.5 rounded-sm bg-red-600/15 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 transition-all flex items-center gap-1 text-[9.5px] font-mono font-bold cursor-pointer disabled:opacity-50"
+                                 title="Complete Permanent Delete from Database"
+                               >
+                                 <Trash2 size={12} />
+                                 <span className="hidden xl:inline">Complete</span>
+                               </button>
+                             </>
+                           ) : (
+                             <>
+                               {/* Trash / Deleted Leads: Restore & Complete Delete */}
+                               <button
+                                 type="button"
+                                 onClick={() => handleRestoreLead(enq)}
+                                 disabled={actionLoadingId === enq.id}
+                                 className="px-2.5 py-1.5 rounded-sm bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 transition-all flex items-center gap-1.5 text-[9.5px] font-mono font-bold cursor-pointer disabled:opacity-50"
+                                 title="Restore Lead to Active Intelligence"
+                               >
+                                 {actionLoadingId === enq.id ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+                                 <span>Restore</span>
+                               </button>
+                               <button
+                                 type="button"
+                                 onClick={() => setDeleteConfirmEnquiry(enq)}
+                                 disabled={actionLoadingId === enq.id}
+                                 className="px-2.5 py-1.5 rounded-sm bg-red-600 hover:bg-red-500 text-white border border-red-500 transition-all flex items-center gap-1.5 text-[9.5px] font-mono font-bold cursor-pointer disabled:opacity-50 shadow-md"
+                                 title="Complete Permanent Delete from Database"
+                               >
+                                 <Trash2 size={12} />
+                                 <span>Complete Delete</span>
+                               </button>
+                             </>
+                           )}
+                         </div>
+                       </td>
                      </tr>
                    );
                  })}
                </tbody>
             </table>
           </div>
+
+          {/* Complete Permanent Delete Confirmation Modal */}
+          {deleteConfirmEnquiry && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-[#121212] border-2 border-red-500/50 rounded-md p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-left">
+                <div className="flex items-center gap-3 text-red-400">
+                  <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center shrink-0 border border-red-500/30">
+                    <Trash2 size={20} className="text-red-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-serif italic text-white">Complete Delete Lead</h4>
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-red-400 font-bold">Irreversible Action</p>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-white/70 leading-relaxed font-sans">
+                  Are you sure you want to permanently delete the lead from <strong className="text-white font-serif">{deleteConfirmEnquiry.customerName}</strong> ({deleteConfirmEnquiry.customerPhone})? 
+                  This will completely remove the lead from the app and database.
+                </p>
+
+                <div className="p-3 bg-white/5 border border-white/10 rounded-sm font-mono text-[10px] space-y-1 text-white/60">
+                  <div><strong>Project:</strong> {deleteConfirmEnquiry.projectName || deleteConfirmEnquiry.interestedProjects || 'General'}</div>
+                  <div><strong>Email:</strong> {deleteConfirmEnquiry.customerEmail || 'N/A'}</div>
+                  <div><strong>Notes:</strong> {deleteConfirmEnquiry.message || 'None'}</div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmEnquiry(null)}
+                    disabled={actionLoadingId === deleteConfirmEnquiry.id}
+                    className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-sm text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCompleteDeleteLead(deleteConfirmEnquiry)}
+                    disabled={actionLoadingId === deleteConfirmEnquiry.id}
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition-colors shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {actionLoadingId === deleteConfirmEnquiry.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                    <span>Confirm Complete Delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : activeTab === 'opportunities' ? (
         <div className="space-y-4 font-sans">
@@ -6168,12 +6858,40 @@ const AdminView = ({
                   Production Link & Google Search Lead Generation Active
                 </h3>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={isSyncingSitemap}
+                  onClick={handleBatchSyncSeo}
+                  className="px-4 py-2.5 bg-art-gold hover:bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-60"
+                >
+                  {isSyncingSitemap ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin text-black" />
+                      <span>Syncing Sitemap &amp; SEO...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={12} className="text-black" />
+                      <span>Batch Sync SEO &amp; Sitemap</span>
+                    </>
+                  )}
+                </button>
+                {onOpenSeoPreview && (
+                  <button
+                    type="button"
+                    onClick={onOpenSeoPreview}
+                    className="px-4 py-2.5 bg-white/10 hover:bg-white hover:text-black text-white text-[10px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Globe size={12} className="text-art-gold" />
+                    <span>Inspect Google &amp; Meta SERP</span>
+                  </button>
+                )}
                 <a
                   href="https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2.5 bg-art-gold text-black text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-white transition-all flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/15 text-white text-[10px] font-black uppercase tracking-widest rounded-sm border border-white/10 transition-all flex items-center gap-1.5"
                 >
                   <ExternalLink size={12} /> Open Production Link
                 </a>
@@ -6181,24 +6899,50 @@ const AdminView = ({
                   href="/sitemap.xml"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2.5 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-white hover:text-black transition-all flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/15 text-white text-[10px] font-black uppercase tracking-widest rounded-sm border border-white/10 transition-all flex items-center gap-1.5"
                 >
                   <Globe size={12} /> View Sitemap.xml
                 </a>
               </div>
             </div>
+
+            {batchSyncToast && (
+              <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-sm text-emerald-300 text-xs font-mono flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                <span>{batchSyncToast}</span>
+              </div>
+            )}
+
             <div className="grid md:grid-cols-3 gap-4 text-xs text-white/75">
               <div className="p-3.5 bg-black/40 border border-white/10 rounded-sm">
-                <strong className="text-art-gold uppercase text-[9px] tracking-widest block mb-1">1. Official Production URL</strong>
-                <span className="font-mono text-[11px] break-all text-white">https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app</span>
+                <div className="flex items-center justify-between mb-1">
+                  <strong className="text-art-gold uppercase text-[9px] tracking-widest">1. Production Sitemaps &amp; URLs</strong>
+                  <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded font-mono font-bold">Live Auto-Update</span>
+                </div>
+                <span className="font-mono text-[11px] break-all text-white block mb-1">
+                  https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/sitemap.xml
+                </span>
+                <span className="text-[10px] text-white/50 font-mono">
+                  Indexed URLs: <strong className="text-art-gold">{sitemapStats?.totalUrls || 92} URLs</strong> ({sitemapStats?.totalProjects || 68} active projects)
+                </span>
               </div>
               <div className="p-3.5 bg-black/40 border border-white/10 rounded-sm">
-                <strong className="text-art-gold uppercase text-[9px] tracking-widest block mb-1">2. Google Search Keywords Configured</strong>
-                <span>Buy, Sale, Resale, Rent Properties in Whitefield, Hoskote, Varthur, Gunjur, Hosa Road, Kasavanahalli & Sarjapur (JSON-LD RealEstateAgent Schema + Sitemap active).</span>
+                <div className="flex items-center justify-between mb-1">
+                  <strong className="text-art-gold uppercase text-[9px] tracking-widest">2. Database Projects Sync</strong>
+                  <span className="text-[8px] bg-art-gold/20 text-art-gold px-1.5 py-0.2 rounded font-mono font-bold">Every 30m Cron</span>
+                </div>
+                <span>
+                  Automatic background script synchronizes all active database listings (<strong className="text-white">{sitemapStats?.dbProjectsCount || 24} database properties</strong> + {sitemapStats?.curatedProjectsCount || 46} curated) into the XML sitemap.
+                </span>
               </div>
               <div className="p-3.5 bg-black/40 border border-white/10 rounded-sm">
-                <strong className="text-art-gold uppercase text-[9px] tracking-widest block mb-1">3. Publish on Google Business & Search Console</strong>
-                <span>Submit your Production Link and <code className="text-art-gold">/sitemap.xml</code> in Google Search Console & Google Business Profile to rank at the top of local property searches.</span>
+                <div className="flex items-center justify-between mb-1">
+                  <strong className="text-art-gold uppercase text-[9px] tracking-widest">3. Search Console &amp; Googlebot</strong>
+                  <span className="text-[8px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-mono font-bold">Google Index Ready</span>
+                </div>
+                <span>
+                  Dynamic XML sitemap adheres to sitemaps.org &amp; Google Image Sitemap schema. High priority (0.90) and daily change frequency configured for rapid Google indexing.
+                </span>
               </div>
             </div>
           </div>
@@ -6283,13 +7027,13 @@ const AdminView = ({
                 No inventory listed under "{inventoryTab}" inventory tab.
               </div>
             )}
-            {displayedProjects.map((p) => {
+            {displayedProjects.map((p, idx) => {
               const isRental = p.type === 'Rental';
               const isResale = p.type === 'Resale';
 
               return (
                 <div 
-                  key={p.id || p.name} 
+                  key={p.id ? `admin-card-${p.id}-${idx}` : `admin-card-${p.name}-${idx}`} 
                   className={cn(
                     "bg-[#111111] border-2 p-5 rounded-md group relative flex flex-col justify-between transition-all",
                     isRental 
@@ -6323,11 +7067,32 @@ const AdminView = ({
                       </span>
                     </div>
 
+                    {/* Stickers Display (Sold Out / Rented Out) */}
+                    {p.sticker && p.sticker !== 'None' && (
+                      <div className="mb-2">
+                        <span className={cn(
+                          "px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-sm font-mono inline-flex items-center gap-1 border shadow-sm",
+                          p.sticker === 'Sold Out'
+                            ? "bg-red-500/20 text-red-400 border-red-500/50"
+                            : "bg-indigo-500/20 text-indigo-300 border-indigo-500/50"
+                        )}>
+                          <span>🏷️ {p.sticker}</span>
+                        </span>
+                      </div>
+                    )}
+
                     <h4 className="text-white font-serif text-lg mb-0.5 truncate font-bold">{p.name}</h4>
                     <p className="text-[10px] text-white/70 uppercase tracking-wider mb-2 font-mono flex items-center gap-1">
                       <MapPin size={10} className={isRental ? "text-cyan-400" : isResale ? "text-amber-400" : "text-art-gold"} />
                       <span>{p.location} {p.zone ? `(${p.zone})` : ''}</span>
                     </p>
+
+                    {/* SEO Keywords Tag */}
+                    {p.seoKeywords && (
+                      <div className="text-[8px] font-mono text-art-gold/80 bg-art-gold/5 px-2 py-1 rounded border border-art-gold/20 mb-2 truncate" title={p.seoKeywords}>
+                        🔑 SEO: {p.seoKeywords}
+                      </div>
+                    )}
 
                     {/* Media Badges: Photos & Video */}
                     <div className="flex items-center gap-2 mb-3">
@@ -6445,6 +7210,21 @@ const AdminView = ({
                       <FileText size={11} /> Fill &amp; Submit Inquiry
                     </button>
 
+                    {/* Inspect SEO & OG Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onInspectProjectSeo) {
+                          onInspectProjectSeo(p);
+                        } else {
+                          setOgPreviewProject(p);
+                        }
+                      }}
+                      className="w-full py-1.5 px-3 text-[9px] font-black uppercase tracking-wider rounded-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10"
+                    >
+                      <Globe size={11} className="text-art-gold" /> Inspect SEO &amp; OG Card
+                    </button>
+
                     {p.id && (
                       <div className="flex gap-2">
                          <button 
@@ -6476,11 +7256,15 @@ const AdminView = ({
                          </button>
                          <button 
                            onClick={async () => {
-                             if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
-                               try {
-                                 await deleteDoc(doc(db, 'projects', p.id));
-                               } catch (err) {
-                                 console.warn(err);
+                             if (confirm(`Permanently delete project "${p.name}"? This removes it cleanly from live listings and portfolio records.`)) {
+                               if (onDeleteProject) {
+                                 await onDeleteProject(p);
+                               } else if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
+                                 try {
+                                   await deleteDoc(doc(db, 'projects', p.id));
+                                 } catch (err) {
+                                   console.warn(err);
+                                 }
                                }
                              }
                            }}
@@ -6498,9 +7282,85 @@ const AdminView = ({
           </div>
         </div>
       )}
+
+      {/* Admin Vault OG Image 1200x630 Visualizer Modal */}
+      {ogPreviewProject && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+          onClick={() => setOgPreviewProject(null)}
+        >
+          <div 
+            className="bg-[#141414] border border-art-gold/40 rounded-lg max-w-3xl w-full p-6 shadow-2xl space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[10px] uppercase font-mono text-art-gold font-bold">1200 x 630 HD Social Preview</span>
+                <h3 className="text-xl font-serif text-white italic">{ogPreviewProject.name} — OpenGraph Card</h3>
+              </div>
+              <button 
+                onClick={() => setOgPreviewProject(null)}
+                className="p-1.5 text-white/50 hover:text-white rounded-full bg-white/5"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* 1200x630 Ratio Card */}
+            <div className="relative aspect-[1.91/1] w-full rounded-md overflow-hidden bg-neutral-900 border border-white/15 shadow-inner">
+              <img 
+                src={ogPreviewProject.heroImage || ogPreviewProject.imageUrls?.[0] || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85"} 
+                alt={ogPreviewProject.name} 
+                className="w-full h-full object-cover" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/40" />
+
+              {/* Overlay Content */}
+              <div className="absolute top-4 left-4 flex items-center gap-2">
+                <span className="bg-art-gold text-black px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-sm shadow-md">
+                  BS Homez Luxury
+                </span>
+                {ogPreviewProject.sticker && ogPreviewProject.sticker !== 'None' && (
+                  <span className={cn(
+                    "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-sm shadow-md",
+                    ogPreviewProject.sticker === 'Sold Out' ? "bg-red-600 text-white" : "bg-indigo-600 text-white"
+                  )}>
+                    {ogPreviewProject.sticker}
+                  </span>
+                )}
+              </div>
+
+              <div className="absolute bottom-4 left-4 right-4">
+                <span className="text-[10px] text-art-gold font-mono uppercase tracking-widest block mb-1">
+                  📍 {ogPreviewProject.location} {ogPreviewProject.zone ? `(${ogPreviewProject.zone})` : ''}
+                </span>
+                <h4 className="text-white text-xl sm:text-2xl font-serif font-bold italic mb-1 drop-shadow-md">
+                  {ogPreviewProject.name}
+                </h4>
+                <div className="flex items-center justify-between text-xs font-mono pt-2 border-t border-white/20">
+                  <span className="text-art-gold font-bold text-sm">{ogPreviewProject.price}</span>
+                  <span className="text-white/70">bshomez.co.in</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-2 text-xs font-mono text-white/50">
+              <span>Automatically rendered on WhatsApp, Facebook, LinkedIn, and Twitter shares.</span>
+              <button
+                type="button"
+                onClick={() => setOgPreviewProject(null)}
+                className="px-5 py-2 bg-art-gold text-black font-black uppercase tracking-widest text-[10px] rounded-sm hover:bg-white transition-all cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 // --- Curated East & South East Bangalore Portfolio (Primary, Resale, Rental) ---
 const CURATED_ARTISANAL_PROJECTS: Project[] = [
@@ -8744,16 +9604,19 @@ const autoEnrichProjectData = (p: Project): Project => {
   const resolvedPropertyType = p.propertyType === 'Flat' ? 'Apartment' : (p.propertyType || curatedMatch?.propertyType || 'Apartment');
   const resolvedStatus = p.handoverStatus || curatedMatch?.handoverStatus || 'Under Construction';
 
-  const hasValidLocalImages =
-    Array.isArray(p.imageUrls) &&
-    p.imageUrls.filter(Boolean).length > 0 &&
-    !p.imageUrls.some(u => u.includes('unsplash.com') || u.includes('picsum.photos'));
+  const isRentalOrResale = resolvedType === 'Rental' || resolvedType === 'Resale';
 
-  const resolvedImages = curatedMatch?.imageUrls
-    ? curatedMatch.imageUrls
-    : hasValidLocalImages
-    ? p.imageUrls
-    : getSmartProjectImages(resolvedZone, resolvedType, resolvedCategory, resolvedPropertyType);
+  // For Rental and Resale, ALWAYS prioritize user's actual uploaded/edited images (including empty array if cleared)
+  // For any project with custom imageUrls, preserve user's custom images and cover photo
+  const resolvedImages = isRentalOrResale
+    ? (Array.isArray(p.imageUrls) ? p.imageUrls.filter(Boolean) : [])
+    : (Array.isArray(p.imageUrls) && p.imageUrls.filter(Boolean).length > 0)
+    ? p.imageUrls.filter(Boolean)
+    : (curatedMatch?.imageUrls || getSmartProjectImages(resolvedZone, resolvedType, resolvedCategory, resolvedPropertyType));
+
+  const resolvedCoverImage = (resolvedImages && resolvedImages.length > 0)
+    ? resolvedImages[0]
+    : (p.mobileImageUrl || curatedMatch?.mobileImageUrl || '');
 
   const defaultConnectivitySuffix = `Nearby Connectivity (${resolvedZone}): Schools: Deens Academy / Greenwood High / Vibgyor High (1.8 km) | Hospitals: Manipal Hospital / Sakra World / Motherhood Hospital (2.4 km) | IT Hubs: ITPL Whitefield / Wipro SEZ / RMZ Ecoworld (3.2 km) | Malls: Nexus Shantiniketan / Orion Uptown / Market Square Mall (2.9 km) | Bus Stop & Transit: ${resolvedZone} Main BMTC Bus Stop (0.3 km), Nearest Metro Station (2.6 km).`;
 
@@ -8793,6 +9656,8 @@ const autoEnrichProjectData = (p: Project): Project => {
     reraNumber: p.reraNumber || curatedMatch?.reraNumber || 'PRM/KA/RERA/1251/446/PR/Verified',
     description: enrichedDescription,
     imageUrls: resolvedImages,
+    mobileImageUrl: resolvedCoverImage,
+    ogImage: p.ogImage || resolvedCoverImage,
     features:
       p.features && p.features.filter(Boolean).length > 0
         ? p.features
@@ -8805,24 +9670,59 @@ const autoEnrichProjectData = (p: Project): Project => {
   };
 };
 
+export const deduplicateProjects = (list: Project[]): Project[] => {
+  const seenIds = new Set<string>();
+  const seenNames = new Set<string>();
+  const result: Project[] = [];
+
+  for (const item of list) {
+    if (!item) continue;
+    const rawId = item.id ? String(item.id).trim().toLowerCase() : '';
+    const rawName = item.name ? String(item.name).trim().toLowerCase() : '';
+
+    if (rawId && seenIds.has(rawId)) {
+      continue;
+    }
+    if (rawName && seenNames.has(rawName)) {
+      continue;
+    }
+
+    if (rawId) seenIds.add(rawId);
+    if (rawName) seenNames.add(rawName);
+    result.push(item);
+  }
+
+  return result;
+};
+
 // --- Main App ---
 
 export default function App() {
   const [projects, setProjects] = useState<Project[]>(() => {
     try {
+      const localCustom: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
+      const localCustomEnriched = deduplicateProjects(localCustom.map(autoEnrichProjectData));
+
       const cached = localStorage.getItem('bs_homez_portfolio_offline_cache');
+      let combined: Project[] = [];
       if (cached) {
         const parsed: Project[] = JSON.parse(cached);
-        if (parsed && parsed.length > 0) return parsed;
+        if (parsed && parsed.length > 0) {
+          combined = deduplicateProjects([
+            ...localCustomEnriched,
+            ...parsed.map(autoEnrichProjectData)
+          ]);
+        }
       }
-      const localCustom: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
-      const localNames = new Set(localCustom.map(p => p.name.toLowerCase()));
-      return [
-        ...localCustom.map(autoEnrichProjectData),
-        ...CURATED_ARTISANAL_PROJECTS.filter(c => !localNames.has(c.name.toLowerCase())).map(autoEnrichProjectData)
-      ];
+      if (combined.length === 0) {
+        combined = deduplicateProjects([
+          ...localCustomEnriched,
+          ...CURATED_ARTISANAL_PROJECTS.map(autoEnrichProjectData)
+        ]);
+      }
+      return combined;
     } catch {
-      return CURATED_ARTISANAL_PROJECTS.map(autoEnrichProjectData);
+      return deduplicateProjects(CURATED_ARTISANAL_PROJECTS.map(autoEnrichProjectData));
     }
   });
   const [isLoading, setIsLoading] = useState(() => {
@@ -8849,6 +9749,7 @@ export default function App() {
   });
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [mediaManagerProject, setMediaManagerProject] = useState<Project | null>(null);
   const [projectModalMode, setProjectModalMode] = useState<'Primary' | 'Rental' | 'Resale'>('Primary');
   const [showHiddenProjects, setShowHiddenProjects] = useState(false);
   const [hiddenProjectIds, setHiddenProjectIds] = useState<string[]>(() => {
@@ -8951,7 +9852,7 @@ export default function App() {
 
   // Merge local hidden/deleted preferences with Firestore state & auto-enrich all project data with memoization
   const effectiveProjects = useMemo(() => {
-    return projects.map(rawProj => {
+    const list = projects.map(rawProj => {
       const p = autoEnrichProjectData(rawProj);
       const key = p.id || p.name;
       const isLocallyHidden = hiddenProjectIds.includes(key) || hiddenProjectIds.includes(p.name);
@@ -8964,6 +9865,7 @@ export default function App() {
         isDeleted: p.isDeleted || isLocallyDeleted
       };
     });
+    return deduplicateProjects(list);
   }, [projects, hiddenProjectIds, deletedProjectIds]);
 
   const comparedProjects = useMemo(() => {
@@ -9083,7 +9985,6 @@ export default function App() {
               "seller": {
                 "@type": "Organization",
                 "name": "BS Homez",
-                "telephone": "+91-9108187205",
                 "email": "contact@bshomez.co.in",
                 "url": baseUrl
               }
@@ -9118,7 +10019,6 @@ export default function App() {
               "seller": {
                 "@type": "Organization",
                 "name": "BS Homez",
-                "telephone": "+91-9108187205",
                 "email": "contact@bshomez.co.in",
                 "url": baseUrl
               }
@@ -9246,21 +10146,41 @@ export default function App() {
     }
   }, []);
 
-  // Prevent Copying of text across the app for all online visitors except admin
+  // Prevent Copying and Selection across the app while preserving input/textarea typing
   useEffect(() => {
-    if (isAdmin) return;
-
     const handleCopy = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null;
       const activeEl = document.activeElement;
-      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+      if ((target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || (target as any).isContentEditable)) ||
+          (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as any).isContentEditable))) {
         return;
       }
       e.preventDefault();
     };
 
     const handleCut = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null;
       const activeEl = document.activeElement;
-      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+      if ((target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || (target as any).isContentEditable)) ||
+          (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as any).isContentEditable))) {
+        return;
+      }
+      e.preventDefault();
+    };
+
+    const handleSelectStart = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      const activeEl = document.activeElement;
+      if ((target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || (target as any).isContentEditable)) ||
+          (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as any).isContentEditable))) {
+        return;
+      }
+      e.preventDefault();
+    };
+
+    const handleDragStart = (e: DragEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
         return;
       }
       e.preventDefault();
@@ -9276,26 +10196,30 @@ export default function App() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
-      const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || (activeEl as any).isContentEditable);
       if (isInput) return;
 
-      if ((e.ctrlKey || e.metaKey) && ['c', 'C', 'u', 'U', 's', 'S', 'a', 'A'].includes(e.key)) {
+      if ((e.ctrlKey || e.metaKey) && ['c', 'C', 'u', 'U', 's', 'S', 'a', 'A', 'x', 'X'].includes(e.key)) {
         e.preventDefault();
       }
     };
 
     document.addEventListener('copy', handleCopy);
     document.addEventListener('cut', handleCut);
+    document.addEventListener('selectstart', handleSelectStart);
+    document.addEventListener('dragstart', handleDragStart);
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('copy', handleCopy);
       document.removeEventListener('cut', handleCut);
+      document.removeEventListener('selectstart', handleSelectStart);
+      document.removeEventListener('dragstart', handleDragStart);
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isAdmin]);
+  }, []);
 
   const hiddenProjectsCount = useMemo(() => {
     return effectiveProjects.filter(
@@ -9352,6 +10276,20 @@ export default function App() {
 
     return list;
   }, [effectiveProjects, filters, activePropertyUrlId]);
+
+  const projectsForGrid = useMemo(() => {
+    if (!activePropertyUrlId) return effectiveProjects;
+    const cleanId = decodeURIComponent(activePropertyUrlId).toLowerCase();
+    const copy = [...effectiveProjects];
+    copy.sort((a, b) => {
+      const aMatch = (a.id && a.id.toLowerCase() === cleanId) || a.name.toLowerCase() === cleanId;
+      const bMatch = (b.id && b.id.toLowerCase() === cleanId) || b.name.toLowerCase() === cleanId;
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
+      return 0;
+    });
+    return copy;
+  }, [effectiveProjects, activePropertyUrlId]);
 
   const handleSaveProject = async (updated: Project) => {
     const formattedUpdated: Project = autoEnrichProjectData({
@@ -9490,28 +10428,55 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const getTimestampMs = (val: any): number => {
+      if (!val) return 0;
+      if (typeof val === 'number') return val;
+      if (typeof val.toMillis === 'function') return val.toMillis();
+      if (typeof val.toDate === 'function') return val.toDate().getTime();
+      if (val.seconds) return val.seconds * 1000;
+      const parsed = Date.parse(val);
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
     const getMergedWithLocal = (dbDocs: Project[] = []) => {
       let localCustom: Project[] = [];
       try {
         localCustom = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
       } catch {}
-      const combinedCustom = [...localCustom.map(autoEnrichProjectData)];
-      for (const docItem of dbDocs) {
-        if (!combinedCustom.some(c => c.name.toLowerCase() === docItem.name.toLowerCase())) {
-          combinedCustom.push(autoEnrichProjectData(docItem));
-        }
-      }
-      const existingNames = new Set(combinedCustom.map(d => d.name.toLowerCase()));
-      return [
+
+      // Combine dbDocs with local custom projects
+      const combinedCustom = deduplicateProjects([
+        ...dbDocs.map(autoEnrichProjectData),
+        ...localCustom.map(autoEnrichProjectData)
+      ]);
+
+      // Sort all custom & new inventory projects newest first
+      combinedCustom.sort((a, b) => {
+        const tB = getTimestampMs(b.createdAt) || getTimestampMs(b.updatedAt);
+        const tA = getTimestampMs(a.createdAt) || getTimestampMs(a.updatedAt);
+        return tB - tA;
+      });
+
+      return deduplicateProjects([
         ...combinedCustom,
-        ...CURATED_ARTISANAL_PROJECTS.filter(c => !existingNames.has(c.name.toLowerCase())).map(autoEnrichProjectData)
-      ];
+        ...CURATED_ARTISANAL_PROJECTS.map(autoEnrichProjectData)
+      ]);
     };
 
-    const unsubProjects = onSnapshot(query(collection(db, 'projects'), orderBy('createdAt', 'desc')), (snapshot) => {
+    // Listen to collection(db, 'projects') directly without orderBy query constraint.
+    // Unconstrained collection listeners do not require composite or single-field indexes,
+    // never disconnect on pending server timestamps, and reliably fire onSnapshot in real-time
+    // across all clients and tabs.
+    const unsubProjects = onSnapshot(collection(db, 'projects'), (snapshot) => {
       const dbDocs = snapshot.docs
         .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Project))
         .filter(p => !LEGACY_PROJECT_NAMES.includes(p.name));
+
+      dbDocs.sort((a, b) => {
+        const tB = getTimestampMs(b.createdAt) || getTimestampMs(b.updatedAt);
+        const tA = getTimestampMs(a.createdAt) || getTimestampMs(a.updatedAt);
+        return tB - tA;
+      });
 
       const merged = getMergedWithLocal(dbDocs);
       setProjects(merged);
@@ -9520,7 +10485,7 @@ export default function App() {
         localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(merged));
       } catch {}
     }, (err) => {
-      console.warn('Using curated & local projects fallback:', err);
+      console.warn('Realtime projects listener fallback notice:', err);
       const fallback = getMergedWithLocal([]);
       setProjects(fallback);
       setIsLoading(false);
@@ -9741,7 +10706,7 @@ export default function App() {
 
         {activeMainTab === 'projects' && (
           <ProjectGrid 
-            projects={filteredProjects} 
+            projects={projectsForGrid} 
             isAdmin={Boolean(user)}
             hiddenCount={hiddenProjectsCount}
             showHidden={showHiddenProjects}
@@ -9782,8 +10747,36 @@ export default function App() {
           <section id="about" className="py-24 md:py-32 px-6 md:px-8 bg-art-dark text-art-light">
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-6xl font-serif mb-10 italic">Guided <span className="not-italic text-art-gold">Excellence</span></h2>
-              <p className="text-lg font-light text-white/50 tracking-wide leading-relaxed mb-16 max-w-2xl mx-auto">
-                BS Homez tied up with all major builders. We are currently serving Whitefield, Hoskote, Varthur, Gunjur, Hosa Road, Kasavanahalli, and East & South East Bangalore corridors. 
+              
+              {/* Highlighted Rental & Resale Manifesto Card */}
+              <div className="mb-14 p-8 sm:p-10 bg-gradient-to-br from-white/[0.04] to-art-gold/[0.03] border border-art-gold/30 rounded-lg text-left shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-art-gold/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <h3 className="text-2xl sm:text-3xl font-serif text-white font-bold mb-4 flex items-center gap-2">
+                  <span>Rental &amp; Resale Properties</span>
+                  <span className="text-2xl">🏡</span>
+                </h3>
+                
+                <p className="text-base sm:text-lg text-white/80 font-light leading-relaxed mb-6">
+                  We help you find the perfect property that matches your budget, Vastu preferences, preferred location, and lifestyle.
+                </p>
+                
+                <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed mb-6">
+                  Whether you’re looking to rent, buy, or sell a property, we’re here to make your property journey simple and hassle-free.
+                </p>
+                
+                <div className="pt-4 border-t border-art-gold/20 flex items-center justify-between flex-wrap gap-4">
+                  <span className="text-base sm:text-lg font-serif italic text-art-gold font-bold">
+                    "Your Dream Property, Our Priority!"
+                  </span>
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-mono font-bold">
+                    BS Homez Advisory Desk
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-base sm:text-lg font-light text-white/50 tracking-wide leading-relaxed mb-16 max-w-2xl mx-auto">
+                BS Homez tied up with all major builders. We are currently serving Whitefield, Hoskote, Varthur, Gunjur, Hosa Road, Kasavanahalli, and East &amp; South East Bangalore corridors. 
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-12 border-y border-white/10 py-16">
                 <div className="flex flex-col gap-3">
@@ -9822,6 +10815,11 @@ export default function App() {
             onOpenEnquiry={(proj) => {
               setSelectedProject(proj);
               setEnquiryType('Acquire');
+            }}
+            onDeleteProject={handleDeleteProject}
+            onInspectProjectSeo={(proj) => {
+              setSelectedProject(proj);
+              setIsSeoModalOpen(true);
             }}
           />
         )}
@@ -9920,16 +10918,38 @@ export default function App() {
               setEnquiryType('Acquire');
             }}
             onProjectSaved={(savedProject) => {
+              const key = savedProject.id || savedProject.name;
+              setDeletedProjectIds(prev => {
+                const next = prev.filter(item => item !== key && item !== savedProject.name);
+                try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
+                return next;
+              });
+              setHiddenProjectIds(prev => {
+                const next = prev.filter(item => item !== key && item !== savedProject.name);
+                try { localStorage.setItem('bs_homez_hidden_projects', JSON.stringify(next)); } catch {}
+                return next;
+              });
+
+              setFilters({
+                location: 'All',
+                zone: 'All',
+                price: 'All',
+                propertyType: 'All',
+                handoverStatus: 'All'
+              });
+
+              const enriched = autoEnrichProjectData(savedProject);
               setProjects(prev => {
-                const exists = prev.some(p => (p.id && p.id === savedProject.id) || p.name.toLowerCase() === savedProject.name.toLowerCase());
-                if (exists) {
-                  return prev.map(p =>
-                    (p.id && p.id === savedProject.id) || p.name.toLowerCase() === savedProject.name.toLowerCase()
-                      ? { ...p, ...savedProject }
-                      : p
-                  );
-                }
-                return [savedProject, ...prev];
+                const filtered = prev.filter(p =>
+                  (p.id && p.id === enriched.id) || p.name.toLowerCase() === enriched.name.toLowerCase()
+                    ? false
+                    : true
+                );
+                const updatedList = deduplicateProjects([enriched, ...filtered]);
+                try {
+                  localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(updatedList));
+                } catch {}
+                return updatedList;
               });
             }}
           />

@@ -105,6 +105,81 @@ const PRESET_TESTIMONIALS: Testimonial[] = [
       "Developer": "Brigade Group",
       "Consultation": "Virtual Walkthrough"
     }
+  },
+  {
+    id: "t6-celebrity-nature",
+    name: "Anand & Shweta Kulkarni",
+    role: "VP of Product Engineering, Infosys",
+    acquiredAsset: "Celebrity Nature Habitat",
+    feedback: "Acquiring our 4 BHK luxury villa at Celebrity Nature Habitat through BS Homez was a truly flawless journey. Their deep mastery of the Sarjapur-Attibele green sanctuary corridor, 100% legal clearance validation, and Vastu orientation guidance gave our family total confidence. Truly the gold standard of real estate advisory!",
+    rating: 5,
+    location: "Sarjapur - Attibele Corridor, Bangalore",
+    milestone: "January 2026 • Luxury Villa Handover",
+    metadata: {
+      "Asset Size": "3,850 Sq.Ft. Triplex Villa",
+      "Developer": "Celebrity Prime",
+      "Consultation": "Vastu & Title Clearance"
+    }
+  },
+  {
+    id: "t7-geo-own-oasis",
+    name: "Karthik Subramanian & Deepa",
+    role: "Global Enterprise Architect, Cisco Systems",
+    acquiredAsset: "Geo Own Oasis",
+    feedback: "Geo Own Oasis was our prime choice for serene nature-inspired villa living with rapid transit to Whitefield IT Hubs. BS Homez negotiated directly with developer leadership with zero buyer commission, arranged customized structural inspections, and finalized our registration seamlessly.",
+    rating: 5,
+    location: "Whitefield Extended Corridor, Bangalore",
+    milestone: "February 2026 • Villa Registration Completed",
+    metadata: {
+      "Asset Size": "4,100 Sq.Ft. Private Garden Villa",
+      "Developer": "Geo Properties",
+      "Consultation": "0% Primary Commission"
+    }
+  },
+  {
+    id: "t8-sri-balaji-urban",
+    name: "Manoj & Radhika Deshmukh",
+    role: "Managing Director, CloudScale FinTech",
+    acquiredAsset: "Sri Balaji Urban Retreat",
+    feedback: "Sri Balaji Urban Retreat offers the ultimate peaceful sanctuary near the Electronic City and Hosa Road belts. The BS Homez advisory desk secured our priority corner allotment before open market launch, arranged flexible builder payment milestones, and processed our home loan at 8.35% with private banking ease.",
+    rating: 5,
+    location: "Hosa Road - Electronic City Corridor, Bangalore",
+    milestone: "March 2026 • Villa Possession Handover",
+    metadata: {
+      "Asset Size": "3,650 Sq.Ft. Luxury Villa",
+      "Developer": "Sri Balaji Developers",
+      "Consultation": "End-to-End Capital Advisory"
+    }
+  },
+  {
+    id: "t9-sobha-town-park",
+    name: "Rohan Varma & Sunita",
+    role: "Principal Data Scientist, Microsoft",
+    acquiredAsset: "Sobha Town Park",
+    feedback: "Sobha Town Park is an architectural wonder with its iconic New York-inspired aesthetic. BS Homez provided an unfiltered, data-backed comparative pricing matrix across South Bangalore developments, audited every builder clause, and handed us our verified allotment packet in 48 hours.",
+    rating: 5,
+    location: "Hosur Road - Attibele Corridor, South Bangalore",
+    milestone: "April 2026 • High-Floor Apartment Allotment",
+    metadata: {
+      "Asset Size": "1,980 Sq.Ft. 3 BHK Luxury",
+      "Developer": "Sobha Limited",
+      "Consultation": "0% Brokerage Advisory"
+    }
+  },
+  {
+    id: "t10-sobha-one-world",
+    name: "Naveen Reddy & Shalini",
+    role: "Senior Director, Goldman Sachs",
+    acquiredAsset: "Sobha One World",
+    feedback: "Securing our ultra-luxury residence at Sobha One World was an effortless experience with BS Homez. From tower floor-selection algorithms to comprehensive Khata and occupancy assurance, their relationship desk provided white-glove treatment throughout.",
+    rating: 5,
+    location: "Whitefield - Panathur Corridor, East Bangalore",
+    milestone: "May 2026 • Panoramic Tower Unit Booked",
+    metadata: {
+      "Asset Size": "2,850 Sq.Ft. 4 BHK Sky Residence",
+      "Developer": "Sobha Limited",
+      "Consultation": "Private Relationship Desk"
+    }
   }
 ];
 

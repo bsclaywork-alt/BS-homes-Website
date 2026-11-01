@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Play, Film, Image as ImageIcon, CheckCircle2, ShieldCheck, Calendar, MapPin, EyeOff, Lock } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  X, 
+  ChevronLeft, 
+  ChevronRight, 
+  Play, 
+  Film, 
+  Image as ImageIcon, 
+  CheckCircle2, 
+  Calendar, 
+  MapPin, 
+  Lock 
+} from 'lucide-react';
 import { Project } from '../types';
 
 interface MediaViewerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  project: Project;
+  project?: Project | null;
   isAdmin?: boolean;
   onEnquire?: (project: Project) => void;
 }
@@ -18,6 +29,29 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
   isAdmin = false,
   onEnquire
 }) => {
+  // Unconditionally call all React hooks at the top of the component (Rules of Hooks)
+  type MediaTab = 'photos' | 'video';
+  const [activeTab, setActiveTab] = useState<MediaTab>('photos');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Derive media info safely with optional chaining
+  const isPrimary = project
+    ? project.type === 'Primary' || project.type === 'Primary Sale' || (!project.type && project.type !== 'Rental' && project.type !== 'Resale')
+    : false;
+  const canViewImages = !isPrimary || isAdmin;
+  const rawImages = (project?.imageUrls || []).filter(Boolean);
+  const images = canViewImages ? rawImages : [];
+  const videoUrl = project?.videoUrl || project?.mobileVideoUrl;
+
+  // Sync active tab & reset image index when modal opens or project changes
+  useEffect(() => {
+    if (!isOpen || !project) return;
+    const hasPhotos = canViewImages && rawImages.length > 0;
+    const hasVideo = Boolean(videoUrl);
+    setActiveTab(hasPhotos ? 'photos' : hasVideo ? 'video' : 'photos');
+    setCurrentImageIndex(0);
+  }, [isOpen, project?.id, project?.name, isAdmin]);
+
   // Listen for Escape key to easily close popup
   useEffect(() => {
     if (!isOpen) return;
@@ -30,29 +64,18 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
-  const isPrimary = project.type === 'Primary' || project.type === 'Primary Sale' || (!project.type && project.type !== 'Rental' && project.type !== 'Resale');
-  // For primary projects: hide images for online browsers/users; only admin can view them
-  const canViewImages = !isPrimary || isAdmin;
-
-  const rawImages = (project.imageUrls || []).filter(Boolean);
-  const images = canViewImages ? rawImages : [];
-  const videoUrl = project.videoUrl || project.mobileVideoUrl;
-
-  type MediaTab = 'photos' | 'video';
-  const [activeTab, setActiveTab] = useState<MediaTab>(
-    images.length > 0 ? 'photos' : videoUrl ? 'video' : 'photos'
-  );
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  // Early return ONLY after all hooks have been unconditionally invoked
+  if (!isOpen || !project) return null;
 
   const handlePrev = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (images.length === 0) return;
     setCurrentImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleNext = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (images.length === 0) return;
     setCurrentImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
@@ -86,7 +109,7 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
             <div>
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black">
-                  {project.type} Portfolio Media Gallery
+                  {project.type || 'Primary'} Portfolio Media Gallery
                 </span>
                 {project.availableFrom && (
                   <span className="text-[9px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 flex items-center gap-1">
@@ -148,11 +171,18 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
             {canViewImages && activeTab === 'photos' && images.length > 0 ? (
               <div className="relative w-full h-full flex flex-col items-center justify-center">
                 <div className="relative w-full max-h-[58vh] flex items-center justify-center">
-                  <img
-                    src={images[currentImageIndex]}
-                    alt={`${project.name} - Photo ${currentImageIndex + 1}`}
-                    className="max-h-[56vh] max-w-full object-contain rounded border border-white/10 shadow-2xl select-none"
-                  />
+                  <div className="relative inline-block max-w-full">
+                    <img
+                      src={images[currentImageIndex]}
+                      alt={`${project.name} - Photo ${currentImageIndex + 1}`}
+                      className="max-h-[56vh] max-w-full object-contain rounded border border-white/10 shadow-2xl select-none"
+                    />
+                    {/* BS Homez Image Watermark */}
+                    <div className="pointer-events-none absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 bg-black/80 backdrop-blur-md rounded-sm border border-art-gold/40 text-white text-[9.5px] font-black tracking-widest font-mono shadow-2xl select-none">
+                      <span className="w-1.5 h-1.5 rounded-full bg-art-gold animate-pulse" />
+                      <span>BS Homez</span>
+                    </div>
+                  </div>
                   {/* Prev / Next Controls */}
                   {images.length > 1 && (
                     <>

@@ -82,7 +82,8 @@ export const AdminMediaManagerModal: React.FC<AdminMediaManagerModalProps> = ({
         imageUrls: images,
         videoUrl: videoUrl,
         mobileVideoUrl: videoUrl || mobileVideoUrl,
-        mobileImageUrl: images[0] || mobileImageUrl || ''
+        mobileImageUrl: images[0] || mobileImageUrl || '',
+        ogImage: images[0] || project.ogImage || ''
       };
 
       await onSave(updatedProject);
@@ -142,11 +143,16 @@ export const AdminMediaManagerModal: React.FC<AdminMediaManagerModalProps> = ({
           <div className="p-4 bg-white/[0.02] border border-white/10 rounded-sm flex flex-col sm:flex-row items-center gap-4">
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded overflow-hidden border border-art-gold shrink-0 bg-black shadow-md relative">
               {images.length > 0 ? (
-                <img 
-                  src={images[0]} 
-                  alt="Active Cover" 
-                  className="w-full h-full object-cover" 
-                />
+                <>
+                  <img 
+                    src={images[0]} 
+                    alt="Active Cover" 
+                    className="w-full h-full object-cover" 
+                  />
+                  <div className="absolute top-1.5 right-1.5 pointer-events-none select-none z-10 px-1.5 py-0.5 rounded bg-black/75 border border-white/20 backdrop-blur-sm flex items-center gap-1 shadow-sm">
+                    <span className="text-[7.5px] font-black uppercase tracking-wider text-art-gold font-mono">BS Homez</span>
+                  </div>
+                </>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-white/30 text-[9px] font-mono p-2 text-center">
                   <ImageIcon size={20} className="mb-1" />

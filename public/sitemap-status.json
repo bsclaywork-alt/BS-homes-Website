@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "timestamp": "2026-10-30T10:40:48.533Z",
+  "baseUrl": "https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app",
+  "totalUrls": 92,
+  "totalProjects": 68,
+  "dbProjectsCount": 24,
+  "curatedProjectsCount": 46,
+  "outputPath": "/app/applet/public/sitemap.xml"
+}

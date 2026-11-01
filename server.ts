@@ -10,6 +10,7 @@ import {
   generatePropertyMetaTags, 
   SITEMAP_PROJECTS 
 } from "./src/data/projectsSitemapData";
+import { updateSitemap } from "./scripts/update-sitemap";
 
 dotenv.config();
 
@@ -28,16 +29,40 @@ async function startServer() {
   app.post("/api/gemini/chat", async (req, res) => {
     try {
       const { message, history } = req.body;
+      const lower = (message || "").toLowerCase();
+
+      // Intelligent local suggestion helper
+      const generateSuggestion = (query: string): string => {
+        let suggestion = "our curated East Bangalore luxury portfolio including Prestige Somerville and Godrej Woodscapes";
+        if (query.includes("villa") || query.includes("independent") || query.includes("plot")) {
+          suggestion = "Celebrity Nature Habitat (Sarjapur-Attibele), Geo Own Oasis (Whitefield), and Sri Balaji Urban Retreat (Hosa Road)";
+        } else if (query.includes("rent") || query.includes("lease")) {
+          suggestion = "our verified luxury rental collection in Whitefield, Kasavanahalli, and Hosa Road";
+        } else if (query.includes("resale") || query.includes("pre-owned")) {
+          suggestion = "our premium resale enclaves with clear BDA/BBMP approvals and zero legal encumbrance";
+        } else if (query.includes("sobha") || query.includes("apartment") || query.includes("flat")) {
+          suggestion = "Sobha Town Park (Hosur Road / Attibele) and Sobha One World (Whitefield-Panathur)";
+        } else if (query.includes("sarjapur")) {
+          suggestion = "Celebrity Nature Habitat and luxury villas along Sarjapur Road";
+        } else if (query.includes("whitefield")) {
+          suggestion = "Sobha One World and Geo Own Oasis in the prime Whitefield corridor";
+        } else if (query.includes("hosa road") || query.includes("electronic city")) {
+          suggestion = "Sri Balaji Urban Retreat and Sobha Town Park";
+        }
+        return suggestion;
+      };
+
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
+        const tailoredSuggestion = generateSuggestion(lower);
         return res.json({
-          response: `Good day! Welcome to BS Homez, where we turn your residential dreams into concrete realities. 
+          response: `Thank you for sharing your requirements with BS Homez! 
 
-I am here to assist you. To help us find the perfect match from our premium real estate listings, could you please provide your:
-- Name:
-- Number:
+Based on your preferences, we highly recommend exploring ${tailoredSuggestion}. 
 
-Alternatively, please specify your query and we will get back to you with an ample of matched properties.`
+Our BS Homez advisory team will review your requirements in detail and get back to you shortly with an ample of matched curated properties, floor plans, and priority viewing arrangements. 
+
+Please share your Name and Mobile Number so our relationship manager can connect directly with you!`
         });
       }
 
@@ -50,14 +75,19 @@ Alternatively, please specify your query and we will get back to you with an amp
         }
       });
 
-      const systemInstruction = `You are a high-end AI assistant for "BS Homez", a premium luxury real estate consultancy.
-Your tone should be elegant, exceptionally polite, warm, helpful, reassuring, and highly expert.
-Keep your responses relatively concise, focused, and beautifully formatted (use clean spacing, bullet points, but keep it elegant and conversational).
-When visitors correspond with you:
-1. Speak with elite poise.
-2. If they haven't provided their name or mobile number, politely and warmly suggest they can share it so that "our elite real estate advisors can revert with an ample of matched properties in due time".
-3. Use Indian Standard Time metrics or references in a polished local context if appropriate.
-Keep responses under 180 words.`;
+      const systemInstruction = `You are the elite AI Real Estate Assistant for "BS Homez", Bangalore's luxury property advisory.
+Your responsibility:
+1. When a user chats with their requirements (budget, location like Whitefield, Sarjapur, Hosa Road, Electronic City, Kasavanahalli, Varthur, Gunjur, or property type: Villa, Apartment, Rental, Resale, 2BHK/3BHK/4BHK):
+   - Give specific, tailored suggestions from BS Homez's portfolio:
+     * Villas: "Celebrity Nature Habitat" (Sarjapur-Attibele), "Geo Own Oasis" (Whitefield), "Sri Balaji Urban Retreat" (Hosa Road).
+     * Apartments: "Sobha Town Park" (Hosur Road / Attibele), "Sobha One World" (Whitefield), "Prestige Somerville", "Godrej Woodscapes".
+     * Rental & Resale: Verified units in Whitefield, Kasavanahalli, Hosa Road, Sarjapur.
+   - Explain why the suggested property matches their requirement (e.g. proximity to IT Hubs, Vastu alignment, 0% primary fee).
+   - Inform the customer clearly and reassuringly: "Our BS Homez advisory team will get back to you with custom property matches, floor plans, and priority viewing slots shortly."
+   - Invite them to share their Name & Mobile Number (with country code) if they haven't yet, so our senior consultant can reach out within 24 hours.
+2. Tone: Sophisticated, warm, highly knowledgeable, and polite.
+3. NEVER mention any obsolete phone numbers; direct users to contact@bshomez.in or invite them to share their number.
+4. Keep answers crisp and beautifully formatted under 160 words.`;
 
       let prompt = message;
       if (history && Array.isArray(history)) {
@@ -78,7 +108,7 @@ Keep responses under 180 words.`;
     } catch (error) {
       console.error("Gemini API Error in Server:", error);
       res.json({ 
-        response: "Welcome to BS Homez! I am here to help you find your dream property. How can I assist you regarding our premium portfolio today?" 
+        response: "Welcome to BS Homez! Based on your requirement, our advisory team will analyze your preferences and get back to you shortly with curated property options. Please share your Name and Contact Number." 
       });
     }
   });
@@ -382,7 +412,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary) with the fol
         });
       }
 
-      const smsText = `Welcome to BS Homez, ${name || "Valued Guest"}! Thank you for downloading details for ${interestedProjects || "our portfolio"} (${preferredLocation || "Bangalore"}). Within 24Hrs our team member will keep in touch with you. - Team BS Homez (+91 91081 87205)`;
+      const smsText = `Welcome to BS Homez, ${name || "Valued Guest"}! Thank you for downloading details for ${interestedProjects || "our portfolio"} (${preferredLocation || "Bangalore"}). Within 24Hrs our team member will keep in touch with you. - Team BS Homez (www.bshomez.in)`;
 
       console.log(`[BS Homez SMS Gateway] Dispatched to +91${digitsOnly}: ${smsText}`);
 
@@ -395,6 +425,96 @@ Return ONLY a valid JSON object (no markdown fences, no commentary) with the fol
     } catch (error) {
       console.error("SMS Dispatch Error:", error);
       res.status(500).json({ success: false, error: "Failed to dispatch welcome message" });
+    }
+  });
+
+  // Location Auto-Fetch Endpoint for Rental / Resale Forms
+  // Returns nearby IT Hubs, School, Malls, Hospital, Bus Stop, Railway Station, Metro Station with distances in Kms
+  app.post("/api/location/lookup", async (req, res) => {
+    try {
+      const { location, zone } = req.body;
+      const cleanLoc = (location || zone || "Whitefield").trim();
+      const lower = cleanLoc.toLowerCase();
+
+      // Database of Bangalore micro-market landmarks with exact km distances
+      let data = {
+        corridor: cleanLoc,
+        itHubs: "ITPL (2.2 km), Brigade Tech Gardens (2.8 km), GR Tech Park (3.1 km)",
+        schools: "The Deens Academy (1.8 km), Vibgyor High Kadugodi (2.6 km), Whitefield Global School (3.4 km)",
+        malls: "Nexus Shantiniketan (2.4 km), Forum Neighbourhood Mall (3.2 km), Phoenix Marketcity (6.5 km)",
+        hospitals: "Manipal Hospital Whitefield (2.1 km), Vydehi Hospital (2.8 km)",
+        busStop: "Kadugodi BMTC Main Bus Terminus (0.4 km)",
+        railwayStation: "Whitefield Railway Station (2.3 km)",
+        metroStation: "Kadugodi Tree Park / Hopefarm Metro Station (1.2 km)",
+        summary: `Nearby Transit & Key Hubs (${cleanLoc}): IT Hubs: ITPL (2.2 km), Brigade Tech Gardens (2.8 km) | Schools: Deens Academy (1.8 km), Vibgyor (2.6 km) | Hospitals: Manipal Hospital (2.1 km), Vydehi (2.8 km) | Malls: Nexus Shantiniketan (2.4 km) | Transit: Kadugodi Bus Stop (0.4 km), Whitefield Railway Station (2.3 km), Metro Station (1.2 km).`
+      };
+
+      if (lower.includes("sarjapur") || lower.includes("carmelaram") || lower.includes("kodathi")) {
+        data = {
+          corridor: "Sarjapur Road Corridor",
+          itHubs: "Wipro Corporate HQ (1.5 km), RGA Tech Park (2.2 km), RMZ Ecoworld (5.4 km)",
+          schools: "Delhi Public School East (2.1 km), Primus International (2.4 km), Greenwood High (4.2 km)",
+          malls: "Market Square Mall (3.5 km), Total Mall Sarjapur (3.8 km)",
+          hospitals: "Manipal Hospital Sarjapur (2.8 km), Motherhood Hospital (3.1 km)",
+          busStop: "Sarjapur Road Wipro Gate BMTC Stop (0.3 km)",
+          railwayStation: "Carmelaram Railway Station (2.9 km)",
+          metroStation: "Iblur / Silk Board Upcoming Metro (4.8 km)",
+          summary: `Nearby Transit & Key Hubs (Sarjapur Road): IT Hubs: Wipro HQ (1.5 km), RGA Tech Park (2.2 km), RMZ Ecoworld (5.4 km) | Schools: DPS East (2.1 km), Greenwood High (4.2 km) | Hospitals: Manipal Hospital (2.8 km) | Malls: Market Square Mall (3.5 km) | Transit: BMTC Bus Stop (0.3 km), Carmelaram Railway Station (2.9 km), Metro (4.8 km).`
+        };
+      } else if (lower.includes("hosa road") || lower.includes("electronic city") || lower.includes("kudlu")) {
+        data = {
+          corridor: "Hosa Road - Electronic City Corridor",
+          itHubs: "Infosys Main Campus (3.2 km), Wipro E-City (3.5 km), AMR Tech Park (2.4 km)",
+          schools: "Orchids The International School (1.8 km), Vibgyor High Haralur (2.4 km)",
+          malls: "Neo Mall E-City (3.8 km), Royal Meenakshi Mall (7.2 km)",
+          hospitals: "Kauvery Hospital (2.2 km), Springleaf Hospital (1.9 km), Narayana Health City (6.5 km)",
+          busStop: "Hosa Road Junction BMTC Bus Stop (0.3 km)",
+          railwayStation: "Heelalige Railway Station (5.2 km), Carmelaram Station (6.1 km)",
+          metroStation: "Yellow Line Hosa Road Metro Station (0.9 km)",
+          summary: `Nearby Transit & Key Hubs (Hosa Road - Electronic City): IT Hubs: Infosys Campus (3.2 km), AMR Tech Park (2.4 km) | Schools: Orchids International (1.8 km), Vibgyor (2.4 km) | Hospitals: Kauvery Hospital (2.2 km), Springleaf (1.9 km) | Malls: Neo Mall (3.8 km) | Transit: Hosa Road Bus Stop (0.3 km), Heelalige Station (5.2 km), Hosa Road Metro (0.9 km).`
+        };
+      } else if (lower.includes("kasavanahalli") || lower.includes("bellandur") || lower.includes("haralur")) {
+        data = {
+          corridor: "Kasavanahalli - Bellandur Corridor",
+          itHubs: "RMZ Ecospace (2.8 km), Prestige Tech Park (3.4 km), Cessna Business Park (3.8 km)",
+          schools: "Vibgyor High Haralur (1.2 km), Asia Pacific World School (1.6 km)",
+          malls: "Central Mall Bellandur (2.9 km), Market Square (3.2 km)",
+          hospitals: "Motherhood Hospital (1.8 km), Sakra World Hospital (3.2 km)",
+          busStop: "Kasavanahalli Main Road Bus Stop (0.2 km)",
+          railwayStation: "Carmelaram Railway Station (3.2 km)",
+          metroStation: "Bellandur Outer Ring Road Metro (2.6 km)",
+          summary: `Nearby Transit & Key Hubs (Kasavanahalli - Bellandur): IT Hubs: RMZ Ecospace (2.8 km), Prestige Tech Park (3.4 km) | Schools: Vibgyor Haralur (1.2 km) | Hospitals: Motherhood (1.8 km), Sakra World Hospital (3.2 km) | Malls: Central Mall (2.9 km) | Transit: Kasavanahalli Bus Stop (0.2 km), Carmelaram Station (3.2 km), Bellandur Metro (2.6 km).`
+        };
+      } else if (lower.includes("varthur") || lower.includes("gunjur") || lower.includes("panathur")) {
+        data = {
+          corridor: "Varthur - Gunjur Corridor",
+          itHubs: "Cessna Business Park (4.2 km), ITPL (5.8 km), Wipro SEZ (4.1 km)",
+          schools: "Chrysalis High (1.2 km), Oakridge International (2.4 km), Global Indian International (2.8 km)",
+          malls: "Nexus Whitefield (4.5 km), Nexus Shantiniketan (5.5 km)",
+          hospitals: "Sahasra Hospital (1.5 km), Columbia Asia / Manipal (4.2 km)",
+          busStop: "Gunjur - Varthur Link Bus Stop (0.3 km)",
+          railwayStation: "Whitefield Railway Station (4.8 km)",
+          metroStation: "Hope Farm / Kadugodi Metro (4.2 km)",
+          summary: `Nearby Transit & Key Hubs (Varthur - Gunjur): IT Hubs: Cessna Tech Park (4.2 km), ITPL (5.8 km) | Schools: Chrysalis High (1.2 km), Oakridge International (2.4 km) | Hospitals: Sahasra Hospital (1.5 km), Manipal (4.2 km) | Malls: Nexus Whitefield (4.5 km) | Transit: Varthur Bus Stop (0.3 km), Whitefield Station (4.8 km), Hope Farm Metro (4.2 km).`
+        };
+      } else if (lower.includes("hoskote")) {
+        data = {
+          corridor: "Hoskote - East Bangalore Corridor",
+          itHubs: "Bearys Global Research Triangle (2.8 km), Aerospace SEZ (5.5 km), ITPL (8.5 km)",
+          schools: "Vibgyor High (3.2 km), New Baldwin International (2.4 km)",
+          malls: "Orion Uptown Mall (2.9 km)",
+          hospitals: "MVJ Medical College & Hospital (3.5 km), East Point Hospital (4.2 km)",
+          busStop: "Hoskote KSRTC/BMTC Main Depot (0.6 km)",
+          railwayStation: "Whitefield Railway Station (6.5 km)",
+          metroStation: "Kadugodi Metro Terminus (5.8 km)",
+          summary: `Nearby Transit & Key Hubs (Hoskote): IT Hubs: Bearys Tech Park (2.8 km), Aerospace SEZ (5.5 km) | Schools: New Baldwin (2.4 km), Vibgyor (3.2 km) | Hospitals: MVJ Hospital (3.5 km) | Malls: Orion Uptown Mall (2.9 km) | Transit: Hoskote Bus Depot (0.6 km), Whitefield Railway Station (6.5 km), Kadugodi Metro (5.8 km).`
+        };
+      }
+
+      return res.json({ success: true, location: cleanLoc, details: data });
+    } catch (err) {
+      console.error("Location lookup error:", err);
+      res.status(500).json({ success: false, error: "Failed to resolve location landmarks" });
     }
   });
 
@@ -466,7 +586,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary) with the fol
 
   // SEO: robots.txt for Google Search Console & Googlebot Crawlers
   app.get("/robots.txt", (req, res) => {
-    const baseUrl = (process.env.APP_URL || "https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app").replace(/\/$/, "");
+    const baseUrl = (process.env.APP_URL || "https://www.bshomez.in").replace(/\/$/, "");
     res.type("text/plain").send(
 `# robots.txt for BS Homez Luxury Real Estate Portal (Bangalore)
 # ${baseUrl}/
@@ -495,15 +615,56 @@ Sitemap: ${baseUrl}/sitemap.xml
     );
   });
 
-  // SEO: Dynamic XML Sitemap for Google Search Console & Googlebot
-  app.get("/sitemap.xml", (req, res) => {
+  // Sitemap Status API Endpoint
+  app.get("/api/sitemap/status", (req, res) => {
     try {
-      const baseUrl = (process.env.APP_URL || "https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app").replace(/\/$/, "");
+      const statusFile = path.resolve(process.cwd(), "public", "sitemap-status.json");
+      if (fs.existsSync(statusFile)) {
+        const data = JSON.parse(fs.readFileSync(statusFile, "utf-8"));
+        return res.json({ success: true, ...data });
+      }
+      return res.json({ 
+        success: true, 
+        lastUpdated: new Date().toISOString(), 
+        totalProjects: SITEMAP_PROJECTS.length, 
+        status: "baseline" 
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || String(err) });
+    }
+  });
+
+  // Sitemap On-Demand Refresh / Regeneration API Endpoint
+  app.post("/api/sitemap/refresh", async (req, res) => {
+    try {
+      const baseUrl = (process.env.APP_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+      const result = await updateSitemap({ baseUrl, silent: false });
+      return res.json({ success: result.success, result });
+    } catch (err: any) {
+      console.error("Manual sitemap refresh error:", err);
+      res.status(500).json({ success: false, error: err?.message || String(err) });
+    }
+  });
+
+  // SEO: Dynamic XML Sitemap for Google Search Console & Googlebot
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const publicSitemapPath = path.resolve(process.cwd(), "public", "sitemap.xml");
+      if (fs.existsSync(publicSitemapPath)) {
+        const xml = fs.readFileSync(publicSitemapPath, "utf-8");
+        return res.type("application/xml").set("Cache-Control", "public, max-age=3600").send(xml);
+      }
+      const baseUrl = (process.env.APP_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+      const updateRes = await updateSitemap({ baseUrl, silent: true });
+      if (updateRes.success && fs.existsSync(publicSitemapPath)) {
+        const xml = fs.readFileSync(publicSitemapPath, "utf-8");
+        return res.type("application/xml").set("Cache-Control", "public, max-age=3600").send(xml);
+      }
       const sitemapXml = generateSitemapXml(baseUrl, SITEMAP_PROJECTS);
       res.type("application/xml").set("Cache-Control", "public, max-age=3600").send(sitemapXml);
     } catch (err) {
-      console.error("Error generating dynamic sitemap:", err);
-      const fallbackUrl = (process.env.APP_URL || "https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app").replace(/\/$/, "");
+      console.error("Error serving dynamic sitemap:", err);
+      const fallbackUrl = (process.env.APP_URL || "https://www.bshomez.in").replace(/\/$/, "");
       res.type("application/xml").send(generateSitemapXml(fallbackUrl, SITEMAP_PROJECTS));
     }
   });
@@ -536,7 +697,7 @@ Sitemap: ${baseUrl}/sitemap.xml
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath, { index: false }));
     app.get("*", (req, res) => {
-      const baseUrl = (process.env.APP_URL || "https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app").replace(/\/$/, "");
+      const baseUrl = (process.env.APP_URL || "https://www.bshomez.in").replace(/\/$/, "");
       const projectQuery = (req.query.project as string) || "";
       const htmlPath = path.join(distPath, "index.html");
       if (fs.existsSync(htmlPath)) {
@@ -549,6 +710,20 @@ Sitemap: ${baseUrl}/sitemap.xml
       res.sendFile(htmlPath);
     });
   }
+
+  // Automated background sitemap generator: runs on startup and every 30 minutes
+  const SITEMAP_INTERVAL_MS = 30 * 60 * 1000;
+  setTimeout(() => {
+    updateSitemap({ silent: false }).catch((err) => {
+      console.warn("Background sitemap initial run notice:", err);
+    });
+  }, 3000);
+
+  setInterval(() => {
+    updateSitemap({ silent: true }).catch((err) => {
+      console.warn("Periodic background sitemap update notice:", err);
+    });
+  }, SITEMAP_INTERVAL_MS);
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);

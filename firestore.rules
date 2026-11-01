@@ -43,7 +43,13 @@ service cloud.firestore {
           'configuration', 'segment', 'imageUrls', 'videoUrl', 
           'features', 'handoverStatus', 'reraNumber', 'handoverDate', 'projectSize',
           'noOfTowers', 'flatsPerFloor', 'floorsHeight', 'mapUrl',
-          'paymentOffers', 'isPaused', 'isDeleted',
+          'paymentOffers', 'isPaused', 'isDeleted', 'sticker',
+          'availableFrom', 'mainDoorFacing', 'tower', 'floor', 'residenceType',
+          'tenantType', 'amenitiesAvailability', 'petFriendly', 'furnishType',
+          'advance', 'monthlyRental', 'maintenance', 'suba', 'carpetArea',
+          'carCloseParking', 'balcony', 'comments', 'handedOverDate',
+          'registrationStatus', 'approvedAuthority', 'seoKeywords', 'ogImage',
+          'metaTitle', 'metaDescription', 'canonicalUrl',
           'mobileImageUrl', 'mobileVideoUrl', 'createdAt', 'updatedAt'
         ])
       );
@@ -55,12 +61,13 @@ service cloud.firestore {
              data.location is string && data.location.size() <= 200 &&
              (!('locationTarget' in data) || (data.locationTarget is string && data.locationTarget.size() <= 300)) &&
              (!('zone' in data) || data.zone in [
+               'Whitefield', 'Hoskote', 'Varthur', 'Gunjur', 'Hosa Road', 'Kasavanahalli',
                'East Bangalore', 'Off Sarjapur Road', 'Sarjapur', 'Electronic City',
                'Marathalli', 'Bellandur', 'South East Bangalore', 'Bangalore East',
                'Bangalore North', 'Bangalore West', 'Bangalore South', 'Bangalore Central', 'All Zone'
              ]) &&
              data.type in ['Primary', 'Resale', 'Rental', 'Primary Sale'] &&
-             (!('propertyType' in data) || data.propertyType in ['Apartment', 'Villa', 'Plot', 'Flat']) &&
+             (!('propertyType' in data) || data.propertyType in ['Apartment', 'Villa', 'Plot', 'Flat', 'Commercial', 'Stand Alone Building']) &&
              (!('builderCategory' in data) || data.builderCategory in ['A+', 'A', 'B', 'C']) &&
              (!('builderName' in data) || (data.builderName is string && data.builderName.size() <= 150)) &&
              (!('approvalBody' in data) || (data.approvalBody is string && data.approvalBody.size() <= 150)) &&
@@ -86,6 +93,29 @@ service cloud.firestore {
              (!('paymentOffers' in data) || (data.paymentOffers is string && data.paymentOffers.size() <= 500)) &&
              (!('isPaused' in data) || data.isPaused is bool) &&
              (!('isDeleted' in data) || data.isDeleted is bool) &&
+             (!('sticker' in data) || data.sticker in ['Sold Out', 'Rented Out', 'None']) &&
+             (!('availableFrom' in data) || (data.availableFrom is string && data.availableFrom.size() <= 100)) &&
+             (!('mainDoorFacing' in data) || (data.mainDoorFacing is string && data.mainDoorFacing.size() <= 100)) &&
+             (!('tower' in data) || (data.tower is string && data.tower.size() <= 100)) &&
+             (!('floor' in data) || (data.floor is string && data.floor.size() <= 100)) &&
+             (!('residenceType' in data) || (data.residenceType is string && data.residenceType.size() <= 100)) &&
+             (!('tenantType' in data) || (data.tenantType is string && data.tenantType.size() <= 100)) &&
+             (!('amenitiesAvailability' in data) || (data.amenitiesAvailability is string && data.amenitiesAvailability.size() <= 100)) &&
+             (!('petFriendly' in data) || (data.petFriendly is string && data.petFriendly.size() <= 100)) &&
+             (!('furnishType' in data) || (data.furnishType is string && data.furnishType.size() <= 100)) &&
+             (!('advance' in data) || (data.advance is string && data.advance.size() <= 100)) &&
+             (!('monthlyRental' in data) || (data.monthlyRental is string && data.monthlyRental.size() <= 100)) &&
+             (!('maintenance' in data) || (data.maintenance is string && data.maintenance.size() <= 100)) &&
+             (!('suba' in data) || (data.suba is string && data.suba.size() <= 100)) &&
+             (!('carpetArea' in data) || (data.carpetArea is string && data.carpetArea.size() <= 100)) &&
+             (!('carCloseParking' in data) || (data.carCloseParking is string && data.carCloseParking.size() <= 100)) &&
+             (!('balcony' in data) || (data.balcony is string && data.balcony.size() <= 100)) &&
+             (!('comments' in data) || (data.comments is string && data.comments.size() <= 2000)) &&
+             (!('handedOverDate' in data) || (data.handedOverDate is string && data.handedOverDate.size() <= 100)) &&
+             (!('registrationStatus' in data) || (data.registrationStatus is string && data.registrationStatus.size() <= 100)) &&
+             (!('approvedAuthority' in data) || (data.approvedAuthority is string && data.approvedAuthority.size() <= 100)) &&
+             (!('seoKeywords' in data) || (data.seoKeywords is list && data.seoKeywords.size() <= 30)) &&
+             (!('ogImage' in data) || (data.ogImage is string && data.ogImage.size() <= 900000)) &&
              (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
              (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 1000));
     }

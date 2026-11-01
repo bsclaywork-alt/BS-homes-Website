@@ -54,6 +54,7 @@ export interface Project {
   priceHistory?: { period: string; price: number; displayPrice: string }[];
   isPaused?: boolean;
   isDeleted?: boolean;
+  sticker?: 'Sold Out' | 'Rented Out' | 'None';
 
   // Specific Rental & Resale Inventory Fields
   availableFrom?: string;
@@ -104,7 +105,10 @@ export interface Enquiry {
   type: 'WhatsApp' | 'Email' | 'Form' | 'AI Chat' | 'Download Brochure';
   enquiryCategory?: 'Primary' | 'Rental' | 'Resale' | 'Home Loan';
   propertyCategory?: 'Primary' | 'Resale' | 'Rent' | 'Home Loan';
+  intentSentiment?: 'High' | 'Medium' | 'Low';
   timestamp: any;
+  isDeleted?: boolean;
+  deletedAt?: any;
 }
 
 export interface Opportunity {

@@ -24,6 +24,7 @@ import {
   Copy
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { PhoneInputWithCountry, validateMobileNumber } from './PhoneInputWithCountry';
 
 export const ReferralSection: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -79,8 +80,9 @@ export const ReferralSection: React.FC = () => {
       setError("Please submit a valid friend's name (minimum 2 characters).");
       return;
     }
-    if (formData.mobileNumber.trim().length < 8) {
-      setError("Please submit a valid friend's contact number.");
+    const phoneVal = validateMobileNumber('+91', formData.mobileNumber);
+    if (!phoneVal.isValid) {
+      setError(phoneVal.message || "Please enter a valid mobile number with the correct number of digits.");
       return;
     }
     if (!formData.contactDateTime) {
@@ -275,21 +277,18 @@ export const ReferralSection: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="text-[8px] uppercase tracking-[0.3em] text-white/40 mb-2 block font-black">
-                          Mobile Number <span className="text-art-gold">*</span>
-                        </label>
-                        <div className="relative">
-                          <input 
-                            type="tel"
-                            name="mobileNumber"
-                            required
-                            placeholder="Enter primary mobile number"
-                            value={formData.mobileNumber}
-                            onChange={handleInputChange}
-                            className="w-full text-xs bg-white/[0.02] border border-white/10 focus:border-art-gold/50 text-white placeholder-white/20 pl-10 pr-4 py-3.5 rounded-sm outline-none transition-all font-mono"
-                          />
-                          <Phone size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
-                        </div>
+                        <PhoneInputWithCountry
+                          label="Mobile Number"
+                          value={formData.mobileNumber}
+                          onChange={(fullNumber, _code, rawDigits) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              mobileNumber: fullNumber,
+                              whatsappNumber: sameAsMobile ? fullNumber : prev.whatsappNumber
+                            }));
+                          }}
+                          required
+                        />
                       </div>
                     </div>
 

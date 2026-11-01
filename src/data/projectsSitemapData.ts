@@ -17,6 +17,7 @@ export interface SitemapProjectItem {
   reraNumber?: string;
   handoverDate?: string;
   imageUrl?: string;
+  lastmod?: string;
 }
 
 export const SITEMAP_PROJECTS: SitemapProjectItem[] = [
@@ -808,7 +809,7 @@ export function generateSitemapXml(
 
     return `  <url>
     <loc>${projectUrl}</loc>
-    <lastmod>${today}</lastmod>
+    <lastmod>${project.lastmod || today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>${imageBlock}
   </url>`;
@@ -860,7 +861,7 @@ export function generatePropertyMetaTags(
     "seller": {
       "@type": "RealEstateAgent",
       "name": "BS Homez",
-      "telephone": "+91-9108187205",
+      "email": "contact@bshomez.in",
       "url": cleanBase
     }
   };

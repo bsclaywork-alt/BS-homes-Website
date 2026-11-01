@@ -9,8 +9,8 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
-// Register service worker for offline portfolio caching
-if ('serviceWorker' in navigator && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+// Register service worker for offline portfolio caching & fast asset delivery
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch((err) => {
       // Non-blocking log for offline worker registration

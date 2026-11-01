@@ -1,179 +1,1002 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-
-  <!-- Core Landing Pages -->
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/</loc>
-    <lastmod>2026-10-26</lastmod>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/</loc>
+    <lastmod>2026-10-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=projects</loc>
-    <lastmod>2026-10-26</lastmod>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=overview</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=projects</loc>
+    <lastmod>2026-10-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=services</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=loans</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=services</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=insights</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=why-choose</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=opportunity</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=insights</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=referral</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=opportunity</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=testimonials</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=referral</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=faq</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=loans</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=about</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.65</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=testimonials</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
   </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=faq</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?tab=about</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Whitefield</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Hoskote</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Varthur</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Gunjur</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Hosa-Road</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Kasavanahalli</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Off-Sarjapur-Road</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Sarjapur</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Electronic-City</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Marathalli</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Bellandur</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=East-Bangalore</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_whitefield_primary_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Prestige Somerville – Whitefield - Varthur Road (Ramagondanahalli), Bangalore</image:title>
+      <image:caption>Iconic lakefront high-rise residential sanctuary on Whitefield - Varthur Main Road overlooking Varthur Lake. Featuring two-side open Vaastu residences, 84% landscaped greens, and p</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_whitefield_resale_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Brigade Woods Botanica – Whitefield ITPL Main Road (Pattandur Agrahara), Bangalore</image:title>
+      <image:caption>Ready-to-move boutique forest-themed residences on Whitefield ITPL Main Road. OC received, zero GST, surrounded by 15+ native tree species, minutes to Pattandur Agrahara Metro and </image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_whitefield_rental_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Total Environment Windmills of Your Mind – Whitefield EPIP Zone (Nallurahalli Road), Bangalore</image:title>
+      <image:caption>Handcrafted earth-sheltered duplex sky-villas in Whitefield EPIP Zone beside SAP Labs and Vydehi Hospital. Each residence features private landscaped terrace gardens and bespoke wo</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_primary_aplus_godrej_woodscapes</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Godrej Woodscapes – Whitefield - Budigere Cross (Old Madras Road), Bangalore</image:title>
+      <image:caption>Forest-themed landmark township at Whitefield - Budigere Cross Junction featuring 1,500+ trees, a 68,000 Sq.Ft. clubhouse, and walk-in access to Orion Uptown Mall.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_primary_c_radiant_jasmine</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Radiant Jasmine Gardens – Whitefield - Immadihalli Main Road, Bangalore</image:title>
+      <image:caption>Smart value primary apartment enclave in Whitefield Immadihalli near Hope Farm Junction. BBMP A-Khata, OC verified, 100% Vaastu compliant with rooftop pool.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_hoskote_primary_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sobha Galera – Hoskote - Old Madras Road (Kannamangala), Bangalore</image:title>
+      <image:caption>Spanish-inspired boutique row villas along the Hoskote Old Madras Road Corridor. Crafted with terracotta roofs, double-height private courtyards, and pedestrian cobblestone bouleva</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_hoskote_resale_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>CJN Sai Fortune – Hoskote Town - NH-75 Old Madras Road, Bangalore</image:title>
+      <image:caption>Ready-to-move gated community on NH-75 Old Madras Road in Hoskote. Vaastu-compliant corner apartments with clear resale documentation and immediate registration.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_hoskote_rental_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Brigade Golden Triangle Signature – Hoskote - Budigere Cross OMR (Kattamnallur), Bangalore</image:title>
+      <image:caption>Mixed-use landmark township at Hoskote - Budigere Cross Junction on Old Madras Road. Semi-furnished sky-view apartments available for immediate lease beside Orion Uptown Mall.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_primary_c_sri_sai_brindavan</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sri Sai Brindavan Enclave – Hoskote Town - NH-75 Old Madras Road, Bangalore</image:title>
+      <image:caption>Well-crafted mid-rise residential community in Hoskote near MVJ Hospital. BMRDA approved, ideal for first-time buyers seeking high capital growth on STRR highway.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_varthur_primary_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Prestige Raintree Park – Varthur Main Road (Opposite Varthur Lake), Bangalore</image:title>
+      <image:caption>Flagship 107-acre integrated lakefront township on Varthur Main Road opposite Varthur Lake. Ultra-luxury high-rise residences with panoramic lake views and a 1,05,000 Sq.Ft. clubho</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_varthur_resale_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Brigade Cornerstone Utopia (Eden &amp; Serene) – Varthur - Whitefield Main Road (Varthur Town), Bangalore</image:title>
+      <image:caption>Award-winning 47-acre smart integrated township on Varthur - Whitefield Main Road. Verified resale residences with multiplex, retail high street, and zero GST.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_varthur_rental_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Prestige Lakeside Habitat – Varthur - Gunjur Main Road (Varthur Lakefront), Bangalore</image:title>
+      <image:caption>102-acre Disney-themed lakefront township on Varthur - Gunjur Main Road. Furnished and semi-furnished apartments and villas available for corporate and expat lease.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_primary_b_candeur_skyline</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Candeur Skyline – Varthur - Gunjur Main Road, Bangalore</image:title>
+      <image:caption>High-rise contemporary residential enclave in Varthur - Gunjur with sky-bridges, double-height entrance lobbies, and panoramic lake views.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_gunjur_primary_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sobha Neopolis – Gunjur - Panathur Main Road, Bangalore</image:title>
+      <image:caption>Santorini-themed Mediterranean luxury enclave on Gunjur - Panathur Main Road off Marathahalli-ORR. Featuring blue-domed architecture, cascading pools, and 3 grand clubhouses.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_gunjur_resale_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>DSR Highland Greenz – Gunjur Palya - Varthur-Sarjapur Road, Bangalore</image:title>
+      <image:caption>Ready gated community in Gunjur Palya. Zero GST verified resale flats with immediate possession, 30,000 Sq.Ft. clubhouse, and walking distance to Chrysalis High.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_gunjur_rental_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Candeur Landmark – Gunjur - Varthur Main Road Junction, Bangalore</image:title>
+      <image:caption>High-rise residential community in Gunjur opposite Prestige Lakeside Habitat. Semi-furnished corner apartments with modular kitchen and wardrobes for executive rental.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_primary_c_slv_lakeview</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>SLV Lakeview Residency – Gunjur - Krupanidhi College Road, Bangalore</image:title>
+      <image:caption>Boutique low-density apartment community in Gunjur near Krupanidhi College. Low maintenance, rooftop garden, pool, and 10 mins to Wipro SEZ Kodathi.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_hosaroad_primary_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Assetz Canvas &amp; Cove Phase 2 – Hosa Road - Begur Lakefront Corridor, Bangalore</image:title>
+      <image:caption>Biophilic lakefront high-rise enclave overlooking 52-acre Begur lake on Hosa Road. 85% open greens, 5 mins to Hosa Road Metro, and quick access to Electronic City.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_hosaroad_resale_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>SNN Raj Etternia – Hosa Road - Haralur Link Road (Silver County), Bangalore</image:title>
+      <image:caption>Hilltop-inspired luxury community on Hosa Road - Haralur Link Road. Dual-lake views, 50,000 Sq.Ft. clubhouse, heated indoor pool, and zero GST verified resale title.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_hosaroad_rental_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Purva Skywood – Hosa Road - Haralur Main Road (Lakedew Corridor), Bangalore</image:title>
+      <image:caption>Sprawling 12.8-acre handed-over residential sanctuary on Hosa Road - Haralur Main Road. 80% botanical gardens, Japanese zen pond, and immediate move-in ready lease.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_primary_b_casagrand_flamingo</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Casagrand Flamingo – Hosa Road - HSR Extension Corridor, Bangalore</image:title>
+      <image:caption>Contemporary lifestyle residential community on Hosa Road offering 65+ world-class amenities, vehicle-free podium lawn, and 5 mins to Hosa Road Metro.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_kasavanahalli_primary_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Assetz 63 Degree East (Tower D &amp; E) – Kasavanahalli - Off Sarjapur Road Corridor, Bangalore</image:title>
+      <image:caption>Sustainable eco-luxury residential township in Kasavanahalli off Sarjapur Road. 68% open green space, 15+ outdoor sports courts, and minutes to Wipro SEZ.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_kasavanahalli_resale_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>PSR Aster Villas &amp; Residences – Kasavanahalli Main Road (Beside Kasavanahalli Lake), Bangalore</image:title>
+      <image:caption>Boutique earth-toned luxury triplex villas on Kasavanahalli Main Road beside the lake. Private plunge decks, Italian marble, and clear resale title.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_kasavanahalli_rental_1</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Bren Imperia – Kasavanahalli - Haralur Main Road, Bangalore</image:title>
+      <image:caption>Contemporary luxury apartment enclave in Kasavanahalli - Haralur Road. Semi-furnished corner units ready for immediate executive lease near RMZ Ecoworld &amp; Wipro.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_primary_c_bm_glorietta</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>BM Glorietta Phase 2 – Kasavanahalli - Hosa Road Link Corridor, Bangalore</image:title>
+      <image:caption>Smart tech-belt primary homes in Kasavanahalli linking Hosa Road and Kaikondrahalli. Modern amenities, BBMP approved, close to Wipro HQ and metro.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_plot_prestige_marigold</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Prestige Marigold (Phase 2 Plotted Enclave) – Off NH-648 &amp; STRR Express Corridor, East Bangalore</image:title>
+      <image:caption>BDA &amp; RERA approved premium villa plotted enclave with underground cabling, organic fruit orchards, and world-class clubhouse. 0% Brokerage with BS Homez.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_plot_brigade_oasis_eoi</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Brigade Oasis (Phase 3 EOI Plotted Launch) – Aerospace &amp; Devanahalli - East Link Corridor, Bangalore</image:title>
+      <image:caption>Pre-launch priority allocation EOI open for 1200 to 2400 sq.ft villa plots with 40-ft wide blacktop roads, manicured boulevard trees, and high capital appreciation potential.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_plot_assetz_earth_essence</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Assetz Earth &amp; Essence Plotted Sanctuary – Hoskote - Budigere Cross Corridor, Bangalore</image:title>
+      <image:caption>Biophilic plotted land surrounded by 500+ trees, rainwater swales, and eco-friendly infrastructure. Ready for bespoke villa construction.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_plot_century_seasons</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Century Seasons &amp; Meadows Plotted Estate – East Tech Link Highway &amp; STRR, Bangalore</image:title>
+      <image:caption>Seasonal flora-themed plotted enclave equipped with piped water, storm-water drainage, and underground fiber optics.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_plot_myhna_maple_leaf</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Myhna Maple Leaf Plotted Enclave – Gunjur - Balagere Road, East Bangalore</image:title>
+      <image:caption>BMRDA &amp; RERA certified residential plot layout near Whitefield and Outer Ring Road tech parks. Compound wall, LED streetlights, and 24/7 security.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_plot_radiant_silver_oak</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Radiant Silver Oak Villa Plots – Sarjapur - Bagalur Road, Bangalore</image:title>
+      <image:caption>High-yield plotted investment near educational hubs on Sarjapur road. Gated community with landscaped parks and tar roads.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_plot_slv_silicon_county_eoi</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>SLV Silicon County (EOI Villa Plots) – Hosa Road - Singasandra East Junction, Bangalore</image:title>
+      <image:caption>Early bird pre-launch allotment for suburban plots minutes away from Electronic City Phase 2 and Hosa Road elevated expressway.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_sobha_oakshire_villas</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sobha Oakshire Tudor-Style Villas – Off OMR - Budigere Cross Corridor, Bangalore</image:title>
+      <image:caption>Super-luxury English Tudor style 4BHK villas crafted with Sobha backward integration, private lawns, and multi-tier clubhouses.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_godrej_park_retreat_phase2</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Godrej Park Retreat (Phase 2) – Sarjapur - Carmelaram Junction Corridor, Bangalore</image:title>
+      <image:caption>Resort-themed high-rise residences with 28,000 sq.ft clubhouse, 50+ experiential amenities, and direct access to Sarjapur tech parks.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_total_environment_tqe_ready</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Total Environment In That Quiet Earth – Off Hennur - Budigere Cross Link, East Bangalore</image:title>
+      <image:caption>Ready-to-move handcrafted L20 &amp; U20 cantilevered terrace garden homes with natural exposed wire-cut brickwork and Italian marble.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_birla_trimaya_phase2_eoi</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Birla Trimaya (Phase 2 The Hills) – BK Halli Road, Aerospace - East Transit Corridor, Bangalore</image:title>
+      <image:caption>Pre-launch priority allocation EOI open for 50-acre mixed township designed by Broadway Malyan featuring 45-acre green lungs and lake view residences.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_sumadhura_folium_uc</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sumadhura Folium – Whitefield - Borewell Road, Bangalore</image:title>
+      <image:caption>83% open-space high-rise enclave close to ITPL, featuring 5 distinct themed zones and cantilevered rooftop observation deck.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_mana_dale_eoi</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Mana Dale (Tower Solstice) – Sarjapur - Kodathi Link Road, Bangalore</image:title>
+      <image:caption>Tropical rainforest inspired high-rise tower currently in priority EOI booking stage. Centered around a 100-year-old banyan tree with natural water bodies.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_shriram_greenfield_ready</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Shriram Greenfield Phase 2 – Old Madras Road - Hoskote Corridor, Bangalore</image:title>
+      <image:caption>Ready-to-move 2 &amp; 3 BHK homes in 40-acre mega township with zero GST and ready clubhouse amenities.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_dsr_the_courtyard_ready</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>DSR The Courtyard – Gunjur - Varthur Road, Bangalore</image:title>
+      <image:caption>Courtyard-centric architecture ensuring cross-ventilation and zero common walls. Ready for interior customization.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_bren_palms_lakeview_uc</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Bren Palms Lakeview Residences – Kasavanahalli - Kaikondrahalli Lake Link, Bangalore</image:title>
+      <image:caption>Lakeview boutique residences with sky lounge, indoor sports hub, and seamless connectivity to Bellandur ORM tech spine.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_casagrand_boulevard_eoi</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Casagrand Boulevard (Phase 2) – Hennur - Bagalur Main Corridor, East Bangalore</image:title>
+      <image:caption>75+ lifestyle amenities with swimming pools, indoor badminton court, and collaborative work lounges in pre-launch allocation.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_gopalan_lakefront_uc</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Gopalan Lakefront Enclave – Electronic City Phase 1 - Neeladri Road, Bangalore</image:title>
+      <image:caption>Spacious high-rise community situated right behind major tech corridors with landscaped podiums and clubhouse.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_sri_sai_golden_nest_ready</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sri Sai Golden Nest – Hosa Road Central, Near Metro Pillar, Bangalore</image:title>
+      <image:caption>Value-engineered 2 &amp; 3 BHK ready homes with 100% Vaastu compliance, borewell plus Kaveri water, and dedicated stilt parking.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_durga_petals_horizon_uc</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Durga Petals Horizon – Marathahalli - Outer Ring Road Junction, Bangalore</image:title>
+      <image:caption>Under-construction urban towers strategically positioned near Outer Ring Road tech parks with infinity pool and multi-gym.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_amrutha_heights_phase2_uc</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Amrutha Heights (Phase 2) – Varthur - Gunjur Main Road, Bangalore</image:title>
+      <image:caption>High rental-yield affordable luxury apartments in the heart of Varthur tech catchment with children play zones and gym.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=2KBgfUYql4JzETrKu0e2</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Celebrity Nature Habitat Phase 1 – Sarjapur</image:title>
+      <image:caption>Celebrity Nature Habitat Phase 1 - Verified Resale 3BHK Villa in Sarjapur. SUBA: 3300, Carpet Area: 2700, Approved Authority: BMRDA, RERA: PRM/KA/RERA/Verified. Big Balcony, Privat</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=3DLkWADahkJAUaAamx4U</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sobha Ayana – Panathur</image:title>
+      <image:caption>Tropical forest theme -
 
-  <!-- High-Growth Bangalore Corridors -->
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Whitefield</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Hoskote</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Varthur</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Gunjur</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Hosa-Road</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Kasavanahalli</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Sarjapur</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Electronic-City</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?corridor=Bellandur</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
+Location
+-  opposite to sobha Dream acres. Panathur Road near Varthur.
 
-  <!-- Curated Luxury Property URLs -->
-  <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_varthur_lakefront_1</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+Project Overview
+- Net Site Area: 6.28 Acres
+- Total Units: 683
+- Total Wings: 12
+
+</image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_varthur_resale_1</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=63e5iENUyBPjwicHWQNE</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Shriram Songs of the Earth – Anekal</image:title>
+      <image:caption>Premium Lifestyle Residences in South Bengaluru
+Near Electronic City
+
+📌 Project Overview
+* Project Name: The One
+* Developer: Shriram Properties Limited
+* Total Land Area: 4 Acres</image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_varthur_rental_1</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=EMYNrEP4w2nJIC5x6N8i</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Ramky Fortuna – Whitefield </image:title>
+      <image:caption>PROJECT AT A GLANCE
+* Name: Ramky Fortuna 
+* Land Area: ~11 Acres
+* Typology: 1, 2, 2.5, 3BHK Apartments
+* Sizes: ~624 – 1610 Sq.ft
+
+
+✨ WHY RAMKY FORTUNA – 
+✔️ 74% Carpet area
+✔️ 8</image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_gunjur_primary_1</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=IiJKwpgP8q4QiD6OOsUo</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>GRC Shreekrish – Choodasandra</image:title>
+      <image:caption>🏡 GRC Shreekrish – Ready-to-Move Luxury by the Lake
+
+✨ Why GRC Shreekrish?
+
+✅ Lake-facing units
+✅ Vaastu-compliant homes
+✅ 1.5 acres open space
+✅ 50+ World Class amenities
+🏡 Read</image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_gunjur_resale_1</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=NIZXXuc1kzbWmFvknJYy</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>ATZ AREVA – Marathalli</image:title>
+      <image:caption>Land parcel __1.5 acres
+Tower ___one tower
+Number of total units ___144
+G+12 construction
+Basement ,ground floor ___parking
+20+ amenities </image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_gunjur_rental_1</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=OZ5p4OnHXo9nSN1cD35x</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Inspira Infinity – Sarjapur Raod</image:title>
+      <image:caption>Inspira Builder&apos;s Infinity project at Carmelaram
+(Before Wipro SEZ &amp; Decathlon)
+
+Basic Project Details - 
+
+-Location : Carmelram road, Sarjapur-Marathahalli Road
+-Land Parcel - 1.1</image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_hosa_primary_1</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=P2Dm1D0lbGkCuoOt4O5R</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Godrej Parkshire – Hoskote</image:title>
+      <image:caption> 📍Godrej Parkshire –Whitefield -Hoskote Bangalore 🌿
+Where Green Living Meets Smart Connectivity!
+
+🏡 Project Highlights
+✨ Spread across 13.5 Acres | 5 Iconic Towers | 1130 Units
+</image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_kasavanahalli_villa_1</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=P5WxbbBfCo6h82H8qWqd</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>MSR Passion Square – Sarjapur Raod</image:title>
+      <image:caption>Own Your Dream Home in a society that blends traditional values with new-age philosophies.
+
+Welcome to MSR Passion Square — thoughtfully designed 2 &amp; 3 BHK homes in a serene BDA-ga</image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=curated_hoskote_plots_1</loc>
-    <lastmod>2026-10-26</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=RmXR8cBHpRLdaD4stxO6</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>CELEBRITY NATURES HABITAT PHASE II – Sarjapur</image:title>
+      <image:caption>. 97 Villas
+- BMRDA and STRR Approved 
+. Amenities are ready to use
+. 30 x 40
+. 40 x 60
+. odd sites
+. **Internal Customization available**
+. Vaastu Complaint</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=Si4UYg5v1Y4k9Rybqkl2</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Ramky - Codename – CLUB CLASS – Thanisandra</image:title>
+      <image:caption>PROJECT AT A GLANCE
+* Name: Codename – CLUB CLASS
+* Land Area: ~3 Acres
+* Residences: 200+ Ultra-Premium Homes
+* Typology: 3 &amp; 3.5 BHK
+* Sizes: ~1800 – 2350 sq.ft
+WHY CLUB CLASS? –</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=WSdE7oB2SEJsnEixF1WY</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>KLASSIK EXOTICA – Sarjapur</image:title>
+      <image:caption>Luxury Beyond Ordinary!
+
+📍 Off Sarjapur Road | 120 Elite Homes | B+G+14
+
+🏡 3 &amp; 4 BHK Spacious Residences
+3 BHK: 1780–2100 sq.ft
+4 BHK: 2420–2430 sq.ft
+💰 ₹1.75 Cr – ₹2.5 Cr
+
+✨ To</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=lIY0V8zuxv1SOg1h4xfP</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Celebrity Nature Habitat – Sarjapur - Atteibele Road</image:title>
+      <image:caption>Celebrity Nature Habitat - Premium 4BHK Villa available for rent in Sarjapur - Atteibele Road. Advance: 250000, Monthly Rent: 40000, Maintenance: 5000, Tenant: Family, Pets: Yes. N</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=XUMXL875YU2ID8nXNTzJ</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Inspira Winds of Life – Sarjapur</image:title>
+      <image:caption>Inspira Winds of Life – Sarjapur Main Road
+Refined living surrounded by nature &amp; unmatched connectivity!
+
+🌿 Why Inspira Winds of life?
+* Located in Main Road
+* Spacious 3 BHK Vill</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=d0a3SJkFExeZvu5hMoCw</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sobha Scarlet – Sarjapur Road</image:title>
+      <image:caption>Royal Pavilion phase 2 
+Sobha Scarlet , Sarjapur road near RGA tech park
+
+4 acres
+200 plus units 
+3 wings 
+2B+G+18 floors 
+Club house 16000 sft 
+G+3 structure 
+3 BHK 1875 SFT it’s </image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=dQfq9wi1jDaLuTO9qckT</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>GLOBAL EDIFICE THE CLAN – Whitefield, Bangalore</image:title>
+      <image:caption>GLOBAL EDIFICE by Premier Bangalore Developer (Cat A) is a thoughtfully master-planned apartment enclave situated in Whitefield, Bangalore. Designed with Vaastu-compliant layouts, </image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=eZcBtpzGqcsRCfO3jVsi</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sri Balaji Urban Retreat – Sarjapur</image:title>
+      <image:caption>✅Urban Retreat - 
+Villa property on Sarjapur Road offers a harmonious blend of peaceful living and luxurious design, where every corner exudes serenity and every detail speaks of e</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=j4hQGIjqQJRckevxwOjV</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>RAMKY LUMINA – Hosa Road - E-city</image:title>
+      <image:caption>PROJECT HIGHLIGHTS:
+🏠 729 Corner Apartments with 75% Carpet Area
+🏠 6 majestic towers of 14-floors each on 7.4 acres
+🏠 80% open space with 40+ lifestyle amenities
+🏠 20,000 Sq. f</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=jK8ySfOaKF8odMtUjkBR</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Geo Own Oasis – Sarjapur</image:title>
+      <image:caption> - All major Banks approved
+- BMRDA  Approved 
+. Amenities are ready to use</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=vlobgPE8I1tguaYiInKL</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Sobha One World – Whitefield</image:title>
+      <image:caption>About the Project
+Along Old Madras Road near Hoskote Toll Gate, a landmark of rare scale
+is set to rise, heralding the next generation of integrated townships —
+SOBHA OneWorld. Thi</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=xhHvlaHE77X1Yf08oD9T</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>Maa Ayana Woods – Sarjapur</image:title>
+      <image:caption>The BIGGEST Balinese-themed Villa Township in Sarjapur – an enchanting 75-Acre tropical heaven! 🌺🌊
+
+Project Highlights
+🌿 Total Land: 75 Acres of pure paradise
+🏞️ Phase 1 Launch</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ais-dev-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/?project=xyZj9A0HWDpC8JpehK69</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
+      <image:title>GRC SAVOR – Choodasandra</image:title>
+      <image:caption>Project Details:
+📐• Total Land Parcel – 2.4 Acres
+🏘️• Low Density Community with Only 150 Units
+🏗️•Structure – G + 4 Floors
+👷• Construction Type – Premium Mivan Construction
+✅•</image:caption>
+    </image:image>
   </url>
 </urlset>

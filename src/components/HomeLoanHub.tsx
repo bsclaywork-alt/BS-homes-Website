@@ -28,6 +28,7 @@ import {
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Enquiry } from '../types';
+import { PhoneInputWithCountry, validateMobileNumber } from './PhoneInputWithCountry';
 
 interface BankRate {
   bankName: string;
@@ -440,8 +441,15 @@ export const HomeLoanHub: React.FC = () => {
 
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmittingInquiry(true);
     setInquiryError(null);
+
+    const validation = validateMobileNumber('+91', inquiryForm.phone);
+    if (!validation.isValid) {
+      setInquiryError(validation.message || 'Please enter a valid mobile number with the correct number of digits.');
+      return;
+    }
+
+    setIsSubmittingInquiry(true);
 
     const mappedCategory = inquiryCategory === 'Rent' ? 'Rental' : inquiryCategory;
     const computedMetricsSummary = activeTab === 'eligibility'
@@ -1258,14 +1266,6 @@ export const HomeLoanHub: React.FC = () => {
                             <MapPin size={10} className="text-art-gold" />
                             {article.corridor}
                           </span>
-                          <a
-                            href={`https://wa.me/919108187205?text=Hi%20BS%20Homez%2C%20I%20am%20inquiring%20about%20the%20Bangalore%20news%20brief%3A%20${encodeURIComponent(article.title)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-art-gold hover:text-white font-mono uppercase tracking-wider font-bold flex items-center gap-1 transition-colors"
-                          >
-                            Inquire Advisory Perspective <ArrowUpRight size={10} />
-                          </a>
                         </div>
                       </div>
                     ))}
@@ -1555,17 +1555,12 @@ export const HomeLoanHub: React.FC = () => {
                         className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">Phone / Mobile Number *</label>
-                      <input
-                        required
-                        type="tel"
-                        value={inquiryForm.phone}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
-                        placeholder="+91 Mobile Number"
-                        className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all"
-                      />
-                    </div>
+                    <PhoneInputWithCountry
+                      label="Phone / Mobile Number"
+                      value={inquiryForm.phone}
+                      onChange={(fullNumber) => setInquiryForm({ ...inquiryForm, phone: fullNumber })}
+                      required
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

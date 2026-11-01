@@ -169,6 +169,10 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   const [manualImageUrl, setManualImageUrl] = useState<string>('');
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [coverNotice, setCoverNotice] = useState<string | null>(null);
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [confirmDeleteVideo, setConfirmDeleteVideo] = useState(false);
+  const [lastDeletedItem, setLastDeletedItem] = useState<{ url: string; index: number } | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputImagesRef = useRef<HTMLInputElement | null>(null);
@@ -351,42 +355,84 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
   // Set an image as the Cover Image (index 0)
   const handleSetAsCover = (index: number) => {
-    if (index === 0 || index >= images.length) return;
+    if (index < 0 || index >= images.length) return;
+    if (index === 0) {
+      setCoverNotice(`Photo #1 is already the active main Cover Image.`);
+      setTimeout(() => setCoverNotice(null), 3000);
+      return;
+    }
     const target = images[index];
     const remaining = images.filter((_, idx) => idx !== index);
     const reordered = [target, ...remaining];
     onImagesChange(reordered);
-    setCoverNotice(`Photo #${index + 1} has been set as the main Cover Image!`);
+    setCoverNotice(`✓ Photo #${index + 1} set as main Cover Image! It is now the primary banner photo.`);
+    setTimeout(() => setCoverNotice(null), 3500);
+  };
+
+  // Safe In-App Delete: prompt inline confirmation on the thumbnail
+  const handleRequestRemoveImage = (indexToRemove: number) => {
+    if (pendingDeleteIndex === indexToRemove) {
+      handleExecuteRemoveImage(indexToRemove);
+    } else {
+      setPendingDeleteIndex(indexToRemove);
+      setTimeout(() => {
+        setPendingDeleteIndex(prev => (prev === indexToRemove ? null : prev));
+      }, 4000);
+    }
+  };
+
+  const handleExecuteRemoveImage = (indexToRemove: number) => {
+    const deletedUrl = images[indexToRemove];
+    const filtered = images.filter((_, idx) => idx !== indexToRemove);
+    onImagesChange(filtered);
+    setPendingDeleteIndex(null);
+    setLastDeletedItem({ url: deletedUrl, index: indexToRemove });
+    setCoverNotice(`Photo #${indexToRemove + 1} deleted successfully.`);
+    setTimeout(() => setCoverNotice(null), 4500);
+  };
+
+  // Undo delete
+  const handleUndoDelete = () => {
+    if (!lastDeletedItem) return;
+    const restored = [...images];
+    restored.splice(lastDeletedItem.index, 0, lastDeletedItem.url);
+    onImagesChange(restored);
+    setLastDeletedItem(null);
+    setCoverNotice(`Photo restored successfully!`);
     setTimeout(() => setCoverNotice(null), 3000);
   };
 
-  // Delete a specific image
-  const handleRemoveImage = (indexToRemove: number) => {
-    if (window.confirm(`Delete photo #${indexToRemove + 1} from this project?`)) {
-      const filtered = images.filter((_, idx) => idx !== indexToRemove);
-      onImagesChange(filtered);
-    }
-  };
-
-  // Delete all images
+  // Delete all images (in-app two-click confirmation)
   const handleDeleteAllImages = () => {
     if (images.length === 0) return;
-    if (window.confirm(`Delete ALL ${images.length} photos from this project? This action cannot be undone.`)) {
-      onImagesChange([]);
-      setCompressionStats(null);
+    if (!confirmDeleteAll) {
+      setConfirmDeleteAll(true);
+      setTimeout(() => setConfirmDeleteAll(false), 4000);
+      return;
     }
+    onImagesChange([]);
+    setCompressionStats(null);
+    setConfirmDeleteAll(false);
+    setCoverNotice(`All ${images.length} photos removed from project.`);
+    setTimeout(() => setCoverNotice(null), 3000);
   };
 
-  // Delete video walkthrough
+  // Delete video walkthrough (in-app two-click confirmation)
   const handleRemoveVideo = () => {
-    if (window.confirm('Delete walkthrough video from this project?')) {
-      setVideoPreviewUrl('');
-      setVideoStats(null);
-      onVideoChange('', '');
-      if (fileInputVideoRef.current) {
-        fileInputVideoRef.current.value = '';
-      }
+    if (!confirmDeleteVideo) {
+      setConfirmDeleteVideo(true);
+      setTimeout(() => setConfirmDeleteVideo(false), 4000);
+      return;
     }
+    setVideoPreviewUrl('');
+    setVideoStats(null);
+    onVideoChange('', '');
+    setConfirmDeleteVideo(false);
+    if (fileInputVideoRef.current) {
+      fileInputVideoRef.current.value = '';
+    }
+    setCoverNotice(`Walkthrough video removed.`);
+    setTimeout(() => setCoverNotice(null), 3000);
   };
 
   return (
@@ -414,13 +460,24 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
           <span className="flex items-center gap-1.5 font-bold">
             <Star size={12} className="fill-art-gold" /> {coverNotice}
           </span>
-          <button 
-            type="button" 
-            onClick={() => setCoverNotice(null)} 
-            className="text-art-gold/60 hover:text-white p-0.5 cursor-pointer"
-          >
-            <X size={12} />
-          </button>
+          <div className="flex items-center gap-2">
+            {lastDeletedItem && (
+              <button
+                type="button"
+                onClick={handleUndoDelete}
+                className="px-2 py-0.5 bg-art-gold text-black rounded text-[9px] font-black uppercase hover:bg-white cursor-pointer transition-colors shadow-sm"
+              >
+                Undo
+              </button>
+            )}
+            <button 
+              type="button" 
+              onClick={() => { setCoverNotice(null); setLastDeletedItem(null); }} 
+              className="text-art-gold/60 hover:text-white p-0.5 cursor-pointer"
+            >
+              <X size={12} />
+            </button>
+          </div>
         </div>
       )}
 
@@ -439,10 +496,15 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                 <button
                   type="button"
                   onClick={handleDeleteAllImages}
-                  className="text-[9px] text-red-400 hover:text-red-300 font-mono uppercase tracking-wider flex items-center gap-1 transition-colors cursor-pointer"
+                  className={cn(
+                    "text-[9px] font-mono uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer px-2.5 py-1 rounded border",
+                    confirmDeleteAll 
+                      ? "bg-red-600 text-white border-red-400 font-black animate-pulse shadow-md" 
+                      : "text-red-400 hover:text-red-300 border-red-500/30 hover:bg-red-500/10"
+                  )}
                   title="Delete all photos"
                 >
-                  <Trash2 size={10} /> Delete All ({images.length})
+                  <Trash2 size={11} /> {confirmDeleteAll ? `Click to Confirm Delete All (${images.length})` : `Delete All (${images.length})`}
                 </button>
               )}
               <span className="text-[9px] font-mono text-white/40">Multiple Selection</span>
@@ -528,10 +590,32 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
           {/* Photo Gallery Previews with Delete & Set As Cover Image */}
           {images.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
+              {/* Quick Cover Selector Strip */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 bg-art-gold/10 border border-art-gold/30 rounded-sm">
+                <div className="flex items-center gap-1.5 text-[9px] font-mono text-art-gold font-bold shrink-0">
+                  <Star size={11} className="fill-art-gold" />
+                  <span>Active Cover Photo:</span>
+                </div>
+                <div className="flex items-center gap-2 flex-1 max-w-sm">
+                  <select
+                    value={0}
+                    onChange={(e) => handleSetAsCover(Number(e.target.value))}
+                    className="w-full bg-black/90 border border-art-gold/50 text-art-gold text-[9px] font-mono px-2 py-1 rounded-sm outline-none cursor-pointer focus:ring-1 focus:ring-art-gold"
+                    title="Select any photo to become the project's main cover photo"
+                  >
+                    {images.map((_, idx) => (
+                      <option key={idx} value={idx}>
+                        {idx === 0 ? `★ Photo #1 (Active Cover Photo)` : `Photo #${idx + 1} — Set as Cover Photo`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between">
                 <span className="text-[8.5px] font-mono uppercase text-white/50 tracking-wider">
-                  Gallery Photos ({images.length}) • Click "Set as Cover" to set main thumbnail
+                  Gallery Photos ({images.length}) • Click "Set Cover" on any photo
                 </span>
                 <span className="text-[8px] font-mono text-art-gold">
                   ★ Photo #1 is active Cover Image
@@ -541,6 +625,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-1.5 bg-black/50 border border-white/10 rounded-sm">
                 {images.map((imgUrl, idx) => {
                   const isCover = idx === 0;
+                  const isPendingDelete = pendingDeleteIndex === idx;
                   return (
                     <div 
                       key={idx} 
@@ -580,18 +665,33 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                         </button>
                       )}
 
-                      {/* Delete Individual Image Button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveImage(idx);
-                        }}
-                        className="absolute top-1.5 right-1.5 p-1.5 bg-black/90 hover:bg-red-600 text-white rounded transition-colors cursor-pointer border border-white/20 shadow-md z-10"
-                        title="Delete this photo from project"
-                      >
-                        <Trash2 size={11} />
-                      </button>
+                      {/* Delete Individual Image Button with safe in-app confirmation */}
+                      {isPendingDelete ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleExecuteRemoveImage(idx);
+                          }}
+                          className="absolute top-1.5 right-1.5 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-[8px] font-black uppercase rounded transition-all cursor-pointer border border-white/50 shadow-2xl z-20 flex items-center gap-1 animate-pulse"
+                          title="Click again to confirm permanent deletion"
+                        >
+                          <Trash2 size={10} />
+                          <span>Confirm</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRequestRemoveImage(idx);
+                          }}
+                          className="absolute top-1.5 right-1.5 p-1.5 bg-black/85 hover:bg-red-600 text-white rounded transition-colors cursor-pointer border border-white/20 shadow-md z-10"
+                          title="Delete this photo from project"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
 
                       {/* Bottom Footer Caption */}
                       <div className="p-1 bg-[#121212] flex items-center justify-between text-[8px] font-mono text-white/50 border-t border-white/10">
@@ -618,10 +718,15 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                 <button
                   type="button"
                   onClick={handleRemoveVideo}
-                  className="text-[9px] text-red-400 hover:text-red-300 font-mono uppercase tracking-wider flex items-center gap-1 transition-colors cursor-pointer"
+                  className={cn(
+                    "text-[9px] font-mono uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer px-2 py-0.5 rounded border",
+                    confirmDeleteVideo
+                      ? "bg-red-600 text-white border-red-500 font-bold animate-pulse shadow-md"
+                      : "text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-500/10"
+                  )}
                   title="Delete walkthrough video"
                 >
-                  <Trash2 size={10} /> Delete Video
+                  <Trash2 size={10} /> {confirmDeleteVideo ? "Confirm Delete Video?" : "Delete Video"}
                 </button>
               )}
               <span className="text-[9px] font-mono text-white/40">MP4, WebM, MOV</span>
