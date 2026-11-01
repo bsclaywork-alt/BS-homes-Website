@@ -10,7 +10,8 @@ import {
   setDoc,
   getDocs,
   deleteDoc,
-  updateDoc
+  updateDoc,
+  where
 } from 'firebase/firestore';
 import { 
   onAuthStateChanged, 
@@ -77,7 +78,9 @@ import {
   Trash2,
   RotateCcw,
   Share2,
-  Archive
+  Archive,
+  Copy,
+  AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -138,7 +141,7 @@ function cn(...inputs: ClassValue[]) {
 
 const Logo = ({ className = "" }: { className?: string }) => (
   <div className={cn("flex flex-col group select-none", className)}>
-    <svg viewBox="0 0 450 180" className="w-48 md:w-56 h-auto text-white fill-current" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 450 180" className="w-32 sm:w-36 md:w-40 h-auto text-white fill-current" xmlns="http://www.w3.org/2000/svg">
       {/* Red Roof */}
       <path 
         d="M 100,72 L 164,15 L 188,39 L 188,25 L 202,25 L 202,53 L 221,72 L 395,72 L 395,82 L 225,82 L 164,25 L 108,72 Z" 
@@ -391,10 +394,10 @@ const Navbar = ({
   return (
     <>
       <nav className={cn(
-        "fixed top-0 w-full z-50 px-3 sm:px-6 md:px-8 transition-all duration-300 flex flex-col gap-1.5 sm:gap-2 max-w-[100vw]",
+        "fixed top-0 w-full z-50 px-3 sm:px-6 md:px-8 transition-all duration-300 flex flex-col gap-1 sm:gap-1.5 max-w-[100vw]",
         scrolled
-          ? "py-1.5 sm:py-2 bg-art-dark/95 backdrop-blur-md border-b border-white/15 shadow-xl"
-          : "py-2 sm:py-2.5 bg-art-dark/95 backdrop-blur-md border-b border-white/10"
+          ? "py-1 sm:py-1.5 bg-art-dark/95 backdrop-blur-md border-b border-white/15 shadow-xl"
+          : "py-1 sm:py-1.5 bg-art-dark/95 backdrop-blur-md border-b border-white/10"
       )}>
         <div className="flex justify-between items-center w-full gap-3">
           <button
@@ -426,8 +429,8 @@ const Navbar = ({
         </div>
 
         {/* Dedicated Multi-Tab Navigation Bar - Visible on desktop, removed on mobile */}
-        <div className="w-full overflow-x-auto no-scrollbar border-t border-white/10 pt-1.5 hidden md:block">
-          <div className="flex items-center gap-1.5 min-w-max pb-0.5">
+        <div className="w-full overflow-x-auto no-scrollbar border-t border-white/10 pt-1 hidden md:block">
+          <div className="flex items-center gap-1 min-w-max pb-0.5">
             {links.map(link => {
               const isActive = activeMainTab === link.id;
               return (
@@ -436,7 +439,7 @@ const Navbar = ({
                   type="button"
                   onClick={() => handleTabClick(link.id)}
                   className={cn(
-                    "px-3 py-1.5 rounded-sm text-[10px] sm:text-[11px] uppercase tracking-wider font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5",
+                    "px-2.5 py-1 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5",
                     isActive
                       ? "bg-art-gold text-black border-art-gold shadow-[0_0_15px_rgba(197,160,89,0.35)]"
                       : link.isSpecial
@@ -506,7 +509,7 @@ const Navbar = ({
             <div className="mt-auto pt-8 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div>
                 <span className="text-[10px] text-art-gold uppercase tracking-[0.5em] font-black block mb-1">Direct Advisory</span>
-                <a href="mailto:contact@bshomez.co.in" className="text-xl font-serif text-white italic hover:text-art-gold transition-colors">contact@bshomez.co.in</a>
+                <a href="mailto:contact@bshomez.in" className="text-xl font-serif text-white italic hover:text-art-gold transition-colors">contact@bshomez.in</a>
               </div>
               <button
                 type="button"
@@ -1026,9 +1029,23 @@ const ProjectCard: React.FC<{
   const [isEditingCard, setIsEditingCard] = useState(false);
   const [editDraft, setEditDraft] = useState<Project>({ ...project });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
   const [isFetchingOnlineCard, setIsFetchingOnlineCard] = useState(false);
+  const [isGeneratingCardAiSeo, setIsGeneratingCardAiSeo] = useState(false);
   const [uploadingImageCard, setUploadingImageCard] = useState(false);
   const [newImageUrlInput, setNewImageUrlInput] = useState('');
+
+  // Nearby Amenities (2km) with Google Search Grounding State
+  const [showNearbyAmenities, setShowNearbyAmenities] = useState(false);
+  const [amenitiesData, setAmenitiesData] = useState<{
+    schools: Array<{ name: string; distance: string }>;
+    hospitals: Array<{ name: string; distance: string }>;
+    transit: Array<{ name: string; distance: string }>;
+    summary?: string;
+    source?: string;
+  } | null>(null);
+  const [isLoadingAmenities, setIsLoadingAmenities] = useState(false);
+  const [amenitiesError, setAmenitiesError] = useState('');
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1171,36 +1188,102 @@ const ProjectCard: React.FC<{
     }
   };
 
+  const fetchNearbyAmenities = async () => {
+    setIsLoadingAmenities(true);
+    setAmenitiesError('');
+    try {
+      const res = await fetch('/api/amenities/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectName: project.name,
+          location: project.location,
+          zone: project.zone
+        })
+      });
+      const data = await res.json();
+      if (data?.success) {
+        setAmenitiesData(data);
+      } else {
+        setAmenitiesError(data?.error || 'Unable to retrieve nearby amenities at this moment.');
+      }
+    } catch (err) {
+      console.error('Failed to load amenities:', err);
+      setAmenitiesError('Connectivity issue loading nearby amenities.');
+    } finally {
+      setIsLoadingAmenities(false);
+    }
+  };
+
+  const handleToggleAmenities = () => {
+    const nextState = !showNearbyAmenities;
+    setShowNearbyAmenities(nextState);
+    if (nextState && !amenitiesData && !isLoadingAmenities) {
+      fetchNearbyAmenities();
+    }
+  };
+
+  const handleCardAiSeo = async () => {
+    if (!editDraft.name?.trim()) return;
+    setIsGeneratingCardAiSeo(true);
+    try {
+      const res = await fetch('/api/ai/seo-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectName: editDraft.name,
+          location: editDraft.location,
+          zone: editDraft.zone,
+          type: editDraft.type === 'Primary Sale' ? 'Primary' : editDraft.type,
+          propertyType: editDraft.propertyType,
+          price: editDraft.price,
+          builderName: editDraft.builderName,
+          reraNumber: editDraft.reraNumber,
+          features: editDraft.features,
+          configuration: editDraft.configuration
+        })
+      });
+      const data = await res.json();
+      if (data?.keywords) {
+        setEditDraft(prev => ({
+          ...prev,
+          seoKeywords: data.keywords.split(',').map((s: string) => s.trim()).filter(Boolean)
+        }));
+      }
+    } catch (err) {
+      console.warn('AI SEO generation in card failed:', err);
+    } finally {
+      setIsGeneratingCardAiSeo(false);
+    }
+  };
+
   const handleSaveInlineEdit = async () => {
     setIsSavingEdit(true);
     try {
       let updatedDraft = { ...editDraft };
 
-      // Auto-update missing or outdated Last Price and Handover Date via online intelligence
-      if (!updatedDraft.lastPrice?.trim() || !updatedDraft.handoverDate?.trim()) {
+      // Ensure high-ranking SEO keywords are populated
+      if (!updatedDraft.seoKeywords || updatedDraft.seoKeywords.length === 0) {
         try {
-          const res = await fetch('/api/projects/lookup', {
+          const res = await fetch('/api/ai/seo-generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               projectName: updatedDraft.name,
-              corridorHint: updatedDraft.zone,
-              portfolioTypeHint: updatedDraft.type === 'Primary Sale' ? 'Primary' : updatedDraft.type
+              location: updatedDraft.location,
+              zone: updatedDraft.zone,
+              type: updatedDraft.type === 'Primary Sale' ? 'Primary' : updatedDraft.type,
+              propertyType: updatedDraft.propertyType,
+              price: updatedDraft.price,
+              builderName: updatedDraft.builderName,
+              reraNumber: updatedDraft.reraNumber
             })
           });
           const data = await res.json();
-          if (data?.project) {
-            updatedDraft = {
-              ...data.project,
-              ...updatedDraft,
-              price: updatedDraft.price?.trim() ? updatedDraft.price : data.project.price,
-              lastPrice: updatedDraft.lastPrice?.trim() ? updatedDraft.lastPrice : (data.project.lastPrice || updatedDraft.price || data.project.price),
-              handoverDate: updatedDraft.handoverDate?.trim() ? updatedDraft.handoverDate : (data.project.handoverDate || 'December 2027'),
-            };
+          if (data?.keywords) {
+            updatedDraft.seoKeywords = data.keywords.split(',').map((s: string) => s.trim()).filter(Boolean);
           }
-        } catch (lookupErr) {
-          console.warn('Auto lookup on inline save skipped:', lookupErr);
-        }
+        } catch {}
       }
 
       const autoHandoverFallback =
@@ -1221,10 +1304,15 @@ const ProjectCard: React.FC<{
         imageUrls: (updatedDraft.imageUrls || []).filter(Boolean).length > 0
           ? (updatedDraft.imageUrls || []).filter(Boolean)
           : getSmartProjectImages(updatedDraft.zone, updatedDraft.type, updatedDraft.builderCategory, updatedDraft.propertyType),
-        features: (updatedDraft.features || []).filter(Boolean)
+        features: (updatedDraft.features || []).filter(Boolean),
+        seoKeywords: (updatedDraft.seoKeywords || []).filter(Boolean)
       };
       await onSaveProject(cleaned);
-      setIsEditingCard(false);
+      setSaveSuccessMsg(true);
+      setTimeout(() => {
+        setSaveSuccessMsg(false);
+        setIsEditingCard(false);
+      }, 1000);
     } catch (err) {
       console.error("Save project error:", err);
     } finally {
@@ -1748,6 +1836,40 @@ const ProjectCard: React.FC<{
             />
           </div>
 
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[8px] uppercase tracking-widest text-art-gold block font-bold">
+                High-Ranking SEO &amp; Social Keywords (Google, Meta, X, WhatsApp)
+              </label>
+              <button
+                type="button"
+                onClick={handleCardAiSeo}
+                disabled={isGeneratingCardAiSeo}
+                className="text-[8.5px] uppercase tracking-wider text-art-gold hover:text-white px-2 py-0.5 rounded bg-art-gold/15 hover:bg-art-gold/30 border border-art-gold/30 flex items-center gap-1 cursor-pointer font-bold disabled:opacity-50"
+              >
+                {isGeneratingCardAiSeo ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                <span>✨ AI Generate Keywords</span>
+              </button>
+            </div>
+            <input
+              type="text"
+              value={Array.isArray(editDraft.seoKeywords) ? editDraft.seoKeywords.join(', ') : (editDraft.seoKeywords || '')}
+              onChange={e => setEditDraft({ ...editDraft, seoKeywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+              placeholder="e.g. Buy 3BHK Whitefield, Prestige Somerville Price, 0% Brokerage Bangalore, RERA Verified"
+              className="w-full bg-white/5 border border-art-gold/30 rounded-sm p-2.5 text-xs text-white font-mono outline-none focus:border-art-gold"
+            />
+            <span className="text-[8px] text-white/40 block mt-1 font-mono">
+              Auto-ranks listing at top for Google Search, Facebook, Instagram &amp; X discovery.
+            </span>
+          </div>
+
+          {saveSuccessMsg && (
+            <div className="p-2.5 bg-emerald-500/20 border border-emerald-500/40 rounded-sm text-center text-emerald-300 text-xs font-mono font-bold flex items-center justify-center gap-2">
+              <CheckCircle2 size={14} className="text-emerald-400" />
+              <span>✓ Project details &amp; SEO saved successfully!</span>
+            </div>
+          )}
+
           {/* Save & Discard Action Bar */}
           <div className="flex items-center gap-3 pt-2 border-t border-white/10">
             <button
@@ -1757,7 +1879,7 @@ const ProjectCard: React.FC<{
               className="flex-1 bg-art-gold hover:bg-white text-black font-black text-[10px] uppercase tracking-[0.25em] py-3 rounded-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isSavingEdit ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-              Save & Auto-Update Price / Handover
+              Save Changes to Portfolio
             </button>
             <button
               type="button"
@@ -1900,24 +2022,164 @@ const ProjectCard: React.FC<{
               </div>
             )}
             <div className="bg-white/[0.03] p-2 sm:p-2.5 rounded-sm border border-white/15">
-              <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
                 <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-art-gold font-extrabold truncate">
-                  Overview & Landmarks — {project.location}
+                  Overview &amp; Landmarks — {project.location}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => onEnquire(project)}
-                  className="text-[9px] sm:text-[10px] uppercase tracking-wider text-art-gold hover:text-black font-black cursor-pointer transition-all px-2 py-0.5 rounded bg-art-gold/15 hover:bg-art-gold border border-art-gold/40 flex items-center gap-1 shrink-0"
-                  title="Inquire to fill form with preferred contact time and receive detailed floor plans"
-                >
-                  <span>More &amp; Inquire</span>
-                  <ChevronRight size={10} />
-                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleToggleAmenities}
+                    className={cn(
+                      "text-[9px] sm:text-[10px] uppercase tracking-wider font-bold cursor-pointer transition-all px-2 py-0.5 rounded border flex items-center gap-1 shadow-sm",
+                      showNearbyAmenities
+                        ? "bg-emerald-500 text-black border-emerald-400 font-black shadow-[0_0_10px_rgba(16,185,129,0.35)]"
+                        : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40"
+                    )}
+                    title="Toggle Google Search Grounding to find verified schools, hospitals, and transit within 2km"
+                  >
+                    <Compass size={11} className={showNearbyAmenities ? "text-black animate-spin" : "text-emerald-400"} />
+                    <span>{showNearbyAmenities ? "Hide 2km Amenities" : "Show Nearby Amenities (2km)"}</span>
+                    {isLoadingAmenities && <Loader2 size={10} className="animate-spin ml-0.5" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onEnquire(project)}
+                    className="text-[9px] sm:text-[10px] uppercase tracking-wider text-art-gold hover:text-black font-black cursor-pointer transition-all px-2 py-0.5 rounded bg-art-gold/15 hover:bg-art-gold border border-art-gold/40 flex items-center gap-1 shrink-0"
+                    title="Inquire to fill form with preferred contact time and receive detailed floor plans"
+                  >
+                    <span>More &amp; Inquire</span>
+                    <ChevronRight size={10} />
+                  </button>
+                </div>
               </div>
               <p className="text-xs text-white/90 leading-snug font-sans line-clamp-2">
                 {project.description}
               </p>
             </div>
+
+            {/* Dynamic Nearby Amenities Panel Powered by Google Search Grounding */}
+            <AnimatePresence>
+              {showNearbyAmenities && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden bg-[#0c120e] border border-emerald-500/40 rounded-sm p-3 space-y-2.5 font-sans shadow-lg"
+                >
+                  <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2 flex-wrap gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                        Nearby Amenities within 2km Radius
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[8.5px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        ⚡ Google Search Grounding
+                      </span>
+                      <button
+                        type="button"
+                        onClick={fetchNearbyAmenities}
+                        disabled={isLoadingAmenities}
+                        className="text-[8.5px] font-mono text-white/70 hover:text-white px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 border border-white/15 cursor-pointer disabled:opacity-50"
+                        title="Re-query verified amenities via Google Search Grounding"
+                      >
+                        {isLoadingAmenities ? <Loader2 size={10} className="animate-spin inline" /> : '↻ Refresh'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {isLoadingAmenities && !amenitiesData ? (
+                    <div className="flex items-center justify-center gap-2 py-5 text-emerald-300 text-xs font-mono">
+                      <Loader2 size={16} className="animate-spin text-emerald-400" />
+                      <span>Discovering schools, hospitals &amp; transit via Google Search Grounding...</span>
+                    </div>
+                  ) : amenitiesError && !amenitiesData ? (
+                    <div className="text-center py-3 text-red-400 text-xs font-mono">
+                      {amenitiesError}
+                    </div>
+                  ) : (
+                    <>
+                      {amenitiesData?.summary && (
+                        <p className="text-[10.5px] text-white/85 leading-relaxed font-sans bg-black/40 p-2 rounded border border-emerald-500/20">
+                          {amenitiesData.summary}
+                        </p>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono">
+                        {/* Schools */}
+                        <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
+                          <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
+                            <span className="flex items-center gap-1">🎓 Schools (&le;2km)</span>
+                            <span className="text-[8.5px] text-white/50">{amenitiesData?.schools?.length || 0}</span>
+                          </div>
+                          {amenitiesData?.schools && amenitiesData.schools.length > 0 ? (
+                            <ul className="space-y-1 pt-1">
+                              {amenitiesData.schools.map((item, idx) => (
+                                <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
+                                  <span className="truncate" title={item.name}>{item.name}</span>
+                                  <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
+                                    {item.distance}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
+                          )}
+                        </div>
+
+                        {/* Hospitals */}
+                        <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
+                          <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
+                            <span className="flex items-center gap-1">🏥 Hospitals (&le;2km)</span>
+                            <span className="text-[8.5px] text-white/50">{amenitiesData?.hospitals?.length || 0}</span>
+                          </div>
+                          {amenitiesData?.hospitals && amenitiesData.hospitals.length > 0 ? (
+                            <ul className="space-y-1 pt-1">
+                              {amenitiesData.hospitals.map((item, idx) => (
+                                <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
+                                  <span className="truncate" title={item.name}>{item.name}</span>
+                                  <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
+                                    {item.distance}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
+                          )}
+                        </div>
+
+                        {/* Transit Points */}
+                        <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
+                          <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
+                            <span className="flex items-center gap-1">🚇 Transit (&le;2km)</span>
+                            <span className="text-[8.5px] text-white/50">{amenitiesData?.transit?.length || 0}</span>
+                          </div>
+                          {amenitiesData?.transit && amenitiesData.transit.length > 0 ? (
+                            <ul className="space-y-1 pt-1">
+                              {amenitiesData.transit.map((item, idx) => (
+                                <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
+                                  <span className="truncate" title={item.name}>{item.name}</span>
+                                  <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
+                                    {item.distance}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Compact Key Specifications */}
             <div className="grid grid-cols-2 gap-1.5 text-xs font-mono bg-white/[0.025] p-2 rounded-sm border border-white/15">
@@ -2148,7 +2410,7 @@ const DownloadBrochureModal = ({
       ``,
       `====================================================================`,
       `Welcome message from BS Homez: In 24Hrs our team member will keep in touch with you.`,
-      `Direct Advisory Desk: contact@bshomez.co.in | www.bshomez.co.in`,
+      `Direct Advisory Desk: contact@bshomez.in | www.bshomez.in`,
       `====================================================================`
     ].join('\n');
 
@@ -3586,6 +3848,42 @@ const ProjectForm = ({
     }
   };
 
+  const [isGeneratingAiKeywords, setIsGeneratingAiKeywords] = useState(false);
+  const [aiKeywordsSuccess, setAiKeywordsSuccess] = useState<string | null>(null);
+
+  const handleGenerateAiKeywords = async () => {
+    setIsGeneratingAiKeywords(true);
+    setAiKeywordsSuccess(null);
+    try {
+      const res = await fetch('/api/ai/seo-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectName: formData.name,
+          location: formData.location,
+          zone: formData.zone,
+          type: inventoryMode,
+          propertyType: formData.propertyType,
+          price: formData.price || formData.monthlyRental,
+          builderName: formData.builderName,
+          reraNumber: formData.reraNumber,
+          features: formData.features,
+          configuration: formData.configuration
+        })
+      });
+      const data = await res.json();
+      if (data?.keywords) {
+        setKeywordsInput(data.keywords);
+        setAiKeywordsSuccess(`Generated ${data.keywords.split(',').length} high-ranking keywords for Google, Meta, X & WhatsApp!`);
+        setTimeout(() => setAiKeywordsSuccess(null), 4000);
+      }
+    } catch (err) {
+      console.warn('AI SEO generation error:', err);
+    } finally {
+      setIsGeneratingAiKeywords(false);
+    }
+  };
+
   const handleAutoCheckOnline = async (customName?: string) => {
     const targetName = (customName ?? formData.name ?? '').trim();
     if (!targetName) {
@@ -3652,10 +3950,17 @@ const ProjectForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
     setError(null);
     try {
       let currentData = { ...formData, type: inventoryMode };
+
+      // Ensure SEO keywords are populated
+      let resolvedKeywords = keywordsInput.trim();
+      if (!resolvedKeywords) {
+        resolvedKeywords = `${currentData.name || 'Bangalore Property'}, Buy ${currentData.propertyType || 'Apartment'} in ${currentData.zone || 'Whitefield'}, ${inventoryMode} Property Bangalore, 0% Brokerage, RERA Approved, BS Homez`;
+      }
 
       // Automatically check online for Primary projects if basic details missing
       if (
@@ -3770,7 +4075,7 @@ const ProjectForm = ({
         registrationStatus: currentData.registrationStatus || 'Ready for Registration',
         approvedAuthority: currentData.approvedAuthority || 'BDA',
         sticker: (currentData.sticker as any) || 'None',
-        seoKeywords: keywordsInput.split(',').map(s => s.trim()).filter(Boolean),
+        seoKeywords: resolvedKeywords.split(',').map(s => s.trim()).filter(Boolean),
 
         isPaused: Boolean(currentData.isPaused),
         isDeleted: false,
@@ -3793,8 +4098,21 @@ const ProjectForm = ({
           await setDoc(doc(db, 'projects', project.id), firestoreData, { merge: true });
           savedProjectResult = { ...data, id: project.id, createdAt: project.createdAt || nowMs, updatedAt: nowMs };
         } else {
-          const docRef = await addDoc(collection(db, 'projects'), firestoreData);
-          savedProjectResult = { ...data, id: docRef.id, createdAt: nowMs, updatedAt: nowMs };
+          // Check if an existing project with same name and inventory mode exists to prevent duplicates
+          const q = query(
+            collection(db, 'projects'),
+            where('name', '==', data.name),
+            where('type', '==', inventoryMode)
+          );
+          const existingSnap = await getDocs(q);
+          if (!existingSnap.empty) {
+            const existingId = existingSnap.docs[0].id;
+            await setDoc(doc(db, 'projects', existingId), firestoreData, { merge: true });
+            savedProjectResult = { ...data, id: existingId, createdAt: nowMs, updatedAt: nowMs };
+          } else {
+            const docRef = await addDoc(collection(db, 'projects'), firestoreData);
+            savedProjectResult = { ...data, id: docRef.id, createdAt: nowMs, updatedAt: nowMs };
+          }
         }
       } catch (dbErr) {
         console.warn('Firestore write fallback: saving project locally', dbErr);
@@ -4960,9 +5278,21 @@ const ProjectForm = ({
 
               {/* SEO Keywords */}
               <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70 block">
-                  SEO Keywords (Comma-Separated)
-                </label>
+                <div className="flex items-center justify-between flex-wrap gap-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70 block">
+                    SEO Keywords (Comma-Separated)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAiKeywords}
+                    disabled={isGeneratingAiKeywords}
+                    className="px-2.5 py-1 bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 rounded-sm text-[8.5px] uppercase tracking-wider font-black transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    title="Generate top-ranking SEO keywords for Google Search, Meta, Instagram, X & other search engines"
+                  >
+                    {isGeneratingAiKeywords ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                    <span>✨ AI Auto-Generate Keywords</span>
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={keywordsInput}
@@ -4970,9 +5300,17 @@ const ProjectForm = ({
                   placeholder="e.g. Bangalore Luxury Villa, 4BHK Villa, Sarjapur Road, RERA Approved"
                   className="w-full bg-white/5 border border-white/15 p-3 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono placeholder:text-white/20"
                 />
-                <span className="text-[9px] text-white/40 block font-mono">
-                  Injected into meta tags &amp; schema.org structured data for search ranking.
-                </span>
+                {aiKeywordsSuccess && (
+                  <p className="text-[9.5px] text-emerald-400 font-mono font-bold flex items-center gap-1">
+                    <CheckCircle2 size={11} /> {aiKeywordsSuccess}
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[8px] font-mono text-white/60">
+                  <span className="px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/25">Google Search SERP</span>
+                  <span className="px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">Meta (Facebook/Instagram)</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 border border-white/20">X (Twitter)</span>
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">WhatsApp</span>
+                </div>
               </div>
             </div>
           </div>
@@ -5798,6 +6136,8 @@ const AdminView = ({
   const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals'>('leads');
   const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
   const [deleteConfirmEnquiry, setDeleteConfirmEnquiry] = useState<Enquiry | null>(null);
+  const [deleteConfirmProject, setDeleteConfirmProject] = useState<Project | null>(null);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [leadActionToast, setLeadActionToast] = useState<string | null>(null);
   const [enquiryCategoryFilter, setEnquiryCategoryFilter] = useState<'all' | 'Primary' | 'Rental' | 'Resale' | 'Home Loan'>('all');
@@ -6888,7 +7228,7 @@ const AdminView = ({
                   </button>
                 )}
                 <a
-                  href="https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app"
+                  href="https://www.bshomez.in"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2.5 bg-white/5 hover:bg-white/15 text-white text-[10px] font-black uppercase tracking-widest rounded-sm border border-white/10 transition-all flex items-center gap-1.5"
@@ -6920,7 +7260,7 @@ const AdminView = ({
                   <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded font-mono font-bold">Live Auto-Update</span>
                 </div>
                 <span className="font-mono text-[11px] break-all text-white block mb-1">
-                  https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/sitemap.xml
+                  https://www.bshomez.in/sitemap.xml
                 </span>
                 <span className="text-[10px] text-white/50 font-mono">
                   Indexed URLs: <strong className="text-art-gold">{sitemapStats?.totalUrls || 92} URLs</strong> ({sitemapStats?.totalProjects || 68} active projects)
@@ -7235,6 +7575,21 @@ const AdminView = ({
                            <Edit size={13} />
                          </button>
                          <button 
+                           onClick={() => {
+                             const cloned: Project = {
+                               ...p,
+                               id: undefined as any,
+                               name: `${p.name} (Copy)`
+                             };
+                             setEditingProject(cloned);
+                             setShowProjectModal(true);
+                           }}
+                           className="flex-1 bg-white/10 hover:bg-art-gold/20 p-2.5 flex justify-center text-art-gold transition-all rounded-sm cursor-pointer"
+                           title="Clone / Duplicate this project into new inventory"
+                         >
+                           <Copy size={13} />
+                         </button>
+                         <button 
                            onClick={async () => {
                              if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
                                try {
@@ -7255,19 +7610,7 @@ const AdminView = ({
                            {p.isPaused ? <Play size={13} /> : <Pause size={13} />}
                          </button>
                          <button 
-                           onClick={async () => {
-                             if (confirm(`Permanently delete project "${p.name}"? This removes it cleanly from live listings and portfolio records.`)) {
-                               if (onDeleteProject) {
-                                 await onDeleteProject(p);
-                               } else if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
-                                 try {
-                                   await deleteDoc(doc(db, 'projects', p.id));
-                                 } catch (err) {
-                                   console.warn(err);
-                                 }
-                               }
-                             }
-                           }}
+                           onClick={() => setDeleteConfirmProject(p)}
                            className="bg-red-500/10 hover:bg-red-500/20 p-2.5 flex justify-center text-red-500 transition-all rounded-sm cursor-pointer"
                            title="Delete project"
                          >
@@ -7339,7 +7682,7 @@ const AdminView = ({
                 </h4>
                 <div className="flex items-center justify-between text-xs font-mono pt-2 border-t border-white/20">
                   <span className="text-art-gold font-bold text-sm">{ogPreviewProject.price}</span>
-                  <span className="text-white/70">bshomez.co.in</span>
+                  <span className="text-white/70">www.bshomez.in</span>
                 </div>
               </div>
             </div>
@@ -7352,6 +7695,66 @@ const AdminView = ({
                 className="px-5 py-2 bg-art-gold text-black font-black uppercase tracking-widest text-[10px] rounded-sm hover:bg-white transition-all cursor-pointer"
               >
                 Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Project In-App Modal */}
+      {deleteConfirmProject && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#121212] border-2 border-red-500/50 rounded-md p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-left">
+            <div className="flex items-center gap-3 text-red-400">
+              <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center shrink-0 border border-red-500/30">
+                <Trash2 size={20} className="text-red-400" />
+              </div>
+              <div>
+                <h4 className="text-white font-serif text-lg font-bold">Delete Inventory Listing</h4>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-red-400 font-bold">Permanent Removal</p>
+              </div>
+            </div>
+            
+            <p className="text-xs text-white/70 leading-relaxed font-sans">
+              Are you sure you want to permanently delete <strong className="text-white font-serif">{deleteConfirmProject.name}</strong> ({deleteConfirmProject.type || 'Primary'} &bull; {deleteConfirmProject.location})? 
+              This will remove it from all live listings, offline cache, and database records.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmProject(null)}
+                disabled={isDeletingProject}
+                className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-sm text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!deleteConfirmProject) return;
+                  setIsDeletingProject(true);
+                  try {
+                    const toDelete = deleteConfirmProject;
+                    setDeleteConfirmProject(null);
+                    if (onDeleteProject) {
+                      await onDeleteProject(toDelete);
+                    } else if (toDelete.id && !toDelete.id.startsWith('curated_') && !toDelete.id.startsWith('local_')) {
+                      try {
+                        await deleteDoc(doc(db, 'projects', toDelete.id));
+                      } catch (err) {
+                        console.warn(err);
+                      }
+                    }
+                  } finally {
+                    setIsDeletingProject(false);
+                  }
+                }}
+                disabled={isDeletingProject}
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition-colors shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingProject ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                <span>Confirm Delete</span>
               </button>
             </div>
           </div>
@@ -9672,23 +10075,25 @@ const autoEnrichProjectData = (p: Project): Project => {
 
 export const deduplicateProjects = (list: Project[]): Project[] => {
   const seenIds = new Set<string>();
-  const seenNames = new Set<string>();
+  const seenNameTypes = new Set<string>();
   const result: Project[] = [];
 
   for (const item of list) {
     if (!item) continue;
     const rawId = item.id ? String(item.id).trim().toLowerCase() : '';
     const rawName = item.name ? String(item.name).trim().toLowerCase() : '';
+    const rawType = item.type ? String(item.type).trim().toLowerCase() : 'primary';
+    const nameTypeKey = `${rawName}_${rawType}`;
 
     if (rawId && seenIds.has(rawId)) {
       continue;
     }
-    if (rawName && seenNames.has(rawName)) {
+    if (rawName && seenNameTypes.has(nameTypeKey)) {
       continue;
     }
 
     if (rawId) seenIds.add(rawId);
-    if (rawName) seenNames.add(rawName);
+    if (rawName) seenNameTypes.add(nameTypeKey);
     result.push(item);
   }
 
@@ -9846,7 +10251,7 @@ export default function App() {
   const [currentSeoSnapshot, setCurrentSeoSnapshot] = useState({
     title: "BS Homez – Buy, Sale, Resale & Rent Luxury Properties in Bangalore",
     description: "BS Homez: Buy, Sale, Resale & Rent RERA-verified Apartments, Villas & Plots in Whitefield, Hoskote, Varthur, Gunjur, Hosa Road, Kasavanahalli & Sarjapur, Bangalore.",
-    canonicalUrl: "https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/",
+    canonicalUrl: "https://www.bshomez.in/",
     imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85"
   });
 
@@ -9876,7 +10281,7 @@ export default function App() {
 
   // --- Dynamic SEO Meta Tags & Schema.org JSON-LD Injection for Google, Meta & Social Spiders ---
   useEffect(() => {
-    const baseUrl = "https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app";
+    const baseUrl = "https://www.bshomez.in";
     const defaultImage = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85";
 
     // Helper to set or create meta tag
@@ -9985,7 +10390,7 @@ export default function App() {
               "seller": {
                 "@type": "Organization",
                 "name": "BS Homez",
-                "email": "contact@bshomez.co.in",
+                "email": "contact@bshomez.in",
                 "url": baseUrl
               }
             }
@@ -10019,7 +10424,7 @@ export default function App() {
               "seller": {
                 "@type": "Organization",
                 "name": "BS Homez",
-                "email": "contact@bshomez.co.in",
+                "email": "contact@bshomez.in",
                 "url": baseUrl
               }
             }
@@ -10298,46 +10703,60 @@ export default function App() {
       lastPrice: formatPriceWithCondition(updated.lastPrice || updated.price)
     });
 
+    const targetDocId = formattedUpdated.id || `custom_${Date.now()}`;
+    const projectWithId: Project = {
+      ...formattedUpdated,
+      id: targetDocId
+    };
+
+    // 1. Immediately update localStorage custom projects
     try {
       const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
       const filteredLocal = existingLocal.filter(
-        item => item.id !== formattedUpdated.id && item.name.toLowerCase() !== formattedUpdated.name.toLowerCase()
+        item => item.id !== targetDocId && item.name.toLowerCase() !== projectWithId.name.toLowerCase()
       );
-      localStorage.setItem('bs_homez_custom_projects', JSON.stringify([formattedUpdated, ...filteredLocal]));
+      localStorage.setItem('bs_homez_custom_projects', JSON.stringify([projectWithId, ...filteredLocal]));
     } catch {}
 
-    // Update optimistic state immediately
+    // 2. Immediately update offline cache
+    try {
+      const cached: Project[] = JSON.parse(localStorage.getItem('bs_homez_portfolio_offline_cache') || '[]');
+      const updatedCache = cached.map(p =>
+        (p.id && p.id === targetDocId) || p.name.toLowerCase() === projectWithId.name.toLowerCase()
+          ? { ...p, ...projectWithId }
+          : p
+      );
+      if (!updatedCache.some(p => (p.id && p.id === targetDocId) || p.name.toLowerCase() === projectWithId.name.toLowerCase())) {
+        updatedCache.unshift(projectWithId);
+      }
+      localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(deduplicateProjects(updatedCache)));
+    } catch {}
+
+    // 3. Update React optimistic state immediately
     setProjects(prev => {
-      const exists = prev.some(item => (item.id && item.id === formattedUpdated.id) || item.name.toLowerCase() === formattedUpdated.name.toLowerCase());
+      const exists = prev.some(item => (item.id && item.id === targetDocId) || item.name.toLowerCase() === projectWithId.name.toLowerCase());
       if (exists) {
         return prev.map(item =>
-          (item.id && item.id === formattedUpdated.id) || item.name.toLowerCase() === formattedUpdated.name.toLowerCase()
-            ? { ...item, ...formattedUpdated }
+          (item.id && item.id === targetDocId) || item.name.toLowerCase() === projectWithId.name.toLowerCase()
+            ? { ...item, ...projectWithId }
             : item
         );
       }
-      return [formattedUpdated, ...prev];
+      return [projectWithId, ...prev];
     });
 
+    // 4. Persist to Firestore using setDoc with merge: true so it never throws "No document to update"
     try {
       const payload: any = {
-        ...formattedUpdated,
-        lastPrice: formattedUpdated.lastPrice || formattedUpdated.price,
-        handoverDate: formattedUpdated.handoverDate || 'December 2027',
+        ...projectWithId,
+        lastPrice: projectWithId.lastPrice || projectWithId.price,
+        handoverDate: projectWithId.handoverDate || 'December 2027',
         updatedAt: serverTimestamp()
       };
-      delete payload.id;
 
-      if (formattedUpdated.id && !formattedUpdated.id.startsWith('curated_') && !formattedUpdated.id.startsWith('local_')) {
-        await updateDoc(doc(db, 'projects', formattedUpdated.id), payload);
-      } else {
-        await addDoc(collection(db, 'projects'), {
-          ...payload,
-          createdAt: serverTimestamp()
-        });
-      }
+      await setDoc(doc(db, 'projects', targetDocId), payload, { merge: true });
     } catch (err) {
-      console.warn('Saved project locally:', err);
+      console.warn('Saved project locally & Firestore sync notice:', err);
     }
   };
 
@@ -10394,9 +10813,13 @@ export default function App() {
       localStorage.setItem('bs_homez_custom_projects', JSON.stringify(filteredLocal));
     } catch {}
 
-    setProjects(prev =>
-      prev.filter(p => !((p.id && p.id === project.id) || p.name === project.name))
-    );
+    setProjects(prev => {
+      const next = prev.filter(p => !((p.id && p.id === project.id) || p.name.toLowerCase() === project.name.toLowerCase()));
+      try {
+        localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
 
     if (project.id && !project.id.startsWith('curated_') && !project.id.startsWith('local_')) {
       try {
@@ -10444,10 +10867,19 @@ export default function App() {
         localCustom = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
       } catch {}
 
-      // Combine dbDocs with local custom projects
+      const dbDocIds = new Set(dbDocs.map(d => d.id?.toLowerCase()).filter(Boolean));
+      const dbDocNames = new Set(dbDocs.map(d => `${d.name?.trim().toLowerCase()}_${(d.type || 'Primary').toLowerCase()}`));
+
+      const nonDuplicateLocal = localCustom.filter(item => {
+        if (item.id && dbDocIds.has(item.id.toLowerCase())) return false;
+        if (item.name && dbDocNames.has(`${item.name.trim().toLowerCase()}_${(item.type || 'Primary').toLowerCase()}`)) return false;
+        return true;
+      });
+
+      // Combine dbDocs with filtered local custom projects
       const combinedCustom = deduplicateProjects([
         ...dbDocs.map(autoEnrichProjectData),
-        ...localCustom.map(autoEnrichProjectData)
+        ...nonDuplicateLocal.map(autoEnrichProjectData)
       ]);
 
       // Sort all custom & new inventory projects newest first
@@ -10457,9 +10889,21 @@ export default function App() {
         return tB - tA;
       });
 
+      // If an existing curated project was edited (matches by id or name), exclude its static unedited entry
+      const customKeys = new Set([
+        ...combinedCustom.map(p => p.id?.toLowerCase()).filter(Boolean),
+        ...combinedCustom.map(p => p.name?.trim().toLowerCase()).filter(Boolean)
+      ]);
+
+      const uneditedCurated = CURATED_ARTISANAL_PROJECTS.filter(cp => {
+        if (cp.id && customKeys.has(cp.id.toLowerCase())) return false;
+        if (cp.name && customKeys.has(cp.name.trim().toLowerCase())) return false;
+        return true;
+      });
+
       return deduplicateProjects([
         ...combinedCustom,
-        ...CURATED_ARTISANAL_PROJECTS.map(autoEnrichProjectData)
+        ...uneditedCurated.map(autoEnrichProjectData)
       ]);
     };
 
@@ -10630,7 +11074,7 @@ export default function App() {
         onInquire={handleGeneralInquiry}
       />
       
-      <main className="flex-grow pt-[58px] sm:pt-[64px] md:pt-[104px] lg:pt-[96px]">
+      <main className="flex-grow pt-[44px] sm:pt-[48px] md:pt-[76px] lg:pt-[72px]">
         {activeMainTab === 'overview' && (
           <div className="max-w-7xl mx-auto px-2.5 sm:px-6 md:px-12 pb-10 sm:pb-12">
             {/* Framed Home Window */}
@@ -10876,8 +11320,8 @@ export default function App() {
             </div>
             <div className="flex flex-col gap-3 text-white/40">
               <span className="text-white mb-1 underline decoration-art-gold/50 underline-offset-8">Digital Presence</span>
-              <span className="text-art-gold font-black">www.bshomez.co.in</span>
-              <a href="mailto:contact@bshomez.co.in" className="hover:text-art-gold transition-colors">contact@bshomez.co.in</a>
+              <span className="text-art-gold font-black">www.bshomez.in</span>
+              <a href="mailto:contact@bshomez.in" className="hover:text-art-gold transition-colors">contact@bshomez.in</a>
               <button 
                 type="button" 
                 onClick={() => setIsSeoModalOpen(true)}
@@ -11007,8 +11451,8 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-1.5 max-w-[160px] sm:max-w-xs overflow-x-auto py-1">
-              {comparedProjects.map(cp => (
-                <div key={cp.id || cp.name} className="flex items-center gap-1 px-2.5 py-0.5 sm:py-1 bg-white/10 border border-white/15 rounded-full text-[9px] text-white shrink-0 font-mono">
+              {comparedProjects.map((cp, idx) => (
+                <div key={`compare-pill-${cp.id || cp.name}-${idx}`} className="flex items-center gap-1 px-2.5 py-0.5 sm:py-1 bg-white/10 border border-white/15 rounded-full text-[9px] text-white shrink-0 font-mono">
                   <span className="truncate max-w-[70px] sm:max-w-[100px]">{cp.name}</span>
                   <button
                     type="button"

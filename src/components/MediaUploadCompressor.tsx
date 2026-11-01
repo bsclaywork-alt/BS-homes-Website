@@ -36,7 +36,8 @@ export const formatBytes = (bytes: number): string => {
 export const compressImageFile = (
   file: File,
   maxDimension = 1920,
-  quality = 0.85
+  quality = 0.85,
+  applyWatermark = true
 ): Promise<CompressedImageResult> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -77,6 +78,50 @@ export const compressImageFile = (
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
+
+        // Automated 'BS Homez' watermark burning pipeline
+        if (applyWatermark) {
+          const fontSize = Math.max(16, Math.round(width * 0.024));
+          ctx.save();
+          ctx.font = `bold ${fontSize}px ui-sans-serif, system-ui, -apple-system, sans-serif`;
+          ctx.textBaseline = 'middle';
+
+          const text = 'BS Homez';
+          const textMetrics = ctx.measureText(text);
+          const paddingX = Math.round(fontSize * 0.7);
+          const paddingY = Math.round(fontSize * 0.45);
+          const dotRadius = Math.max(2, Math.round(fontSize * 0.16));
+          const dotMargin = Math.round(fontSize * 0.35);
+          const badgeWidth = textMetrics.width + paddingX * 2 + dotRadius * 2 + dotMargin;
+          const badgeHeight = fontSize + paddingY * 2;
+
+          const posX = width - badgeWidth - Math.round(width * 0.03);
+          const posY = height - badgeHeight - Math.round(height * 0.035);
+          const radius = Math.round(badgeHeight * 0.25);
+
+          // Subtle translucent dark pill backdrop with gold border
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+          ctx.strokeStyle = 'rgba(197, 160, 89, 0.85)';
+          ctx.lineWidth = Math.max(1.5, Math.round(fontSize * 0.08));
+
+          ctx.beginPath();
+          ctx.roundRect(posX, posY, badgeWidth, badgeHeight, radius);
+          ctx.fill();
+          ctx.stroke();
+
+          // Gold accent circle
+          ctx.fillStyle = '#C5A059';
+          ctx.beginPath();
+          ctx.arc(posX + paddingX + dotRadius, posY + badgeHeight / 2, dotRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Watermark text in crisp white with subtle shadow
+          ctx.fillStyle = '#FFFFFF';
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+          ctx.shadowBlur = 4;
+          ctx.fillText(text, posX + paddingX + dotRadius * 2 + dotMargin, posY + badgeHeight / 2);
+          ctx.restore();
+        }
 
         // JPEG compression with quality 0.85
         const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
@@ -173,6 +218,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [confirmDeleteVideo, setConfirmDeleteVideo] = useState(false);
   const [lastDeletedItem, setLastDeletedItem] = useState<{ url: string; index: number } | null>(null);
+  const [applyWatermark, setApplyWatermark] = useState<boolean>(true);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputImagesRef = useRef<HTMLInputElement | null>(null);
@@ -208,7 +254,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     }
   }[accentColor];
 
-  // Handle Image Upload & Compression with real-time Progress Bar
+  // Handle Image Upload & Compression with real-time Progress Bar & Batch Watermark Pipeline
   const handleImageFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawFiles = e.target.files;
     const files: File[] = rawFiles ? Array.from(rawFiles) : [];
@@ -216,7 +262,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
     setIsCompressingImages(true);
     setImageProgress(5);
-    setImageStatusMsg(`Preparing ${files.length} photo(s) for HD compression...`);
+    setImageStatusMsg(`Batch processing ${files.length} photo(s) [Watermark: ${applyWatermark ? 'Enabled' : 'Disabled'}]...`);
     setCompressionStats(null);
 
     let totalOriginal = 0;
@@ -236,9 +282,9 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
         const currentPct = Math.round(((i) / validFiles.length) * 90) + 5;
         setImageProgress(currentPct);
-        setImageStatusMsg(`Compressing photo ${i + 1} of ${validFiles.length}: "${file.name}" (${formatBytes(file.size)})...`);
+        setImageStatusMsg(`Processing photo ${i + 1} of ${validFiles.length}: "${file.name}" (${formatBytes(file.size)}) [Watermark: ${applyWatermark ? 'YES' : 'NO'}]...`);
 
-        const result = await compressImageFile(file, 1920, 0.85);
+        const result = await compressImageFile(file, 1920, 0.85, applyWatermark);
         totalCompressed += result.compressedSize;
         newCompressedList.push(result.dataUrl);
 
@@ -509,6 +555,34 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
               )}
               <span className="text-[9px] font-mono text-white/40">Multiple Selection</span>
             </div>
+          </div>
+
+          {/* Watermark Toggle Bar with Batch Control */}
+          <div className="p-2.5 bg-black/60 border border-art-gold/30 rounded-sm flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-art-gold animate-pulse" />
+              <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-white">
+                'BS Homez' Watermark Pipeline
+              </span>
+              <span className={cn(
+                "text-[8px] font-mono font-bold px-1.5 py-0.2 rounded uppercase",
+                applyWatermark ? "bg-art-gold/20 text-art-gold border border-art-gold/30" : "bg-white/10 text-white/50 border border-white/15"
+              )}>
+                {applyWatermark ? "Active for Batch" : "Disabled"}
+              </span>
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={applyWatermark}
+                onChange={e => setApplyWatermark(e.target.checked)}
+                className="accent-art-gold w-3.5 h-3.5 cursor-pointer rounded"
+              />
+              <span className="text-[9px] font-mono uppercase tracking-wider text-white/80 font-bold">
+                {applyWatermark ? "Watermark ON" : "Watermark OFF"}
+              </span>
+            </label>
           </div>
 
           {/* Upload Drop Area */}
