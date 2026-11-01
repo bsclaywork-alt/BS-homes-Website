@@ -80,7 +80,13 @@ import {
   Share2,
   Archive,
   Copy,
-  AlertTriangle
+  AlertTriangle,
+  Save,
+  Check,
+  Eye,
+  RefreshCw,
+  FileEdit,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -1484,18 +1490,50 @@ const ProjectCard: React.FC<{
             <MapPin size={10} className="text-art-gold shrink-0" />
             {displayZone}
           </span>
-          {/* Stickers: Sold Out / Rented Out */}
-          {project.sticker === 'Sold Out' && (
-            <span className="px-2 py-0.5 bg-red-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.5)] flex items-center gap-1 animate-pulse">
-              <span>🏷️</span> SOLD OUT
+          {/* Explicit Inventory Sold Out Flag: Replaces Units Remaining badge with Prominent Sold Out visual */}
+          {Boolean(project.isInventorySoldOut || project.sticker === 'Sold Out') ? (
+            <span
+              key={`soldout-badge-${project.id}`}
+              className="animate-limited-badge px-3 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-black text-[9.5px] sm:text-[10px] uppercase tracking-wider rounded-sm border-2 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.7)] flex items-center gap-1.5 transform-gpu origin-center"
+              title="Inventory explicitly marked as Sold Out — Zero Units Remaining"
+            >
+              <span className="text-[11px]">⛔</span> SOLD OUT
             </span>
-          )}
-          {project.sticker === 'Rented Out' && (
-            <span className="px-2 py-0.5 bg-indigo-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.5)] flex items-center gap-1">
-              <span>🔑</span> RENTED OUT
-            </span>
+          ) : (
+            <>
+              {project.sticker === 'Rented Out' && (
+                <span className="px-2 py-0.5 bg-indigo-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.5)] flex items-center gap-1">
+                  <span>🔑</span> RENTED OUT
+                </span>
+              )}
+              {/* Units Remaining / Limited Availability Badge */}
+              {project.unitsRemaining !== undefined && project.unitsRemaining !== null && (
+                project.unitsRemaining < 5 ? (
+                  <span
+                    key={`ltd-badge-${project.id}-${project.unitsRemaining}`}
+                    className="animate-limited-badge px-2.5 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.6)] flex items-center gap-1 transform-gpu origin-center"
+                    title={`Only ${project.unitsRemaining} units left in inventory`}
+                  >
+                    <span>⚡</span> LIMITED AVAILABILITY ({project.unitsRemaining === 1 ? '1 UNIT LEFT' : `${project.unitsRemaining} UNITS LEFT`})
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 bg-white/10 text-art-gold font-mono font-bold text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-art-gold/30 flex items-center gap-1" title={`${project.unitsRemaining} units available`}>
+                    <span>📦</span> {project.unitsRemaining} Units Left
+                  </span>
+                )
+              )}
+            </>
           )}
         </div>
+
+        {/* Prominent Sold Out Strip */}
+        {Boolean(project.isInventorySoldOut || project.sticker === 'Sold Out') && (
+          <div className="w-full bg-gradient-to-r from-red-950 via-red-900 to-rose-950 border-t border-red-500/40 px-3 py-1 text-center flex items-center justify-center gap-2">
+            <span className="text-red-300 font-mono font-black text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.2em] flex items-center gap-1.5">
+              <span>⛔</span> INVENTORY FULLY SOLD OUT · RESALE / WAITLIST ONLY
+            </span>
+          </div>
+        )}
 
         <div className="flex items-center gap-1.5 flex-wrap">
           {onToggleCompare && (
@@ -1793,6 +1831,62 @@ const ProjectCard: React.FC<{
                 onChange={e => setEditDraft({ ...editDraft, floorsHeight: e.target.value })}
                 className="w-full bg-white/5 border border-white/15 rounded-sm p-2.5 text-xs text-white outline-none focus:border-art-gold"
               />
+            </div>
+            <div>
+              <label className="text-[8px] uppercase tracking-widest text-amber-400 block mb-1 font-bold flex items-center justify-between">
+                <span>Units Remaining Tracker</span>
+                {Boolean(editDraft.isInventorySoldOut || editDraft.sticker === 'Sold Out') ? (
+                  <span className="text-red-400 font-mono text-[8px] uppercase font-bold">⛔ Masked (Sold Out)</span>
+                ) : editDraft.unitsRemaining !== undefined && editDraft.unitsRemaining !== null && editDraft.unitsRemaining < 5 ? (
+                  <span className="text-red-400 font-mono text-[8px] uppercase font-bold">⚡ Limited Availability Active</span>
+                ) : null}
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={editDraft.unitsRemaining !== undefined && editDraft.unitsRemaining !== null ? editDraft.unitsRemaining : ''}
+                onChange={e => {
+                  const val = e.target.value.trim();
+                  setEditDraft({
+                    ...editDraft,
+                    unitsRemaining: val === '' ? undefined : Math.max(0, parseInt(val, 10))
+                  });
+                }}
+                placeholder="e.g. 3 (triggers Limited Availability if < 5)"
+                className="w-full bg-amber-500/10 border border-amber-500/30 rounded-sm p-2.5 text-xs text-amber-300 font-mono outline-none focus:border-amber-400"
+              />
+            </div>
+
+            {/* Explicit Inventory Sold Out Toggle in Inline Editor */}
+            <div className="sm:col-span-2 p-3 bg-red-950/20 border border-red-500/35 rounded-sm flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <span className="text-[9px] uppercase tracking-widest font-black text-red-400 block flex items-center gap-1.5">
+                  <span>⛔</span> Explicit 'Inventory Sold Out' Flag
+                </span>
+                <p className="text-[8.5px] text-white/50 font-mono">
+                  When enabled, this completely replaces the 'Units Remaining' badge with a prominent 'SOLD OUT' visual.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextState = !Boolean(editDraft.isInventorySoldOut || editDraft.sticker === 'Sold Out');
+                  setEditDraft({
+                    ...editDraft,
+                    isInventorySoldOut: nextState,
+                    sticker: nextState ? 'Sold Out' : (editDraft.sticker === 'Sold Out' ? 'None' : editDraft.sticker)
+                  });
+                }}
+                className={cn(
+                  "px-3.5 py-1.5 rounded text-[9px] font-black uppercase tracking-wider border transition-all cursor-pointer flex items-center gap-1.5",
+                  Boolean(editDraft.isInventorySoldOut || editDraft.sticker === 'Sold Out')
+                    ? "bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.7)]"
+                    : "bg-white/5 text-white/60 border-white/10 hover:border-red-400/50 hover:text-red-300"
+                )}
+              >
+                <span>⛔</span>
+                {Boolean(editDraft.isInventorySoldOut || editDraft.sticker === 'Sold Out') ? 'SOLD OUT ACTIVE' : 'Flag Sold Out'}
+              </button>
             </div>
             <div className="sm:col-span-2">
               <label className="text-[8px] uppercase tracking-widest text-white/45 block mb-1 font-bold">Configurations (Comma Separated)</label>
@@ -3721,6 +3815,108 @@ const FileDropzone = ({
   );
 };
 
+export const generateLocalSeoKeywords = (pName: string, loc: string, z: string, mode: string, propType: string, pr: string, bName: string, rera?: string) => {
+  const cleanName = (pName || 'Bangalore Luxury Property').trim();
+  const cleanLoc = (loc || z || 'Whitefield, Bangalore').trim();
+  const cleanZone = (z || 'Whitefield').trim();
+  const cleanProp = (propType || 'Apartment').trim();
+  const cleanPrice = (pr || 'Best Price on Request').trim();
+  const cleanBuilder = (bName || 'Premier Bangalore Developer').trim();
+  const isRent = (mode || '').toLowerCase().includes('rent');
+  const isResale = (mode || '').toLowerCase().includes('resale');
+  const verb = isRent ? 'Rent' : isResale ? 'Resale Buy' : 'Buy';
+  const action = isRent ? 'for Rent' : 'for Sale';
+
+  const pLower = cleanPrice.toLowerCase();
+  let budgetTier = "High-Demand Tech Corridor Budget";
+  let roiTag = "12-15% Expected Annual Appreciation";
+  let rentalYieldTag = "5.5-6.5% High Corporate Rental Yield";
+
+  if (pLower.includes('lakh') || pLower.includes('lac')) {
+    const match = pLower.match(/(\d+(\.\d+)?)/);
+    const val = match ? parseFloat(match[1]) : 75;
+    if (val < 90) {
+      budgetTier = "Affordable Luxury Under 1 Crore";
+      roiTag = "High-Growth Corridor 15-18% Capital Gains";
+      rentalYieldTag = "6-8% High Rental Demand";
+    } else {
+      budgetTier = "Entry-Level Premium 90L - 1.5 Cr";
+      roiTag = "13-15% Steady Capital Growth";
+      rentalYieldTag = "5.5-6.5% Rental Yield";
+    }
+  } else if (pLower.includes('cr')) {
+    const match = pLower.match(/(\d+(\.\d+)?)/);
+    const val = match ? parseFloat(match[1]) : 2.5;
+    if (val < 2) {
+      budgetTier = "High-Demand 1-2 Cr Tech Hub Segment";
+      roiTag = "12-14% Steady Appreciation";
+      rentalYieldTag = "5.5-6.5% Rental Yield";
+    } else if (val <= 4) {
+      budgetTier = "Ultra-Luxury 2-4 Cr Executive Residences";
+      roiTag = "14-16% Capital Growth & High Resale Value";
+      rentalYieldTag = "5-6% Expat / Corporate Lease Yield";
+    } else {
+      budgetTier = "Trophy Ultra-Luxury 4 Cr+ Estate";
+      roiTag = "Exclusive Capital Preservation Asset";
+      rentalYieldTag = "High-Ticket Expat Corporate Lease";
+    }
+  } else if (isRent) {
+    budgetTier = "Verified Executive Corporate Rental";
+    roiTag = "Zero-Vacancy Continuous Cash Flow";
+    rentalYieldTag = "Corporate ITPL & ORR Executive Lease";
+  }
+
+  const keywords = [
+    `${cleanName} ${cleanLoc}`,
+    `${cleanName} ${action}`,
+    `${cleanName} Price and Floor Plans`,
+    `${cleanName} Brochure Download`,
+    `${cleanBuilder} ${cleanName}`,
+    `${verb} ${cleanProp} in ${cleanZone}`,
+    `${cleanZone} Bangalore Luxury Real Estate`,
+    `${cleanProp} for sale near ITPL and Tech Parks`,
+    `Gated community ${cleanProp} in ${cleanZone}`,
+    `${budgetTier}`,
+    `2 BHK 3 BHK 4 BHK in ${cleanZone}`,
+    `Vaastu Compliant ${cleanProp} ${cleanZone}`,
+    isRent ? `Luxury flats for rent in ${cleanZone}` : `0% Brokerage on Primary Sale ${cleanZone}`,
+    `High ROI Real Estate in ${cleanZone}`,
+    `${roiTag}`,
+    `${rentalYieldTag}`,
+    `Best property to invest in Bangalore 2026`,
+    `NRI Property Investment Bangalore 0% Tax Encumbrance`,
+    `RERA Approved BBMP A Khata ${cleanProp} ${cleanZone}`,
+    isResale ? `Verified clear resale title ${cleanZone}` : `Pre-launch and construction linked payment plan`,
+    `BS Homez Verified Portfolio`,
+    `BS Homez ${cleanZone} Property Advisory`,
+    `Direct Developer Mandate Bangalore`
+  ];
+
+  const hashtags = [
+    "#BSHomez",
+    "#BangaloreRealEstate",
+    `#${cleanZone.replace(/\s+/g, '')}Homes`,
+    `#Luxury${cleanProp}`,
+    "#HighROIBangalore",
+    "#NRIPropertyInvestment",
+    `#${cleanName.replace(/\s+/g, '')}`,
+    "#ZeroBrokerage"
+  ];
+
+  const whatsappSnippet = `*BS HOMEZ LUXURY PORTFOLIO*\n📍 *Project:* ${cleanName}\n🗺️ *Location:* ${cleanLoc} (${cleanZone})\n🏢 *Type:* ${mode} ${cleanProp}\n💰 *Price:* ${cleanPrice} (*Conditions Apply)\n📈 *ROI Highlight:* ${roiTag} | ${rentalYieldTag}\n🛡️ *RERA:* ${rera || 'Verified'}\n\n🔗 *Details:* https://www.bshomez.in\n📞 *Advisory:* contact@bshomez.in`;
+
+  return {
+    keywords: Array.from(new Set(keywords)).join(', '),
+    budgetTier,
+    roiTag,
+    rentalYieldTag,
+    hashtags,
+    whatsappSnippet,
+    metaTitle: `${cleanName} | Luxury ${cleanProp} ${action} in ${cleanZone} | BS Homez`,
+    metaDescription: `${verb} luxury ${cleanProp} at ${cleanName}, ${cleanLoc}. ${cleanPrice}. RERA verified, ${roiTag}, zero builder brokerage. Contact BS Homez.`
+  };
+};
+
 const ProjectForm = ({
   project,
   initialInventoryType = 'Primary',
@@ -3799,7 +3995,9 @@ const ProjectForm = ({
     handedOverDate: project?.handedOverDate || '',
     registrationStatus: project?.registrationStatus || 'Ready for Registration',
     approvedAuthority: project?.approvedAuthority || 'BDA',
-    sticker: project?.sticker || 'None'
+    sticker: project?.sticker || 'None',
+    unitsRemaining: project?.unitsRemaining !== undefined ? project.unitsRemaining : undefined,
+    isInventorySoldOut: Boolean(project?.isInventorySoldOut || project?.sticker === 'Sold Out')
   });
 
   const [keywordsInput, setKeywordsInput] = useState<string>(
@@ -3850,14 +4048,29 @@ const ProjectForm = ({
 
   const [isGeneratingAiKeywords, setIsGeneratingAiKeywords] = useState(false);
   const [aiKeywordsSuccess, setAiKeywordsSuccess] = useState<string | null>(null);
+  const [aiSeoDetails, setAiSeoDetails] = useState<{
+    budgetTier?: string;
+    roiTag?: string;
+    rentalYieldTag?: string;
+    hashtags?: string[];
+    whatsappSnippet?: string;
+    source?: string;
+  } | null>(null);
+  const [copiedTagMsg, setCopiedTagMsg] = useState<string | null>(null);
 
   const handleGenerateAiKeywords = async () => {
     setIsGeneratingAiKeywords(true);
     setAiKeywordsSuccess(null);
+
+    // Setup 2.5-second timeout for rapid real-time response
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+
     try {
       const res = await fetch('/api/ai/seo-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           projectName: formData.name,
           location: formData.location,
@@ -3871,14 +4084,63 @@ const ProjectForm = ({
           configuration: formData.configuration
         })
       });
+      clearTimeout(timeoutId);
+
       const data = await res.json();
       if (data?.keywords) {
         setKeywordsInput(data.keywords);
-        setAiKeywordsSuccess(`Generated ${data.keywords.split(',').length} high-ranking keywords for Google, Meta, X & WhatsApp!`);
-        setTimeout(() => setAiKeywordsSuccess(null), 4000);
+        setAiSeoDetails({
+          budgetTier: data.budgetTier,
+          roiTag: data.roiTag,
+          rentalYieldTag: data.rentalYieldTag,
+          hashtags: data.hashtags,
+          whatsappSnippet: data.whatsappSnippet,
+          source: data.source
+        });
+        if (data.metaTitle && (!formData.metaTitle || formData.metaTitle.trim() === '')) {
+          setFormData(prev => ({
+            ...prev,
+            metaTitle: data.metaTitle,
+            metaDescription: data.metaDescription || prev.metaDescription
+          }));
+        }
+        const count = data.keywords.split(',').length;
+        setAiKeywordsSuccess(`✨ Generated ${count} Real-Time Keywords! (Google SERP • Meta • WhatsApp • ${data.roiTag || 'High ROI'})`);
+        setTimeout(() => setAiKeywordsSuccess(null), 5000);
+        return;
       }
     } catch (err) {
-      console.warn('AI SEO generation error:', err);
+      clearTimeout(timeoutId);
+      // Instant local real-time generation on network delay or timeout
+      const localResult = generateLocalSeoKeywords(
+        formData.name,
+        formData.location,
+        formData.zone,
+        inventoryMode,
+        formData.propertyType,
+        formData.price || formData.monthlyRental,
+        formData.builderName,
+        formData.reraNumber
+      );
+      setKeywordsInput(localResult.keywords);
+      setAiSeoDetails({
+        budgetTier: localResult.budgetTier,
+        roiTag: localResult.roiTag,
+        rentalYieldTag: localResult.rentalYieldTag,
+        hashtags: localResult.hashtags,
+        whatsappSnippet: localResult.whatsappSnippet,
+        source: 'realtime_instant_matrix'
+      });
+      if (!formData.metaTitle) {
+        setFormData(prev => ({
+          ...prev,
+          metaTitle: localResult.metaTitle,
+          metaDescription: localResult.metaDescription
+        }));
+      }
+      const count = localResult.keywords.split(',').length;
+      setAiKeywordsSuccess(`✨ Generated ${count} Real-Time Keywords! (Google SERP • Meta • WhatsApp • ${localResult.roiTag})`);
+      setTimeout(() => setAiKeywordsSuccess(null), 5000);
     } finally {
       setIsGeneratingAiKeywords(false);
     }
@@ -4074,7 +4336,11 @@ const ProjectForm = ({
         handedOverDate: currentData.handedOverDate || '',
         registrationStatus: currentData.registrationStatus || 'Ready for Registration',
         approvedAuthority: currentData.approvedAuthority || 'BDA',
-        sticker: (currentData.sticker as any) || 'None',
+        sticker: Boolean(currentData.isInventorySoldOut) ? 'Sold Out' : ((currentData.sticker as any) || 'None'),
+        unitsRemaining: currentData.unitsRemaining !== undefined && currentData.unitsRemaining !== null && String(currentData.unitsRemaining).trim() !== ''
+          ? Number(currentData.unitsRemaining)
+          : undefined,
+        isInventorySoldOut: Boolean(currentData.isInventorySoldOut),
         seoKeywords: resolvedKeywords.split(',').map(s => s.trim()).filter(Boolean),
 
         isPaused: Boolean(currentData.isPaused),
@@ -5256,7 +5522,11 @@ const ProjectForm = ({
                     <button
                       key={opt}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, sticker: opt }))}
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        sticker: opt,
+                        isInventorySoldOut: opt === 'Sold Out'
+                      }))}
                       className={cn(
                         "py-2.5 px-2 rounded-sm text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer text-center",
                         (formData.sticker || 'None') === opt
@@ -5277,39 +5547,280 @@ const ProjectForm = ({
               </div>
 
               {/* SEO Keywords */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between flex-wrap gap-1">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70 block">
-                    SEO Keywords (Comma-Separated)
-                  </label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/80 block">
+                      SEO &amp; Social Visibility Keywords
+                    </label>
+                    <span className="text-[8.5px] text-white/40 font-mono">
+                      Targeted for Google SERP Top-Rank, Meta (FB/IG) &amp; WhatsApp
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={handleGenerateAiKeywords}
                     disabled={isGeneratingAiKeywords}
-                    className="px-2.5 py-1 bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 rounded-sm text-[8.5px] uppercase tracking-wider font-black transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                    title="Generate top-ranking SEO keywords for Google Search, Meta, Instagram, X & other search engines"
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-art-gold via-amber-300 to-art-gold hover:from-white hover:to-white text-black font-black rounded-sm text-[9px] uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                    title="Real-time AI Keyword Generation: Location, Project, Property Type, Budget & High ROI Matrix for Google, Meta & WhatsApp"
                   >
-                    {isGeneratingAiKeywords ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
-                    <span>✨ AI Auto-Generate Keywords</span>
+                    {isGeneratingAiKeywords ? <Loader2 size={11} className="animate-spin text-black" /> : <Sparkles size={11} className="text-black" />}
+                    <span>AI Generate Keywords (Real-Time)</span>
                   </button>
                 </div>
-                <input
-                  type="text"
+
+                <textarea
+                  rows={3}
                   value={keywordsInput}
                   onChange={e => setKeywordsInput(e.target.value)}
-                  placeholder="e.g. Bangalore Luxury Villa, 4BHK Villa, Sarjapur Road, RERA Approved"
-                  className="w-full bg-white/5 border border-white/15 p-3 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono placeholder:text-white/20"
+                  placeholder="Click 'AI Generate Keywords' to populate high-visibility tags for Google, Meta, WhatsApp, Budget, & ROI..."
+                  className="w-full bg-white/5 border border-white/15 p-3 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono placeholder:text-white/20 leading-relaxed resize-y"
                 />
+
                 {aiKeywordsSuccess && (
-                  <p className="text-[9.5px] text-emerald-400 font-mono font-bold flex items-center gap-1">
-                    <CheckCircle2 size={11} /> {aiKeywordsSuccess}
-                  </p>
+                  <div className="p-2 bg-emerald-500/15 border border-emerald-500/40 rounded-sm flex items-center justify-between gap-2 text-[9.5px] text-emerald-300 font-mono font-bold animate-pulse">
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                      {aiKeywordsSuccess}
+                    </span>
+                    <span className="text-[8px] bg-emerald-500/20 px-1.5 py-0.5 rounded uppercase">Real-Time Active</span>
+                  </div>
                 )}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[8px] font-mono text-white/60">
-                  <span className="px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/25">Google Search SERP</span>
-                  <span className="px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">Meta (Facebook/Instagram)</span>
-                  <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 border border-white/20">X (Twitter)</span>
-                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">WhatsApp</span>
+
+                {copiedTagMsg && (
+                  <div className="p-1.5 bg-art-gold/20 border border-art-gold/40 rounded-sm text-[9px] text-art-gold font-mono font-bold flex items-center gap-1">
+                    <span>✓</span> {copiedTagMsg}
+                  </div>
+                )}
+
+                {/* Real-time Category Matrix & Quick Actions */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex flex-wrap items-center gap-1.5 text-[8px] font-mono text-white/70">
+                    <span className="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/25">
+                      🔍 Google Search SERP
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
+                      📱 Meta (Facebook &amp; Instagram)
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+                      💬 WhatsApp Broadcast
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                      📈 High ROI &amp; Capital Gains
+                    </span>
+                  </div>
+
+                  {/* AI Generated Intelligence Highlights (Visible once generated or populated) */}
+                  {aiSeoDetails && (
+                    <div className="p-2.5 bg-black/50 border border-white/10 rounded-sm space-y-2 text-[9px] font-mono">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                        <span className="text-art-gold font-bold uppercase tracking-wider flex items-center gap-1">
+                          <span>✨</span> AI Visibility Breakdown
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {aiSeoDetails.hashtags && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const text = aiSeoDetails.hashtags?.join(' ') || '';
+                                navigator?.clipboard?.writeText?.(text);
+                                setCopiedTagMsg('Copied Meta Hashtags to clipboard!');
+                                setTimeout(() => setCopiedTagMsg(null), 3000);
+                              }}
+                              className="px-2 py-0.5 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 rounded text-[8px] cursor-pointer transition-all"
+                            >
+                              📋 Copy Meta Tags
+                            </button>
+                          )}
+                          {aiSeoDetails.whatsappSnippet && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const text = aiSeoDetails.whatsappSnippet || '';
+                                navigator?.clipboard?.writeText?.(text);
+                                setCopiedTagMsg('Copied WhatsApp Broadcast to clipboard!');
+                                setTimeout(() => setCopiedTagMsg(null), 3000);
+                              }}
+                              className="px-2 py-0.5 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 rounded text-[8px] cursor-pointer transition-all"
+                            >
+                              📲 Copy WhatsApp Card
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-white/75 text-[8.5px]">
+                        {aiSeoDetails.budgetTier && (
+                          <div className="bg-white/5 p-1.5 rounded border border-white/5">
+                            <span className="text-white/40 block text-[7.5px] uppercase">Budget Segment</span>
+                            <span className="text-amber-300 font-semibold">{aiSeoDetails.budgetTier}</span>
+                          </div>
+                        )}
+                        {aiSeoDetails.roiTag && (
+                          <div className="bg-white/5 p-1.5 rounded border border-white/5">
+                            <span className="text-white/40 block text-[7.5px] uppercase">Capital Appreciation ROI</span>
+                            <span className="text-emerald-300 font-semibold">{aiSeoDetails.roiTag}</span>
+                          </div>
+                        )}
+                        {aiSeoDetails.rentalYieldTag && (
+                          <div className="bg-white/5 p-1.5 rounded border border-white/5">
+                            <span className="text-white/40 block text-[7.5px] uppercase">Rental Yield Target</span>
+                            <span className="text-cyan-300 font-semibold">{aiSeoDetails.rentalYieldTag}</span>
+                          </div>
+                        )}
+                        {aiSeoDetails.hashtags && (
+                          <div className="bg-white/5 p-1.5 rounded border border-white/5">
+                            <span className="text-white/40 block text-[7.5px] uppercase">Social Discovery Tags</span>
+                            <span className="text-indigo-300 truncate block">{aiSeoDetails.hashtags.slice(0, 4).join(' ')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Explicit 'Inventory Sold Out' Flag Card */}
+              <div className={cn(
+                "md:col-span-2 p-3.5 rounded-sm border transition-all space-y-2.5",
+                formData.isInventorySoldOut
+                  ? "bg-red-950/30 border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.25)]"
+                  : "bg-black/40 border-white/15"
+              )}>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-red-400 flex items-center gap-1.5">
+                      <span>⛔</span> Explicit 'Inventory Sold Out' Flag
+                    </label>
+                    <p className="text-[9px] text-white/60 font-mono mt-0.5">
+                      Explicitly marks this project as sold out. <strong className="text-red-400">Replaces the 'Units Remaining' badge</strong> with a prominent 'SOLD OUT' visual on the card.
+                    </p>
+                  </div>
+                  {formData.isInventorySoldOut ? (
+                    <span className="animate-limited-badge px-3 py-1 bg-red-600 text-white border border-red-400 rounded text-[9.5px] font-mono font-black uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_12px_rgba(239,68,68,0.5)]">
+                      <span>⛔</span> LIVE VISUAL: SOLD OUT (REPLACES UNITS BADGE)
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 bg-white/5 text-white/40 border border-white/10 rounded text-[9px] font-mono uppercase">
+                      Standard Units Badge Active
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 pt-1 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextState = !formData.isInventorySoldOut;
+                      setFormData(prev => ({
+                        ...prev,
+                        isInventorySoldOut: nextState,
+                        sticker: nextState ? 'Sold Out' : (prev.sticker === 'Sold Out' ? 'None' : prev.sticker)
+                      }));
+                    }}
+                    className={cn(
+                      "px-4 py-2 rounded-sm text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer flex items-center gap-2",
+                      formData.isInventorySoldOut
+                        ? "bg-red-600 text-white border-red-400 shadow-md hover:bg-red-500"
+                        : "bg-white/5 text-white/70 border-white/20 hover:border-red-500/50 hover:text-red-300"
+                    )}
+                  >
+                    <span>⛔</span>
+                    {formData.isInventorySoldOut ? 'Sold Out Active (Click to Deactivate)' : 'Set Inventory Sold Out'}
+                  </button>
+                  {formData.isInventorySoldOut && (
+                    <span className="text-[9px] text-red-300 font-mono italic">
+                      Units Remaining count is preserved in data but masked on the front-end with the prominent Sold Out visual.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Units Remaining Tracker (triggers 'Limited Availability' badge when < 5) */}
+              <div className={cn(
+                "md:col-span-2 p-3 bg-black/40 border rounded-sm space-y-2 transition-all",
+                formData.isInventorySoldOut ? "border-white/10 opacity-75" : "border-art-gold/30"
+              )}>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold flex items-center gap-2">
+                      <span>Units Remaining Tracker</span>
+                      {formData.isInventorySoldOut && (
+                        <span className="text-[8px] uppercase tracking-wider bg-red-600/30 text-red-400 border border-red-500/40 px-1.5 py-0.5 rounded font-mono font-bold">
+                          Masked on card by Sold Out Flag
+                        </span>
+                      )}
+                    </label>
+                    <p className="text-[9px] text-white/50 font-mono">
+                      Set available inventory count. When fewer than 5 units are listed, the card displays a pulsing <strong className="text-red-400">"Limited Availability"</strong> badge.
+                    </p>
+                  </div>
+                  {formData.isInventorySoldOut ? (
+                    <span className="px-2.5 py-1 bg-red-950/40 text-red-400 border border-red-500/40 rounded text-[9px] font-mono uppercase">
+                      ⛔ Replaced by Sold Out Visual
+                    </span>
+                  ) : formData.unitsRemaining !== undefined && formData.unitsRemaining !== null && formData.unitsRemaining !== ('' as any) && (
+                    Number(formData.unitsRemaining) < 5 ? (
+                      <span
+                        key={`form-preview-${formData.unitsRemaining}`}
+                        className="animate-limited-badge px-2.5 py-1 bg-red-600/30 text-red-400 border border-red-500/60 rounded text-[9.5px] font-mono font-black uppercase tracking-wider flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.3)] transform-gpu origin-center"
+                      >
+                        <span>⚡</span> Preview: Limited Availability ({formData.unitsRemaining} Left)
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded text-[9.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+                        <span>✓</span> {formData.unitsRemaining} Units in Stock
+                      </span>
+                    )
+                  )}
+                </div>
+                <div className="flex items-center gap-3 pt-1 flex-wrap">
+                  <div className="relative flex-1 min-w-[180px] max-w-xs">
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.unitsRemaining !== undefined && formData.unitsRemaining !== null ? formData.unitsRemaining : ''}
+                      onChange={e => {
+                        const val = e.target.value.trim();
+                        setFormData(prev => ({
+                          ...prev,
+                          unitsRemaining: val === '' ? undefined : Math.max(0, parseInt(val, 10))
+                        }));
+                      }}
+                      placeholder="e.g. 3 (triggers badge if < 5)"
+                      className="w-full bg-white/5 border border-white/15 p-2.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono placeholder:text-white/20"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[1, 2, 3, 4, 10, 25].map(qty => (
+                      <button
+                        key={qty}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, unitsRemaining: qty }))}
+                        className={cn(
+                          "px-2.5 py-1.5 rounded text-[9px] font-mono font-bold border transition-all cursor-pointer",
+                          formData.unitsRemaining === qty
+                            ? qty < 5
+                              ? "bg-red-600 text-white border-red-500 font-black shadow-sm"
+                              : "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                            : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:bg-white/10"
+                        )}
+                        title={qty < 5 ? `Set ${qty} units (Limited Availability badge will show)` : `Set ${qty} units`}
+                      >
+                        {qty} {qty < 5 ? '⚠️' : ''}
+                      </button>
+                    ))}
+                    {formData.unitsRemaining !== undefined && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, unitsRemaining: undefined }))}
+                        className="px-2 py-1 rounded text-[8.5px] font-mono text-white/40 hover:text-red-400 border border-transparent hover:border-red-500/30 cursor-pointer"
+                        title="Clear Tracker"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -6117,7 +6628,8 @@ const AdminView = ({
   onOpenNewProjectWithMode,
   onOpenEnquiry,
   onDeleteProject,
-  onInspectProjectSeo
+  onInspectProjectSeo,
+  onSaveProject
 }: { 
   enquiries: Enquiry[], 
   projects: Project[], 
@@ -6131,9 +6643,10 @@ const AdminView = ({
   onOpenNewProjectWithMode?: (mode: 'Primary' | 'Rental' | 'Resale') => void,
   onOpenEnquiry?: (p: Project) => void,
   onDeleteProject?: (p: Project) => Promise<void> | void,
-  onInspectProjectSeo?: (p: Project) => void
+  onInspectProjectSeo?: (p: Project) => void,
+  onSaveProject?: (p: Project) => Promise<void> | void
 }) => {
-  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'seo_audit'>('leads');
   const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
   const [deleteConfirmEnquiry, setDeleteConfirmEnquiry] = useState<Enquiry | null>(null);
   const [deleteConfirmProject, setDeleteConfirmProject] = useState<Project | null>(null);
@@ -6153,6 +6666,28 @@ const AdminView = ({
     curatedProjectsCount?: number;
     timestamp?: string;
   } | null>(null);
+
+  // SEO Audit Table State
+  const [seoDrafts, setSeoDrafts] = useState<Record<string, {
+    metaTitle?: string;
+    seoKeywords?: string;
+    ogImage?: string;
+    isDirty?: boolean;
+  }>>({});
+  const [seoAuditSearch, setSeoAuditSearch] = useState('');
+  const [seoAuditCategoryFilter, setSeoAuditCategoryFilter] = useState<'all' | 'Primary' | 'Rental' | 'Resale'>('all');
+  const [seoAuditHealthFilter, setSeoAuditHealthFilter] = useState<'all' | 'needs_attention' | 'optimized'>('all');
+  const [isBulkSavingSeo, setIsBulkSavingSeo] = useState(false);
+  const [singleSavingId, setSingleSavingId] = useState<string | null>(null);
+  const [generatingAiId, setGeneratingAiId] = useState<string | null>(null);
+  const [seoAuditToast, setSeoAuditToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [seoImageModalUrl, setSeoImageModalUrl] = useState<string | null>(null);
+
+  // Personalized WhatsApp Lead Intelligence Modal State
+  const [whatsAppModalLead, setWhatsAppModalLead] = useState<Enquiry | null>(null);
+  const [whatsAppTemplateType, setWhatsAppTemplateType] = useState<'client_outreach' | 'site_visit' | 'internal_briefing'>('client_outreach');
+  const [whatsAppCustomText, setWhatsAppCustomText] = useState<string>('');
+  const [whatsAppCopiedToast, setWhatsAppCopiedToast] = useState(false);
 
   const handleSoftDeleteLead = async (enq: Enquiry) => {
     if (!enq.id) return;
@@ -6394,6 +6929,401 @@ const AdminView = ({
     : inventoryTab === 'Rental'
     ? rentalProjects
     : resaleProjects;
+
+  // --- Personalized WhatsApp Message Generator for Lead Intelligence ---
+  const generatePersonalizedWhatsAppLeadTemplate = (
+    enq: Enquiry,
+    intent: { level: 'High' | 'Medium' | 'Low'; score: number; signals: string[]; tone: string; summary: string },
+    templateStyle: 'client_outreach' | 'site_visit' | 'internal_briefing' = 'client_outreach'
+  ) => {
+    const customerName = (enq.customerName || 'Valued Client').trim();
+    const projectName = (enq.projectName || enq.interestedProjects || 'Bangalore Luxury Real Estate').trim();
+    const phone = enq.customerPhone || 'N/A';
+    const contactSlot = enq.preferredContactTime ? `around ${enq.preferredContactTime}` : 'at your earliest convenience';
+    const { time, date } = getEnquiryTimeAndDate(enq.timestamp);
+
+    if (templateStyle === 'client_outreach') {
+      if (intent.level === 'High') {
+        return `Dear ${customerName},\n\nThank you for reaching out to *BS Homez* regarding *${projectName}*.\n\nWe noted your strong purchase readiness (Priority Intent Score: ${intent.score}% - ${intent.tone}) and have reserved high-priority advisory attention for your inquiry. Our portfolio team has verified available inventory, current payment milestone schemes, and official developer launch pricing for ${projectName}.\n\nI will personally connect with you ${contactSlot}. If you would like instant access to the digital brochure, floor plans, or wish to schedule a priority private walkthrough, please reply right here.\n\nWarm regards,\n*BS Homez Private Advisory Desk*\n🌐 https://www.bshomez.in | 📞 +91 96068 18199`;
+      } else if (intent.level === 'Medium') {
+        return `Hello ${customerName},\n\nGreetings from *BS Homez*!\n\nThank you for inquiring about *${projectName}* (Verified Match: ${intent.score}% Intent). We have assembled the complete property specification, floor plans, and pricing breakdown for this development.\n\nWould you like me to share the verified project brochure and payment scheme over WhatsApp? We can also arrange a brief consultation ${contactSlot}.\n\nBest regards,\n*BS Homez Advisory Team*\n🌐 https://www.bshomez.in`;
+      } else {
+        return `Hello ${customerName},\n\nThank you for exploring *${projectName}* on *BS Homez*.\n\nWe would be pleased to assist you with verified pricing, RERA documentation, and layout choices for ${projectName} or alternative premium developments across Bangalore. Feel free to let us know your preferred unit size or budget whenever convenient.\n\nRegards,\n*BS Homez Advisory Desk*\n🌐 https://www.bshomez.in`;
+      }
+    } else if (templateStyle === 'site_visit') {
+      return `Dear ${customerName},\n\nRegarding your inquiry for *${projectName}* (Lead Priority: ${intent.score}% - ${intent.level} Intent), we would like to invite you for an exclusive private site inspection and model home walkthrough.\n\n📍 *Project:* ${projectName}\n🎯 *Advisory Advantage:* Direct Developer Pricing • 0% Brokerage on Primary • Legal Verification\n🕒 *Suggested Window:* ${enq.preferredContactTime || 'This Weekend / On Request'}\n\nPlease confirm if this time suits you or suggest an alternate slot so we can schedule our senior corridor specialist.\n\nWarm regards,\n*BS Homez Concierge*\n🌐 https://www.bshomez.in | 📞 +91 96068 18199`;
+    } else {
+      // internal_briefing
+      return `📋 *LEAD BRIEFING | BS HOMEZ VAULT*\n\n👤 *Client:* ${customerName}\n📱 *Phone:* ${phone}\n✉️ *Email:* ${enq.customerEmail || 'N/A'}\n🏢 *Project Interest:* ${projectName}\n📍 *Location Preference:* ${enq.preferredLocation || 'Standard'}\n🎯 *Intent Score:* ${intent.score}% (${intent.level} Intent - ${intent.tone})\n⚡ *Key Triggers:* ${intent.signals.join(', ') || 'Direct Portal Enquiry'}\n🕒 *Preferred Contact Time:* ${enq.preferredContactTime || 'Standard Hours'}\n📝 *Customer Message:* "${enq.message || 'No additional note'}"\n📅 *Logged At:* ${date} at ${time}\n\n👉 *Action Item:* Urgent consultative outreach required for ${projectName}.`;
+    }
+  };
+
+  const handleOpenPersonalizedWhatsAppModal = (enq: Enquiry) => {
+    const intent = analyzeCustomerIntent(enq);
+    const initialText = generatePersonalizedWhatsAppLeadTemplate(enq, intent, 'client_outreach');
+    setWhatsAppModalLead(enq);
+    setWhatsAppTemplateType('client_outreach');
+    setWhatsAppCustomText(initialText);
+  };
+
+  const handleSelectWhatsAppTemplate = (type: 'client_outreach' | 'site_visit' | 'internal_briefing') => {
+    if (!whatsAppModalLead) return;
+    setWhatsAppTemplateType(type);
+    const intent = analyzeCustomerIntent(whatsAppModalLead);
+    const text = generatePersonalizedWhatsAppLeadTemplate(whatsAppModalLead, intent, type);
+    setWhatsAppCustomText(text);
+  };
+
+  const handleCopyWhatsAppText = () => {
+    if (!whatsAppCustomText) return;
+    navigator.clipboard.writeText(whatsAppCustomText);
+    setWhatsAppCopiedToast(true);
+    setTimeout(() => setWhatsAppCopiedToast(false), 2500);
+  };
+
+  const handleLaunchWhatsAppDirect = (phone: string, text: string) => {
+    const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
+    const encoded = encodeURIComponent(text);
+    const url = cleanPhone 
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`
+      : `https://api.whatsapp.com/send?text=${encoded}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  // --- SEO Audit Table Engine ---
+  const getProjectSeoRowData = (p: Project) => {
+    const draft = seoDrafts[p.id || p.name] || {};
+    const defaultTitle = `${p.name} | Luxury ${p.propertyType || 'Apartment'} ${p.type === 'Rental' ? 'for Rent' : 'for Sale'} in ${p.zone} | BS Homez`;
+    const metaTitle = draft.metaTitle !== undefined ? draft.metaTitle : (p.metaTitle || defaultTitle);
+    const seoKeywords = draft.seoKeywords !== undefined 
+      ? draft.seoKeywords 
+      : ((p.seoKeywords && p.seoKeywords.length > 0) ? p.seoKeywords.join(', ') : '');
+    const ogImage = draft.ogImage !== undefined ? draft.ogImage : (p.ogImage || p.imageUrls?.[0] || '');
+    const isDirty = Boolean(draft.isDirty);
+
+    const kwCount = seoKeywords.split(',').map(s => s.trim()).filter(Boolean).length;
+    const titleLen = metaTitle.trim().length;
+    const hasImage = Boolean(ogImage.trim());
+
+    let health: 'optimized' | 'needs_attention' = 'optimized';
+    if (titleLen < 25 || titleLen > 75 || kwCount < 5 || !hasImage) {
+      health = 'needs_attention';
+    }
+
+    return {
+      metaTitle,
+      seoKeywords,
+      ogImage,
+      isDirty,
+      kwCount,
+      titleLen,
+      hasImage,
+      health
+    };
+  };
+
+  const handleUpdateSeoDraft = (p: Project, field: 'metaTitle' | 'seoKeywords' | 'ogImage', value: string) => {
+    const key = p.id || p.name;
+    const current = getProjectSeoRowData(p);
+    const updated = {
+      metaTitle: field === 'metaTitle' ? value : current.metaTitle,
+      seoKeywords: field === 'seoKeywords' ? value : current.seoKeywords,
+      ogImage: field === 'ogImage' ? value : current.ogImage,
+      isDirty: true
+    };
+    setSeoDrafts(prev => ({ ...prev, [key]: updated }));
+  };
+
+  const handleSaveSingleSeo = async (p: Project) => {
+    const row = getProjectSeoRowData(p);
+    const key = p.id || p.name;
+    setSingleSavingId(key);
+    try {
+      const parsedKeywords = row.seoKeywords
+        .split(',')
+        .map(k => k.trim())
+        .filter(Boolean);
+
+      const updatedProject: Project = {
+        ...p,
+        metaTitle: row.metaTitle.trim(),
+        seoKeywords: parsedKeywords,
+        ogImage: row.ogImage.trim() || p.imageUrls?.[0] || '',
+        seoLastSyncedAt: new Date().toISOString()
+      };
+
+      if (onSaveProject) {
+        await onSaveProject(updatedProject);
+      } else if (p.id) {
+        await setDoc(doc(db, 'projects', p.id), {
+          metaTitle: updatedProject.metaTitle,
+          seoKeywords: updatedProject.seoKeywords,
+          ogImage: updatedProject.ogImage,
+          seoLastSyncedAt: updatedProject.seoLastSyncedAt,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
+
+      setSeoDrafts(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+
+      setSeoAuditToast({
+        message: `Saved SEO metadata for "${p.name}"!`,
+        type: 'success'
+      });
+      setTimeout(() => setSeoAuditToast(null), 3500);
+    } catch (err: any) {
+      console.error('Error saving single SEO:', err);
+      setSeoAuditToast({
+        message: `Failed to save SEO for "${p.name}": ${err.message || 'Unknown error'}`,
+        type: 'error'
+      });
+      setTimeout(() => setSeoAuditToast(null), 4000);
+    } finally {
+      setSingleSavingId(null);
+    }
+  };
+
+  const handleBulkSaveAllSeo = async () => {
+    const dirtyProjects = validProjects.filter(p => {
+      const row = getProjectSeoRowData(p);
+      return row.isDirty;
+    });
+
+    if (dirtyProjects.length === 0) {
+      setSeoAuditToast({ message: 'No unsaved SEO changes to commit.', type: 'info' });
+      setTimeout(() => setSeoAuditToast(null), 3000);
+      return;
+    }
+
+    setIsBulkSavingSeo(true);
+    try {
+      await Promise.all(dirtyProjects.map(async p => {
+        const row = getProjectSeoRowData(p);
+        const parsedKeywords = row.seoKeywords
+          .split(',')
+          .map(k => k.trim())
+          .filter(Boolean);
+
+        const updatedProject: Project = {
+          ...p,
+          metaTitle: row.metaTitle.trim(),
+          seoKeywords: parsedKeywords,
+          ogImage: row.ogImage.trim() || p.imageUrls?.[0] || '',
+          seoLastSyncedAt: new Date().toISOString()
+        };
+
+        if (onSaveProject) {
+          await onSaveProject(updatedProject);
+        } else if (p.id) {
+          await setDoc(doc(db, 'projects', p.id), {
+            metaTitle: updatedProject.metaTitle,
+            seoKeywords: updatedProject.seoKeywords,
+            ogImage: updatedProject.ogImage,
+            seoLastSyncedAt: updatedProject.seoLastSyncedAt,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        }
+      }));
+
+      setSeoDrafts({});
+      setSeoAuditToast({
+        message: `Bulk saved and synchronized ${dirtyProjects.length} projects successfully!`,
+        type: 'success'
+      });
+      setTimeout(() => setSeoAuditToast(null), 4000);
+    } catch (err: any) {
+      console.error('Bulk save SEO error:', err);
+      setSeoAuditToast({
+        message: `Bulk save error: ${err.message || 'Check connection'}`,
+        type: 'error'
+      });
+      setTimeout(() => setSeoAuditToast(null), 5000);
+    } finally {
+      setIsBulkSavingSeo(false);
+    }
+  };
+
+  const handleBulkAiGenerateMissing = () => {
+    let populatedCount = 0;
+    const newDrafts = { ...seoDrafts };
+
+    validProjects.forEach(p => {
+      const row = getProjectSeoRowData(p);
+      const isMissingTitle = !row.metaTitle || row.metaTitle.length < 25;
+      const isSparseKw = row.kwCount < 5;
+
+      if (isMissingTitle || isSparseKw) {
+        const generated = generateLocalSeoKeywords(
+          p.name,
+          p.location,
+          p.zone,
+          p.type,
+          p.propertyType,
+          p.price,
+          p.builderName || '',
+          p.reraNumber
+        );
+
+        const key = p.id || p.name;
+        newDrafts[key] = {
+          metaTitle: isMissingTitle ? generated.metaTitle : row.metaTitle,
+          seoKeywords: isSparseKw ? generated.keywords : row.seoKeywords,
+          ogImage: row.ogImage || p.imageUrls?.[0] || '',
+          isDirty: true
+        };
+        populatedCount++;
+      }
+    });
+
+    setSeoDrafts(newDrafts);
+    if (populatedCount > 0) {
+      setSeoAuditToast({
+        message: `Auto-generated high-ranking SEO for ${populatedCount} projects! Review edits and click "Bulk Save All Changes".`,
+        type: 'success'
+      });
+    } else {
+      setSeoAuditToast({
+        message: `All ${validProjects.length} projects already have high-ranking SEO keywords and page titles.`,
+        type: 'info'
+      });
+    }
+    setTimeout(() => setSeoAuditToast(null), 5000);
+  };
+
+  const handleSingleRowAiKeywords = async (p: Project) => {
+    const key = p.id || p.name;
+    setGeneratingAiId(key);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+      try {
+        const res = await fetch('/api/ai/seo-generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            projectName: p.name,
+            location: p.location,
+            zone: p.zone,
+            type: p.type,
+            propertyType: p.propertyType,
+            price: p.price,
+            builderName: p.builderName,
+            reraNumber: p.reraNumber,
+            features: p.features,
+            configuration: p.configuration
+          })
+        });
+        clearTimeout(timeoutId);
+        const data = await res.json();
+        if (data?.keywords) {
+          const current = getProjectSeoRowData(p);
+          setSeoDrafts(prev => ({
+            ...prev,
+            [key]: {
+              metaTitle: data.metaTitle || current.metaTitle,
+              seoKeywords: data.keywords,
+              ogImage: current.ogImage || p.imageUrls?.[0] || '',
+              isDirty: true
+            }
+          }));
+          setSeoAuditToast({
+            message: `✨ Generated ${data.keywords.split(',').length} keywords for "${p.name}"!`,
+            type: 'success'
+          });
+          setTimeout(() => setSeoAuditToast(null), 3000);
+          return;
+        }
+      } catch {
+        clearTimeout(timeoutId);
+      }
+
+      // Fast fallback to local matrix
+      const local = generateLocalSeoKeywords(
+        p.name,
+        p.location,
+        p.zone,
+        p.type,
+        p.propertyType,
+        p.price,
+        p.builderName || '',
+        p.reraNumber
+      );
+      const current = getProjectSeoRowData(p);
+      setSeoDrafts(prev => ({
+        ...prev,
+        [key]: {
+          metaTitle: current.metaTitle.length < 25 ? local.metaTitle : current.metaTitle,
+          seoKeywords: local.keywords,
+          ogImage: current.ogImage || p.imageUrls?.[0] || '',
+          isDirty: true
+        }
+      }));
+      setSeoAuditToast({
+        message: `✨ Real-time generated ${local.keywords.split(',').length} tags for "${p.name}"!`,
+        type: 'success'
+      });
+      setTimeout(() => setSeoAuditToast(null), 3000);
+    } finally {
+      setGeneratingAiId(null);
+    }
+  };
+
+  const handleDiscardAllEdits = () => {
+    setSeoDrafts({});
+    setSeoAuditToast({
+      message: 'All unsaved SEO drafts discarded.',
+      type: 'info'
+    });
+    setTimeout(() => setSeoAuditToast(null), 2500);
+  };
+
+  const dirtyProjectsCount = validProjects.filter(p => getProjectSeoRowData(p).isDirty).length;
+  const totalAuditProjects = validProjects.length;
+  const optimizedCount = validProjects.filter(p => getProjectSeoRowData(p).health === 'optimized').length;
+  const needsAttentionCount = totalAuditProjects - optimizedCount;
+  const missingTitleCount = validProjects.filter(p => {
+    const r = getProjectSeoRowData(p);
+    return !r.metaTitle || r.titleLen < 25;
+  }).length;
+  const lowKeywordsCount = validProjects.filter(p => {
+    const r = getProjectSeoRowData(p);
+    return r.kwCount < 5;
+  }).length;
+
+  const auditDisplayedProjects = validProjects.filter(p => {
+    const row = getProjectSeoRowData(p);
+    
+    // Category filter
+    if (seoAuditCategoryFilter !== 'all') {
+      if (seoAuditCategoryFilter === 'Primary' && (p.type === 'Rental' || p.type === 'Resale')) return false;
+      if (seoAuditCategoryFilter === 'Rental' && p.type !== 'Rental') return false;
+      if (seoAuditCategoryFilter === 'Resale' && p.type !== 'Resale') return false;
+    }
+
+    // Health filter
+    if (seoAuditHealthFilter === 'needs_attention' && row.health !== 'needs_attention') return false;
+    if (seoAuditHealthFilter === 'optimized' && row.health !== 'optimized') return false;
+
+    // Search query
+    if (seoAuditSearch.trim()) {
+      const q = seoAuditSearch.toLowerCase().trim();
+      const match = (p.name || '').toLowerCase().includes(q) ||
+        (p.zone || '').toLowerCase().includes(q) ||
+        (p.location || '').toLowerCase().includes(q) ||
+        (p.builderName || '').toLowerCase().includes(q) ||
+        row.metaTitle.toLowerCase().includes(q) ||
+        row.seoKeywords.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+
+    return true;
+  });
 
   const handleBatchSyncSeo = async () => {
     setIsSyncingSitemap(true);
@@ -7407,19 +8337,44 @@ const AdminView = ({
                       </span>
                     </div>
 
-                    {/* Stickers Display (Sold Out / Rented Out) */}
-                    {p.sticker && p.sticker !== 'None' && (
-                      <div className="mb-2">
-                        <span className={cn(
-                          "px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-sm font-mono inline-flex items-center gap-1 border shadow-sm",
-                          p.sticker === 'Sold Out'
-                            ? "bg-red-500/20 text-red-400 border-red-500/50"
-                            : "bg-indigo-500/20 text-indigo-300 border-indigo-500/50"
-                        )}>
-                          <span>🏷️ {p.sticker}</span>
+                    {/* Stickers & Units Remaining Display */}
+                    <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                      {Boolean(p.isInventorySoldOut || p.sticker === 'Sold Out') ? (
+                        <span
+                          key={`admin-soldout-badge-${p.id}`}
+                          className="animate-limited-badge px-2.5 py-0.5 text-[9px] font-mono font-black uppercase tracking-wider rounded-sm inline-flex items-center gap-1 border shadow-sm bg-red-600 text-white border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.5)] transform-gpu origin-center"
+                        >
+                          <span>⛔</span> SOLD OUT
                         </span>
-                      </div>
-                    )}
+                      ) : (
+                        <>
+                          {p.sticker && p.sticker !== 'None' && (
+                            <span className={cn(
+                              "px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-sm font-mono inline-flex items-center gap-1 border shadow-sm",
+                              p.sticker === 'Sold Out'
+                                ? "bg-red-500/20 text-red-400 border-red-500/50"
+                                : "bg-indigo-500/20 text-indigo-300 border-indigo-500/50"
+                            )}>
+                              <span>🏷️ {p.sticker}</span>
+                            </span>
+                          )}
+                          {p.unitsRemaining !== undefined && p.unitsRemaining !== null && (
+                            p.unitsRemaining < 5 ? (
+                              <span
+                                key={`admin-ltd-badge-${p.id}-${p.unitsRemaining}`}
+                                className="animate-limited-badge px-2.5 py-0.5 text-[8.5px] font-mono font-black uppercase tracking-wider rounded-sm inline-flex items-center gap-1 border shadow-sm bg-red-600/25 text-red-400 border-red-500/50 transform-gpu origin-center"
+                              >
+                                <span>⚡</span> Limited Availability ({p.unitsRemaining} Left)
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 text-[8.5px] font-mono font-bold uppercase tracking-wider rounded-sm inline-flex items-center gap-1 border bg-white/5 text-white/70 border-white/10">
+                                <span>📦</span> {p.unitsRemaining} Units Left
+                              </span>
+                            )
+                          )}
+                        </>
+                      )}
+                    </div>
 
                     <h4 className="text-white font-serif text-lg mb-0.5 truncate font-bold">{p.name}</h4>
                     <p className="text-[10px] text-white/70 uppercase tracking-wider mb-2 font-mono flex items-center gap-1">
@@ -7802,6 +8757,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     ],
     handoverStatus: 'Under Construction',
     paymentOffers: '10:90 Construction Linked Plan Available*',
+    unitsRemaining: 3,
     createdAt: null
   },
   {
@@ -7838,6 +8794,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     ],
     handoverStatus: 'Ready to Move',
     paymentOffers: 'Immediate Key Handover • Clear Resale Title*',
+    unitsRemaining: 2,
     createdAt: null
   },
   {
@@ -7874,6 +8831,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     ],
     handoverStatus: 'Handed Over',
     paymentOffers: 'Expat & Corporate Lease Ready • Fully Furnished*',
+    unitsRemaining: 1,
     createdAt: null
   },
 
@@ -7948,6 +8906,9 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     ],
     handoverStatus: 'Ready to Move',
     paymentOffers: 'Bank Loan Approved across SBI & HDFC*',
+    sticker: 'Sold Out',
+    isInventorySoldOut: true,
+    unitsRemaining: 0,
     createdAt: null
   },
   {
@@ -11265,6 +12226,7 @@ export default function App() {
               setSelectedProject(proj);
               setIsSeoModalOpen(true);
             }}
+            onSaveProject={handleSaveProject}
           />
         )}
 

@@ -55,6 +55,8 @@ export interface Project {
   isPaused?: boolean;
   isDeleted?: boolean;
   sticker?: 'Sold Out' | 'Rented Out' | 'None';
+  unitsRemaining?: number;
+  isInventorySoldOut?: boolean;
 
   // Specific Rental & Resale Inventory Fields
   availableFrom?: string;
