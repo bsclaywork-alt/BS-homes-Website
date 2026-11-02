@@ -1,5 +1,5 @@
-# robots.txt for BS Homez Luxury Real Estate Portal (Bangalore)
-# https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/
+# robots.txt for BS Homez Luxury Real Estate (Bangalore)
+# Official Website: https://bshomez.in / https://www.bshomez.in
 
 User-agent: *
 Allow: /
@@ -7,44 +7,70 @@ Allow: /?project=*
 Allow: /?corridor=*
 Allow: /?tab=*
 Allow: /sitemap.xml
+Allow: /assets/
+Allow: /images/
 
 # Protect internal API endpoints and admin view from crawl indexing
 Disallow: /api/
 Disallow: /?tab=admin
 
-# Googlebot specific rules
+# Google Search Engine Crawler
 User-agent: Googlebot
+User-agent: Googlebot-Image
+User-agent: Googlebot-Mobile
 Allow: /
 Allow: /?project=*
 Allow: /?corridor=*
 Allow: /?tab=*
 Allow: /sitemap.xml
 
-# Bingbot rules
+# Microsoft Bing Crawler
 User-agent: Bingbot
+User-agent: msnbot
 Allow: /
 Allow: /?project=*
 Allow: /?corridor=*
 Allow: /?tab=*
 Allow: /sitemap.xml
 
-# Meta / Facebook OpenGraph Scraper
+# Yahoo & DuckDuckGo & Apple Search
+User-agent: Slurp
+User-agent: DuckDuckBot
+User-agent: Applebot
+Allow: /
+
+# Meta / Facebook & Instagram Scrapers
 User-agent: facebookexternalhit
+User-agent: Facebot
 Allow: /
 Allow: /assets/
 Allow: /images/
 
-# Twitter / X Card Scraper
+# WhatsApp Link Preview Scraper
+User-agent: WhatsApp
+Allow: /
+Allow: /assets/
+Allow: /images/
+
+# Twitter / X Social Card Scraper
 User-agent: Twitterbot
 Allow: /
 Allow: /assets/
 Allow: /images/
 
-# LinkedIn Scraper
+# LinkedIn Social Scraper
 User-agent: LinkedInBot
 Allow: /
 Allow: /assets/
 
-# Host and Sitemap Index
-Host: ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app
-Sitemap: https://ais-pre-743fxcympdiwmiaxapfzsa-780755046007.asia-southeast1.run.app/sitemap.xml
+# Telegram & Pinterest & Discord & Slack Social Previews
+User-agent: TelegramBot
+User-agent: Pinterestbot
+User-agent: Discordbot
+User-agent: Slackbot
+Allow: /
+
+# Canonical Host & Multi-Sitemap Declarations
+Host: https://bshomez.in
+Sitemap: https://bshomez.in/sitemap.xml
+Sitemap: https://www.bshomez.in/sitemap.xml

@@ -86,11 +86,16 @@
     },
     "Opportunity": {
       "title": "Opportunity",
-      "description": "User property submitted for selling or renting",
+      "description": "User property or grow business opportunity lead submitted via website",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
         "mobile": { "type": "string" },
+        "email": { "type": "string" },
+        "interested": { "type": "string" },
+        "services": { "type": "array", "items": { "type": "string" } },
+        "comment": { "type": "string" },
+        "category": { "type": "string", "enum": ["Business", "Property"] },
         "propertyName": { "type": "string" },
         "propertyStatus": { "type": "string", "enum": ["Ready to Move", "Under Construction", "On Going", "Nearing Completion"] },
         "propertyType": { "type": "string", "enum": ["Villa", "Flat", "Plot"] },
@@ -101,9 +106,10 @@
         "willingTo": { "type": "string", "enum": ["Rent", "Sell"] },
         "expectedRent": { "type": "number" },
         "expectedSell": { "type": "number" },
+        "notes": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "mobile", "propertyName", "propertyStatus", "propertyType", "rooms", "facing", "floorNumber", "willingTo"]
+      "required": ["name", "mobile"]
     },
     "Subscription": {
       "title": "Subscription",

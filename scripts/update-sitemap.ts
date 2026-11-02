@@ -86,8 +86,18 @@ async function fetchActiveDbProjects(): Promise<SitemapProjectItem[]> {
     }
 
     return items;
-  } catch (err) {
-    console.warn('[Sitemap Generator] Notice fetching from Firestore, proceeding with curated baseline:', err);
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    if (
+      errMsg.includes('Quota') ||
+      errMsg.includes('quota') ||
+      errMsg.includes('resource-exhausted') ||
+      (err as { code?: string })?.code === 'resource-exhausted'
+    ) {
+      console.info('[Sitemap Generator] Daily Firestore read quota reached; generated sitemap using verified curated baseline data.');
+    } else {
+      console.warn('[Sitemap Generator] Notice fetching from Firestore, proceeding with curated baseline:', errMsg);
+    }
     return [];
   }
 }
@@ -118,9 +128,11 @@ function mergeProjects(curated: SitemapProjectItem[], fromDb: SitemapProjectItem
  */
 export async function updateSitemap(options?: { 
   baseUrl?: string; 
-  silent?: boolean 
+  silent?: boolean;
 }): Promise<SitemapUpdateResult> {
-  const baseUrl = (options?.baseUrl || process.env.APP_URL || 'https://www.bshomez.in').replace(/\/$/, '');
+  // Enforce production custom domain https://bshomez.in for search engines & web platforms
+  const rawBase = options?.baseUrl || (process.env.APP_URL && !process.env.APP_URL.includes('run.app') ? process.env.APP_URL : 'https://bshomez.in');
+  const baseUrl = rawBase.replace(/\/$/, '');
   const timestamp = new Date().toISOString();
 
   try {

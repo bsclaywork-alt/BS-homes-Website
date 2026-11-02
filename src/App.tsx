@@ -87,7 +87,10 @@ import {
   Eye,
   RefreshCw,
   FileEdit,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -120,6 +123,7 @@ import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { PhoneInputWithCountry, validateMobileNumber } from './components/PhoneInputWithCountry';
+import { GrowBusinessSection } from './components/GrowBusinessSection';
 
 import imgEastEoi from './assets/images/east_bangalore_eoi_towers_1791731720202.jpg';
 import imgSouthEastConst from './assets/images/southeast_bangalore_construction_1791731732392.jpg';
@@ -344,6 +348,7 @@ const MarketInsights = () => {
 export type MainAppTab =
   | 'overview'
   | 'projects'
+  | 'grow-business'
   | 'services'
   | 'why-choose'
   | 'insights'
@@ -380,6 +385,7 @@ const Navbar = ({
   const links: Array<{ id: MainAppTab; name: string; isSpecial?: boolean }> = [
     { id: 'overview', name: 'Home' },
     { id: 'projects', name: 'Portfolios', isSpecial: true },
+    { id: 'grow-business', name: 'Grow Business', isSpecial: true },
     { id: 'services', name: 'Expertise' },
     { id: 'why-choose', name: 'Philosophy' },
     { id: 'insights', name: 'Intelligence' },
@@ -455,6 +461,7 @@ const Navbar = ({
                   )}
                 >
                   {link.id === 'overview' && <Home size={12} className="shrink-0" />}
+                  {link.id === 'grow-business' && <TrendingUp size={12} className={cn("shrink-0", isActive ? "text-black" : "text-art-gold")} />}
                   <span>{link.name}</span>
                 </button>
               );
@@ -506,6 +513,7 @@ const Navbar = ({
                   >
                     <span className="flex items-center gap-2.5">
                       {link.id === 'overview' && <Home size={20} className={isActive ? "text-black" : "text-art-gold"} />}
+                      {link.id === 'grow-business' && <TrendingUp size={20} className={isActive ? "text-black" : "text-art-gold"} />}
                       <span>{link.name}</span>
                     </span>
                     <ChevronRight size={16} />
@@ -6444,6 +6452,28 @@ const formatDateTime = (timestamp: any): string => {
   }
 };
 
+const getTimestampMillis = (timestamp: any): number => {
+  if (!timestamp) return 0;
+  try {
+    if (typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().getTime();
+    }
+    if (timestamp instanceof Date) {
+      return timestamp.getTime();
+    }
+    if (typeof timestamp === 'number') {
+      return timestamp;
+    }
+    if (timestamp.seconds !== undefined) {
+      return timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000;
+    }
+    const d = new Date(timestamp);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  } catch {
+    return 0;
+  }
+};
+
 const getEnquiryTimeAndDate = (timestamp: any): { time: string; date: string } => {
   if (!timestamp) return { time: 'N/A', date: 'N/A' };
   try {
@@ -6778,6 +6808,32 @@ const AdminView = ({
   const [enquiryCategoryFilter, setEnquiryCategoryFilter] = useState<'all' | 'Primary' | 'Rental' | 'Resale' | 'Home Loan'>('all');
   const [intentFilter, setIntentFilter] = useState<'all' | 'High' | 'Medium' | 'Low'>('all');
   const [inventoryTab, setInventoryTab] = useState<'all' | 'Primary' | 'Rental' | 'Resale'>('all');
+  const [opportunityCategoryFilter, setOpportunityCategoryFilter] = useState<'all' | 'business' | 'property'>('all');
+  
+  // Column Sorting State for CRM Lead Management (Opportunities & Enquiries)
+  const [oppSortField, setOppSortField] = useState<'date' | 'name' | 'score'>('date');
+  const [oppSortDirection, setOppSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const [leadSortField, setLeadSortField] = useState<'date' | 'name' | 'score'>('date');
+  const [leadSortDirection, setLeadSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleToggleOppSort = (field: 'date' | 'name' | 'score') => {
+    if (oppSortField === field) {
+      setOppSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setOppSortField(field);
+      setOppSortDirection(field === 'name' ? 'asc' : 'desc');
+    }
+  };
+
+  const handleToggleLeadSort = (field: 'date' | 'name' | 'score') => {
+    if (leadSortField === field) {
+      setLeadSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setLeadSortField(field);
+      setLeadSortDirection(field === 'name' ? 'asc' : 'desc');
+    }
+  };
   const [batchSyncToast, setBatchSyncToast] = useState<string | null>(null);
   const [ogPreviewProject, setOgPreviewProject] = useState<Project | null>(null);
   const [isSyncingSitemap, setIsSyncingSitemap] = useState(false);
@@ -6989,6 +7045,89 @@ const AdminView = ({
     }
   };
 
+  // Lead Intent Analysis for CRM Opportunities
+  const analyzeOpportunityIntent = (opp: Opportunity): { 
+    level: 'High' | 'Medium' | 'Low'; 
+    score: number; 
+    signals: string[]; 
+    tone: string;
+    summary: string;
+  } => {
+    if (typeof opp.intentScore === 'number' && !isNaN(opp.intentScore)) {
+      const score = Math.max(10, Math.min(100, Math.round(opp.intentScore)));
+      return {
+        level: score >= 75 ? 'High' : score >= 45 ? 'Medium' : 'Low',
+        score,
+        signals: score >= 75 ? ['Verified High Intent'] : score >= 45 ? ['Active Interest'] : ['Casual Lead'],
+        tone: score >= 75 ? 'Ready / Priority' : score >= 45 ? 'Consultative' : 'Exploratory',
+        summary: `Stored Lead Score: ${score}%`
+      };
+    }
+
+    const text = `${opp.name || ''} ${opp.comment || ''} ${opp.notes || ''} ${opp.interested || ''} ${(opp.services || []).join(' ')} ${opp.propertyName || ''}`.toLowerCase();
+    const signals: string[] = [];
+    let score = 50;
+
+    // Contact completeness
+    if (opp.mobile && opp.mobile.replace(/[^0-9]/g, '').length >= 10) {
+      score += 10;
+      signals.push('Verified Phone');
+    }
+    if (opp.email && opp.email.includes('@')) {
+      score += 10;
+      signals.push('Direct Email');
+    }
+
+    // High Intent triggers: Urgent timeline, enterprise scope, e-commerce, custom CRM
+    const urgentKws = ['urgent', 'immediately', 'asap', 'within 24', 'today', 'tomorrow', 'fast', 'quick', 'ready'];
+    const highValueKws = ['crm', 'e-commerce', 'customized', 'enterprise', 'scale', 'payment gateway', 'inventory', 'amazon', 'flipkart', 'meesho', 'ready to move', 'immediate sell', 'immediate rent'];
+    
+    if (urgentKws.some(k => text.includes(k))) {
+      score += 20;
+      signals.push('Immediate Timeline');
+    }
+    if (highValueKws.some(k => text.includes(k))) {
+      score += 15;
+      signals.push('High-Value Scope');
+    }
+
+    // Length of requirements / comments (capacity 1000 chars)
+    const commentLen = (opp.comment || opp.notes || '').trim().length;
+    if (commentLen >= 100) {
+      score += 15;
+      signals.push('Detailed Specs');
+    } else if (commentLen >= 25) {
+      score += 8;
+      signals.push('Clear Request');
+    } else if (commentLen === 0) {
+      score -= 10;
+    }
+
+    // Pricing / Expected rent or sell
+    if ((opp.expectedRent && opp.expectedRent > 0) || (opp.expectedSell && opp.expectedSell > 0)) {
+      score += 15;
+      signals.push('Target Pricing Defined');
+    }
+
+    // Service specifics
+    if (opp.services && opp.services.length > 1) {
+      score += 10;
+      signals.push('Multi-Service Inquiry');
+    }
+
+    score = Math.max(15, Math.min(99, score));
+    const level: 'High' | 'Medium' | 'Low' = score >= 75 ? 'High' : score >= 45 ? 'Medium' : 'Low';
+    const tone = level === 'High' ? 'Assertive / Hot' : level === 'Medium' ? 'Active / Qualified' : 'Passive / Cold';
+
+    return {
+      level,
+      score,
+      signals: signals.length > 0 ? signals : ['Standard Opportunity'],
+      tone,
+      summary: `${level} Intent Opportunity Lead (${score}%)`
+    };
+  };
+
   const resolveEnquiryCategory = (enq: Enquiry): 'Primary' | 'Rental' | 'Resale' | 'Home Loan' => {
     if (enq.enquiryCategory) {
       if (enq.enquiryCategory === 'Rental' || (enq.enquiryCategory as any) === 'Rent') return 'Rental';
@@ -7033,6 +7172,32 @@ const AdminView = ({
   const displayedEnquiries = intentFilter === 'all'
     ? categoryFilteredEnquiries
     : categoryFilteredEnquiries.filter(e => analyzeCustomerIntent(e).level === intentFilter);
+
+  // Sorted customer intelligence leads based on column sorting state (date, name, score)
+  const sortedEnquiries = useMemo(() => {
+    const list = [...displayedEnquiries];
+    list.sort((a, b) => {
+      if (leadSortField === 'date') {
+        const timeA = getTimestampMillis(a.timestamp);
+        const timeB = getTimestampMillis(b.timestamp);
+        return leadSortDirection === 'asc' ? timeA - timeB : timeB - timeA;
+      }
+      if (leadSortField === 'name') {
+        const nameA = (a.customerName || '').toLowerCase();
+        const nameB = (b.customerName || '').toLowerCase();
+        return leadSortDirection === 'asc'
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA);
+      }
+      if (leadSortField === 'score') {
+        const scoreA = analyzeCustomerIntent(a).score;
+        const scoreB = analyzeCustomerIntent(b).score;
+        return leadSortDirection === 'asc' ? scoreA - scoreB : scoreB - scoreA;
+      }
+      return 0;
+    });
+    return list;
+  }, [displayedEnquiries, leadSortField, leadSortDirection]);
 
   // Intent statistics across all current category enquiries
   const highIntentCount = categoryFilteredEnquiries.filter(e => analyzeCustomerIntent(e).level === 'High').length;
@@ -7467,7 +7632,7 @@ const AdminView = ({
   };
 
   const exportEnquiriesExcel = () => {
-    const listToExport = displayedEnquiries;
+    const listToExport = sortedEnquiries;
     const headers = [
       'Order',
       'Category',
@@ -7526,26 +7691,59 @@ const AdminView = ({
 
   const exportOpportunitiesExcel = () => {
     const headers = [
-      'Order', 'Date & Time Filed', 'Owner Name', 'Contact Mobile', 'Property Name', 
-      'Property Type', 'Willing To', 'Expected Income (Rs.)', 'Property Status', 
-      'Facing Direction', 'Rooms Specification', 'Floor Detail', 'Tower Detail', 'Advisory Notes'
+      'Order', 'Date & Time Filed', 'Category', 'Client / Owner Name', 'Lead Intent Level', 'Intent Score (0-100)', 'Contact Mobile', 'Email Address', 
+      'Services Interested / Property', 'Comment / Scope (1000 Chars)', 'Property Type / Offering', 
+      'Expected Income (Rs.)', 'Property Status', 'Attributes & Notes'
     ];
-    const rows = opportunities.map((opp, index) => [
-      index + 1,
-      formatDateTime(opp.timestamp),
-      opp.name,
-      opp.mobile,
-      opp.propertyName,
-      opp.propertyType,
-      opp.willingTo,
-      opp.willingTo === 'Rent' ? opp.expectedRent || 0 : opp.expectedSell || 0,
-      opp.propertyStatus,
-      opp.facing,
-      opp.rooms,
-      opp.floorNumber,
-      opp.tower || '',
-      opp.notes || ''
-    ]);
+    const businessOpps = opportunities.filter(o => o.category === 'Opportunity' || o.category === 'Business' || Boolean(o.email) || Boolean(o.interested));
+    const propertyOpps = opportunities.filter(o => o.category !== 'Opportunity' && o.category !== 'Business' && !o.interested);
+    const targetOpps = opportunityCategoryFilter === 'business'
+      ? businessOpps
+      : opportunityCategoryFilter === 'property'
+      ? propertyOpps
+      : opportunities;
+
+    const sortedList = [...targetOpps].sort((a, b) => {
+      if (oppSortField === 'date') {
+        const timeA = getTimestampMillis(a.timestamp);
+        const timeB = getTimestampMillis(b.timestamp);
+        return oppSortDirection === 'asc' ? timeA - timeB : timeB - timeA;
+      }
+      if (oppSortField === 'name') {
+        const nameA = (a.name || '').toLowerCase();
+        const nameB = (b.name || '').toLowerCase();
+        return oppSortDirection === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+      }
+      if (oppSortField === 'score') {
+        const scoreA = analyzeOpportunityIntent(a).score;
+        const scoreB = analyzeOpportunityIntent(b).score;
+        return oppSortDirection === 'asc' ? scoreA - scoreB : scoreB - scoreA;
+      }
+      return 0;
+    });
+
+    const rows = sortedList.map((opp, index) => {
+      const isBusiness = opp.category === 'Opportunity' || opp.category === 'Business' || Boolean(opp.email) || Boolean(opp.interested);
+      const intent = analyzeOpportunityIntent(opp);
+      return [
+        index + 1,
+        formatDateTime(opp.timestamp),
+        isBusiness ? 'Grow Business Lead' : 'Property Sell/Rent Offer',
+        opp.name,
+        intent.level,
+        intent.score,
+        opp.mobile,
+        opp.email || 'N/A',
+        isBusiness ? (opp.interested || opp.propertyName || 'Grow Business') : (opp.propertyName || 'Property'),
+        opp.comment || opp.notes || '',
+        isBusiness ? 'Digital & Tech Solutions' : `${opp.propertyType || ''} (${opp.willingTo || ''})`,
+        isBusiness ? 'Custom Quote' : (opp.willingTo === 'Rent' ? opp.expectedRent || 0 : opp.expectedSell || 0),
+        isBusiness ? 'New Business Inquiry' : (opp.propertyStatus || 'N/A'),
+        isBusiness 
+          ? `Interested: ${opp.interested || 'All'} | Tone: ${intent.tone}`
+          : `Facing: ${opp.facing || ''} | Rooms: ${opp.rooms || ''} | Floor: ${opp.floorNumber || ''} | Tower: ${opp.tower || ''}`
+      ];
+    });
     
     const csvContent = [
       headers.map(escapeCSV).join(','),
@@ -7556,7 +7754,7 @@ const AdminView = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `BS_Homez_Sell_Rent_Offers_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `BS_Homez_Opportunities_and_Business_Leads_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -7649,7 +7847,17 @@ const AdminView = ({
              )}
            >
              <TrendingUp size={15} className={cn("transition-transform duration-300", activeTab === 'opportunities' ? "scale-110 stroke-[2.5]" : "opacity-60")} />
-             <span>Sell/Rent Offers</span>
+             <div className="flex items-center gap-2">
+               <span>Opportunity</span>
+               <span className={cn(
+                 "text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold border",
+                 activeTab === 'opportunities'
+                   ? "bg-black/20 text-black border-black/30"
+                   : "bg-white/10 text-white/80 border-white/20"
+               )}>
+                 {opportunities.length}
+               </span>
+             </div>
            </button>
            <button 
              onClick={() => setActiveTab('referrals')}
@@ -7813,14 +8021,119 @@ const AdminView = ({
             ))}
           </div>
 
+          {/* Quick Sorting Toolbar for Leads */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-[#111111] border border-white/10 rounded-sm">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] uppercase tracking-wider text-art-gold font-bold flex items-center gap-1.5 font-mono">
+                <ArrowUpDown size={12} className="text-art-gold" />
+                <span>Sort Leads By:</span>
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleToggleLeadSort('date')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border",
+                    leadSortField === 'date'
+                      ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                      : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  <span>Date</span>
+                  {leadSortField === 'date' && (leadSortDirection === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleLeadSort('name')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border",
+                    leadSortField === 'name'
+                      ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                      : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  <span>Customer Name</span>
+                  {leadSortField === 'name' && (leadSortDirection === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleLeadSort('score')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border",
+                    leadSortField === 'score'
+                      ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                      : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  <span>Lead Intent Score</span>
+                  {leadSortField === 'score' && (leadSortDirection === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
+                </button>
+              </div>
+            </div>
+            <span className="text-[10px] text-white/40 font-mono">
+              Showing {sortedEnquiries.length} leads sorted by {leadSortField.toUpperCase()} ({leadSortDirection === 'asc' ? 'ascending' : 'descending'})
+            </span>
+          </div>
+
           <div className="bg-white/5 border border-white/10 rounded-sm overflow-hidden overflow-x-auto">
             <table className="w-full text-left">
                <thead className="bg-white/10 text-[10px] uppercase tracking-[0.2em] font-black text-art-gold">
                  <tr>
-                   <th className="px-6 py-5">Identity</th>
+                   <th className="px-6 py-5">
+                     <button
+                       type="button"
+                       onClick={() => handleToggleLeadSort('name')}
+                       className={cn(
+                         "flex items-center gap-2 hover:text-white transition-colors cursor-pointer text-left font-black tracking-[0.2em]",
+                         leadSortField === 'name' ? "text-white" : "text-art-gold"
+                       )}
+                       title="Sort by Customer Name"
+                     >
+                       <span>Identity</span>
+                       {leadSortField === 'name' ? (
+                         leadSortDirection === 'asc' ? <ArrowUp size={13} className="text-art-gold" /> : <ArrowDown size={13} className="text-art-gold" />
+                       ) : (
+                         <ArrowUpDown size={13} className="opacity-40 hover:opacity-100" />
+                       )}
+                     </button>
+                   </th>
                    <th className="px-6 py-5">Category</th>
-                   <th className="px-6 py-5">Intent &amp; Sentiment</th>
-                   <th className="px-6 py-5">Enquired At</th>
+                   <th className="px-6 py-5">
+                     <button
+                       type="button"
+                       onClick={() => handleToggleLeadSort('score')}
+                       className={cn(
+                         "flex items-center gap-2 hover:text-white transition-colors cursor-pointer text-left font-black tracking-[0.2em]",
+                         leadSortField === 'score' ? "text-white" : "text-art-gold"
+                       )}
+                       title="Sort by Lead Intent Score"
+                     >
+                       <span>Intent &amp; Sentiment</span>
+                       {leadSortField === 'score' ? (
+                         leadSortDirection === 'asc' ? <ArrowUp size={13} className="text-art-gold" /> : <ArrowDown size={13} className="text-art-gold" />
+                       ) : (
+                         <ArrowUpDown size={13} className="opacity-40 hover:opacity-100" />
+                       )}
+                     </button>
+                   </th>
+                   <th className="px-6 py-5">
+                     <button
+                       type="button"
+                       onClick={() => handleToggleLeadSort('date')}
+                       className={cn(
+                         "flex items-center gap-2 hover:text-white transition-colors cursor-pointer text-left font-black tracking-[0.2em]",
+                         leadSortField === 'date' ? "text-white" : "text-art-gold"
+                       )}
+                       title="Sort by Date"
+                     >
+                       <span>Enquired At</span>
+                       {leadSortField === 'date' ? (
+                         leadSortDirection === 'asc' ? <ArrowUp size={13} className="text-art-gold" /> : <ArrowDown size={13} className="text-art-gold" />
+                       ) : (
+                         <ArrowUpDown size={13} className="opacity-40 hover:opacity-100" />
+                       )}
+                     </button>
+                   </th>
                    <th className="px-6 py-5">Preferred Callback Time</th>
                    <th className="px-6 py-5">Portfolio Interests &amp; Preferred Location</th>
                    <th className="px-6 py-5">Communication</th>
@@ -7830,7 +8143,7 @@ const AdminView = ({
                  </tr>
                </thead>
                <tbody className="divide-y divide-white/5">
-                 {displayedEnquiries.length === 0 && (
+                 {sortedEnquiries.length === 0 && (
                    <tr>
                      <td colSpan={10} className="px-10 py-20 text-center text-white/30 italic tracking-widest text-xs font-mono">
                        {leadStatusFilter === 'trash'
@@ -7839,7 +8152,7 @@ const AdminView = ({
                      </td>
                    </tr>
                  )}
-                 {displayedEnquiries.map((enq) => {
+                 {sortedEnquiries.map((enq) => {
                    const category = resolveEnquiryCategory(enq);
                    const intent = analyzeCustomerIntent(enq);
                    return (
@@ -8049,110 +8362,402 @@ const AdminView = ({
           )}
         </div>
       ) : activeTab === 'opportunities' ? (
-        <div className="space-y-4 font-sans">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white/5 border border-white/10 p-6 rounded-sm">
-            <div>
-              <p className="text-white/40 font-mono text-[9px] uppercase tracking-widest block mb-1">Asset Verification Pipeline</p>
-              <h3 className="text-lg font-serif italic text-white font-sans">Active Sell/Rent Offers ({opportunities.length})</h3>
-            </div>
-            <button 
-              onClick={exportOpportunitiesExcel}
-              className="flex items-center gap-2 bg-art-gold/10 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/30 px-5 py-3 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all font-sans"
-            >
-              <FileSpreadsheet size={14} />
-              Export to Excel
-            </button>
-          </div>
+        (() => {
+          const businessOpps = opportunities.filter(o => o.category === 'Opportunity' || o.category === 'Business' || Boolean(o.email) || Boolean(o.interested));
+          const propertyOpps = opportunities.filter(o => o.category !== 'Opportunity' && o.category !== 'Business' && !o.interested);
+          const filteredOpps = opportunityCategoryFilter === 'business'
+            ? businessOpps
+            : opportunityCategoryFilter === 'property'
+            ? propertyOpps
+            : opportunities;
 
-          <div className="bg-white/5 border border-white/10 rounded-sm overflow-hidden font-sans">
-            <table className="w-full text-left">
-               <thead className="bg-white/10 text-[10px] uppercase tracking-[0.2em] font-black text-art-gold font-sans">
-                 <tr>
-                   <th className="px-10 py-8">Owner</th>
-                   <th className="px-10 py-8">Offered At</th>
-                   <th className="px-10 py-8">Property Coordinate</th>
-                   <th className="px-10 py-8">Model & Offering</th>
-                   <th className="px-10 py-8">Attributes</th>
-                   <th className="px-10 py-8">Actions</th>
-                 </tr>
-               </thead>
-               <tbody className="divide-y divide-white/5">
-                  {opportunities.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-10 py-20 text-center text-white/20 italic tracking-widest font-serif text-sm">No property opportunities filed in current database scope.</td>
-                    </tr>
-                  )}
-                  {opportunities.map((opp) => (
-                    <tr key={opp.id} className="hover:bg-white/5 transition-colors group">
-                      <td className="px-10 py-8 font-sans">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-serif text-lg text-white">{opp.name}</span>
-                          <span className="text-white/40 font-mono text-xs">{opp.mobile}</span>
-                        </div>
-                      </td>
-                      <td className="px-10 py-8 text-[11px] font-mono text-white/60">
-                        {formatDateTime(opp.timestamp)}
-                      </td>
-                    <td className="px-10 py-8 font-sans">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-white font-semibold text-sm">{opp.propertyName}</span>
-                        <span className="text-art-gold font-mono text-[10px] uppercase font-bold tracking-widest">{opp.propertyType}</span>
-                      </div>
-                    </td>
-                    <td className="px-10 py-8 font-sans">
-                      <div className="flex flex-col gap-1">
-                        <span className={cn(
-                          "text-[9px] px-3 py-1 rounded-sm uppercase font-black tracking-widest w-max",
-                          opp.willingTo === 'Rent' ? "bg-amber-500/20 text-amber-500 border border-amber-500/20" : "bg-emerald-500/20 text-emerald-500 border border-emerald-500/20"
-                        )}>
-                          For {opp.willingTo}
-                        </span>
-                        <span className="text-white font-mono text-sm leading-6">
-                          {opp.willingTo === 'Rent' 
-                            ? `Rs. ${(opp.expectedRent ?? 0).toLocaleString()}/month`
-                            : `Rs. ${(opp.expectedSell ?? 0).toLocaleString()}`
-                          }
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-10 py-8 text-[11px] font-mono font-sans">
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-white/60">
-                        <span>Status: <strong className="text-white font-medium">{opp.propertyStatus}</strong></span>
-                        <span>Facing: <strong className="text-white font-medium">{opp.facing}</strong></span>
-                        <span>Rooms: <strong className="text-white font-medium">{opp.rooms}</strong></span>
-                        <span>Floor: <strong className="text-white font-medium">{opp.floorNumber}</strong></span>
-                        {opp.tower && <span className="col-span-2">Tower: <strong className="text-white font-medium">{opp.tower}</strong></span>}
-                      </div>
-                      {opp.notes && (
-                        <div className="mt-3 pt-3 border-t border-white/5 text-[11px] text-art-gold/85 leading-relaxed font-sans break-words bg-white/[0.02] p-2 rounded-sm border border-white/5">
-                          <span className="text-[9px] uppercase tracking-wider text-white/40 block mb-1 font-bold">Advisory Notes:</span>
-                          "{opp.notes}"
-                        </div>
+          const displayedOpps = [...filteredOpps].sort((a, b) => {
+            if (oppSortField === 'date') {
+              const timeA = getTimestampMillis(a.timestamp);
+              const timeB = getTimestampMillis(b.timestamp);
+              return oppSortDirection === 'asc' ? timeA - timeB : timeB - timeA;
+            }
+            if (oppSortField === 'name') {
+              const nameA = (a.name || '').toLowerCase();
+              const nameB = (b.name || '').toLowerCase();
+              return oppSortDirection === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+            }
+            if (oppSortField === 'score') {
+              const scoreA = analyzeOpportunityIntent(a).score;
+              const scoreB = analyzeOpportunityIntent(b).score;
+              return oppSortDirection === 'asc' ? scoreA - scoreB : scoreB - scoreA;
+            }
+            return 0;
+          });
+
+          return (
+            <div className="space-y-4 font-sans">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white/5 border border-white/10 p-6 rounded-sm">
+                <div>
+                  <p className="text-white/40 font-mono text-[9px] uppercase tracking-widest block mb-1">Asset &amp; Business Intake Pipeline</p>
+                  <h3 className="text-lg font-serif italic text-white font-sans">
+                    Opportunity Vault Registry ({displayedOpps.length})
+                  </h3>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button 
+                    onClick={exportOpportunitiesExcel}
+                    className="flex items-center gap-2 bg-art-gold/10 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/30 px-5 py-3 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all font-sans cursor-pointer"
+                  >
+                    <FileSpreadsheet size={14} />
+                    <span>Export to Excel</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Sub-Filters: All, Grow Business, Property */}
+              <div className="flex flex-wrap gap-2 p-2 bg-[#141414] border border-white/10 rounded-sm">
+                {[
+                  { id: 'all', label: 'All Inquiries', count: opportunities.length, color: 'text-white' },
+                  { id: 'business', label: 'Opportunity Leads (Grow Business)', count: businessOpps.length, color: 'text-art-gold' },
+                  { id: 'property', label: 'Property Sell/Rent Offers', count: propertyOpps.length, color: 'text-emerald-400' },
+                ].map(tab => {
+                  const isActive = opportunityCategoryFilter === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setOpportunityCategoryFilter(tab.id as any)}
+                      className={cn(
+                        "px-4 py-2 rounded-sm text-xs uppercase tracking-wider font-extrabold transition-all flex items-center gap-2 border cursor-pointer",
+                        isActive
+                          ? "bg-art-gold text-black border-art-gold font-black shadow-md"
+                          : "bg-white/5 text-white/70 border-white/10 hover:text-white hover:border-white/20 hover:bg-white/10"
                       )}
-                    </td>
-                    <td className="px-10 py-8 font-sans">
-                      <button 
-                        onClick={async () => {
-                          if (confirm('Verify deletion of this opportunity entry?')) {
-                            try {
-                              await deleteDoc(doc(db, 'opportunities', opp.id!));
-                            } catch (err) {
-                              handleFirestoreError(err, OperationType.DELETE, `opportunities/${opp.id}`);
-                            }
-                          }
-                        }}
-                        className="bg-red-500/10 hover:bg-red-500/20 p-3 flex justify-center text-red-500 transition-all rounded-sm"
-                      >
-                        <Trash size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-             </tbody>
-          </table>
-        </div>
-      </div>
-    ) : activeTab === 'referrals' ? (
+                    >
+                      <span className={isActive ? "text-black" : tab.color}>{tab.label}</span>
+                      <span className={cn(
+                        "text-[10px] px-2 py-0.5 rounded-full font-mono font-bold",
+                        isActive ? "bg-black/20 text-black" : "bg-white/10 text-white"
+                      )}>
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Quick Sorting Toolbar for Opportunities */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-[#111111] border border-white/10 rounded-sm">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] uppercase tracking-wider text-art-gold font-bold flex items-center gap-1.5 font-mono">
+                    <ArrowUpDown size={12} className="text-art-gold" />
+                    <span>Sort Opportunities By:</span>
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleOppSort('date')}
+                      className={cn(
+                        "px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border",
+                        oppSortField === 'date'
+                          ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                          : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      <span>Date</span>
+                      {oppSortField === 'date' && (oppSortDirection === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleOppSort('name')}
+                      className={cn(
+                        "px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border",
+                        oppSortField === 'name'
+                          ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                          : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      <span>Client Name</span>
+                      {oppSortField === 'name' && (oppSortDirection === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleOppSort('score')}
+                      className={cn(
+                        "px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border",
+                        oppSortField === 'score'
+                          ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                          : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      <span>Lead Intent Score</span>
+                      {oppSortField === 'score' && (oppSortDirection === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
+                    </button>
+                  </div>
+                </div>
+                <span className="text-[10px] text-white/40 font-mono">
+                  Showing {displayedOpps.length} opportunities sorted by {oppSortField.toUpperCase()} ({oppSortDirection === 'asc' ? 'ascending' : 'descending'})
+                </span>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-sm overflow-hidden font-sans overflow-x-auto">
+                <table className="w-full text-left">
+                   <thead className="bg-white/10 text-[10px] uppercase tracking-[0.2em] font-black text-art-gold font-sans">
+                     <tr>
+                       <th className="px-6 py-5">
+                         <button
+                           type="button"
+                           onClick={() => handleToggleOppSort('name')}
+                           className={cn(
+                             "flex items-center gap-2 hover:text-white transition-colors cursor-pointer text-left font-black tracking-[0.2em]",
+                             oppSortField === 'name' ? "text-white" : "text-art-gold"
+                           )}
+                           title="Sort by Client / Owner Name"
+                         >
+                           <span>Client / Owner</span>
+                           {oppSortField === 'name' ? (
+                             oppSortDirection === 'asc' ? <ArrowUp size={13} className="text-art-gold" /> : <ArrowDown size={13} className="text-art-gold" />
+                           ) : (
+                             <ArrowUpDown size={13} className="opacity-40 hover:opacity-100" />
+                           )}
+                         </button>
+                       </th>
+                       <th className="px-6 py-5">
+                         <button
+                           type="button"
+                           onClick={() => handleToggleOppSort('score')}
+                           className={cn(
+                             "flex items-center gap-2 hover:text-white transition-colors cursor-pointer text-left font-black tracking-[0.2em]",
+                             oppSortField === 'score' ? "text-white" : "text-art-gold"
+                           )}
+                           title="Sort by Lead Intent Score"
+                         >
+                           <span>Lead Intent Score</span>
+                           {oppSortField === 'score' ? (
+                             oppSortDirection === 'asc' ? <ArrowUp size={13} className="text-art-gold" /> : <ArrowDown size={13} className="text-art-gold" />
+                           ) : (
+                             <ArrowUpDown size={13} className="opacity-40 hover:opacity-100" />
+                           )}
+                         </button>
+                       </th>
+                       <th className="px-6 py-5">
+                         <button
+                           type="button"
+                           onClick={() => handleToggleOppSort('date')}
+                           className={cn(
+                             "flex items-center gap-2 hover:text-white transition-colors cursor-pointer text-left font-black tracking-[0.2em]",
+                             oppSortField === 'date' ? "text-white" : "text-art-gold"
+                           )}
+                           title="Sort by Date"
+                         >
+                           <span>Contact &amp; Date</span>
+                           {oppSortField === 'date' ? (
+                             oppSortDirection === 'asc' ? <ArrowUp size={13} className="text-art-gold" /> : <ArrowDown size={13} className="text-art-gold" />
+                           ) : (
+                             <ArrowUpDown size={13} className="opacity-40 hover:opacity-100" />
+                           )}
+                         </button>
+                       </th>
+                       <th className="px-6 py-5">Type &amp; Category</th>
+                       <th className="px-6 py-5">Offering / Services</th>
+                       <th className="px-6 py-5">Requirements &amp; Scope (1000 Chars)</th>
+                       <th className="px-6 py-5 text-right">Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-white/5">
+                      {displayedOpps.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-10 py-20 text-center text-white/20 italic tracking-widest font-serif text-sm">
+                            No opportunities filed in current filter scope.
+                          </td>
+                        </tr>
+                      )}
+                      {displayedOpps.map((opp) => {
+                        const isBusiness = opp.category === 'Opportunity' || opp.category === 'Business' || Boolean(opp.email) || Boolean(opp.interested);
+                        const intent = analyzeOpportunityIntent(opp);
+                        return (
+                        <tr key={opp.id} className="hover:bg-white/5 transition-colors group">
+                          {/* Client / Owner */}
+                          <td className="px-6 py-5 font-sans align-top">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-serif text-lg text-white font-medium">{opp.name}</span>
+                              <span className={cn(
+                                "text-[9px] px-2 py-0.5 rounded uppercase font-bold font-mono tracking-widest w-max",
+                                isBusiness ? "bg-art-gold/15 text-art-gold border border-art-gold/30" : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                              )}>
+                                {isBusiness ? "Grow Business" : "Property"}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Lead Intent Score */}
+                          <td className="px-6 py-5 align-top">
+                            <div className="flex flex-col gap-1.5 min-w-[130px]">
+                              <span className={cn(
+                                "text-[9px] px-2.5 py-1 rounded-sm uppercase font-black tracking-wider whitespace-nowrap border font-mono inline-flex items-center gap-1.5 w-max",
+                                intent.level === 'High'
+                                  ? "bg-rose-500/15 text-rose-300 border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.2)]"
+                                  : intent.level === 'Medium'
+                                  ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+                                  : "bg-white/5 text-white/50 border-white/10"
+                              )}>
+                                <span>{intent.level === 'High' ? '🔥' : intent.level === 'Medium' ? '⚡' : '○'}</span>
+                                <span>{intent.level}</span>
+                                <span className="opacity-75 font-mono text-[9px]">({intent.score}%)</span>
+                              </span>
+                              <span className="text-[10px] text-white/70 font-mono">
+                                Tone: <strong className="text-white">{intent.tone}</strong>
+                              </span>
+                              <div className="flex flex-wrap gap-1 mt-0.5">
+                                {intent.signals.slice(0, 2).map((sig, sIdx) => (
+                                  <span key={sIdx} className="text-[8px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-art-gold font-mono truncate max-w-[130px]" title={sig}>
+                                    {sig}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Contact & Date */}
+                          <td className="px-6 py-5 text-xs font-mono text-white/70 align-top">
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex items-center gap-1.5 text-white font-semibold">
+                                <Phone size={12} className="text-art-gold shrink-0" />
+                                <span>{opp.mobile}</span>
+                                <a
+                                  href={`https://wa.me/${opp.mobile.replace(/[^0-9]/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-colors"
+                                  title="WhatsApp Chat"
+                                >
+                                  <MessageCircle size={11} />
+                                </a>
+                              </div>
+                              {opp.email && (
+                                <a
+                                  href={`mailto:${opp.email}`}
+                                  className="flex items-center gap-1.5 text-art-gold/80 hover:text-white transition-colors"
+                                >
+                                  <Mail size={12} className="shrink-0" />
+                                  <span className="break-all">{opp.email}</span>
+                                </a>
+                              )}
+                              <span className="text-[10px] text-white/40 mt-1">
+                                {formatDateTime(opp.timestamp)}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Type & Category */}
+                          <td className="px-6 py-5 font-sans align-top">
+                            {isBusiness ? (
+                              <div className="flex flex-col gap-1">
+                                <span className="text-white font-semibold text-sm">Grow Business Intake</span>
+                                <span className="text-art-gold font-mono text-[10px] uppercase font-bold tracking-widest">
+                                  {opp.interested || "Digital & CRM Suite"}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col gap-1">
+                                <span className="text-white font-semibold text-sm">{opp.propertyName}</span>
+                                <span className="text-art-gold font-mono text-[10px] uppercase font-bold tracking-widest">{opp.propertyType}</span>
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Offering / Services */}
+                          <td className="px-6 py-5 font-sans align-top">
+                            {isBusiness ? (
+                              <div className="flex flex-wrap gap-1.5 max-w-xs">
+                                {(opp.interested ? opp.interested.split(', ') : (opp.services || ['General'])).map((srv, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-2 py-0.5 rounded bg-white/10 border border-white/15 text-white/90 text-[10px] font-bold"
+                                  >
+                                    {srv}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="flex flex-col gap-1">
+                                <span className={cn(
+                                  "text-[9px] px-3 py-1 rounded-sm uppercase font-black tracking-widest w-max",
+                                  opp.willingTo === 'Rent' ? "bg-amber-500/20 text-amber-500 border border-amber-500/20" : "bg-emerald-500/20 text-emerald-500 border border-emerald-500/20"
+                                )}>
+                                  For {opp.willingTo}
+                                </span>
+                                <span className="text-white font-mono text-sm leading-6">
+                                  {opp.willingTo === 'Rent' 
+                                    ? `Rs. ${(opp.expectedRent ?? 0).toLocaleString()}/month`
+                                    : `Rs. ${(opp.expectedSell ?? 0).toLocaleString()}`
+                                  }
+                                </span>
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Requirements & Scope (1000 Chars) */}
+                          <td className="px-6 py-5 text-[11px] font-sans align-top">
+                            {isBusiness ? (
+                              <div className="max-w-md space-y-2">
+                                {(opp.comment || opp.notes) ? (
+                                  <div className="p-3 bg-white/[0.03] border border-white/10 rounded-sm space-y-1.5">
+                                    <div className="flex items-center justify-between text-[9px] uppercase tracking-wider text-art-gold font-mono font-bold">
+                                      <span>Comment / Project Scope</span>
+                                      <span>{(opp.comment || opp.notes || '').length}/1000</span>
+                                    </div>
+                                    <p className="text-white/80 text-xs leading-relaxed whitespace-pre-wrap font-sans max-h-40 overflow-y-auto no-scrollbar">
+                                      {opp.comment || opp.notes}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <span className="text-white/30 italic">No comment provided.</span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="font-mono text-white/60">
+                                <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                                  <span>Status: <strong className="text-white font-medium">{opp.propertyStatus}</strong></span>
+                                  <span>Facing: <strong className="text-white font-medium">{opp.facing}</strong></span>
+                                  <span>Rooms: <strong className="text-white font-medium">{opp.rooms}</strong></span>
+                                  <span>Floor: <strong className="text-white font-medium">{opp.floorNumber}</strong></span>
+                                  {opp.tower && <span className="col-span-2">Tower: <strong className="text-white font-medium">{opp.tower}</strong></span>}
+                                </div>
+                                {opp.notes && (
+                                  <div className="mt-3 pt-3 border-t border-white/5 text-[11px] text-art-gold/85 leading-relaxed font-sans break-words bg-white/[0.02] p-2 rounded-sm border border-white/5">
+                                    <span className="text-[9px] uppercase tracking-wider text-white/40 block mb-1 font-bold">Advisory Notes:</span>
+                                    "{opp.notes}"
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-6 py-5 font-sans align-top text-right">
+                            <button 
+                              onClick={async () => {
+                                if (confirm(`Verify deletion of this opportunity entry for ${opp.name}?`)) {
+                                  try {
+                                    await deleteDoc(doc(db, 'opportunities', opp.id!));
+                                  } catch (err) {
+                                    handleFirestoreError(err, OperationType.DELETE, `opportunities/${opp.id}`);
+                                  }
+                                }
+                              }}
+                              className="bg-red-500/10 hover:bg-red-500/20 p-3 inline-flex justify-center text-red-500 transition-all rounded-sm cursor-pointer"
+                              title="Delete Opportunity"
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                        );
+                      })}
+                   </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()
+      ) : activeTab === 'referrals' ? (
       <div className="space-y-4 font-sans">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white/5 border border-white/10 p-6 rounded-sm font-sans">
           <div>
@@ -11320,7 +11925,7 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab') as MainAppTab;
-      if (tabParam && ['overview', 'projects', 'services', 'why-choose', 'insights', 'opportunity', 'referral', 'testimonials', 'loans', 'faq', 'about', 'admin'].includes(tabParam)) {
+      if (tabParam && ['overview', 'projects', 'grow-business', 'services', 'why-choose', 'insights', 'opportunity', 'referral', 'testimonials', 'loans', 'faq', 'about', 'admin'].includes(tabParam)) {
         return tabParam;
       }
       if (params.get('project') || params.get('corridor')) {
@@ -11586,6 +12191,10 @@ export default function App() {
       tabTitle = "About BS Homez – Luxury & RERA-Verified Real Estate Advisory, Bangalore";
       tabDesc = "Learn about BS Homez's mission, localized corridor expertise, developer partnerships, and fiduciary advisory standards across Bangalore.";
       tabUrl = `${baseUrl}/?tab=about`;
+    } else if (activeMainTab === 'grow-business') {
+      tabTitle = "Grow Business – CRM, Modern Websites, E-Commerce & Marketplace Selling | BS Homez";
+      tabDesc = "Scale your business with tailored CRM systems, responsive websites, e-commerce stores, and marketplace growth on Amazon, Flipkart & Meesho.";
+      tabUrl = `${baseUrl}/?tab=grow-business`;
     }
 
     document.title = tabTitle;
@@ -11615,7 +12224,7 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab') as MainAppTab;
-      if (tabParam && ['overview', 'projects', 'services', 'why-choose', 'insights', 'opportunity', 'referral', 'testimonials', 'loans', 'faq', 'about', 'admin'].includes(tabParam)) {
+      if (tabParam && ['overview', 'projects', 'grow-business', 'services', 'why-choose', 'insights', 'opportunity', 'referral', 'testimonials', 'loans', 'faq', 'about', 'admin'].includes(tabParam)) {
         setActiveMainTab(tabParam);
       }
       const corridorParam = params.get('corridor');
@@ -12012,7 +12621,12 @@ export default function App() {
         localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(merged));
       } catch {}
     }, (err) => {
-      console.warn('Realtime projects listener fallback notice:', err);
+      const errMsg = err?.message || String(err);
+      if (errMsg.includes('Quota') || errMsg.includes('quota') || errMsg.includes('resource-exhausted')) {
+        console.info('Firestore daily read limit reached; app operating seamlessly with verified local curated portfolio.');
+      } else {
+        console.warn('Realtime projects listener fallback notice:', errMsg);
+      }
       const fallback = getMergedWithLocal([]);
       setProjects(fallback);
       setIsLoading(false);
@@ -12256,6 +12870,10 @@ export default function App() {
           />
         )}
 
+        {activeMainTab === 'grow-business' && (
+          <GrowBusinessSection onSuccessSubmitted={() => {}} />
+        )}
+
         {activeMainTab === 'services' && <Services />}
 
         {activeMainTab === 'why-choose' && <WhyChoose onConsult={handlePrivateConsultation} />}
@@ -12399,7 +13017,8 @@ export default function App() {
               <button type="button" onClick={() => { setActiveMainTab('referral'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Referral Program</button>
             </div>
             <div className="flex flex-col gap-3 text-white/40">
-              <span className="text-white mb-1 underline decoration-art-gold/50 underline-offset-8">Advisory Tabs</span>
+              <span className="text-white mb-1 underline decoration-art-gold/50 underline-offset-8">Advisory &amp; Growth</span>
+              <button type="button" onClick={() => { setActiveMainTab('grow-business'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left text-art-gold hover:text-white transition-colors cursor-pointer font-bold">Grow Business</button>
               <button type="button" onClick={() => { setActiveMainTab('services'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Expertise & Services</button>
               <button type="button" onClick={() => { setActiveMainTab('insights'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Market Analysis</button>
               <button type="button" onClick={() => { setActiveMainTab('loans'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Home Loan Hub</button>
@@ -12408,14 +13027,16 @@ export default function App() {
               <span className="text-white mb-1 underline decoration-art-gold/50 underline-offset-8">Digital Presence</span>
               <span className="text-art-gold font-black">www.bshomez.in</span>
               <a href="mailto:contact@bshomez.in" className="hover:text-art-gold transition-colors">contact@bshomez.in</a>
-              <button 
-                type="button" 
-                onClick={() => setIsSeoModalOpen(true)}
-                className="flex items-center gap-1.5 text-art-gold hover:text-white transition-colors cursor-pointer text-left font-bold"
-              >
-                <Globe size={11} className="text-art-gold shrink-0 animate-pulse" />
-                <span>Google · Meta · X SEO Visualizer</span>
-              </button>
+              {isAdmin && (
+                <button 
+                  type="button" 
+                  onClick={() => setIsSeoModalOpen(true)}
+                  className="flex items-center gap-1.5 text-art-gold hover:text-white transition-colors cursor-pointer text-left font-bold"
+                >
+                  <Globe size={11} className="text-art-gold shrink-0 animate-pulse" />
+                  <span>Google · Meta · X SEO Visualizer</span>
+                </button>
+              )}
             </div>
           </div>
           <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/20">

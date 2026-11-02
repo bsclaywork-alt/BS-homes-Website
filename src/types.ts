@@ -118,17 +118,23 @@ export interface Opportunity {
   id?: string;
   name: string;
   mobile: string;
-  propertyName: string;
-  propertyStatus: 'Ready to Move' | 'Under Construction' | 'On Going' | 'Nearing Completion';
-  propertyType: 'Villa' | 'Flat' | 'Plot';
-  rooms: '1BHK' | '2BHK' | '3BHK' | '4BHK' | '5BHK';
-  facing: string; // East, North, West, South, or custom choice
+  email?: string;
+  interested?: string;
+  services?: string[];
+  comment?: string;
+  category?: 'Opportunity' | 'Business' | 'Property';
+  propertyName?: string;
+  propertyStatus?: 'Ready to Move' | 'Under Construction' | 'On Going' | 'Nearing Completion' | string;
+  propertyType?: 'Villa' | 'Flat' | 'Plot' | string;
+  rooms?: '1BHK' | '2BHK' | '3BHK' | '4BHK' | '5BHK' | string;
+  facing?: string; // East, North, West, South, or custom choice
   tower?: string;
-  floorNumber: string;
-  willingTo: 'Rent' | 'Sell';
+  floorNumber?: string;
+  willingTo?: 'Rent' | 'Sell' | string;
   expectedRent?: number;
   expectedSell?: number;
   notes?: string;
+  intentScore?: number;
   timestamp: any;
 }
 

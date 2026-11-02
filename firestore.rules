@@ -154,22 +154,36 @@ service cloud.firestore {
              data.name.size() <= 100 &&
              data.mobile is string &&
              data.mobile.size() >= 8 &&
-             data.mobile.size() <= 20 &&
-             data.propertyName is string &&
-             data.propertyName.size() >= 2 &&
-             data.propertyName.size() <= 200 &&
-             data.propertyStatus in ['Ready to Move', 'Under Construction', 'On Going', 'Nearing Completion'] &&
-             data.propertyType in ['Villa', 'Flat', 'Plot'] &&
-             data.rooms in ['1BHK', '2BHK', '3BHK', '4BHK', '5BHK'] &&
-             data.facing is string &&
-             data.facing.size() >= 2 &&
-             data.facing.size() <= 100 &&
-             (!('tower' in data) || (data.tower is string && data.tower.size() <= 100)) &&
-             data.floorNumber is string &&
-             data.floorNumber.size() <= 50 &&
-             data.willingTo in ['Rent', 'Sell'] &&
-             (!('expectedRent' in data) || data.expectedRent is int || data.expectedRent is float) &&
-             (!('expectedSell' in data) || data.expectedSell is int || data.expectedSell is float);
+             data.mobile.size() <= 25 &&
+             (
+               // Property Opportunity
+               (
+                 data.propertyName is string &&
+                 data.propertyName.size() >= 2 &&
+                 data.propertyName.size() <= 200 &&
+                 data.propertyStatus in ['Ready to Move', 'Under Construction', 'On Going', 'Nearing Completion'] &&
+                 data.propertyType in ['Villa', 'Flat', 'Plot'] &&
+                 data.rooms in ['1BHK', '2BHK', '3BHK', '4BHK', '5BHK'] &&
+                 data.facing is string &&
+                 data.facing.size() >= 2 &&
+                 data.facing.size() <= 100 &&
+                 (!('tower' in data) || (data.tower is string && data.tower.size() <= 100)) &&
+                 data.floorNumber is string &&
+                 data.floorNumber.size() <= 50 &&
+                 data.willingTo in ['Rent', 'Sell'] &&
+                 (!('expectedRent' in data) || data.expectedRent is int || data.expectedRent is float) &&
+                 (!('expectedSell' in data) || data.expectedSell is int || data.expectedSell is float) &&
+                 (!('notes' in data) || (data.notes is string && data.notes.size() <= 1200))
+               ) ||
+               // Grow Business Opportunity
+               (
+                 (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+                 (!('interested' in data) || (data.interested is string && data.interested.size() <= 500)) &&
+                 (!('services' in data) || (data.services is list && data.services.size() <= 10)) &&
+                 (!('comment' in data) || (data.comment is string && data.comment.size() <= 1200)) &&
+                 (!('category' in data) || data.category in ['Opportunity', 'Business', 'Property'])
+               )
+             );
     }
 
     // Subscriptions: Public writable, admin readable/manageable

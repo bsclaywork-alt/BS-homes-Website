@@ -1,0 +1,23 @@
+{
+  "short_name": "BS Homez",
+  "name": "BS Homez – Luxury Real Estate Bangalore",
+  "description": "Discover RERA-verified luxury apartments, villas and plots in Bangalore with 0% brokerage. Welcome to your dream home with BS Homez.",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=192&h=192&q=80",
+      "type": "image/jpeg",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=512&h=512&q=80",
+      "type": "image/jpeg",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#101010",
+  "theme_color": "#c5a059",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/"
+}
