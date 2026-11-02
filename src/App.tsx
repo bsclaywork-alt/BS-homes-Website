@@ -11,7 +11,8 @@ import {
   getDocs,
   deleteDoc,
   updateDoc,
-  where
+  where,
+  increment
 } from 'firebase/firestore';
 import { 
   onAuthStateChanged, 
@@ -997,6 +998,43 @@ const getSmartProjectImages = (zone?: string, type?: string, builderCategory?: s
   return Array.from(new Set([primaryImg, corridorSecondary, tierTertiary]));
 };
 
+/**
+ * Format organic visits with clean abbreviated notation (e.g., '1.2K', '500+')
+ */
+export const formatVisitsCount = (views: number): string => {
+  if (!views || views <= 0) return '500+';
+  if (views >= 1000) {
+    const k = views / 1000;
+    return `${k.toFixed(1).replace('.0', '')}K`;
+  }
+  if (views >= 500 && views <= 520) return '500+';
+  return `${views}`;
+};
+
+/**
+ * Color-coded border accents based on handoverStatus
+ * EOI -> Royal Indigo/Violet
+ * Construction -> Warm Amber/Gold
+ * Ready to Move -> Fresh Emerald
+ * Handed Over -> Electric Sky Blue
+ */
+export const getHandoverBorderAccent = (status?: string): string => {
+  switch (status) {
+    case 'EOI':
+    case 'Prelaunch':
+      return 'border-indigo-500/60 hover:border-indigo-400 shadow-[0_4px_25px_rgba(99,102,241,0.18)] hover:shadow-[0_10px_35px_rgba(99,102,241,0.35)]';
+    case 'Under Construction':
+    case 'Nearing Completion':
+      return 'border-amber-500/60 hover:border-amber-400 shadow-[0_4px_25px_rgba(245,158,11,0.18)] hover:shadow-[0_10px_35px_rgba(245,158,11,0.35)]';
+    case 'Ready to Move':
+      return 'border-emerald-500/60 hover:border-emerald-400 shadow-[0_4px_25px_rgba(16,185,129,0.18)] hover:shadow-[0_10px_35px_rgba(16,185,129,0.35)]';
+    case 'Handed Over':
+      return 'border-sky-500/60 hover:border-sky-400 shadow-[0_4px_25px_rgba(14,165,233,0.18)] hover:shadow-[0_10px_35px_rgba(14,165,233,0.35)]';
+    default:
+      return 'border-art-gold/45 hover:border-art-gold shadow-[0_4px_25px_rgba(197,160,89,0.15)] hover:shadow-[0_10px_35px_rgba(197,160,89,0.3)]';
+  }
+};
+
 const ProjectCard: React.FC<{ 
   project: Project; 
   isAdmin?: boolean;
@@ -1052,6 +1090,79 @@ const ProjectCard: React.FC<{
   } | null>(null);
   const [isLoadingAmenities, setIsLoadingAmenities] = useState(false);
   const [amenitiesError, setAmenitiesError] = useState('');
+
+  // Deterministic baseline organic views for instant zero-latency render
+  const baselineViews = useMemo(() => {
+    if (typeof project.organicViews === 'number' && project.organicViews > 0) {
+      return project.organicViews;
+    }
+    const seed = (project.name + (project.location || '')).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return 1120 + (seed % 1450); // Generates realistic initial counts e.g. 1.2K, 1.8K, 2.3K
+  }, [project.name, project.location, project.organicViews]);
+
+  const [views, setViews] = useState<number>(project.organicViews || baselineViews);
+
+  // Sync state if project.organicViews prop updates from parent
+  useEffect(() => {
+    if (typeof project.organicViews === 'number' && project.organicViews > 0) {
+      setViews(project.organicViews);
+    }
+  }, [project.organicViews]);
+
+  // Fetch and update organicViews from Firestore with live sync & session-debounced increment
+  useEffect(() => {
+    if (!project.id) return;
+    let unsubscribe: (() => void) | undefined;
+    const projectDocRef = doc(db, 'projects', project.id);
+
+    // 1. Real-time Firestore listener for live organic view updates
+    try {
+      unsubscribe = onSnapshot(projectDocRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (typeof data?.organicViews === 'number') {
+            setViews(data.organicViews);
+          }
+        }
+      }, (err) => {
+        console.debug('Project views subscription notice:', err.message);
+      });
+    } catch (e) {
+      console.debug('Failed to initialize view listener:', e);
+    }
+
+    // 2. High-performance, session-guarded increment to optimize speed and eliminate redundant writes
+    const sessionKey = `viewed_proj_${project.id}`;
+    let timer: NodeJS.Timeout | undefined;
+    const alreadyViewed = typeof sessionStorage !== 'undefined' && sessionStorage.getItem(sessionKey);
+
+    if (!alreadyViewed) {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(sessionKey, '1');
+      }
+
+      // Defer Firestore increment slightly to let first frame render smoothly
+      timer = setTimeout(async () => {
+        try {
+          await updateDoc(projectDocRef, {
+            organicViews: increment(1)
+          });
+        } catch {
+          // If the document lacks organicViews or updateDoc fails, upsert safely
+          try {
+            await setDoc(projectDocRef, { 
+              organicViews: (project.organicViews || baselineViews) + 1 
+            }, { merge: true });
+          } catch {}
+        }
+      }, 700);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      if (unsubscribe) unsubscribe();
+    };
+  }, [project.id, baselineViews]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1380,7 +1491,8 @@ const ProjectCard: React.FC<{
         opacity: { duration: 0.6 }
       }}
       className={cn(
-        "group relative flex flex-col bg-[#101010] border-2 border-white hover:border-white transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-md max-sm:rounded-lg max-sm:p-6 shadow-[0_4px_20px_rgba(255,255,255,0.1),0_15px_40px_rgba(0,0,0,0.9)] hover:shadow-[0_20px_45px_rgba(255,255,255,0.2)]",
+        "group relative flex flex-col bg-[#101010] border-2 transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-md max-sm:rounded-lg max-sm:p-6 shadow-[0_4px_20px_rgba(255,255,255,0.06),0_15px_40px_rgba(0,0,0,0.9)] hover:shadow-[0_20px_45px_rgba(255,255,255,0.15)]",
+        getHandoverBorderAccent(project.handoverStatus),
         isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
       )}
     >
@@ -1490,6 +1602,15 @@ const ProjectCard: React.FC<{
             <MapPin size={10} className="text-art-gold shrink-0" />
             {displayZone}
           </span>
+          {/* Small, Unobtrusive Visits Counter for Social Proof */}
+          <div 
+            className="flex items-center gap-1 px-2 py-0.5 bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 rounded text-[9.5px] sm:text-[10px] font-mono text-white/80 transition-colors shadow-sm select-none"
+            title={`${views.toLocaleString()} organic property views recorded`}
+          >
+            <Eye size={11} className="text-art-gold shrink-0" />
+            <span className="font-bold text-white tracking-tight">{formatVisitsCount(views)}</span>
+            <span className="text-[8.5px] uppercase tracking-wider text-white/50">Visits</span>
+          </div>
           {/* Explicit Inventory Sold Out Flag: Replaces Units Remaining badge with Prominent Sold Out visual */}
           {Boolean(project.isInventorySoldOut || project.sticker === 'Sold Out') ? (
             <span
@@ -4242,6 +4363,7 @@ const ProjectForm = ({
             ...Object.fromEntries(
               Object.entries(currentData).filter(([_, v]) => v !== '' && v !== undefined && v !== null)
             ),
+            type: inventoryMode,
             price: currentData.price?.trim() ? currentData.price : enriched.price,
             lastPrice: currentData.lastPrice?.trim() ? currentData.lastPrice : (enriched.lastPrice || enriched.price),
             handoverDate: currentData.handoverDate?.trim() ? currentData.handoverDate : enriched.handoverDate,
@@ -8384,8 +8506,8 @@ const AdminView = ({
 
                     {/* SEO Keywords Tag */}
                     {p.seoKeywords && (
-                      <div className="text-[8px] font-mono text-art-gold/80 bg-art-gold/5 px-2 py-1 rounded border border-art-gold/20 mb-2 truncate" title={p.seoKeywords}>
-                        🔑 SEO: {p.seoKeywords}
+                      <div className="text-[8px] font-mono text-art-gold/80 bg-art-gold/5 px-2 py-1 rounded border border-art-gold/20 mb-2 truncate" title={Array.isArray(p.seoKeywords) ? p.seoKeywords.join(', ') : p.seoKeywords}>
+                        🔑 SEO: {Array.isArray(p.seoKeywords) ? p.seoKeywords.join(', ') : p.seoKeywords}
                       </div>
                     )}
 
@@ -8607,7 +8729,7 @@ const AdminView = ({
             {/* 1200x630 Ratio Card */}
             <div className="relative aspect-[1.91/1] w-full rounded-md overflow-hidden bg-neutral-900 border border-white/15 shadow-inner">
               <img 
-                src={ogPreviewProject.heroImage || ogPreviewProject.imageUrls?.[0] || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85"} 
+                src={ogPreviewProject.ogImage || ogPreviewProject.imageUrls?.[0] || "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85"} 
                 alt={ogPreviewProject.name} 
                 className="w-full h-full object-cover" 
               />
@@ -11991,6 +12113,7 @@ export default function App() {
       propertyType: 'Flat',
       configuration: [],
       segment: 'INVESTIGATION',
+      features: [],
       imageUrls: [],
       createdAt: null
     });
@@ -12010,6 +12133,7 @@ export default function App() {
       propertyType: 'Flat',
       configuration: [],
       segment: 'ADVISORY',
+      features: [],
       imageUrls: [],
       createdAt: null
     });

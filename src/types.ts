@@ -57,6 +57,7 @@ export interface Project {
   sticker?: 'Sold Out' | 'Rented Out' | 'None';
   unitsRemaining?: number;
   isInventorySoldOut?: boolean;
+  organicViews?: number;
 
   // Specific Rental & Resale Inventory Fields
   availableFrom?: string;

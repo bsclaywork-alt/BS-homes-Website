@@ -293,7 +293,7 @@ export const Testimonials: React.FC = () => {
   };
 
   // Slide sliding animation parameters
-  const slideVariants = {
+  const slideVariants: any = {
     enter: (dir: 'next' | 'prev') => ({
       x: dir === 'next' ? 150 : -150,
       opacity: 0,
