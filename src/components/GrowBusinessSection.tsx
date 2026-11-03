@@ -22,7 +22,9 @@ import {
   BarChart3,
   Phone,
   Mail,
-  AlertCircle
+  AlertCircle,
+  EyeOff,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -31,9 +33,10 @@ import { CrmPlanComparison } from './CrmPlanComparison';
 
 interface GrowBusinessSectionProps {
   onSuccessSubmitted?: () => void;
+  isAdmin?: boolean;
 }
 
-const AVAILABLE_SERVICES = [
+const ALL_AVAILABLE_SERVICES = [
   { id: 'CRM', label: 'CRM', icon: Building2, desc: 'Customized CRM for various fields, lead & payment tracking' },
   { id: 'Website', label: 'Website', icon: Globe, desc: 'Modern, responsive, SEO-ready, fast & secure site' },
   { id: 'E-commerce sites', label: 'E-commerce sites', icon: ShoppingCart, desc: 'Online store setup, secure payments & product management' },
@@ -131,8 +134,12 @@ const SubSectionImageHeader: React.FC<SubSectionImageHeaderProps> = ({
   );
 };
 
-export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSuccessSubmitted }) => {
+export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSuccessSubmitted, isAdmin = false }) => {
   const formRef = useRef<HTMLDivElement>(null);
+
+  const availableServices = isAdmin 
+    ? ALL_AVAILABLE_SERVICES 
+    : ALL_AVAILABLE_SERVICES.filter(s => s.id !== 'CRM');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -142,8 +149,8 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
     comment: ''
   });
 
-  // Multi-select state: initialized to ['CRM'], but Reset explicitly sets to []
-  const [selectedInterested, setSelectedInterested] = useState<string[]>(['CRM']);
+  // Multi-select state: initialized to ['CRM'] for admin, or ['Website'] for online users. Reset explicitly sets to []
+  const [selectedInterested, setSelectedInterested] = useState<string[]>(() => isAdmin ? ['CRM'] : ['Website']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -241,7 +248,10 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
 
     // Multi-Select Validation
     if (selectedInterested.length === 0) {
-      setErrorMessage('Please select at least one service you are interested in (CRM, Website, E-commerce, or Sell products online).');
+      setErrorMessage(isAdmin 
+        ? 'Please select at least one service you are interested in (CRM, Website, E-commerce, or Sell products online).'
+        : 'Please select at least one service you are interested in (Website, E-commerce, or Sell products online).'
+      );
       return;
     }
 
@@ -297,7 +307,7 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
   };
 
   return (
-    <div className="min-h-screen bg-art-dark text-white pt-24 pb-20 selection:bg-art-gold selection:text-black">
+    <div className="min-h-screen bg-art-dark text-white py-10 sm:py-14 md:py-18 selection:bg-art-gold selection:text-black">
       {/* Hero Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-art-gold/10 border border-art-gold/30 text-art-gold text-[10px] font-mono uppercase tracking-[0.25em] mb-4">
@@ -308,7 +318,7 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
           Grow Your Business with Modern Digital Power
         </h1>
         <p className="max-w-3xl mx-auto text-white/70 text-sm sm:text-base leading-relaxed font-light mb-8">
-          From enterprise-grade custom CRMs and high-converting modern websites, to secure e-commerce portals and multi-channel marketplace scaling on Amazon, Flipkart, and Meesho — we engineer end-to-end solutions to drive sales, automate workflows, and multiply revenue.
+          From high-converting modern websites and secure e-commerce portals, to multi-channel marketplace scaling on Amazon, Flipkart, and Meesho — we engineer end-to-end solutions to drive sales, automate workflows, and multiply revenue.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -320,128 +330,139 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
             <span>Submit Business Enquiry</span>
             <ArrowRight size={14} />
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              const el = document.getElementById('crm-plans-table');
-              el?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white text-xs uppercase tracking-[0.2em] font-bold rounded-sm border border-white/15 transition-all flex items-center gap-2 cursor-pointer"
-          >
-            <span>Compare CRM Plans</span>
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('crm-plans-table');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-6 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs uppercase tracking-[0.2em] font-bold rounded-sm border border-amber-500/30 transition-all flex items-center gap-2 cursor-pointer"
+              title="Admin Preview: Compare CRM Plans"
+            >
+              <EyeOff size={13} className="text-amber-400" />
+              <span>Compare CRM Plans (Admin View)</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* 4 Pillars Section with High-Quality Relevant Image Headers */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 mb-24">
         
-        {/* 1. CRM */}
-        <div className="bg-white/[0.02] border border-white/10 rounded-sm p-6 sm:p-10 hover:border-art-gold/40 transition-all group space-y-8">
-          <div className="grid lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-5">
-              <SubSectionImageHeader
-                primarySrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=85"
-                fallbackSrc="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1600&q=85"
-                alt="Custom CRM Architecture and Analytics Pipeline Dashboard"
-                sectionNumber="01 / CRM"
-                badgeLabel="Enterprise Systems"
-                categoryTag="Workflow Automation"
-                title="Bespoke CRM Engineering"
-                metricLabel="Efficiency"
-                metricValue="+45% ROI"
-              />
+        {/* 1. CRM - Hidden from online users, only admin can see it */}
+        {isAdmin && (
+          <div className="bg-white/[0.02] border border-amber-500/30 rounded-sm p-6 sm:p-10 hover:border-art-gold/40 transition-all group space-y-8 relative">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-mono uppercase tracking-widest">
+              <EyeOff size={13} className="text-amber-400" />
+              <span>Admin Preview Mode: CRM section is hidden from public online users</span>
             </div>
 
-            <div className="lg:col-span-7 space-y-5">
-              <div className="flex items-center gap-2 text-art-gold">
-                <div className="w-8 h-8 rounded-sm bg-art-gold/10 border border-art-gold/30 flex items-center justify-center font-bold text-art-gold text-sm font-mono">
-                  01
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-serif italic text-white">
-                  1. CRM (Customer Relationship Management)
-                </h2>
-              </div>
-              <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
-                Tailor-made cloud architectures engineered around your exact industry workflow. Eliminate manual spreadsheets, centralize every customer interaction, and empower your sales managers with real-time conversion visibility.
-              </p>
-
-              {/* Exact Points Required */}
-              <div className="grid sm:grid-cols-2 gap-3.5 pt-2">
-                <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 rounded bg-art-gold/15 text-art-gold shrink-0 mt-0.5">
-                      <CheckCircle2 size={15} />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white mb-1">1. We build customized CRM For various field</h5>
-                      <p className="text-white/50 text-xs leading-relaxed">
-                        Custom architectures for real estate, retail, manufacturing, consulting, healthcare, and education tailored to your specific pipeline.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 mt-0.5">
-                      <TrendingUp size={15} />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white mb-1">2. Trackeads and follow leads</h5>
-                      <p className="text-white/50 text-xs leading-relaxed">
-                        Instant lead capture from Meta, Google, property portals, and digital inbound channels with automated agent assignment and activity timelines.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 rounded bg-blue-500/15 text-blue-400 shrink-0 mt-0.5">
-                      <CreditCard size={15} />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white mb-1">3. Follow-up payments</h5>
-                      <p className="text-white/50 text-xs leading-relaxed">
-                        Automated milestone alerts, payment schedules, overdue notifications, ledger syncing, and digital receipts.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 rounded bg-amber-500/15 text-amber-400 shrink-0 mt-0.5">
-                      <Zap size={15} />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white mb-1">4. Increase sales and Productivity</h5>
-                      <p className="text-white/50 text-xs leading-relaxed">
-                        Intelligent follow-up triggers, conversion analytics, team leaderboards, and zero lead leakage.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            <div className="grid lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-5">
+                <SubSectionImageHeader
+                  primarySrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=85"
+                  fallbackSrc="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1600&q=85"
+                  alt="Custom CRM Architecture and Analytics Pipeline Dashboard"
+                  sectionNumber="01 / CRM"
+                  badgeLabel="Enterprise Systems"
+                  categoryTag="Workflow Automation"
+                  title="Bespoke CRM Engineering"
+                  metricLabel="Efficiency"
+                  metricValue="+45% ROI"
+                />
               </div>
 
-              <div className="pt-2 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => handleQuickInquire('CRM')}
-                  className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-art-gold hover:text-white transition-colors cursor-pointer"
-                >
-                  <span>Request Custom CRM Quote</span>
-                  <ArrowRight size={13} />
-                </button>
-                <span className="text-[10px] font-mono text-white/40">Custom SLA · Cloud Hosted · Role-Based Access</span>
+              <div className="lg:col-span-7 space-y-5">
+                <div className="flex items-center gap-2 text-art-gold">
+                  <div className="w-8 h-8 rounded-sm bg-art-gold/10 border border-art-gold/30 flex items-center justify-center font-bold text-art-gold text-sm font-mono">
+                    01
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-serif italic text-white">
+                    1. CRM (Customer Relationship Management)
+                  </h2>
+                </div>
+                <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+                  Tailor-made cloud architectures engineered around your exact industry workflow. Eliminate manual spreadsheets, centralize every customer interaction, and empower your sales managers with real-time conversion visibility.
+                </p>
+
+                {/* Exact Points Required */}
+                <div className="grid sm:grid-cols-2 gap-3.5 pt-2">
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="p-1.5 rounded bg-art-gold/15 text-art-gold shrink-0 mt-0.5">
+                        <CheckCircle2 size={15} />
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-bold text-white mb-1">1. We build customized CRM For various field</h5>
+                        <p className="text-white/50 text-xs leading-relaxed">
+                          Custom architectures for real estate, retail, manufacturing, consulting, healthcare, and education tailored to your specific pipeline.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="p-1.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 mt-0.5">
+                        <TrendingUp size={15} />
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-bold text-white mb-1">2. Trackeads and follow leads</h5>
+                        <p className="text-white/50 text-xs leading-relaxed">
+                          Instant lead capture from Meta, Google, property portals, and digital inbound channels with automated agent assignment and activity timelines.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="p-1.5 rounded bg-blue-500/15 text-blue-400 shrink-0 mt-0.5">
+                        <CreditCard size={15} />
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-bold text-white mb-1">3. Follow-up payments</h5>
+                        <p className="text-white/50 text-xs leading-relaxed">
+                          Automated milestone alerts, payment schedules, overdue notifications, ledger syncing, and digital receipts.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="p-1.5 rounded bg-amber-500/15 text-amber-400 shrink-0 mt-0.5">
+                        <Zap size={15} />
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-bold text-white mb-1">4. Increase sales and Productivity</h5>
+                        <p className="text-white/50 text-xs leading-relaxed">
+                          Intelligent follow-up triggers, conversion analytics, team leaderboards, and zero lead leakage.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickInquire('CRM')}
+                    className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-art-gold hover:text-white transition-colors cursor-pointer"
+                  >
+                    <span>Request Custom CRM Quote</span>
+                    <ArrowRight size={13} />
+                  </button>
+                  <span className="text-[10px] font-mono text-white/40">Custom SLA · Cloud Hosted · Role-Based Access</span>
+                </div>
               </div>
             </div>
+
+            {/* CRM Visual Feature-Comparison Table */}
+            <CrmPlanComparison onSelectPlan={handleSelectPlan} />
           </div>
-
-          {/* CRM Visual Feature-Comparison Table */}
-          <CrmPlanComparison onSelectPlan={handleSelectPlan} />
-        </div>
+        )}
 
         {/* 2. Build Website */}
         <div className="grid lg:grid-cols-12 gap-8 items-center bg-white/[0.02] border border-white/10 rounded-sm p-6 sm:p-10 hover:border-art-gold/40 transition-all group">
@@ -913,7 +934,7 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                 </div>
                 
                 <div className="grid sm:grid-cols-2 gap-3 pt-1">
-                  {AVAILABLE_SERVICES.map((srv) => {
+                  {availableServices.map((srv) => {
                     const isSelected = selectedInterested.includes(srv.id);
                     const Icon = srv.icon;
                     return (

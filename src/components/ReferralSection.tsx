@@ -144,7 +144,7 @@ export const ReferralSection: React.FC = () => {
   };
 
   return (
-    <section id="referral" className="py-24 md:py-48 px-6 md:px-12 bg-art-dark relative overflow-hidden border-t border-white/5">
+    <section id="referral" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-art-dark relative overflow-hidden border-t border-white/5">
       {/* Background gradients */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-art-gold/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-3xl pointer-events-none" />

@@ -39,13 +39,13 @@ export const FAQSection: React.FC = () => {
   };
 
   return (
-    <section id="faq" className="py-24 md:py-32 px-6 md:px-12 bg-art-dark relative overflow-hidden border-t border-white/5">
+    <section id="faq" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-art-dark relative overflow-hidden border-t border-white/5">
       {/* Decorative blurred backgrounds */}
       <div className="absolute top-1/4 left-1/10 w-96 h-96 bg-art-gold/5 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-1/10 w-80 h-80 bg-art-gold/3 rounded-full blur-3xl" />
 
       <div className="max-w-4xl mx-auto relative z-10">
-        <div className="text-center mb-16 md:mb-20">
+        <div className="text-center mb-10 sm:mb-16 md:mb-20">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-art-gold/10 border border-art-gold/25 rounded-full mb-4">
             <Sparkles className="text-art-gold" size={12} />
             <span className="text-[10px] uppercase tracking-[0.3em] font-black font-mono text-art-gold">
@@ -53,10 +53,10 @@ export const FAQSection: React.FC = () => {
             </span>
           </div>
           
-          <h2 className="text-4xl md:text-6xl font-serif text-white tracking-wide italic leading-normal">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-serif text-white tracking-wide italic leading-normal">
             Frequently Asked <span className="not-italic text-art-gold">Questions</span>
           </h2>
-          <p className="text-sm font-light text-white/50 tracking-wide max-w-xl mx-auto mt-4 font-sans leading-relaxed">
+          <p className="text-xs sm:text-sm font-light text-white/50 tracking-wide max-w-xl mx-auto mt-4 font-sans leading-relaxed">
             Unveiling absolute structural clarity on acquisition mechanics, verification processes, and tailored advisory routines.
           </p>
         </div>
@@ -75,7 +75,7 @@ export const FAQSection: React.FC = () => {
               >
                 <button
                   onClick={() => toggleFAQ(faq.id)}
-                  className="w-full flex justify-between items-center px-6 md:px-8 py-5 md:py-6 text-left cursor-pointer select-none group"
+                  className="w-full flex justify-between items-center px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 text-left cursor-pointer select-none group"
                 >
                   <div className="flex items-center gap-4">
                     <span className={`text-xs font-mono font-bold tracking-widest transition-colors duration-300 ${isOpen ? 'text-art-gold' : 'text-white/30'}`}>

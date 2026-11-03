@@ -506,7 +506,7 @@ export const HomeLoanHub: React.FC = () => {
   };
 
   return (
-    <section id="loan-advisor" className="py-24 md:py-32 px-6 md:px-12 bg-[#090909] border-t border-white/5 relative overflow-hidden">
+    <section id="loan-advisor" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-[#090909] border-t border-white/5 relative overflow-hidden">
       {/* Visual background atmospheric elements */}
       <div className="absolute top-1/3 right-1/10 w-[500px] h-[500px] bg-art-gold/5 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-1/10 left-1/12 w-[350px] h-[350px] bg-art-gold/3 rounded-full blur-[100px] pointer-events-none" />
@@ -514,7 +514,7 @@ export const HomeLoanHub: React.FC = () => {
       <div className="max-w-6xl mx-auto relative z-10">
         
         {/* Header Block */}
-        <div className="text-center mb-16 md:mb-20">
+        <div className="text-center mb-10 sm:mb-16 md:mb-20">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-art-gold/15 border border-art-gold/25 rounded-full mb-4">
             <Coins className="text-art-gold" size={12} />
             <span className="text-[10px] uppercase tracking-[0.3em] font-black font-mono text-art-gold">
@@ -522,15 +522,15 @@ export const HomeLoanHub: React.FC = () => {
             </span>
           </div>
           
-          <h2 className="text-4xl md:text-6xl font-serif text-white tracking-wide italic leading-normal">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-serif text-white tracking-wide italic leading-normal">
             Bespoke <span className="not-italic text-art-gold">Capital Financing</span>
           </h2>
-          <p className="text-sm font-light text-white/50 tracking-wide max-w-xl mx-auto mt-4 leading-relaxed">
+          <p className="text-xs sm:text-sm font-light text-white/50 tracking-wide max-w-xl mx-auto mt-4 leading-relaxed">
             Configure capital structures, calculate loan eligibility based on age and income, evaluate premier bank-wise alignments, and leverage real-time discount parameters securely.
           </p>
 
           {/* Core Tab Selector */}
-          <div className="mt-12 flex flex-wrap justify-start p-1 bg-white/[0.02] border border-white/10 rounded-sm max-w-2xl mr-auto gap-1">
+          <div className="mt-8 sm:mt-12 flex items-center overflow-x-auto no-scrollbar w-full sm:max-w-2xl sm:flex-wrap p-1 bg-white/[0.02] border border-white/10 rounded-sm mr-auto gap-1">
             <button
               onClick={() => setActiveTab('calculator')}
               className={`px-4 py-3 text-[9px] uppercase tracking-[0.15em] font-bold transition-all rounded-sm cursor-pointer ${

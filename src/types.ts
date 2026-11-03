@@ -163,3 +163,34 @@ export interface Referral {
   clientOpinion?: string;
   createdAt?: any;
 }
+
+export type PublicTabKey = 
+  | 'overview' 
+  | 'projects' 
+  | 'grow-business' 
+  | 'services' 
+  | 'why-choose' 
+  | 'insights' 
+  | 'opportunity' 
+  | 'referral' 
+  | 'loans' 
+  | 'testimonials' 
+  | 'faq' 
+  | 'about';
+
+export type TabVisibilityConfig = Record<PublicTabKey, boolean>;
+
+export const DEFAULT_TAB_VISIBILITY: TabVisibilityConfig = {
+  overview: true,
+  projects: true,
+  'grow-business': true,
+  services: true,
+  'why-choose': true,
+  insights: true,
+  opportunity: true,
+  referral: true,
+  loans: true,
+  testimonials: true,
+  faq: true,
+  about: true
+};

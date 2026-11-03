@@ -324,7 +324,7 @@ export const Testimonials: React.FC = () => {
   return (
     <section 
       id="testimonials" 
-      className="py-24 md:py-36 px-6 md:px-12 bg-[#060606] border-t border-white/5 relative overflow-hidden"
+      className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-[#060606] border-t border-white/5 relative overflow-hidden"
       onMouseEnter={() => setIsAutoplayActive(false)}
       onMouseLeave={() => setIsAutoplayActive(true)}
     >
@@ -337,7 +337,7 @@ export const Testimonials: React.FC = () => {
       <div className="max-w-6xl mx-auto relative z-10">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 md:mb-24 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-16 md:mb-20 gap-6">
           <div className="text-left">
             <span className="text-art-gold font-medium tracking-[0.5em] text-[10px] uppercase block mb-6">
               Verified Social Proof

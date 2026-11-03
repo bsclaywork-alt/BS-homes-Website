@@ -90,7 +90,12 @@ import {
   Image as ImageIcon,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  EyeOff,
+  CheckSquare,
+  Square,
+  Sliders,
+  BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -108,7 +113,7 @@ import {
   Cell,
   Legend
 } from 'recharts';
-import { Project, Enquiry, Opportunity, Referral } from './types';
+import { Project, Enquiry, Opportunity, Referral, PublicTabKey, TabVisibilityConfig, DEFAULT_TAB_VISIBILITY } from './types';
 import { Testimonials } from './components/Testimonials';
 import { ReferralSection } from './components/ReferralSection';
 import { FAQSection } from './components/FAQSection';
@@ -269,7 +274,7 @@ const MarketInsights = () => {
             viewport={{ once: true }}
           >
             <span className="text-art-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Market Vault</span>
-            <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white leading-tight italic whitespace-nowrap">
+            <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white leading-tight italic">
               Strategic <span className="not-italic text-art-gold">Metrics.</span>
             </h2>
           </motion.div>
@@ -364,11 +369,13 @@ const Navbar = ({
   activeMainTab,
   onSelectTab,
   isAdminUser,
+  tabVisibility,
   onInquire
 }: {
   activeMainTab: MainAppTab;
   onSelectTab: (tab: MainAppTab) => void;
   isAdminUser?: boolean;
+  tabVisibility?: TabVisibilityConfig;
   onInquire?: () => void;
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -397,6 +404,12 @@ const Navbar = ({
     { id: 'about', name: 'About' },
     ...(isAdminUser ? [{ id: 'admin' as MainAppTab, name: 'Admin Vault', isSpecial: true }] : [])
   ];
+
+  const visibleLinks = links.filter(link => {
+    if (link.id === 'admin') return Boolean(isAdminUser);
+    if (isAdminUser) return true; // Admins see all tabs, with visual badge if hidden
+    return tabVisibility ? tabVisibility[link.id as PublicTabKey] !== false : true;
+  });
 
   const handleTabClick = (tab: MainAppTab) => {
     onSelectTab(tab);
@@ -444,25 +457,31 @@ const Navbar = ({
         {/* Dedicated Multi-Tab Navigation Bar - Visible on desktop, removed on mobile */}
         <div className="w-full overflow-x-auto no-scrollbar border-t border-white/10 pt-1 hidden md:block">
           <div className="flex items-center gap-1 min-w-max pb-0.5">
-            {links.map(link => {
+            {visibleLinks.map(link => {
               const isActive = activeMainTab === link.id;
+              const isTabHiddenFromPublic = isAdminUser && link.id !== 'admin' && tabVisibility && tabVisibility[link.id as PublicTabKey] === false;
               return (
                 <button
                   key={link.id}
                   type="button"
                   onClick={() => handleTabClick(link.id)}
+                  title={isTabHiddenFromPublic ? `${link.name} (Hidden from online users)` : link.name}
                   className={cn(
                     "px-2.5 py-1 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5",
                     isActive
                       ? "bg-art-gold text-black border-art-gold shadow-[0_0_15px_rgba(197,160,89,0.35)]"
                       : link.isSpecial
                       ? "bg-art-gold/10 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
-                      : "bg-white/[0.05] text-white/80 border-white/15 hover:text-white hover:border-white/35 hover:bg-white/[0.1]"
+                      : "bg-white/[0.05] text-white/80 border-white/15 hover:text-white hover:border-white/35 hover:bg-white/[0.1]",
+                    isTabHiddenFromPublic && !isActive && "border-amber-500/40 text-amber-200/90"
                   )}
                 >
                   {link.id === 'overview' && <Home size={12} className="shrink-0" />}
                   {link.id === 'grow-business' && <TrendingUp size={12} className={cn("shrink-0", isActive ? "text-black" : "text-art-gold")} />}
                   <span>{link.name}</span>
+                  {isTabHiddenFromPublic && (
+                    <EyeOff size={10} className="text-amber-400 shrink-0" />
+                  )}
                 </button>
               );
             })}
@@ -497,8 +516,9 @@ const Navbar = ({
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-12">
-              {links.map((link) => {
+              {visibleLinks.map((link) => {
                 const isActive = activeMainTab === link.id;
+                const isTabHiddenFromPublic = isAdminUser && link.id !== 'admin' && tabVisibility && tabVisibility[link.id as PublicTabKey] === false;
                 return (
                   <button
                     key={link.id}
@@ -508,13 +528,19 @@ const Navbar = ({
                       "p-4 rounded-sm text-left font-serif italic text-xl transition-all border cursor-pointer flex items-center justify-between",
                       isActive
                         ? "bg-art-gold text-black border-art-gold font-bold shadow-lg"
-                        : "bg-white/5 text-white border-white/10 hover:border-art-gold hover:text-art-gold"
+                        : "bg-white/5 text-white border-white/10 hover:border-art-gold hover:text-art-gold",
+                      isTabHiddenFromPublic && !isActive && "border-amber-500/40"
                     )}
                   >
                     <span className="flex items-center gap-2.5">
                       {link.id === 'overview' && <Home size={20} className={isActive ? "text-black" : "text-art-gold"} />}
                       {link.id === 'grow-business' && <TrendingUp size={20} className={isActive ? "text-black" : "text-art-gold"} />}
                       <span>{link.name}</span>
+                      {isTabHiddenFromPublic && (
+                        <span className="text-[9px] font-mono not-italic px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                          <EyeOff size={10} /> Hidden Online
+                        </span>
+                      )}
                     </span>
                     <ChevronRight size={16} />
                   </button>
@@ -666,7 +692,7 @@ const Services = () => (
           viewport={{ once: true }}
         >
           <span className="text-art-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Expertise & Nexus</span>
-          <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white leading-tight italic whitespace-nowrap">
+          <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white leading-tight italic">
             Property <span className="not-italic text-art-gold">Intelligence.</span>
           </h2>
         </motion.div>
@@ -799,7 +825,7 @@ const WhyChoose = ({ onConsult }: { onConsult?: () => void }) => {
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 lg:gap-12 mb-12 sm:mb-16 md:mb-24">
           <div className="max-w-2xl">
             <span className="text-art-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Our Philosophy • Primary, Resale & Rental</span>
-            <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white tracking-tight italic whitespace-nowrap">
+            <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white tracking-tight italic">
               Why Choose <span className="not-italic text-art-gold">BS Homez.</span>
             </h2>
           </div>
@@ -1499,7 +1525,7 @@ const ProjectCard: React.FC<{
         opacity: { duration: 0.6 }
       }}
       className={cn(
-        "group relative flex flex-col bg-[#101010] border-2 transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-md max-sm:rounded-lg max-sm:p-6 shadow-[0_4px_20px_rgba(255,255,255,0.06),0_15px_40px_rgba(0,0,0,0.9)] hover:shadow-[0_20px_45px_rgba(255,255,255,0.15)]",
+        "group relative flex flex-col bg-[#101010] border-2 transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-md shadow-[0_4px_16px_rgba(0,0,0,0.8)] hover:shadow-[0_12px_28px_rgba(255,255,255,0.12)]",
         getHandoverBorderAccent(project.handoverStatus),
         isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
       )}
@@ -1623,7 +1649,7 @@ const ProjectCard: React.FC<{
           {Boolean(project.isInventorySoldOut || project.sticker === 'Sold Out') ? (
             <span
               key={`soldout-badge-${project.id}`}
-              className="animate-limited-badge px-3 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-black text-[9.5px] sm:text-[10px] uppercase tracking-wider rounded-sm border-2 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.7)] flex items-center gap-1.5 transform-gpu origin-center"
+              className="animate-limited-badge px-3 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-black text-[9.5px] sm:text-[10px] uppercase tracking-wider rounded-sm border border-red-400/80 shadow-[0_0_8px_rgba(239,68,68,0.35)] flex items-center gap-1.5 transform-gpu origin-center"
               title="Inventory explicitly marked as Sold Out — Zero Units Remaining"
             >
               <span className="text-[11px]">⛔</span> SOLD OUT
@@ -1640,7 +1666,7 @@ const ProjectCard: React.FC<{
                 project.unitsRemaining < 5 ? (
                   <span
                     key={`ltd-badge-${project.id}-${project.unitsRemaining}`}
-                    className="animate-limited-badge px-2.5 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.6)] flex items-center gap-1 transform-gpu origin-center"
+                    className="animate-limited-badge px-2.5 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400/80 shadow-[0_0_8px_rgba(239,68,68,0.3)] flex items-center gap-1 transform-gpu origin-center"
                     title={`Only ${project.unitsRemaining} units left in inventory`}
                   >
                     <span>⚡</span> LIMITED AVAILABILITY ({project.unitsRemaining === 1 ? '1 UNIT LEFT' : `${project.unitsRemaining} UNITS LEFT`})
@@ -2117,47 +2143,47 @@ const ProjectCard: React.FC<{
       ) : (
         <>
           {/* Project Name & Segment Header */}
-          <div className="px-3 sm:px-4 pt-2.5 pb-2 bg-white/[0.02] border-b border-white/10 max-sm:px-0">
-            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-              <span className="text-art-gold text-[9.5px] sm:text-[10.5px] uppercase tracking-wider font-extrabold">
+          <div className="px-2.5 sm:px-3 pt-2 pb-1.5 bg-white/[0.02] border-b border-white/10">
+            <div className="flex items-center justify-between gap-1 mb-0.5 flex-wrap">
+              <span className="text-art-gold text-[8.5px] sm:text-[9.5px] uppercase tracking-wider font-extrabold truncate">
                 {displayPropertyType} {project.segment ? `• ${project.segment}` : ''}
               </span>
               {project.configuration && project.configuration.length > 0 && (
-                <span className="text-white/80 text-[9.5px] sm:text-[10.5px] font-mono font-semibold uppercase tracking-wider">{project.configuration.join(' | ')}</span>
+                <span className="text-white/80 text-[8px] sm:text-[9px] font-mono font-semibold uppercase tracking-wider">{project.configuration.join(' | ')}</span>
               )}
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 border-b border-white/5 pb-2">
-              <h3 className="text-sm sm:text-xl md:text-2xl font-serif text-white font-bold italic leading-snug group-hover:text-art-gold transition-colors duration-300 tracking-tight break-words flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 border-b border-white/5 pb-1.5">
+              <h3 className="text-xs sm:text-sm md:text-base font-serif text-white font-bold italic leading-tight group-hover:text-art-gold transition-colors duration-300 tracking-tight break-words flex-1 min-w-0 line-clamp-1">
                 {project.name}
               </h3>
-              <div className="text-left sm:text-right shrink-0 max-w-full sm:max-w-[48%] bg-black/60 border border-art-gold/35 px-3 py-1.5 rounded-sm shadow-sm">
-                <span className="text-md sm:text-lg md:text-xl font-mono font-black text-art-gold tracking-tight leading-tight block whitespace-normal break-words antialiased">
+              <div className="text-left sm:text-right shrink-0 max-w-full bg-black/60 border border-art-gold/35 px-2 py-0.5 rounded-sm shadow-sm">
+                <span className="text-xs sm:text-sm font-mono font-black text-art-gold tracking-tight leading-tight block whitespace-normal break-words antialiased">
                   {formattedMainPrice}
                 </span>
-                <span className="text-[8.5px] sm:text-[9.5px] uppercase tracking-wider text-white/80 font-mono font-semibold block mt-0.5">
+                <span className="text-[7.5px] sm:text-[8px] uppercase tracking-wider text-white/70 font-mono font-semibold block mt-0.5">
                   * Conditions Apply
                 </span>
               </div>
             </div>
 
             {/* Compact Unified Location, Last Price & Handover Strip */}
-            <div className="mt-1.5 p-1.5 sm:p-2 bg-white/[0.04] border border-white/15 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[11px] sm:text-xs">
-              <div className="flex items-center gap-1.5 truncate">
-                <MapPin size={11} className="text-art-gold shrink-0" />
-                <span className="text-xs sm:text-[13px] font-semibold text-white truncate">
+            <div className="mt-1 p-1 sm:p-1.5 bg-white/[0.04] border border-white/15 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[9.5px] sm:text-[10px]">
+              <div className="flex items-center gap-1 truncate">
+                <MapPin size={10} className="text-art-gold shrink-0" />
+                <span className="text-[10.5px] sm:text-xs font-semibold text-white truncate">
                   {project.location}
                 </span>
                 <a
                   href={googleMapsSearchUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[9px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-1 font-mono font-bold transition-colors px-1.5 py-0.5 bg-art-gold/15 border border-art-gold/40 rounded-sm shrink-0"
+                  className="text-[8px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-0.5 font-mono font-bold transition-colors px-1 py-0.2 bg-art-gold/15 border border-art-gold/40 rounded-sm shrink-0"
                 >
-                  <ExternalLink size={9} /> Map
+                  <ExternalLink size={8} /> Map
                 </a>
               </div>
 
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono shrink-0 border-t sm:border-t-0 sm:border-l border-white/15 pt-0.5 sm:pt-0 sm:pl-2">
+              <div className="flex items-center gap-1 text-[9px] sm:text-[9.5px] font-mono shrink-0 border-t sm:border-t-0 sm:border-l border-white/15 pt-0.5 sm:pt-0 sm:pl-1.5">
                 <span className="text-white font-black tracking-tight" title="Last Verified Price">
                   {effectiveLastPrice}
                 </span>
@@ -2170,7 +2196,7 @@ const ProjectCard: React.FC<{
           </div>
           
           {/* Small & Compact Project Info Box, Floor Plans & Specifications */}
-          <div className="p-2.5 sm:p-3 flex flex-col flex-grow relative z-20 space-y-2">
+          <div className="p-2 sm:p-2.5 flex flex-col flex-grow relative z-20 space-y-1.5">
             {/* Media Badges: Compressed Photos & Video Walkthrough */}
             {((canViewProjectImages && project.imageUrls && project.imageUrls.length > 0) || project.videoUrl || project.availableFrom) && (
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -3071,7 +3097,7 @@ const ProjectGrid = ({
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 lg:gap-8 mb-5 sm:mb-6">
           <div>
             <span className="text-art-gold text-[9.5px] sm:text-[10px] uppercase tracking-[0.35em] sm:tracking-[0.5em] font-black block mb-2 sm:mb-3">Archive / Portfolios</span>
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-serif text-white tracking-tight italic whitespace-nowrap">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-serif text-white tracking-tight italic">
               Artisanal <span className="not-italic text-art-gold">Portraits.</span>
             </h2>
           </div>
@@ -3190,8 +3216,8 @@ const ProjectGrid = ({
         {/* Dedicated Filter Category Tabs (Separate Tabs - Not Stacked Scrolling) */}
         <div className="mb-8 bg-white/[0.02] border border-white/10 rounded-sm overflow-hidden">
           {/* Tab Header Strip */}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-black/40 p-2">
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 bg-black/40 p-2">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full sm:w-auto py-0.5">
               {[
                 { id: 'portfolio', label: `01. Portfolio Type (${selectedType})` },
                 { id: 'corridor', label: `02. Location Corridor (${selectedCorridor})` },
@@ -3475,13 +3501,13 @@ const ProjectGrid = ({
           )}
         </AnimatePresence>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5 sm:gap-4 lg:gap-4.5">
           {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
+            Array.from({ length: 8 }).map((_, i) => (
               <ProjectCardSkeleton key={`skeleton-${i}`} />
             ))
           ) : displayedProjects.length === 0 ? (
-            <div className="col-span-1 md:col-span-2 xl:col-span-3 text-center py-20 border border-dashed border-white/10 rounded-sm bg-white/[0.01] space-y-4">
+            <div className="col-span-full text-center py-20 border border-dashed border-white/10 rounded-sm bg-white/[0.01] space-y-4">
               <span className="text-art-gold uppercase tracking-[0.4em] text-[10px] block">Advisory Archive</span>
               <p className="text-white/60 font-serif italic text-xl">No matching portraits in this specific filter combination.</p>
               <button
@@ -6113,22 +6139,22 @@ const OpportunitySection = () => {
   };
 
   return (
-    <section id="opportunity" className="py-24 md:py-48 px-6 md:px-12 bg-white/[0.01] border-t border-white/5 relative overflow-hidden">
+    <section id="opportunity" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-white/[0.01] border-t border-white/5 relative overflow-hidden">
       <div className="absolute right-0 top-0 w-96 h-96 bg-art-gold/5 rounded-full filter blur-3xl -z-10" />
       <div className="absolute left-12 top-0 w-px h-full bg-white/5 hidden lg:block" />
       
       <div className="max-w-4xl mx-auto relative z-10">
-        <div className="text-center mb-16 md:mb-24">
-          <span className="text-art-gold font-medium tracking-[0.5em] text-[10px] uppercase block mb-10 text-center">BS Homez Concierge</span>
-          <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tight italic mb-8">
+        <div className="text-center mb-10 sm:mb-16 md:mb-20">
+          <span className="text-art-gold font-medium tracking-[0.5em] text-[10px] uppercase block mb-6 text-center">BS Homez Concierge</span>
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-serif text-white tracking-tight italic mb-6">
             Offer Your <span className="not-italic text-art-gold">Asset</span>
           </h2>
-          <p className="text-sm font-light text-white/50 tracking-wide leading-relaxed max-w-2xl mx-auto">
+          <p className="text-xs sm:text-sm font-light text-white/50 tracking-wide leading-relaxed max-w-2xl mx-auto">
             Authorize BS Homez to process your residential real estate assets. Complete the details below so that our direct HNWI and institutional channels can facilitate private placement.
           </p>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/10 p-8 md:p-16 rounded-sm backdrop-blur-md font-sans">
+        <div className="bg-white/[0.02] border border-white/10 p-5 sm:p-8 md:p-12 rounded-sm backdrop-blur-md font-sans">
           {success ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
@@ -6767,11 +6793,127 @@ const AIChatAssistant: React.FC = () => {
   );
 };
 
+interface TabMetaItem {
+  key: PublicTabKey;
+  label: string;
+  category: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  description: string;
+  route: string;
+  isImportant?: boolean;
+}
+
+const PUBLIC_TABS_META: TabMetaItem[] = [
+  {
+    key: 'overview',
+    label: 'Home (Overview)',
+    category: 'Core Homepage',
+    icon: Home,
+    description: 'Hero presentation, Bangalore micro-market corridors, curated highlights & directory access.',
+    route: '/?tab=overview',
+    isImportant: true
+  },
+  {
+    key: 'projects',
+    label: 'Portfolios (Properties)',
+    category: 'Property Inventory',
+    icon: Building2,
+    description: 'Primary, Resale & Rental project showcase with interactive filters, floor plans, pricing & brochures.',
+    route: '/?tab=projects',
+    isImportant: true
+  },
+  {
+    key: 'grow-business',
+    label: 'Grow Business',
+    category: 'Digital Acceleration',
+    icon: TrendingUp,
+    description: 'Modern website development, secure e-commerce portals, Amazon/Flipkart/Meesho scaling & direct intake form.',
+    route: '/?tab=grow-business',
+    isImportant: true
+  },
+  {
+    key: 'services',
+    label: 'Expertise (Services)',
+    category: 'Advisory & Legal',
+    icon: ShieldCheck,
+    description: '0% buyer brokerage, verified legal title, Khata checks, end-to-end registration & advisory.',
+    route: '/?tab=services'
+  },
+  {
+    key: 'why-choose',
+    label: 'Philosophy (Why Choose Us)',
+    category: 'Brand Trust',
+    icon: Compass,
+    description: 'Pillars of trust, 100% transparent advisory, curated property selection & zero hidden commissions.',
+    route: '/?tab=why-choose'
+  },
+  {
+    key: 'insights',
+    label: 'Intelligence (Insights)',
+    category: 'Market Intelligence',
+    icon: BarChart3,
+    description: 'East Bangalore micro-market intelligence, metro connectivity, ROI yield analysis & appreciation trends.',
+    route: '/?tab=insights'
+  },
+  {
+    key: 'opportunity',
+    label: 'Offer Your Asset',
+    category: 'Asset Sourcing',
+    icon: Target,
+    description: 'Direct listing intake form for property owners wishing to sell or rent apartments, villas & plots through BS Homez.',
+    route: '/?tab=opportunity',
+    isImportant: true
+  },
+  {
+    key: 'referral',
+    label: 'Referral Program',
+    category: 'Client Rewards',
+    icon: Handshake,
+    description: 'Advocacy program where clients introduce friends and family for premium rewards upon property closing.',
+    route: '/?tab=referral'
+  },
+  {
+    key: 'loans',
+    label: 'Home Loans Hub',
+    category: 'Financial Advisory',
+    icon: CreditCard,
+    description: 'Tier-1 banking tie-ups (SBI, HDFC, ICICI), competitive interest rate comparison & interactive EMI calculator.',
+    route: '/?tab=loans'
+  },
+  {
+    key: 'testimonials',
+    label: 'Client Voices',
+    category: 'Social Proof',
+    icon: MessageCircle,
+    description: 'Authentic buyer reviews, owner satisfaction stories, video testimonials & verified homeowner endorsements.',
+    route: '/?tab=testimonials'
+  },
+  {
+    key: 'faq',
+    label: 'Advisory FAQ',
+    category: 'Client Knowledge',
+    icon: Info,
+    description: 'Comprehensive answers to RERA verification, Khata transfer, loan approval, down payments & resale timelines.',
+    route: '/?tab=faq'
+  },
+  {
+    key: 'about',
+    label: 'About BS Homez',
+    category: 'Corporate Overview',
+    icon: Star,
+    description: 'Company background, leadership vision, 100+ tied builder ecosystem & curated luxury philosophy in Bangalore.',
+    route: '/?tab=about'
+  }
+];
+
 const AdminView = ({ 
   enquiries, 
   projects, 
   opportunities, 
   referrals = [], 
+  tabVisibility = DEFAULT_TAB_VISIBILITY,
+  onUpdateTabVisibility,
+  onNavigateTab,
   showProjectModal, 
   setShowProjectModal, 
   editingProject, 
@@ -6787,6 +6929,9 @@ const AdminView = ({
   projects: Project[], 
   opportunities: Opportunity[], 
   referrals?: Referral[], 
+  tabVisibility?: TabVisibilityConfig,
+  onUpdateTabVisibility?: (config: TabVisibilityConfig) => Promise<void> | void,
+  onNavigateTab?: (tab: MainAppTab) => void,
   showProjectModal: boolean, 
   setShowProjectModal: (val: boolean) => void, 
   editingProject: Project | null, 
@@ -6798,7 +6943,9 @@ const AdminView = ({
   onInspectProjectSeo?: (p: Project) => void,
   onSaveProject?: (p: Project) => Promise<void> | void
 }) => {
-  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'seo_audit'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility' | 'seo_audit'>('leads');
+  const [tabVisibilityToast, setTabVisibilityToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const [isUpdatingTabVis, setIsUpdatingTabVis] = useState(false);
   const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
   const [deleteConfirmEnquiry, setDeleteConfirmEnquiry] = useState<Enquiry | null>(null);
   const [deleteConfirmProject, setDeleteConfirmProject] = useState<Project | null>(null);
@@ -6816,6 +6963,84 @@ const AdminView = ({
 
   const [leadSortField, setLeadSortField] = useState<'date' | 'name' | 'score'>('date');
   const [leadSortDirection, setLeadSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleToggleTabVisibility = async (key: PublicTabKey) => {
+    const currentVal = tabVisibility[key] !== false;
+    const nextVal = !currentVal;
+    const nextConfig: TabVisibilityConfig = {
+      ...tabVisibility,
+      [key]: nextVal
+    };
+    if (onUpdateTabVisibility) {
+      setIsUpdatingTabVis(true);
+      try {
+        await onUpdateTabVisibility(nextConfig);
+        const meta = PUBLIC_TABS_META.find(t => t.key === key);
+        setTabVisibilityToast({
+          message: `"${meta?.label || key}" is now ${nextVal ? 'VISIBLE ONLINE (Live to public users)' : 'HIDDEN FROM ONLINE USERS (Admin Only)'}.`,
+          type: 'success'
+        });
+        setTimeout(() => setTabVisibilityToast(null), 3500);
+      } finally {
+        setIsUpdatingTabVis(false);
+      }
+    }
+  };
+
+  const handleBulkSetTabVisibility = async (action: 'all' | 'essential' | 'default') => {
+    let nextConfig: TabVisibilityConfig;
+    if (action === 'all') {
+      nextConfig = {
+        overview: true,
+        projects: true,
+        'grow-business': true,
+        services: true,
+        'why-choose': true,
+        insights: true,
+        opportunity: true,
+        referral: true,
+        loans: true,
+        testimonials: true,
+        faq: true,
+        about: true
+      };
+    } else if (action === 'essential') {
+      nextConfig = {
+        overview: true,
+        projects: true,
+        'grow-business': true,
+        services: true,
+        'why-choose': false,
+        insights: false,
+        opportunity: true,
+        referral: false,
+        loans: false,
+        testimonials: false,
+        faq: false,
+        about: true
+      };
+    } else {
+      nextConfig = { ...DEFAULT_TAB_VISIBILITY };
+    }
+
+    if (onUpdateTabVisibility) {
+      setIsUpdatingTabVis(true);
+      try {
+        await onUpdateTabVisibility(nextConfig);
+        setTabVisibilityToast({
+          message: action === 'all' 
+            ? 'All 12 tabs are now marked VISIBLE to online visitors.'
+            : action === 'essential'
+            ? 'Enabled Core Tabs mode (Portfolios, Grow Business, Opportunities & Services live).'
+            : 'Reset all tabs to default visibility config.',
+          type: 'info'
+        });
+        setTimeout(() => setTabVisibilityToast(null), 4000);
+      } finally {
+        setIsUpdatingTabVis(false);
+      }
+    }
+  };
 
   const handleToggleOppSort = (field: 'date' | 'name' | 'score') => {
     if (oppSortField === field) {
@@ -7824,11 +8049,11 @@ const AdminView = ({
           </div>
         </div>
         
-        <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto bg-[#121212]/90 border border-white/10 p-1.5 rounded-sm overflow-x-auto gap-2 md:gap-3 shadow-[0_15px_35px_rgba(0,0,0,0.6)]">
+        <div className="flex items-center overflow-x-auto no-scrollbar w-full md:w-auto bg-[#121212]/90 border border-white/10 p-1.5 rounded-sm gap-2 md:gap-3 shadow-[0_15px_35px_rgba(0,0,0,0.6)]">
            <button 
              onClick={() => setActiveTab('leads')}
              className={cn(
-               "flex-1 flex items-center justify-center gap-2.5 px-6 py-4 text-xs uppercase tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'leads' 
                  ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform" 
                  : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
@@ -7840,7 +8065,7 @@ const AdminView = ({
            <button 
              onClick={() => setActiveTab('opportunities')}
              className={cn(
-               "flex-1 flex items-center justify-center gap-2.5 px-6 py-4 text-xs uppercase tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'opportunities' 
                  ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform" 
                  : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
@@ -7862,7 +8087,7 @@ const AdminView = ({
            <button 
              onClick={() => setActiveTab('referrals')}
              className={cn(
-               "flex-1 flex items-center justify-center gap-2.5 px-6 py-4 text-xs uppercase tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'referrals' 
                  ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform" 
                  : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
@@ -7874,7 +8099,7 @@ const AdminView = ({
            <button 
              onClick={() => setActiveTab('portfolio')}
              className={cn(
-               "flex-1 flex items-center justify-center gap-2.5 px-6 py-4 text-xs uppercase tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'portfolio' 
                  ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform" 
                  : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
@@ -7882,6 +8107,28 @@ const AdminView = ({
            >
              <LayoutGrid size={15} className={cn("transition-transform duration-300", activeTab === 'portfolio' ? "scale-110 stroke-[2.5]" : "opacity-60")} />
              <span>Portfolio Curator</span>
+           </button>
+           <button 
+             onClick={() => setActiveTab('tab_visibility')}
+             className={cn(
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               activeTab === 'tab_visibility' 
+                 ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform" 
+                 : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
+             )}
+           >
+             <Sliders size={15} className={cn("transition-transform duration-300", activeTab === 'tab_visibility' ? "scale-110 stroke-[2.5]" : "opacity-60")} />
+             <div className="flex items-center gap-2">
+               <span>Online Tab Visibility</span>
+               <span className={cn(
+                 "text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold border",
+                 activeTab === 'tab_visibility'
+                   ? "bg-black/20 text-black border-black/30"
+                   : "bg-white/10 text-white/80 border-white/20"
+               )}>
+                 {Object.values(tabVisibility).filter(v => v !== false).length}/12 Live
+               </span>
+             </div>
            </button>
         </div>
       </div>
@@ -8842,6 +9089,234 @@ const AdminView = ({
           </table>
         </div>
       </div>
+    ) : activeTab === 'tab_visibility' ? (
+      <div className="space-y-6 font-sans">
+        {tabVisibilityToast && (
+          <div className={cn(
+            "p-4 rounded-sm border text-xs font-mono flex items-center justify-between",
+            tabVisibilityToast.type === 'success'
+              ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+              : "bg-art-gold/15 border-art-gold/40 text-art-gold"
+          )}>
+            <span className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="shrink-0" />
+              <span>{tabVisibilityToast.message}</span>
+            </span>
+            <button 
+              type="button" 
+              onClick={() => setTabVisibilityToast(null)} 
+              className="hover:text-white cursor-pointer ml-4"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
+        {/* Manager Header & Statistics */}
+        <div className="bg-white/5 border border-white/10 rounded-sm p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-white/10 pb-6">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-art-gold/10 border border-art-gold/30 text-art-gold text-[10px] font-mono uppercase tracking-widest">
+                <Sliders size={12} className="text-art-gold" />
+                <span>Public Navigation Architecture</span>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-serif italic text-white">
+                Online Tab Visibility Controls
+              </h3>
+              <p className="text-white/60 text-xs sm:text-sm max-w-2xl leading-relaxed">
+                Toggle the checkboxes below to control which navigation tabs and sections are publicly visible to online visitors. Unchecked tabs are immediately hidden from public visitors while remaining accessible to admins in the Admin Vault.
+              </p>
+            </div>
+
+            {/* Live Count Stat Badges */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="px-4 py-3 bg-black/50 border border-emerald-500/40 rounded-sm text-center min-w-[130px]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 block flex items-center justify-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Live Online
+                </span>
+                <span className="text-2xl font-serif font-bold text-white mt-0.5 block">
+                  {PUBLIC_TABS_META.filter(t => tabVisibility[t.key] !== false).length}
+                  <span className="text-xs text-white/40 font-mono font-normal"> / 12 Tabs</span>
+                </span>
+              </div>
+
+              <div className="px-4 py-3 bg-black/50 border border-amber-500/40 rounded-sm text-center min-w-[130px]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300 block flex items-center justify-center gap-1.5">
+                  <EyeOff size={11} className="text-amber-400" />
+                  Hidden
+                </span>
+                <span className="text-2xl font-serif font-bold text-white mt-0.5 block">
+                  {PUBLIC_TABS_META.filter(t => tabVisibility[t.key] === false).length}
+                  <span className="text-xs text-white/40 font-mono font-normal"> Admin Only</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bulk Action Controls */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={isUpdatingTabVis}
+                onClick={() => handleBulkSetTabVisibility('all')}
+                className="px-4 py-2 bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/30 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <CheckSquare size={13} />
+                <span>Show All Tabs Online (Check All)</span>
+              </button>
+              <button
+                type="button"
+                disabled={isUpdatingTabVis}
+                onClick={() => handleBulkSetTabVisibility('essential')}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/15 rounded-sm text-[10px] uppercase font-bold tracking-widest transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <Sliders size={13} />
+                <span>Essential Mode (Core Portfolio Only)</span>
+              </button>
+              <button
+                type="button"
+                disabled={isUpdatingTabVis}
+                onClick={() => handleBulkSetTabVisibility('default')}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 rounded-sm text-[10px] uppercase font-bold tracking-widest transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <RotateCcw size={13} />
+                <span>Reset to Defaults</span>
+              </button>
+            </div>
+
+            <div className="text-[10px] font-mono text-white/40 flex items-center gap-2">
+              <ShieldCheck size={13} className="text-art-gold" />
+              <span>Persisted in Firestore (system_settings/tab_visibility)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Checkbox Table / Grid of Tabs */}
+        <div className="bg-white/5 border border-white/10 rounded-sm overflow-hidden">
+          <div className="divide-y divide-white/10">
+            {PUBLIC_TABS_META.map((tab) => {
+              const isChecked = tabVisibility[tab.key] !== false;
+              const TabIcon = tab.icon;
+              return (
+                <div 
+                  key={tab.key}
+                  className={cn(
+                    "p-5 sm:p-6 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4",
+                    isChecked 
+                      ? "bg-black/20 hover:bg-white/[0.04]" 
+                      : "bg-black/50 hover:bg-black/40 border-l-2 border-l-amber-500/60"
+                  )}
+                >
+                  {/* Left: Checkbox & Meta Info */}
+                  <div className="flex items-start gap-4 flex-1">
+                    {/* Interactive Checkbox Button */}
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={isChecked}
+                      disabled={isUpdatingTabVis}
+                      onClick={() => handleToggleTabVisibility(tab.key)}
+                      className={cn(
+                        "mt-0.5 p-1 rounded transition-transform cursor-pointer focus:outline-none shrink-0",
+                        isChecked
+                          ? "text-art-gold hover:scale-110"
+                          : "text-white/40 hover:text-white hover:scale-110"
+                      )}
+                      title={isChecked ? `Click to uncheck & hide ${tab.label} from public users` : `Click to check & make ${tab.label} visible online`}
+                    >
+                      {isChecked ? (
+                        <CheckSquare size={24} className="text-art-gold fill-art-gold/15" />
+                      ) : (
+                        <Square size={24} className="text-white/35" />
+                      )}
+                    </button>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <div className={cn(
+                          "w-6 h-6 rounded flex items-center justify-center shrink-0",
+                          isChecked ? "bg-art-gold/15 text-art-gold" : "bg-white/5 text-white/40"
+                        )}>
+                          <TabIcon size={13} />
+                        </div>
+                        
+                        <span className="text-base font-serif italic text-white font-bold">
+                          {tab.label}
+                        </span>
+
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/60 uppercase tracking-wider">
+                          {tab.category}
+                        </span>
+
+                        <span className="text-[9px] font-mono text-art-gold/70">
+                          {tab.route}
+                        </span>
+
+                        {tab.isImportant && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-art-gold/20 text-art-gold font-bold">
+                            Key Page
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-white/60 leading-relaxed max-w-3xl">
+                        {tab.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: Status Badge & Navigation Test Trigger */}
+                  <div className="flex items-center gap-3 shrink-0 self-end md:self-center pl-10 md:pl-0">
+                    {isChecked ? (
+                      <div className="px-3 py-1.5 rounded-sm bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-bold flex items-center gap-1.5">
+                        <CheckCircle2 size={12} className="text-emerald-400" />
+                        <span>LIVE ONLINE</span>
+                      </div>
+                    ) : (
+                      <div className="px-3 py-1.5 rounded-sm bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[10px] font-mono font-bold flex items-center gap-1.5">
+                        <EyeOff size={12} className="text-rose-400" />
+                        <span>HIDDEN (Admin Only)</span>
+                      </div>
+                    )}
+
+                    {/* Instant Toggle Checkbox Action */}
+                    <button
+                      type="button"
+                      disabled={isUpdatingTabVis}
+                      onClick={() => handleToggleTabVisibility(tab.key)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-sm text-[10px] uppercase font-black tracking-wider border transition-all cursor-pointer whitespace-nowrap",
+                        isChecked
+                          ? "bg-white/5 hover:bg-rose-500/20 text-white/70 hover:text-rose-200 border-white/15 hover:border-rose-500/30"
+                          : "bg-art-gold text-black hover:bg-white border-art-gold shadow-sm"
+                      )}
+                    >
+                      {isChecked ? 'Uncheck to Hide' : 'Check to Make Live'}
+                    </button>
+
+                    {/* Direct Preview Tab Trigger */}
+                    {onNavigateTab && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onNavigateTab(tab.key);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="p-1.5 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded border border-white/10 transition-colors cursor-pointer"
+                        title={`Preview ${tab.label} tab`}
+                      >
+                        <ExternalLink size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     ) : (
         <div className="space-y-8">
           {/* Online Publishing & Google SEO Lead Hub for Admin */}
@@ -9018,7 +9493,7 @@ const AdminView = ({
             </div>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-3.5">
             {displayedProjects.length === 0 && (
               <div className="col-span-full py-20 text-center text-white/30 italic font-mono text-xs border border-dashed border-white/10 rounded-sm">
                 No inventory listed under "{inventoryTab}" inventory tab.
@@ -9032,12 +9507,12 @@ const AdminView = ({
                 <div 
                   key={p.id ? `admin-card-${p.id}-${idx}` : `admin-card-${p.name}-${idx}`} 
                   className={cn(
-                    "bg-[#111111] border-2 p-5 rounded-md group relative flex flex-col justify-between transition-all",
+                    "bg-[#111111] border p-3.5 rounded-sm group relative flex flex-col justify-between transition-all",
                     isRental 
                       ? "border-cyan-500/40 hover:border-cyan-400" 
                       : isResale 
                       ? "border-amber-500/40 hover:border-amber-400" 
-                      : "border-white hover:border-art-gold"
+                      : "border-white/20 hover:border-art-gold"
                   )}
                 >
                   {p.isPaused && (
@@ -11860,6 +12335,49 @@ export default function App() {
     }
   });
 
+  const [tabVisibility, setTabVisibility] = useState<TabVisibilityConfig>(() => {
+    try {
+      const stored = localStorage.getItem('bs_homez_tab_visibility');
+      if (stored) {
+        return { ...DEFAULT_TAB_VISIBILITY, ...JSON.parse(stored) };
+      }
+    } catch {}
+    return DEFAULT_TAB_VISIBILITY;
+  });
+
+  // Sync tab visibility in real-time from Firestore system_settings/tab_visibility
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'system_settings', 'tab_visibility'), (docSnap) => {
+      if (docSnap.exists()) {
+        const remote = docSnap.data() as Partial<TabVisibilityConfig>;
+        setTabVisibility(prev => {
+          const merged = { ...prev, ...remote };
+          try {
+            localStorage.setItem('bs_homez_tab_visibility', JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+      }
+    }, (err) => {
+      console.warn('Tab visibility sync note:', err?.message || err);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleUpdateTabVisibility = async (newConfig: TabVisibilityConfig) => {
+    setTabVisibility(newConfig);
+    try {
+      localStorage.setItem('bs_homez_tab_visibility', JSON.stringify(newConfig));
+    } catch {}
+    if (user) {
+      try {
+        await setDoc(doc(db, 'system_settings', 'tab_visibility'), newConfig, { merge: true });
+      } catch (err) {
+        console.warn('Failed to update Firestore tab visibility:', err);
+      }
+    }
+  };
+
   const [activePropertyUrlId, setActivePropertyUrlId] = useState<string | null>(() => {
     try {
       return new URLSearchParams(window.location.search).get('project');
@@ -11934,6 +12452,15 @@ export default function App() {
     } catch {}
     return 'overview';
   });
+
+  // Redirect non-admin visitors if they navigate directly to a hidden tab
+  useEffect(() => {
+    if (!user && activeMainTab !== 'admin' && activeMainTab !== 'overview') {
+      if (tabVisibility[activeMainTab as PublicTabKey] === false) {
+        setActiveMainTab('overview');
+      }
+    }
+  }, [activeMainTab, tabVisibility, user]);
 
   const [isSeoModalOpen, setIsSeoModalOpen] = useState(false);
   const [currentSeoSnapshot, setCurrentSeoSnapshot] = useState({
@@ -12765,15 +13292,16 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-art-dark">
+    <div className="min-h-screen flex flex-col bg-art-dark overflow-x-hidden w-full max-w-full">
       <Navbar
         activeMainTab={activeMainTab}
         onSelectTab={handleSelectTab}
         isAdminUser={Boolean(user)}
+        tabVisibility={tabVisibility}
         onInquire={handleGeneralInquiry}
       />
       
-      <main className="flex-grow pt-[44px] sm:pt-[48px] md:pt-[76px] lg:pt-[72px]">
+      <main className="flex-grow pt-[60px] sm:pt-[66px] md:pt-[94px] lg:pt-[98px]">
         {activeMainTab === 'overview' && (
           <div className="max-w-7xl mx-auto px-2.5 sm:px-6 md:px-12 pb-10 sm:pb-12">
             {/* Framed Home Window */}
@@ -12801,6 +13329,7 @@ export default function App() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
                   {[
                     { id: 'projects' as MainAppTab, title: 'Artisanal Portraits', sub: 'Primary, Resale & Rental Portfolios', icon: Building2 },
+                    { id: 'grow-business' as MainAppTab, title: 'Grow Business', sub: 'Tech, Portals & Growth Solutions', icon: Briefcase },
                     { id: 'services' as MainAppTab, title: 'Property Intelligence', sub: '0% Primary, Resale & Rental Services', icon: ShieldCheck },
                     { id: 'why-choose' as MainAppTab, title: 'Philosophy', sub: 'Sales, Resale & Rental Pillars of Trust', icon: Compass },
                     { id: 'insights' as MainAppTab, title: 'Market Vault & Metrics', sub: 'East Corridor Capital Velocity', icon: TrendingUp },
@@ -12809,8 +13338,11 @@ export default function App() {
                     { id: 'loans' as MainAppTab, title: 'Home Loan Hub', sub: 'EMI & Tier-1 Banking Concierge', icon: CreditCard },
                     { id: 'testimonials' as MainAppTab, title: 'Client Voices', sub: 'Verified Homebuyer & Tenant Stories', icon: MessageCircle },
                     { id: 'faq' as MainAppTab, title: 'Advisory FAQ', sub: 'RERA, Khata, Resale & Rental Answers', icon: Info },
-                    { id: 'about' as MainAppTab, title: 'Guided Excellence', sub: '100+ Tied Builders Across Bangalore', icon: Star }
-                  ].map(card => {
+                    { id: 'about' as MainAppTab, title: 'About BS Homez', sub: 'Your Trusted Real Estate Partner', icon: Star }
+                  ].filter(card => {
+                    if (Boolean(user)) return true;
+                    return tabVisibility ? tabVisibility[card.id as PublicTabKey] !== false : true;
+                  }).map(card => {
                     const CardIcon = card.icon;
                     return (
                       <button
@@ -12871,7 +13403,7 @@ export default function App() {
         )}
 
         {activeMainTab === 'grow-business' && (
-          <GrowBusinessSection onSuccessSubmitted={() => {}} />
+          <GrowBusinessSection isAdmin={Boolean(user)} onSuccessSubmitted={() => {}} />
         )}
 
         {activeMainTab === 'services' && <Services />}
@@ -12891,52 +13423,207 @@ export default function App() {
         {activeMainTab === 'faq' && <FAQSection />}
 
         {activeMainTab === 'about' && (
-          <section id="about" className="py-24 md:py-32 px-6 md:px-8 bg-art-dark text-art-light">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-6xl font-serif mb-10 italic">Guided <span className="not-italic text-art-gold">Excellence</span></h2>
-              
-              {/* Highlighted Rental & Resale Manifesto Card */}
-              <div className="mb-14 p-8 sm:p-10 bg-gradient-to-br from-white/[0.04] to-art-gold/[0.03] border border-art-gold/30 rounded-lg text-left shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-art-gold/10 rounded-full blur-2xl pointer-events-none" />
-                
-                <h3 className="text-2xl sm:text-3xl font-serif text-white font-bold mb-4 flex items-center gap-2">
-                  <span>Rental &amp; Resale Properties</span>
-                  <span className="text-2xl">🏡</span>
-                </h3>
-                
-                <p className="text-base sm:text-lg text-white/80 font-light leading-relaxed mb-6">
-                  We help you find the perfect property that matches your budget, Vastu preferences, preferred location, and lifestyle.
+          <section id="about" className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 md:px-12 bg-art-dark text-art-light">
+            <div className="max-w-5xl mx-auto">
+              {/* Header */}
+              <div className="text-center mb-12 sm:mb-16">
+                <span className="inline-block text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-art-gold font-black px-3.5 py-1.5 bg-art-gold/10 border border-art-gold/30 rounded-sm mb-4">
+                  RERA-Compliant Real Estate Consultancy
+                </span>
+                <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif text-white italic mb-4">
+                  About <span className="not-italic text-art-gold">BS Homez</span>
+                </h1>
+                <p className="text-lg sm:text-2xl font-serif text-white/90 italic max-w-2xl mx-auto">
+                  Your Trusted Partner in Finding the Perfect Property
                 </p>
-                
-                <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed mb-6">
-                  Whether you’re looking to rent, buy, or sell a property, we’re here to make your property journey simple and hassle-free.
+                <div className="w-16 h-0.5 bg-art-gold/50 mx-auto mt-6" />
+              </div>
+
+              {/* Story Intro Card */}
+              <div className="mb-14 sm:mb-20 p-6 sm:p-10 md:p-12 bg-gradient-to-br from-white/[0.035] via-art-gold/[0.02] to-white/[0.015] border border-art-gold/25 rounded-sm shadow-2xl relative overflow-hidden space-y-5">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-art-gold/5 rounded-full blur-3xl pointer-events-none" />
+                <p className="text-base sm:text-lg text-white/90 font-light leading-relaxed">
+                  At <strong className="text-art-gold font-semibold">BS Homez</strong>, we believe that finding the right property is more than just a real estate transaction — it's about finding a place to call home, making smart investments, and building a secure future.
                 </p>
-                
-                <div className="pt-4 border-t border-art-gold/20 flex items-center justify-between flex-wrap gap-4">
-                  <span className="text-base sm:text-lg font-serif italic text-art-gold font-bold">
-                    "Your Dream Property, Our Priority!"
-                  </span>
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-mono font-bold">
-                    BS Homez Advisory Desk
-                  </span>
+                <p className="text-base sm:text-lg text-white/80 font-light leading-relaxed">
+                  We are a RERA-compliant real estate consultancy committed to making property buying, selling, and renting in Bangalore simple, transparent, and hassle-free. With a customer-first approach and in-depth understanding of the Bangalore real estate market, we help individuals, families, and investors make confident property decisions.
+                </p>
+                <p className="text-base sm:text-lg text-white/80 font-light leading-relaxed">
+                  Whether you are looking for your dream home, a premium villa, a residential plot, a commercial property, or a profitable investment opportunity, BS Homez offers personalized guidance and end-to-end assistance at every step.
+                </p>
+              </div>
+
+              {/* Our Services Section */}
+              <div className="mb-16 sm:mb-24">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-8 h-px bg-art-gold" />
+                  <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-black text-art-gold">Comprehensive Portfolio</span>
+                  <div className="flex-1 h-px bg-white/10" />
+                </div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-white italic mb-8">
+                  Our <span className="not-italic text-art-gold">Services</span>
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                  {[
+                    {
+                      title: "Property Buying & Selling",
+                      desc: "Expert assistance in primary sales, resale properties, and property transactions.",
+                      icon: Building2
+                    },
+                    {
+                      title: "Residential & Commercial Rentals",
+                      desc: "Helping owners and tenants find the right property and the right opportunities.",
+                      icon: Compass
+                    },
+                    {
+                      title: "New Project Consultation",
+                      desc: "Access to carefully selected apartments, villas, plots, and premium developments.",
+                      icon: Star
+                    },
+                    {
+                      title: "Home Loan Assistance",
+                      desc: "Guidance and support in finding suitable home loan options through banking partners.",
+                      icon: CreditCard
+                    },
+                    {
+                      title: "Legal Verification Support",
+                      desc: "Assistance in property documentation and legal due diligence through relevant professionals.",
+                      icon: ShieldCheck
+                    },
+                    {
+                      title: "Interior Solutions",
+                      desc: "Helping transform your property into a comfortable and beautiful living space.",
+                      icon: Sparkles
+                    },
+                    {
+                      title: "End-to-End Property Assistance",
+                      desc: "From property discovery and site visits to negotiations, documentation, and transaction support.",
+                      icon: Handshake
+                    }
+                  ].map((service, idx) => {
+                    const SvgIcon = service.icon;
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`p-5 sm:p-6 bg-white/[0.02] border border-white/10 hover:border-art-gold/50 rounded-sm transition-all group ${
+                          idx === 6 ? 'md:col-span-2 bg-gradient-to-r from-art-gold/[0.05] to-transparent border-art-gold/30' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 rounded-sm bg-art-gold/10 border border-art-gold/30 flex items-center justify-center shrink-0 group-hover:bg-art-gold group-hover:text-black transition-colors text-art-gold">
+                            <SvgIcon size={18} />
+                          </div>
+                          <div>
+                            <h3 className="text-base sm:text-lg font-serif font-bold text-white group-hover:text-art-gold transition-colors mb-1.5">
+                              {service.title}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-white/70 font-light leading-relaxed">
+                              {service.desc}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              <p className="text-base sm:text-lg font-light text-white/50 tracking-wide leading-relaxed mb-16 max-w-2xl mx-auto">
-                BS Homez tied up with all major builders. We are currently serving Whitefield, Hoskote, Varthur, Gunjur, Hosa Road, Kasavanahalli, and East &amp; South East Bangalore corridors. 
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-12 border-y border-white/10 py-16">
-                <div className="flex flex-col gap-3">
-                  <span className="text-5xl font-serif text-art-gold">100+</span>
-                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-40">Tied Builders</span>
+              {/* Why Choose BS Homez? */}
+              <div className="mb-16 sm:mb-24">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-8 h-px bg-art-gold" />
+                  <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-black text-art-gold">The BS Homez Advantage</span>
+                  <div className="flex-1 h-px bg-white/10" />
                 </div>
-                <div className="flex flex-col gap-3">
-                  <span className="text-5xl font-serif text-art-gold">0%</span>
-                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-40">Primary Fee</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-white italic mb-8">
+                  Why Choose <span className="not-italic text-art-gold">BS Homez?</span>
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {[
+                    "Customer-first approach with personalized property recommendations.",
+                    "Transparent communication and honest property guidance.",
+                    "Access to a wide range of property options across Bangalore.",
+                    "Dedicated assistance throughout the buying, selling, and rental process.",
+                    "Focus on verified projects and responsible property transactions.",
+                    "Complete support to make your real estate journey smoother and more convenient."
+                  ].map((item, idx) => (
+                    <div 
+                      key={idx}
+                      className="p-5 bg-white/[0.02] border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors flex items-start gap-3.5 group"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-art-gold/10 border border-art-gold/40 flex items-center justify-center shrink-0 mt-0.5 text-art-gold">
+                        <Check size={13} className="text-art-gold" />
+                      </div>
+                      <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-light group-hover:text-white transition-colors">
+                        {item}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex flex-col gap-3">
-                  <span className="text-5xl font-serif text-art-gold">24hr</span>
-                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-40">Response</span>
+              </div>
+
+              {/* Mission & Vision Side-by-Side Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-16 sm:mb-24">
+                {/* Mission Card */}
+                <div className="p-7 sm:p-9 bg-white/[0.025] border border-white/10 hover:border-art-gold/40 rounded-sm transition-all relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-art-gold" />
+                  <div>
+                    <span className="text-[9.5px] uppercase tracking-[0.3em] text-art-gold font-black block mb-2">Purpose</span>
+                    <h3 className="text-2xl sm:text-3xl font-serif text-white italic mb-4">Our Mission</h3>
+                    <p className="text-sm sm:text-base text-white/80 font-light leading-relaxed">
+                      To simplify real estate decisions by providing reliable property guidance, transparent services, and customer-focused solutions that create lasting value.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Vision Card */}
+                <div className="p-7 sm:p-9 bg-white/[0.025] border border-white/10 hover:border-art-gold/40 rounded-sm transition-all relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-art-gold" />
+                  <div>
+                    <span className="text-[9.5px] uppercase tracking-[0.3em] text-art-gold font-black block mb-2">Ambition</span>
+                    <h3 className="text-2xl sm:text-3xl font-serif text-white italic mb-4">Our Vision</h3>
+                    <p className="text-sm sm:text-base text-white/80 font-light leading-relaxed">
+                      To become one of Bangalore's most trusted real estate consulting brands by building long-term relationships, delivering exceptional service, and helping every customer find the right property.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA Closing Box */}
+              <div className="p-8 sm:p-12 bg-gradient-to-br from-art-gold/15 via-white/[0.03] to-art-gold/5 border border-art-gold/40 rounded-sm text-center shadow-2xl relative overflow-hidden">
+                <div className="max-w-2xl mx-auto space-y-4">
+                  <h3 className="text-2xl sm:text-4xl font-serif text-white italic">
+                    Let's Find Your <span className="not-italic text-art-gold">Perfect Property!</span>
+                  </h3>
+                  <p className="text-sm sm:text-base text-white/85 font-light leading-relaxed">
+                    At BS Homez, your property goals are our priority. Whether you are buying your first home, upgrading your lifestyle, selling a property, or exploring investment opportunities, we are here to guide you at every step.
+                  </p>
+                  <div className="pt-4 border-t border-art-gold/30 mt-6">
+                    <p className="text-base sm:text-xl font-serif italic text-art-gold font-bold tracking-wide">
+                      BS Homez – Your Property. Your Dreams. Our Commitment.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveMainTab('projects');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="w-full sm:w-auto px-7 py-3 bg-art-gold text-black text-[11px] font-black uppercase tracking-widest rounded-sm hover:bg-white transition-all cursor-pointer shadow-lg"
+                    >
+                      Explore Portfolios
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePrivateConsultation}
+                      className="w-full sm:w-auto px-7 py-3 bg-white/10 hover:bg-white/20 text-white text-[11px] font-black uppercase tracking-widest rounded-sm border border-white/20 transition-all cursor-pointer"
+                    >
+                      Book Advisory Consultation
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -12969,6 +13656,12 @@ export default function App() {
               setIsSeoModalOpen(true);
             }}
             onSaveProject={handleSaveProject}
+            tabVisibility={tabVisibility}
+            onUpdateTabVisibility={handleUpdateTabVisibility}
+            onNavigateTab={(tab) => {
+              setActiveMainTab(tab);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
 
