@@ -35,6 +35,7 @@ import {
   MessageCircle, 
   ChevronLeft,
   ChevronRight, 
+  ChevronDown,
   Info, 
   X,
   Play,
@@ -1069,8 +1070,44 @@ export const getHandoverBorderAccent = (status?: string): string => {
   }
 };
 
+/**
+ * Distinct vibrant color border for each horizontal project
+ */
+export const getProjectColorBorder = (project: Project, index?: number): string => {
+  if (project.isInventorySoldOut || project.sticker === 'Sold Out') {
+    return 'border-2 border-red-500/80 hover:border-red-400 shadow-[0_4px_25px_rgba(239,68,68,0.25)] border-l-4 sm:border-l-[6px] border-l-red-500';
+  }
+
+  const colorBorders = [
+    // 0: Royal Gold / Amber
+    'border-2 border-amber-400/80 hover:border-amber-300 shadow-[0_4px_25px_rgba(251,191,36,0.2)] border-l-4 sm:border-l-[6px] border-l-amber-400',
+    // 1: Emerald Green
+    'border-2 border-emerald-500/80 hover:border-emerald-400 shadow-[0_4px_25px_rgba(16,185,129,0.2)] border-l-4 sm:border-l-[6px] border-l-emerald-500',
+    // 2: Electric Cyan / Sapphire
+    'border-2 border-cyan-400/80 hover:border-cyan-300 shadow-[0_4px_25px_rgba(6,182,212,0.2)] border-l-4 sm:border-l-[6px] border-l-cyan-400',
+    // 3: Imperial Violet / Purple
+    'border-2 border-purple-400/80 hover:border-purple-300 shadow-[0_4px_25px_rgba(168,85,247,0.2)] border-l-4 sm:border-l-[6px] border-l-purple-400',
+    // 4: Rose / Ruby
+    'border-2 border-rose-400/80 hover:border-rose-300 shadow-[0_4px_25px_rgba(244,63,94,0.2)] border-l-4 sm:border-l-[6px] border-l-rose-400',
+    // 5: Teal / Sea Green
+    'border-2 border-teal-400/80 hover:border-teal-300 shadow-[0_4px_25px_rgba(45,212,191,0.2)] border-l-4 sm:border-l-[6px] border-l-teal-400',
+    // 6: Sky Blue
+    'border-2 border-sky-400/80 hover:border-sky-300 shadow-[0_4px_25px_rgba(56,189,248,0.2)] border-l-4 sm:border-l-[6px] border-l-sky-400',
+    // 7: Radiant Orange / Coral
+    'border-2 border-orange-400/80 hover:border-orange-300 shadow-[0_4px_25px_rgba(251,146,60,0.2)] border-l-4 sm:border-l-[6px] border-l-orange-400'
+  ];
+
+  if (typeof index === 'number') {
+    return colorBorders[Math.abs(index) % colorBorders.length];
+  }
+
+  const seed = (project.name || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return colorBorders[seed % colorBorders.length];
+};
+
 const ProjectCard: React.FC<{ 
   project: Project; 
+  index?: number;
   isAdmin?: boolean;
   isCompared?: boolean;
   comparedCount?: number;
@@ -1082,6 +1119,7 @@ const ProjectCard: React.FC<{
   onTogglePause: (p: Project) => Promise<void>;
 }> = ({ 
   project, 
+  index = 0,
   isAdmin = false, 
   isCompared = false,
   comparedCount = 0,
@@ -1102,6 +1140,7 @@ const ProjectCard: React.FC<{
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isMediaViewerOpen, setIsMediaViewerOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Inline Editing State (Primary: Entire Project Edit + Save/Discard; Resale & Rental: Edit & Upload Images + Save/Discard)
   const [isEditingCard, setIsEditingCard] = useState(false);
@@ -1508,30 +1547,33 @@ const ProjectCard: React.FC<{
     return (seed % 17) + 14;
   }, [project.name, project.location]);
 
+  const coverImage = (project.imageUrls && project.imageUrls.filter(Boolean).length > 0)
+    ? project.imageUrls.filter(Boolean)[0]
+    : (project.mobileImageUrl || getCorridorDefaultImage(project.zone, project.type, project.builderCategory, project.propertyType));
+
   return (
     <motion.div 
       ref={containerRef}
-      initial={{ opacity: 0, y: 30 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 24 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
       whileHover={{ 
-        y: isEditingCard ? 0 : -8,
-        scale: isEditingCard ? 1 : 1.015,
-        boxShadow: "0 30px 60px -12px rgba(255, 255, 255, 0.12), 0 20px 45px rgba(0, 0, 0, 0.9)"
+        y: isEditingCard ? 0 : -4,
+        boxShadow: "0 20px 45px -10px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.08)"
       }}
       transition={{ 
         type: "spring", 
         stiffness: 260, 
-        damping: 20,
-        opacity: { duration: 0.6 }
+        damping: 22,
+        opacity: { duration: 0.4 }
       }}
       className={cn(
-        "group relative flex flex-col bg-[#101010] border-2 transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-md shadow-[0_4px_16px_rgba(0,0,0,0.8)] hover:shadow-[0_12px_28px_rgba(255,255,255,0.12)]",
-        getHandoverBorderAccent(project.handoverStatus),
+        "group relative flex flex-col md:flex-row bg-[#111111] transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-lg",
+        getProjectColorBorder(project, index),
         isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
       )}
     >
       {project.priceChanged && (
-         <div className="absolute top-4 left-4 z-20 bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm shadow-md">
+         <div className="absolute top-4 left-4 z-30 bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-sm shadow-md">
             Price Alert
          </div>
       )}
@@ -1543,7 +1585,7 @@ const ProjectCard: React.FC<{
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="absolute inset-0 bg-art-dark/98 backdrop-blur-md z-30 flex flex-col justify-center p-8 border border-art-gold/30"
+            className="absolute inset-0 bg-art-dark/98 backdrop-blur-md z-40 flex flex-col justify-center p-8 border border-art-gold/30"
           >
             <button 
               onClick={() => {
@@ -1626,161 +1668,9 @@ const ProjectCard: React.FC<{
         )}
       </AnimatePresence>
 
-      {/* Top Status & Corridor Header Banner */}
-      <div className="px-3 py-1.5 bg-black/90 border-b border-white/20 flex items-center justify-between gap-1.5 flex-wrap">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-art-gold text-black rounded-sm shadow-sm">
-            {displayType}
-          </span>
-          <span className="text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 bg-white/10 text-white border border-white/15 rounded-sm flex items-center gap-1">
-            <MapPin size={10} className="text-art-gold shrink-0" />
-            {displayZone}
-          </span>
-          {/* Small, Unobtrusive Visits Counter for Social Proof */}
-          <div 
-            className="flex items-center gap-1 px-2 py-0.5 bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 rounded text-[9.5px] sm:text-[10px] font-mono text-white/80 transition-colors shadow-sm select-none"
-            title={`${views.toLocaleString()} organic property views recorded`}
-          >
-            <Eye size={11} className="text-art-gold shrink-0" />
-            <span className="font-bold text-white tracking-tight">{formatVisitsCount(views)}</span>
-            <span className="text-[8.5px] uppercase tracking-wider text-white/50">Visits</span>
-          </div>
-          {/* Explicit Inventory Sold Out Flag: Replaces Units Remaining badge with Prominent Sold Out visual */}
-          {Boolean(project.isInventorySoldOut || project.sticker === 'Sold Out') ? (
-            <span
-              key={`soldout-badge-${project.id}`}
-              className="badge-soldout-static px-2.5 sm:px-3 py-0.5 bg-red-700 text-white font-black text-[9px] sm:text-[10px] uppercase tracking-wider rounded-sm border border-red-400 shadow-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap"
-              title="Inventory explicitly marked as Sold Out — Zero Units Remaining"
-            >
-              <span className="text-[10px] sm:text-[11px]">⛔</span> SOLD OUT
-            </span>
-          ) : (
-            <>
-              {project.sticker === 'Rented Out' && (
-                <span className="px-2 py-0.5 bg-indigo-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.5)] flex items-center gap-1 shrink-0 whitespace-nowrap">
-                  <span>🔑</span> RENTED OUT
-                </span>
-              )}
-              {/* Units Remaining / Limited Availability Badge */}
-              {project.unitsRemaining !== undefined && project.unitsRemaining !== null && (
-                project.unitsRemaining < 5 ? (
-                  <span
-                    key={`ltd-badge-${project.id}-${project.unitsRemaining}`}
-                    className="animate-limited-badge px-2.5 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400/80 shadow-[0_0_8px_rgba(239,68,68,0.3)] flex items-center gap-1 transform-gpu origin-center shrink-0 whitespace-nowrap"
-                    title={`Only ${project.unitsRemaining} units left in inventory`}
-                  >
-                    <span>⚡</span> LIMITED AVAILABILITY ({project.unitsRemaining === 1 ? '1 UNIT LEFT' : `${project.unitsRemaining} UNITS LEFT`})
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 bg-white/10 text-art-gold font-mono font-bold text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-art-gold/30 flex items-center gap-1" title={`${project.unitsRemaining} units available`}>
-                    <span>📦</span> {project.unitsRemaining} Units Left
-                  </span>
-                )
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Prominent Sold Out Strip */}
-        {Boolean(project.isInventorySoldOut || project.sticker === 'Sold Out') && (
-          <div className="w-full bg-gradient-to-r from-red-950 via-red-900 to-rose-950 border-t border-red-500/40 px-3 py-1 text-center flex items-center justify-center gap-2">
-            <span className="text-red-300 font-mono font-black text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.2em] flex items-center gap-1.5">
-              <span>⛔</span> INVENTORY FULLY SOLD OUT · RESALE / WAITLIST ONLY
-            </span>
-          </div>
-        )}
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {onToggleCompare && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleCompare(project);
-              }}
-              className={cn(
-                "px-2.5 py-1 rounded-sm text-[10px] sm:text-xs uppercase tracking-wider font-bold border transition-all flex items-center gap-1 cursor-pointer",
-                isCompared
-                  ? "bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.3)]"
-                  : "bg-white/10 hover:bg-white/20 text-white hover:text-white border-white/25"
-              )}
-              title={isCompared ? "Remove from comparison" : "Add to side-by-side comparison (up to 3)"}
-            >
-              <ArrowLeftRight size={10} className={isCompared ? "text-black" : "text-art-gold"} />
-              <span>{isCompared ? "✓ Compared" : "+ Compare"}</span>
-            </button>
-          )}
-
-          {isAdmin && (
-            <>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onTogglePause(project);
-                }}
-                className={cn(
-                  "px-2.5 py-1 rounded-sm text-[9px] uppercase tracking-widest font-black border transition-all cursor-pointer",
-                  project.isPaused ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-white/5 hover:bg-art-gold hover:text-black text-art-gold border-art-gold/35"
-                )}
-                title={project.isPaused ? "Unhide / Resume Project" : "Hide Project from Main View"}
-              >
-                {project.isPaused ? 'Unhide' : 'Hide'}
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteProject(project);
-                }}
-                className="px-2.5 py-1 rounded-sm text-[9px] uppercase tracking-widest font-black border bg-white/5 hover:bg-red-500/20 text-red-400 border-red-500/30 transition-all cursor-pointer"
-                title="Remove Project from App"
-              >
-                Delete
-              </button>
-            </>
-          )}
-
-          {project.handoverStatus && (
-            <span className={cn(
-              "text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 border rounded-sm",
-              project.handoverStatus === 'EOI' && "bg-art-gold/15 border-art-gold/40 text-art-gold",
-              project.handoverStatus === 'Under Construction' && "bg-blue-500/15 border-blue-500/40 text-blue-300",
-              project.handoverStatus === 'Ready to Move' && "bg-emerald-500/15 border-emerald-500/40 text-emerald-300",
-              project.handoverStatus === 'Handed Over' && "bg-purple-500/15 border-purple-500/40 text-purple-300",
-              !['EOI', 'Under Construction', 'Ready to Move', 'Handed Over'].includes(project.handoverStatus) && "bg-white/10 border-white/20 text-white/80"
-            )}>
-              {project.handoverStatus === 'Under Construction' ? 'Under .Construction' : project.handoverStatus}
-            </span>
-          )}
-          
-          {/* Direct Edit Trigger Button for Admin Only */}
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditDraft({ ...project });
-                setIsEditingCard(!isEditingCard);
-              }}
-              className={cn(
-                "px-2.5 py-1 rounded-sm text-[9px] uppercase tracking-widest font-black border transition-all flex items-center gap-1 cursor-pointer",
-                isEditingCard
-                  ? "bg-art-gold text-black border-art-gold"
-                  : "bg-white/5 hover:bg-art-gold hover:text-black text-art-gold border-art-gold/35"
-              )}
-              title="Edit Project Data"
-            >
-              <Edit size={11} />
-              Edit Data
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Inline Editor Mode for Admin (All Data Fields Only — Image Option Removed for Production) */}
       {isAdmin && isEditingCard ? (
-        <div className="p-6 bg-[#0d0d0d] border-b border-art-gold/30 space-y-5 font-sans z-20">
+        <div className="w-full p-6 bg-[#0d0d0d] border-b border-art-gold/30 space-y-5 font-sans z-20">
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div>
               <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black block">
@@ -2142,145 +2032,266 @@ const ProjectCard: React.FC<{
         </div>
       ) : (
         <>
-          {/* Project Name & Segment Header */}
-          <div className="px-2.5 sm:px-3 pt-2 pb-1.5 bg-white/[0.02] border-b border-white/10">
-            <div className="flex items-center justify-between gap-1 mb-0.5 flex-wrap">
-              <span className="text-art-gold text-[8.5px] sm:text-[9.5px] uppercase tracking-wider font-extrabold truncate">
-                {displayPropertyType} {project.segment ? `• ${project.segment}` : ''}
-              </span>
-              {project.configuration && project.configuration.length > 0 && (
-                <span className="text-white/80 text-[8px] sm:text-[9px] font-mono font-semibold uppercase tracking-wider">{project.configuration.join(' | ')}</span>
-              )}
+          {/* Left Column: Property Visual & Media Showcase */}
+          <div className="w-full md:w-80 lg:w-96 xl:w-[410px] shrink-0 relative overflow-hidden bg-black/80 flex flex-col justify-between min-h-[250px] md:min-h-[350px] border-b md:border-b-0 md:border-r border-white/10 group/img">
+            {/* Property Photo */}
+            <img
+              src={coverImage}
+              alt={project.name}
+              className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700 absolute inset-0 cursor-pointer"
+              onClick={() => setIsMediaViewerOpen(true)}
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/60 pointer-events-none" />
+
+            {/* Top Overlays: Badges */}
+            <div className="p-3 relative z-10 flex items-start justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 bg-art-gold text-black rounded-sm shadow-md">
+                  {displayType}
+                </span>
+                <span className="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 bg-black/75 text-white border border-white/20 rounded-sm flex items-center gap-1 backdrop-blur-sm">
+                  <MapPin size={10} className="text-art-gold shrink-0" />
+                  {displayZone}
+                </span>
+                {project.handoverStatus && (
+                  <span className={cn(
+                    "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border rounded-sm backdrop-blur-sm",
+                    project.handoverStatus === 'EOI' && "bg-art-gold/25 border-art-gold/50 text-art-gold",
+                    project.handoverStatus === 'Under Construction' && "bg-blue-600/30 border-blue-400 text-blue-200",
+                    project.handoverStatus === 'Ready to Move' && "bg-emerald-600/30 border-emerald-400 text-emerald-200",
+                    project.handoverStatus === 'Handed Over' && "bg-purple-600/30 border-purple-400 text-purple-200",
+                    !['EOI', 'Under Construction', 'Ready to Move', 'Handed Over'].includes(project.handoverStatus) && "bg-black/60 border-white/20 text-white"
+                  )}>
+                    {project.handoverStatus === 'Under Construction' ? 'Under .Construction' : project.handoverStatus}
+                  </span>
+                )}
+              </div>
+
+              {/* Small Organic Visits Counter */}
+              <div 
+                className="flex items-center gap-1 px-2 py-0.5 bg-black/80 border border-white/20 rounded text-[9.5px] font-mono text-white/90 backdrop-blur-sm select-none shadow"
+                title={`${views.toLocaleString()} organic property views recorded`}
+              >
+                <Eye size={11} className="text-art-gold shrink-0" />
+                <span className="font-bold text-white tracking-tight">{formatVisitsCount(views)}</span>
+                <span className="text-[8px] uppercase tracking-wider text-white/50">Visits</span>
+              </div>
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 border-b border-white/5 pb-1.5">
-              <h3 className="text-xs sm:text-sm md:text-base font-serif text-white font-bold italic leading-tight group-hover:text-art-gold transition-colors duration-300 tracking-tight break-words flex-1 min-w-0 line-clamp-1">
-                {project.name}
-              </h3>
-              <div className="text-left sm:text-right shrink-0 max-w-full bg-black/60 border border-art-gold/35 px-2 py-0.5 rounded-sm shadow-sm">
-                <span className="text-xs sm:text-sm font-mono font-black text-art-gold tracking-tight leading-tight block whitespace-normal break-words antialiased">
+
+            {/* Bottom Overlay on Image: Sold Out / Limited / Media button */}
+            <div className="p-3 relative z-10 space-y-2 mt-auto">
+              {/* Sold Out Badge */}
+              {Boolean(project.isInventorySoldOut || project.sticker === 'Sold Out') ? (
+                <div className="badge-soldout-static px-3 py-1.5 bg-red-700/95 text-white font-black text-[10px] uppercase tracking-wider rounded-sm border border-red-400 shadow-lg flex items-center justify-center gap-1.5 w-full text-center">
+                  <span>⛔</span> SOLD OUT · WAITLIST ONLY
+                </div>
+              ) : (
+                <>
+                  {project.sticker === 'Rented Out' && (
+                    <div className="px-2.5 py-1 bg-indigo-600/95 text-white font-black text-[9.5px] uppercase tracking-wider rounded-sm border border-indigo-400 shadow flex items-center justify-center gap-1 w-full text-center">
+                      <span>🔑</span> RENTED OUT
+                    </div>
+                  )}
+                  {project.unitsRemaining !== undefined && project.unitsRemaining !== null && (
+                    project.unitsRemaining < 5 ? (
+                      <div className="animate-limited-badge px-3 py-1 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white font-black text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400/80 shadow-lg flex items-center justify-center gap-1 text-center">
+                        <span>⚡</span> LIMITED AVAILABILITY ({project.unitsRemaining === 1 ? '1 UNIT LEFT' : `${project.unitsRemaining} UNITS LEFT`})
+                      </div>
+                    ) : (
+                      <div className="px-2.5 py-1 bg-black/80 text-art-gold font-mono font-bold text-[9.5px] uppercase tracking-wider rounded-sm border border-art-gold/40 text-center">
+                        <span>📦</span> {project.unitsRemaining} Units Left
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+
+              {/* Media Bar & Floor Plan trigger */}
+              <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                {canViewProjectImages && project.imageUrls && project.imageUrls.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMediaViewerOpen(true);
+                    }}
+                    className="px-2.5 py-1 rounded-sm text-[9.5px] font-mono font-bold bg-black/85 hover:bg-emerald-500 text-white hover:text-black border border-white/20 hover:border-emerald-400 transition-all flex items-center gap-1.5 cursor-pointer shadow"
+                    title={isAdmin && isPrimary ? "Admin View: High-Definition Photos" : "View High-Definition Photos"}
+                  >
+                    <ImageIcon size={11} className="text-emerald-400" />
+                    <span>{project.imageUrls.length} HD Photos</span>
+                  </button>
+                )}
+                {(project.videoUrl || project.mobileVideoUrl) && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMediaViewerOpen(true);
+                    }}
+                    className="px-2.5 py-1 rounded-sm text-[9.5px] font-mono font-bold bg-black/85 hover:bg-purple-500 text-white hover:text-black border border-white/20 hover:border-purple-400 transition-all flex items-center gap-1 cursor-pointer shadow"
+                    title="Watch Verified Video Walkthrough"
+                  >
+                    <span>🎥</span>
+                    <span>Tour</span>
+                  </button>
+                )}
+                {project.availableFrom && (
+                  <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-cyan-950/90 text-cyan-300 border border-cyan-500/40">
+                    🗓️ From {project.availableFrom}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Complete Details, Writeup, Amenities & Action Bar */}
+          <div className="flex-1 min-w-0 p-4 sm:p-5 md:p-6 flex flex-col justify-between space-y-3.5 bg-gradient-to-b from-[#131313] to-[#0c0c0c]">
+            {/* 1. PROJECT NAME FIRST */}
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-2.5">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-serif text-white font-bold italic leading-tight group-hover:text-art-gold transition-colors duration-300 tracking-tight break-words">
+                  {project.name}
+                </h3>
+                <div className="flex items-center gap-2 flex-wrap mt-1 text-[9px] sm:text-[10px]">
+                  <span className="text-art-gold uppercase tracking-wider font-extrabold">
+                    {displayPropertyType} {project.segment ? `• ${project.segment}` : ''}
+                  </span>
+                  {project.builderName && (
+                    <span className="px-2 py-0.5 rounded-sm bg-white/10 text-white font-mono text-[9px] font-semibold">
+                      {project.builderName} {project.builderCategory ? `(Cat ${project.builderCategory})` : ''}
+                    </span>
+                  )}
+                  {project.configuration && project.configuration.length > 0 && (
+                    <span className="text-white/80 font-mono font-semibold uppercase tracking-wider">
+                      {project.configuration.join(' | ')}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Compare & Admin Controls */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {onToggleCompare && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleCompare(project);
+                    }}
+                    className={cn(
+                      "px-2.5 py-1 rounded-sm text-[9.5px] uppercase tracking-wider font-bold border transition-all flex items-center gap-1 cursor-pointer",
+                      isCompared
+                        ? "bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.3)]"
+                        : "bg-white/10 hover:bg-white/20 text-white border-white/20"
+                    )}
+                    title={isCompared ? "Remove from comparison" : "Add to side-by-side comparison (up to 3)"}
+                  >
+                    <ArrowLeftRight size={10} className={isCompared ? "text-black" : "text-art-gold"} />
+                    <span>{isCompared ? "✓ Compared" : "+ Compare"}</span>
+                  </button>
+                )}
+
+                {isAdmin && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditDraft({ ...project });
+                        setIsEditingCard(!isEditingCard);
+                      }}
+                      className="px-2 py-1 rounded-sm text-[9px] uppercase tracking-wider font-black bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Edit Project Data"
+                    >
+                      <Edit size={10} /> Edit Data
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onTogglePause(project)}
+                      className={cn(
+                        "px-2 py-1 rounded-sm text-[9px] uppercase tracking-wider font-black border cursor-pointer transition-colors",
+                        project.isPaused ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-white/5 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
+                      )}
+                      title={project.isPaused ? "Unhide project" : "Hide project"}
+                    >
+                      {project.isPaused ? 'Unhide' : 'Hide'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteProject(project)}
+                      className="px-2 py-1 rounded-sm text-[9px] uppercase tracking-wider font-black bg-white/5 hover:bg-red-500/20 text-red-400 border border-red-500/30 cursor-pointer transition-colors"
+                      title="Delete project"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* 2. PRICING SECOND (Directly following Project Name) */}
+            <div className="flex items-center justify-between gap-3 flex-wrap bg-gradient-to-r from-black/90 via-black/80 to-transparent border border-art-gold/50 px-3.5 py-2 rounded-sm shadow-md">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-[10px] sm:text-[11px] uppercase tracking-widest text-white/70 font-mono font-bold">
+                  Price:
+                </span>
+                <span className="text-lg sm:text-xl md:text-2xl font-mono font-black text-art-gold tracking-tight leading-tight">
                   {formattedMainPrice}
                 </span>
-                <span className="text-[7.5px] sm:text-[8px] uppercase tracking-wider text-white/70 font-mono font-semibold block mt-0.5">
+                <span className="text-[8.5px] sm:text-[9px] uppercase tracking-wider text-white/70 font-mono font-semibold pl-2 border-l border-white/20">
                   * Conditions Apply
+                </span>
+              </div>
+
+              {/* Handover quick pill */}
+              <div className="flex items-center gap-2 text-[9.5px] sm:text-[10.5px] font-mono text-white/80">
+                <span className="px-2.5 py-0.5 rounded bg-white/10 text-white/90 border border-white/15">
+                  🗓️ {effectiveHandoverDate}
                 </span>
               </div>
             </div>
 
-            {/* Compact Unified Location, Last Price & Handover Strip */}
-            <div className="mt-1 p-1 sm:p-1.5 bg-white/[0.04] border border-white/15 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[9.5px] sm:text-[10px]">
-              <div className="flex items-center gap-1 truncate">
-                <MapPin size={10} className="text-art-gold shrink-0" />
-                <span className="text-[10.5px] sm:text-xs font-semibold text-white truncate">
+            {/* Unified Location, Last Price & Handover Strip */}
+            <div className="p-2 sm:p-2.5 bg-white/[0.03] border border-white/15 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] sm:text-[11px]">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <MapPin size={13} className="text-art-gold shrink-0" />
+                <span className="text-xs sm:text-sm font-semibold text-white break-words">
                   {project.location}
                 </span>
                 <a
                   href={googleMapsSearchUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[8px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-0.5 font-mono font-bold transition-colors px-1 py-0.2 bg-art-gold/15 border border-art-gold/40 rounded-sm shrink-0"
+                  className="text-[8.5px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-0.5 font-mono font-bold transition-colors px-2 py-0.5 bg-art-gold/15 border border-art-gold/40 rounded-sm shrink-0"
                 >
-                  <ExternalLink size={8} /> Map
+                  <ExternalLink size={9} /> Map
                 </a>
               </div>
 
-              <div className="flex items-center gap-1 text-[9px] sm:text-[9.5px] font-mono shrink-0 border-t sm:border-t-0 sm:border-l border-white/15 pt-0.5 sm:pt-0 sm:pl-1.5">
+              <div className="flex items-center gap-2 text-[9.5px] sm:text-[10.5px] font-mono shrink-0 border-t sm:border-t-0 sm:border-l border-white/15 pt-1 sm:pt-0 sm:pl-2.5">
                 <span className="text-white font-black tracking-tight" title="Last Verified Price">
                   {effectiveLastPrice}
                 </span>
                 <span className="text-white/40">•</span>
-                <span className="text-white/85 font-semibold">
+                <span className="text-white/90 font-semibold">
                   {effectiveHandoverDate}
                 </span>
               </div>
             </div>
-          </div>
-          
-          {/* Small & Compact Project Info Box, Floor Plans & Specifications */}
-          <div className="p-2 sm:p-2.5 flex flex-col flex-grow relative z-20 space-y-1.5">
-            {/* Media Badges: Compressed Photos & Video Walkthrough */}
-            {((canViewProjectImages && project.imageUrls && project.imageUrls.length > 0) || project.videoUrl || project.availableFrom) && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {canViewProjectImages && project.imageUrls && project.imageUrls.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsMediaViewerOpen(true)}
-                    className="px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] font-mono font-bold bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/30 transition-all flex items-center gap-1 cursor-pointer"
-                    title={isAdmin && isPrimary ? "Admin View: High-Definition Photos (Hidden from Online Browsers)" : "View High-Definition Compressed Photos"}
-                  >
-                    <span>📷</span>
-                    <span>{project.imageUrls.length} HD Photos {isAdmin && isPrimary ? '(Admin Only)' : ''}</span>
-                  </button>
-                )}
-                {(project.videoUrl || project.mobileVideoUrl) && (
-                  <button
-                    type="button"
-                    onClick={() => setIsMediaViewerOpen(true)}
-                    className="px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] font-mono font-bold bg-purple-500/15 hover:bg-purple-500 text-purple-300 hover:text-black border border-purple-500/30 transition-all flex items-center gap-1 cursor-pointer"
-                    title="Watch Verified Video Walkthrough"
-                  >
-                    <span>🎥</span>
-                    <span>Video Tour</span>
-                  </button>
-                )}
-                {project.availableFrom && (
-                  <span className="px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
-                    <span>🗓️</span>
-                    <span>From {project.availableFrom}</span>
+
+            {/* Curated Writeup (Project Overview & Highlights in Decent Typography) */}
+            {project.description && (
+              <div className="bg-white/[0.025] p-3 rounded-sm border border-white/15 space-y-1.5">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider text-art-gold font-extrabold">
+                    Overview &amp; Corridor Highlights
                   </span>
-                )}
-              </div>
-            )}
-
-            {/* Dedicated Rental Specifications Box */}
-            {project.type === 'Rental' && (
-              <div className="p-2.5 bg-cyan-950/20 border border-cyan-500/30 rounded-sm space-y-1 font-mono text-[9.5px]">
-                <div className="flex justify-between items-center text-cyan-300 font-bold border-b border-cyan-500/20 pb-1">
-                  <span>Rental Lease Terms:</span>
-                  <span className="text-white font-bold">{project.monthlyRental || project.price}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-white/70">
-                  <span>Advance: <strong className="text-white font-medium">{project.advance || 'Negotiable'}</strong></span>
-                  <span>Maint: <strong className="text-white font-medium">{project.maintenance || 'Nominal'}</strong></span>
-                  <span>Residence: <strong className="text-white font-medium">{project.residenceType || '2BHK'}</strong></span>
-                  <span>Tenant: <strong className="text-white font-medium">{project.tenantType || 'Family'}</strong></span>
-                  <span>Furnish: <strong className="text-white font-medium">{project.furnishType || 'Semi Furnished'}</strong></span>
-                  <span>Pets: <strong className="text-white font-medium">{project.petFriendly || 'Yes'}</strong></span>
-                  {project.suba && <span>SUBA: <strong className="text-white font-medium">{project.suba}</strong></span>}
-                  <span>Parking: <strong className="text-white font-medium">{project.carCloseParking || 1} Covered</strong></span>
-                </div>
-              </div>
-            )}
-
-            {/* Dedicated Resale Specifications Box */}
-            {project.type === 'Resale' && (
-              <div className="p-2.5 bg-amber-950/20 border border-amber-500/30 rounded-sm space-y-1 font-mono text-[9.5px]">
-                <div className="flex justify-between items-center text-amber-300 font-bold border-b border-amber-500/20 pb-1">
-                  <span>Resale Property Mandate:</span>
-                  <span className="text-white font-bold">{project.price}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-white/70">
-                  <span>SUBA: <strong className="text-white font-medium">{project.suba || '1650 Sq.Ft.'}</strong></span>
-                  <span>Carpet: <strong className="text-white font-medium">{project.carpetArea || '1280 Sq.Ft.'}</strong></span>
-                  <span>Authority: <strong className="text-amber-300 font-bold">{project.approvedAuthority || project.approvalBody || 'BDA'}</strong></span>
-                  <span>Status: <strong className="text-white font-medium">{project.registrationStatus || 'Clear Title'}</strong></span>
-                  <span>Tower/Floor: <strong className="text-white font-medium">{project.tower || 'Block A'} / {project.floor || 'High'}</strong></span>
-                  <span>Parking: <strong className="text-white font-medium">{project.carCloseParking || 1} Covered</strong></span>
-                  {project.balcony && <span>Balcony: <strong className="text-white font-medium">{project.balcony}</strong></span>}
-                  {project.mainDoorFacing && <span>Facing: <strong className="text-white font-medium">{project.mainDoorFacing}</strong></span>}
-                </div>
-              </div>
-            )}
-            <div className="bg-white/[0.03] p-2 sm:p-2.5 rounded-sm border border-white/15">
-              <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-art-gold font-extrabold truncate">
-                  Overview &amp; Landmarks — {project.location}
-                </span>
-                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={handleToggleAmenities}
                     className={cn(
-                      "text-[9px] sm:text-[10px] uppercase tracking-wider font-bold cursor-pointer transition-all px-2 py-0.5 rounded border flex items-center gap-1 shadow-sm",
+                      "text-[9px] sm:text-[9.5px] uppercase tracking-wider font-bold cursor-pointer transition-all px-2.5 py-0.5 rounded border flex items-center gap-1.5 shrink-0",
                       showNearbyAmenities
                         ? "bg-emerald-500 text-black border-emerald-400 font-black shadow-[0_0_10px_rgba(16,185,129,0.35)]"
                         : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40"
@@ -2288,256 +2299,313 @@ const ProjectCard: React.FC<{
                     title="Toggle Google Search Grounding to find verified schools, hospitals, and transit within 2km"
                   >
                     <Compass size={11} className={showNearbyAmenities ? "text-black animate-spin" : "text-emerald-400"} />
-                    <span>{showNearbyAmenities ? "Hide 2km Amenities" : "Show Nearby Amenities (2km)"}</span>
+                    <span>{showNearbyAmenities ? "Hide 2km Amenities" : "Nearby (2km Radius)"}</span>
                     {isLoadingAmenities && <Loader2 size={10} className="animate-spin ml-0.5" />}
                   </button>
+                </div>
+                <p className="text-xs sm:text-[13px] text-white/85 font-sans leading-relaxed line-clamp-3">
+                  {project.description}
+                </p>
+              </div>
+            )}
 
-                  <button
-                    type="button"
-                    onClick={() => onEnquire(project)}
-                    className="text-[9px] sm:text-[10px] uppercase tracking-wider text-art-gold hover:text-black font-black cursor-pointer transition-all px-2 py-0.5 rounded bg-art-gold/15 hover:bg-art-gold border border-art-gold/40 flex items-center gap-1 shrink-0"
-                    title="Inquire to fill form with preferred contact time and receive detailed floor plans"
-                  >
-                    <span>More &amp; Inquire</span>
-                    <ChevronRight size={10} />
-                  </button>
+            {/* Curated Lifestyle Amenities in Decent Fonts */}
+            {project.features && project.features.length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[9px] uppercase tracking-widest text-white/50 font-mono block">
+                  Curated Amenities &amp; Lifestyle Infrastructure
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {project.features.slice(0, 5).map((feat, idx) => (
+                    <span
+                      key={idx}
+                      className="text-[10.5px] sm:text-xs font-sans font-medium text-white/90 bg-white/[0.06] hover:bg-white/10 border border-white/15 px-2.5 py-1 rounded-sm flex items-center gap-1.5 transition-colors"
+                    >
+                      <Sparkles size={10} className="text-art-gold shrink-0" />
+                      <span>{feat}</span>
+                    </span>
+                  ))}
                 </div>
               </div>
-              <p className="text-xs text-white/90 leading-snug font-sans line-clamp-2">
-                {project.description}
-              </p>
+            )}
+
+            {/* Quick Micro-Specs Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2 bg-white/[0.025] border border-white/10 rounded-sm font-mono text-[9px] sm:text-[10px]">
+              <div>
+                <span className="text-white/50 block text-[7.5px] sm:text-[8px] uppercase">RERA / Approval</span>
+                <span className="text-art-gold font-bold truncate block">{project.approvalBody || 'RERA Verified'}</span>
+              </div>
+              <div>
+                <span className="text-white/50 block text-[7.5px] sm:text-[8px] uppercase">RERA No.</span>
+                <span className="text-white font-medium truncate block">{project.reraNumber || 'PRM/KA/RERA Verified'}</span>
+              </div>
+              <div>
+                <span className="text-white/50 block text-[7.5px] sm:text-[8px] uppercase">Scale</span>
+                <span className="text-white font-medium truncate block">{project.projectSize || project.suba || 'Gated Enclave'}</span>
+              </div>
+              <div>
+                <span className="text-white/50 block text-[7.5px] sm:text-[8px] uppercase">Elevation</span>
+                <span className="text-white font-medium truncate block">{project.floorsHeight || project.noOfTowers || 'Landmark Towers'}</span>
+              </div>
             </div>
 
-            {/* Dynamic Nearby Amenities Panel Powered by Google Search Grounding */}
+            {/* Expandable Rich Specifications Drawer */}
             <AnimatePresence>
-              {showNearbyAmenities && (
+              {isExpanded && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden bg-[#0c120e] border border-emerald-500/40 rounded-sm p-3 space-y-2.5 font-sans shadow-lg"
+                  className="space-y-3 pt-2 overflow-hidden border-t border-white/10"
                 >
-                  <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2 flex-wrap gap-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
-                        Nearby Amenities within 2km Radius
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[8.5px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        ⚡ Google Search Grounding
-                      </span>
-                      <button
-                        type="button"
-                        onClick={fetchNearbyAmenities}
-                        disabled={isLoadingAmenities}
-                        className="text-[8.5px] font-mono text-white/70 hover:text-white px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 border border-white/15 cursor-pointer disabled:opacity-50"
-                        title="Re-query verified amenities via Google Search Grounding"
-                      >
-                        {isLoadingAmenities ? <Loader2 size={10} className="animate-spin inline" /> : '↻ Refresh'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {isLoadingAmenities && !amenitiesData ? (
-                    <div className="flex items-center justify-center gap-2 py-5 text-emerald-300 text-xs font-mono">
-                      <Loader2 size={16} className="animate-spin text-emerald-400" />
-                      <span>Discovering schools, hospitals &amp; transit via Google Search Grounding...</span>
-                    </div>
-                  ) : amenitiesError && !amenitiesData ? (
-                    <div className="text-center py-3 text-red-400 text-xs font-mono">
-                      {amenitiesError}
-                    </div>
-                  ) : (
-                    <>
-                      {amenitiesData?.summary && (
-                        <p className="text-[10.5px] text-white/85 leading-relaxed font-sans bg-black/40 p-2 rounded border border-emerald-500/20">
-                          {amenitiesData.summary}
-                        </p>
-                      )}
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono">
-                        {/* Schools */}
-                        <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
-                          <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
-                            <span className="flex items-center gap-1">🎓 Schools (&le;2km)</span>
-                            <span className="text-[8.5px] text-white/50">{amenitiesData?.schools?.length || 0}</span>
-                          </div>
-                          {amenitiesData?.schools && amenitiesData.schools.length > 0 ? (
-                            <ul className="space-y-1 pt-1">
-                              {amenitiesData.schools.map((item, idx) => (
-                                <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
-                                  <span className="truncate" title={item.name}>{item.name}</span>
-                                  <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
-                                    {item.distance}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
-                          )}
+                  {/* Dynamic Nearby Amenities Panel Powered by Google Search Grounding */}
+                  {showNearbyAmenities && (
+                    <div className="overflow-hidden bg-[#0c120e] border border-emerald-500/40 rounded-sm p-3 space-y-2.5 font-sans shadow-lg">
+                      <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2 flex-wrap gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                            Nearby Amenities within 2km Radius
+                          </span>
                         </div>
-
-                        {/* Hospitals */}
-                        <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
-                          <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
-                            <span className="flex items-center gap-1">🏥 Hospitals (&le;2km)</span>
-                            <span className="text-[8.5px] text-white/50">{amenitiesData?.hospitals?.length || 0}</span>
-                          </div>
-                          {amenitiesData?.hospitals && amenitiesData.hospitals.length > 0 ? (
-                            <ul className="space-y-1 pt-1">
-                              {amenitiesData.hospitals.map((item, idx) => (
-                                <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
-                                  <span className="truncate" title={item.name}>{item.name}</span>
-                                  <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
-                                    {item.distance}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
-                          )}
-                        </div>
-
-                        {/* Transit Points */}
-                        <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
-                          <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
-                            <span className="flex items-center gap-1">🚇 Transit (&le;2km)</span>
-                            <span className="text-[8.5px] text-white/50">{amenitiesData?.transit?.length || 0}</span>
-                          </div>
-                          {amenitiesData?.transit && amenitiesData.transit.length > 0 ? (
-                            <ul className="space-y-1 pt-1">
-                              {amenitiesData.transit.map((item, idx) => (
-                                <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
-                                  <span className="truncate" title={item.name}>{item.name}</span>
-                                  <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
-                                    {item.distance}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
-                          )}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8.5px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            ⚡ Google Search Grounding
+                          </span>
+                          <button
+                            type="button"
+                            onClick={fetchNearbyAmenities}
+                            disabled={isLoadingAmenities}
+                            className="text-[8.5px] font-mono text-white/70 hover:text-white px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 border border-white/15 cursor-pointer disabled:opacity-50"
+                            title="Re-query verified amenities via Google Search Grounding"
+                          >
+                            {isLoadingAmenities ? <Loader2 size={10} className="animate-spin inline" /> : '↻ Refresh'}
+                          </button>
                         </div>
                       </div>
-                    </>
+
+                      {isLoadingAmenities && !amenitiesData ? (
+                        <div className="flex items-center justify-center gap-2 py-5 text-emerald-300 text-xs font-mono">
+                          <Loader2 size={16} className="animate-spin text-emerald-400" />
+                          <span>Discovering schools, hospitals &amp; transit via Google Search Grounding...</span>
+                        </div>
+                      ) : amenitiesError && !amenitiesData ? (
+                        <div className="text-center py-3 text-red-400 text-xs font-mono">
+                          {amenitiesError}
+                        </div>
+                      ) : (
+                        <>
+                          {amenitiesData?.summary && (
+                            <p className="text-[11px] text-white/85 leading-relaxed font-sans bg-black/40 p-2 rounded border border-emerald-500/20">
+                              {amenitiesData.summary}
+                            </p>
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono">
+                            {/* Schools */}
+                            <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
+                              <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
+                                <span className="flex items-center gap-1">🎓 Schools (&le;2km)</span>
+                                <span className="text-[8.5px] text-white/50">{amenitiesData?.schools?.length || 0}</span>
+                              </div>
+                              {amenitiesData?.schools && amenitiesData.schools.length > 0 ? (
+                                <ul className="space-y-1 pt-1">
+                                  {amenitiesData.schools.map((item, idx) => (
+                                    <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
+                                      <span className="truncate" title={item.name}>{item.name}</span>
+                                      <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
+                                        {item.distance}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
+                              )}
+                            </div>
+
+                            {/* Hospitals */}
+                            <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
+                              <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
+                                <span className="flex items-center gap-1">🏥 Hospitals (&le;2km)</span>
+                                <span className="text-[8.5px] text-white/50">{amenitiesData?.hospitals?.length || 0}</span>
+                              </div>
+                              {amenitiesData?.hospitals && amenitiesData.hospitals.length > 0 ? (
+                                <ul className="space-y-1 pt-1">
+                                  {amenitiesData.hospitals.map((item, idx) => (
+                                    <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
+                                      <span className="truncate" title={item.name}>{item.name}</span>
+                                      <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
+                                        {item.distance}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
+                              )}
+                            </div>
+
+                            {/* Transit Points */}
+                            <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
+                              <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
+                                <span className="flex items-center gap-1">🚇 Transit (&le;2km)</span>
+                                <span className="text-[8.5px] text-white/50">{amenitiesData?.transit?.length || 0}</span>
+                              </div>
+                              {amenitiesData?.transit && amenitiesData.transit.length > 0 ? (
+                                <ul className="space-y-1 pt-1">
+                                  {amenitiesData.transit.map((item, idx) => (
+                                    <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
+                                      <span className="truncate" title={item.name}>{item.name}</span>
+                                      <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
+                                        {item.distance}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
+
+                  {/* Dedicated Rental Specifications Box */}
+                  {project.type === 'Rental' && (
+                    <div className="p-3 bg-cyan-950/20 border border-cyan-500/30 rounded-sm space-y-1.5 font-mono text-[10px]">
+                      <div className="flex justify-between items-center text-cyan-300 font-bold border-b border-cyan-500/20 pb-1">
+                        <span>Rental Lease Terms:</span>
+                        <span className="text-white font-bold">{project.monthlyRental || project.price}</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-white/70">
+                        <span>Advance: <strong className="text-white font-medium">{project.advance || 'Negotiable'}</strong></span>
+                        <span>Maint: <strong className="text-white font-medium">{project.maintenance || 'Nominal'}</strong></span>
+                        <span>Residence: <strong className="text-white font-medium">{project.residenceType || '2BHK'}</strong></span>
+                        <span>Tenant: <strong className="text-white font-medium">{project.tenantType || 'Family'}</strong></span>
+                        <span>Furnish: <strong className="text-white font-medium">{project.furnishType || 'Semi Furnished'}</strong></span>
+                        <span>Pets: <strong className="text-white font-medium">{project.petFriendly || 'Yes'}</strong></span>
+                        {project.suba && <span>SUBA: <strong className="text-white font-medium">{project.suba}</strong></span>}
+                        <span>Parking: <strong className="text-white font-medium">{project.carCloseParking || 1} Covered</strong></span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dedicated Resale Specifications Box */}
+                  {project.type === 'Resale' && (
+                    <div className="p-3 bg-amber-950/20 border border-amber-500/30 rounded-sm space-y-1.5 font-mono text-[10px]">
+                      <div className="flex justify-between items-center text-amber-300 font-bold border-b border-amber-500/20 pb-1">
+                        <span>Resale Property Mandate:</span>
+                        <span className="text-white font-bold">{project.price}</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-white/70">
+                        <span>SUBA: <strong className="text-white font-medium">{project.suba || '1650 Sq.Ft.'}</strong></span>
+                        <span>Carpet: <strong className="text-white font-medium">{project.carpetArea || '1280 Sq.Ft.'}</strong></span>
+                        <span>Authority: <strong className="text-amber-300 font-bold">{project.approvedAuthority || project.approvalBody || 'BDA'}</strong></span>
+                        <span>Status: <strong className="text-white font-medium">{project.registrationStatus || 'Clear Title'}</strong></span>
+                        <span>Tower/Floor: <strong className="text-white font-medium">{project.tower || 'Block A'} / {project.floor || 'High'}</strong></span>
+                        <span>Parking: <strong className="text-white font-medium">{project.carCloseParking || 1} Covered</strong></span>
+                        {project.balcony && <span>Balcony: <strong className="text-white font-medium">{project.balcony}</strong></span>}
+                        {project.mainDoorFacing && <span>Facing: <strong className="text-white font-medium">{project.mainDoorFacing}</strong></span>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Floor Plan & Specifications */}
+                  {project.floorPlan && (
+                    <div className="px-3 py-1.5 bg-white/[0.03] rounded-sm border border-art-gold/30 text-[10px] sm:text-[11px] flex items-center gap-2">
+                      <Layers size={12} className="text-art-gold shrink-0" />
+                      <span className="text-white font-mono font-medium">{project.floorPlan}</span>
+                    </div>
+                  )}
+
+                  {/* Additional Curated Features */}
+                  {project.features && project.features.length > 5 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {project.features.slice(5).map((feat, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[10px] font-mono font-medium text-white/80 bg-white/5 border border-white/10 px-2 py-0.5 rounded-sm"
+                        >
+                          + {feat}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Social Share & Alerts inside Expanded Drawer */}
+                  <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setIsSubscribeOpen(true)}
+                      className="px-2.5 py-1 rounded-sm border bg-white/10 hover:bg-art-gold/20 text-art-gold border-white/20 text-[9px] font-mono transition-all cursor-pointer flex items-center gap-1.5"
+                      title="Subscribe to Price Alerts"
+                    >
+                      <Bell size={10} />
+                      <span>Price Alerts</span>
+                    </button>
+                    <SocialShareButtons 
+                      propertyTitle={project.name}
+                      propertyHighlights={project.features || []}
+                      propertyLink={`${window.location.origin}/?project=${encodeURIComponent(project.id || project.name)}`}
+                    />
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Compact Key Specifications */}
-            <div className="grid grid-cols-2 gap-1.5 text-xs font-mono bg-white/[0.025] p-2 rounded-sm border border-white/15">
-              <div className="truncate">
-                <span className="text-[8.5px] sm:text-[9.5px] uppercase tracking-wider text-white/70 font-semibold block">Approval & RERA</span>
-                <span className="text-white font-bold text-[10.5px] sm:text-xs truncate block" title={project.reraNumber || project.approvalBody}>
-                  {project.approvalBody || 'RERA Verified'}
-                </span>
-                {project.reraNumber && (
-                  <span className="text-[9.5px] sm:text-[10px] text-art-gold font-bold truncate block mt-0.5" title={project.reraNumber}>
-                    {project.reraNumber}
-                  </span>
-                )}
-              </div>
-              <div className="truncate">
-                <span className="text-[8.5px] sm:text-[9.5px] uppercase tracking-wider text-white/70 font-semibold block">Scale & Elevation</span>
-                <span className="text-white font-bold text-[10.5px] sm:text-xs truncate block">
-                  {project.projectSize || 'Gated Enclave'} {project.noOfTowers ? `• ${project.noOfTowers}` : ''}
-                </span>
-                {(project.floorsHeight || project.flatsPerFloor) && (
-                  <span className="text-[9.5px] sm:text-[10px] text-white/80 font-medium truncate block mt-0.5">
-                    {[project.floorsHeight, project.flatsPerFloor].filter(Boolean).join(' • ')}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {project.floorPlan && (
-              <div className="px-2 py-1 bg-white/[0.03] rounded-sm border border-art-gold/30 text-[9.5px] sm:text-[10px] flex items-center gap-1.5">
-                <Layers size={10} className="text-art-gold shrink-0" />
-                <span className="text-white font-mono font-medium truncate">{project.floorPlan}</span>
-              </div>
-            )}
-
-            {project.features && project.features.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {project.features.slice(0, 3).map((feat, idx) => (
-                  <span
-                    key={idx}
-                    className="text-[9px] uppercase tracking-wider font-mono font-semibold px-1.5 py-0.5 bg-white/10 border border-white/20 text-white rounded-sm"
-                  >
-                    {feat}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Sleek Action Footer with accessible touch targets */}
-            <div className="pt-2 border-t border-white/15 flex items-center justify-between gap-1.5 flex-wrap mt-auto">
-              <div className="flex items-center gap-1 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setIsCalculatorOpen(true)}
-                  className="px-2.5 py-1 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border bg-art-gold/15 hover:bg-art-gold hover:text-black text-art-gold border-art-gold/40 transition-all flex items-center gap-1 cursor-pointer min-h-[30px] shadow-sm"
-                  title="Open Investment & ROI Calculator"
-                >
-                  <Calculator size={11} className="shrink-0" />
-                  <span>Calculate ROI</span>
-                </button>
-                {onToggleCompare && (
-                  <button
-                    type="button"
-                    onClick={() => onToggleCompare(project)}
-                    className={cn(
-                      "px-2 py-1 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border transition-all flex items-center gap-1 cursor-pointer min-h-[30px]",
-                      isCompared
-                        ? "bg-art-gold text-black border-art-gold shadow-[0_0_10px_rgba(197,160,89,0.3)]"
-                        : "bg-white/10 hover:bg-white/20 text-white border-white/20"
-                    )}
-                    title="Compare specifications side-by-side"
-                  >
-                    <ArrowLeftRight size={10} className={isCompared ? "text-black" : "text-art-gold"} />
-                    <span>{isCompared ? "Added" : "Compare"}</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setIsSubscribeOpen(true)}
-                  className="p-1.5 rounded-sm border bg-white/10 hover:bg-art-gold/20 text-art-gold border-white/20 transition-all cursor-pointer min-h-[30px] min-w-[30px] flex items-center justify-center"
-                  title="Subscribe to Price Alerts"
-                >
-                  <Bell size={10} />
-                </button>
-                <SocialShareButtons 
-                  propertyTitle={project.name}
-                  propertyHighlights={project.features || []}
-                  propertyLink={`${window.location.origin}/?project=${encodeURIComponent(project.id || project.name)}`}
-                />
-              </div>
-
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => onDownload(project)}
-                  className="px-2 py-1 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white hover:text-black text-white border-white/25 transition-all flex items-center gap-1 cursor-pointer min-h-[30px]"
-                >
-                  <Download size={10} />
-                  Brochure
-                </button>
+            {/* Bottom Action Footer Bar */}
+            <div className="pt-2.5 border-t border-white/15 flex items-center justify-between gap-2 flex-wrap mt-auto">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => onEnquire(project)}
-                  className="relative px-3 py-1 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-black bg-art-gold hover:bg-white text-black transition-all cursor-pointer flex items-center gap-1 shadow-[0_2px_12px_rgba(197,160,89,0.35)] min-h-[30px]"
+                  className="px-3.5 sm:px-4 py-2 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-black bg-art-gold hover:bg-white text-black transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_2px_12px_rgba(197,160,89,0.35)]"
                   title={`${inquiriesSocialCount} verified buyer inquiries on ${project.name}`}
                 >
-                  <span>Inquire</span>
-                  <span className="inline-flex items-center justify-center px-1.5 py-0.2 text-[8px] font-mono font-bold bg-black text-art-gold rounded-full border border-black/20">
+                  <span>Inquire Now</span>
+                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8px] font-mono font-bold bg-black text-art-gold rounded-full">
                     {inquiriesSocialCount}
                   </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onDownload(project)}
+                  className="px-3 sm:px-3.5 py-2 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white hover:text-black text-white border-white/25 transition-all flex items-center gap-1.5 cursor-pointer"
+                  title="Download Official Brochure"
+                >
+                  <Download size={11} />
+                  <span>Brochure</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsCalculatorOpen(true)}
+                  className="px-2.5 py-2 rounded-sm border bg-art-gold/15 hover:bg-art-gold hover:text-black text-art-gold border-art-gold/40 text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer flex items-center gap-1"
+                  title="Open Investment & ROI Calculator"
+                >
+                  <Calculator size={11} />
+                  <span className="hidden sm:inline">Calculator</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className={cn(
+                    "px-3 py-2 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border transition-all flex items-center gap-1 cursor-pointer",
+                    isExpanded
+                      ? "bg-art-gold text-black border-art-gold shadow-[0_0_10px_rgba(197,160,89,0.3)]"
+                      : "bg-white/5 hover:bg-white/15 text-white/80 hover:text-white border-white/20"
+                  )}
+                  title={isExpanded ? "Collapse specifications" : "Expand full overview, 2km amenities & specifications"}
+                >
+                  <span>{isExpanded ? "Less Details" : "Full Specifications"}</span>
+                  <ChevronDown size={11} className={cn("transition-transform duration-200", isExpanded ? "rotate-180" : "")} />
                 </button>
               </div>
             </div>
@@ -2559,15 +2627,24 @@ const ProjectCard: React.FC<{
 
 const ProjectCardSkeleton = () => {
   return (
-    <div className="group relative flex flex-col bg-[#101010] border-2 border-white overflow-hidden w-full max-w-full box-border rounded-md max-sm:rounded-lg max-sm:p-6">
-      <div className="p-3 max-sm:p-0 flex flex-col flex-grow space-y-2.5">
-        <div className="bg-white/10 h-5 w-3/4 rounded-sm shimmer-bg" />
-        <div className="bg-white/[0.04] h-10 w-full rounded-sm shimmer-bg" />
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white/[0.03] h-9 rounded-sm shimmer-bg" />
-          <div className="bg-white/[0.03] h-9 rounded-sm shimmer-bg" />
+    <div className="group relative flex flex-col md:flex-row bg-[#111111] border border-white/20 overflow-hidden w-full max-w-full box-border rounded-lg shadow-lg">
+      {/* Left Media Skeleton */}
+      <div className="w-full md:w-80 lg:w-96 xl:w-[410px] h-56 sm:h-64 md:h-auto min-h-[220px] md:min-h-[280px] bg-white/[0.04] shimmer-bg relative shrink-0" />
+      {/* Right Details Skeleton */}
+      <div className="flex-1 min-w-0 p-4 sm:p-5 md:p-6 flex flex-col space-y-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="bg-white/10 h-4 w-1/3 rounded-sm shimmer-bg" />
+          <div className="bg-art-gold/25 h-7 w-28 rounded-sm shimmer-bg" />
         </div>
-        <div className="bg-art-gold/20 h-8 w-full rounded-sm shimmer-bg" />
+        <div className="bg-white/20 h-6 sm:h-7 w-3/5 rounded-sm shimmer-bg" />
+        <div className="bg-white/[0.05] h-4 w-1/2 rounded-sm shimmer-bg" />
+        <div className="bg-white/[0.03] h-14 w-full rounded-sm shimmer-bg" />
+        <div className="flex gap-2">
+          <div className="bg-white/[0.06] h-6 w-24 rounded-sm shimmer-bg" />
+          <div className="bg-white/[0.06] h-6 w-28 rounded-sm shimmer-bg" />
+          <div className="bg-white/[0.06] h-6 w-20 rounded-sm shimmer-bg" />
+        </div>
+        <div className="bg-white/[0.04] h-10 w-full rounded-sm shimmer-bg mt-auto" />
       </div>
     </div>
   );
@@ -3080,6 +3157,63 @@ const ProjectGrid = ({
 
   const [activeFilterTab, setActiveFilterTab] = useState<'portfolio' | 'corridor' | 'asset' | 'status'>('portfolio');
 
+  // Per-page display options: default 10, options 10, 20, 30, 40, 50
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50] as const;
+
+  // Reset to first page whenever any filter or search or page size changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchQuery,
+    selectedType,
+    selectedCorridor,
+    selectedPropType,
+    selectedHeaderStatus,
+    selectedTag,
+    selectedBuilderCat,
+    pageSize
+  ]);
+
+  const totalProjects = uniqueDisplayedProjects.length;
+  const totalPages = Math.max(1, Math.ceil(totalProjects / pageSize));
+  const activePage = Math.min(currentPage, totalPages);
+  const startIndex = (activePage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalProjects);
+  const paginatedProjects = uniqueDisplayedProjects.slice(startIndex, endIndex);
+
+  const scrollToArchiveTop = () => {
+    const el = document.getElementById('portfolios-archive-anchor') || document.getElementById('projects');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const targetPage = Math.max(1, Math.min(newPage, totalPages));
+    setCurrentPage(targetPage);
+    scrollToArchiveTop();
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (activePage > 3) pages.push('...');
+      const start = Math.max(2, activePage - 1);
+      const end = Math.min(totalPages - 1, activePage + 1);
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) pages.push(i);
+      }
+      if (activePage < totalPages - 2) pages.push('...');
+      if (!pages.includes(totalPages)) pages.push(totalPages);
+    }
+    return pages;
+  };
+
   const activeFiltersCount = [
     Boolean(searchQuery.trim()),
     selectedType !== 'All',
@@ -3500,15 +3634,57 @@ const ProjectGrid = ({
             </motion.div>
           )}
         </AnimatePresence>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5 sm:gap-4 lg:gap-4.5">
+        {/* Anchor for smooth scroll when changing pages */}
+        <div id="portfolios-archive-anchor" className="scroll-mt-28" />
+
+        {/* Page Size & Portfolio Count Summary Bar */}
+        <div className="mb-4 sm:mb-5 px-4 py-3 bg-[#111111]/90 border border-white/15 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-mono text-white/70">
+              Displaying <span className="text-art-gold font-bold">{totalProjects === 0 ? 0 : startIndex + 1}–{endIndex}</span> of <span className="text-white font-bold">{totalProjects}</span> Portfolios
+            </span>
+            {totalPages > 1 && (
+              <span className="text-[9.5px] uppercase tracking-wider font-mono px-2 py-0.5 rounded-sm bg-white/10 text-white/60 border border-white/10">
+                Page {activePage} of {totalPages}
+              </span>
+            )}
+          </div>
+
+          {/* Options to view in same page: 10, 20, 30, 40, 50 */}
+          <div className="flex items-center gap-2">
+            <span className="text-[9.5px] uppercase tracking-widest text-white/60 font-mono font-bold whitespace-nowrap">
+              Per Page:
+            </span>
+            <div className="flex items-center gap-1 bg-black/60 p-1 rounded-md border border-white/10">
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <button
+                  key={`top-pagesize-${size}`}
+                  type="button"
+                  onClick={() => setPageSize(size)}
+                  className={cn(
+                    "px-2.5 py-1 text-[10px] font-mono font-bold rounded transition-all cursor-pointer",
+                    pageSize === size
+                      ? "bg-art-gold text-black border border-art-gold shadow-[0_0_10px_rgba(197,160,89,0.35)]"
+                      : "text-white/70 hover:text-white hover:bg-white/10"
+                  )}
+                  title={`Show ${size} projects per page`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Horizontal one below other project list */}
+        <div className="flex flex-col gap-5 sm:gap-6 w-full">
           {isLoading ? (
-            Array.from({ length: 8 }).map((_, i) => (
+            Array.from({ length: Math.min(pageSize, 6) }).map((_, i) => (
               <ProjectCardSkeleton key={`skeleton-${i}`} />
             ))
           ) : displayedProjects.length === 0 ? (
-            <div className="col-span-full text-center py-20 border border-dashed border-white/10 rounded-sm bg-white/[0.01] space-y-4">
-              <span className="text-art-gold uppercase tracking-[0.4em] text-[10px] block">Advisory Archive</span>
+            <div className="text-center py-20 border border-dashed border-white/10 rounded-lg bg-white/[0.01] space-y-4">
+              <span className="text-art-gold uppercase tracking-[0.4em] text-[10px] block font-mono">Advisory Archive</span>
               <p className="text-white/60 font-serif italic text-xl">No matching portraits in this specific filter combination.</p>
               <button
                 type="button"
@@ -3518,17 +3694,20 @@ const ProjectGrid = ({
                   setSelectedBuilderCat('All');
                   setSelectedPropType('All');
                   setSelectedHeaderStatus('All');
+                  setSelectedTag('All');
+                  setSearchQuery('');
                 }}
-                className="px-6 py-2.5 bg-art-gold text-black text-[10px] uppercase tracking-widest font-black rounded-sm cursor-pointer"
+                className="px-6 py-2.5 bg-art-gold text-black text-[10px] uppercase tracking-widest font-black rounded-sm cursor-pointer hover:bg-white transition-all shadow-md"
               >
                 Reset Portrait Filters
               </button>
             </div>
           ) : (
-            uniqueDisplayedProjects.map((project, idx) => (
+            paginatedProjects.map((project, idx) => (
               <ProjectCard 
-                key={project.id ? `grid-card-${project.id}-${idx}` : `grid-card-${project.name}-${idx}`} 
+                key={project.id ? `grid-card-${project.id}-${startIndex + idx}` : `grid-card-${project.name}-${startIndex + idx}`} 
                 project={project} 
+                index={startIndex + idx}
                 isAdmin={isAdmin}
                 isCompared={comparedProjectIds.includes(project.id || '') || comparedProjectIds.includes(project.name)}
                 comparedCount={comparedProjectIds.length}
@@ -3542,6 +3721,134 @@ const ProjectGrid = ({
             ))
           )}
         </div>
+
+        {/* Bottom Pagination & Navigation Controls */}
+        {totalProjects > 0 && (
+          <div className="mt-8 pt-6 border-t border-white/15 flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Left pagination details & page size quick change */}
+            <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
+              <span className="text-[10px] sm:text-[11px] font-mono text-white/60 uppercase tracking-wider">
+                Showing <span className="text-art-gold font-bold">{startIndex + 1}–{endIndex}</span> of <span className="text-white font-bold">{totalProjects}</span>
+              </span>
+              <div className="flex items-center gap-1.5 text-[9.5px] font-mono text-white/50">
+                <span>· View:</span>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <button
+                    key={`bottom-pagesize-${size}`}
+                    type="button"
+                    onClick={() => setPageSize(size)}
+                    className={cn(
+                      "px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer",
+                      pageSize === size
+                        ? "bg-art-gold text-black font-black"
+                        : "bg-white/5 text-white/60 hover:text-white hover:bg-white/15 border border-white/10"
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Pagination page controls */}
+            {totalPages > 1 && (
+              <nav aria-label="Portfolios pagination" className="flex items-center gap-1.5 flex-wrap justify-center">
+                {/* First button */}
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(1)}
+                  disabled={activePage === 1}
+                  className={cn(
+                    "px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded-sm border transition-all cursor-pointer",
+                    activePage === 1
+                      ? "bg-white/[0.02] text-white/25 border-white/5 cursor-not-allowed"
+                      : "bg-white/5 text-white/80 hover:text-white hover:bg-white/15 border-white/15"
+                  )}
+                  title="First Page"
+                >
+                  « First
+                </button>
+
+                {/* Prev button */}
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(activePage - 1)}
+                  disabled={activePage === 1}
+                  className={cn(
+                    "px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex items-center gap-1",
+                    activePage === 1
+                      ? "bg-white/[0.02] text-white/25 border-white/5 cursor-not-allowed"
+                      : "bg-white/5 text-white/80 hover:text-white hover:bg-white/15 border-white/15"
+                  )}
+                  title="Previous Page"
+                >
+                  ‹ Prev
+                </button>
+
+                {/* Page numbers */}
+                {getPageNumbers().map((pageItem, pIdx) => {
+                  if (pageItem === '...') {
+                    return (
+                      <span key={`dots-${pIdx}`} className="px-2 text-white/40 font-mono text-xs select-none">
+                        …
+                      </span>
+                    );
+                  }
+                  const pageNum = Number(pageItem);
+                  const isCurrent = pageNum === activePage;
+                  return (
+                    <button
+                      key={`page-${pageNum}`}
+                      type="button"
+                      onClick={() => handlePageChange(pageNum)}
+                      aria-current={isCurrent ? "page" : undefined}
+                      className={cn(
+                        "min-w-[32px] h-[32px] px-2 text-[11px] font-mono font-bold rounded-sm border transition-all cursor-pointer flex items-center justify-center",
+                        isCurrent
+                          ? "bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.35)]"
+                          : "bg-white/5 text-white/70 hover:text-white hover:bg-white/15 border-white/15"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                {/* Next button */}
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(activePage + 1)}
+                  disabled={activePage === totalPages}
+                  className={cn(
+                    "px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex items-center gap-1",
+                    activePage === totalPages
+                      ? "bg-white/[0.02] text-white/25 border-white/5 cursor-not-allowed"
+                      : "bg-white/5 text-white/80 hover:text-white hover:bg-white/15 border-white/15"
+                  )}
+                  title="Next Page"
+                >
+                  Next ›
+                </button>
+
+                {/* Last button */}
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={activePage === totalPages}
+                  className={cn(
+                    "px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded-sm border transition-all cursor-pointer",
+                    activePage === totalPages
+                      ? "bg-white/[0.02] text-white/25 border-white/5 cursor-not-allowed"
+                      : "bg-white/5 text-white/80 hover:text-white hover:bg-white/15 border-white/15"
+                  )}
+                  title="Last Page"
+                >
+                  Last »
+                </button>
+              </nav>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -12966,12 +13273,21 @@ export default function App() {
 
     // 4. Persist to Firestore using setDoc with merge: true so it never throws "No document to update"
     try {
-      const payload: any = {
+      const rawPayload: any = {
         ...projectWithId,
+        price: projectWithId.price,
         lastPrice: projectWithId.lastPrice || projectWithId.price,
         handoverDate: projectWithId.handoverDate || 'December 2027',
         updatedAt: serverTimestamp()
       };
+
+      // Strip all undefined values so Firestore setDoc never throws an invalid data error
+      const payload: Record<string, any> = {};
+      for (const [k, v] of Object.entries(rawPayload)) {
+        if (v !== undefined) {
+          payload[k] = v;
+        }
+      }
 
       await setDoc(doc(db, 'projects', targetDocId), payload, { merge: true });
     } catch (err) {
@@ -13086,6 +13402,28 @@ export default function App() {
         localCustom = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
       } catch {}
 
+      // Map localCustom by id and name for fast lookup
+      const localCustomMap: Record<string, Project> = {};
+      for (const item of localCustom) {
+        if (item.id) localCustomMap[item.id.toLowerCase()] = item;
+        if (item.name) localCustomMap[item.name.trim().toLowerCase()] = item;
+      }
+
+      // Preserve user's latest edited price and fields even if Firestore snapshot is delayed
+      const mergedDbDocs = dbDocs.map(doc => {
+        const localMatch = (doc.id && localCustomMap[doc.id.toLowerCase()]) ||
+                           (doc.name && localCustomMap[doc.name.trim().toLowerCase()]);
+        if (localMatch && localMatch.price) {
+          return {
+            ...doc,
+            ...localMatch,
+            price: localMatch.price,
+            lastPrice: localMatch.lastPrice || localMatch.price
+          };
+        }
+        return doc;
+      });
+
       const dbDocIds = new Set(dbDocs.map(d => d.id?.toLowerCase()).filter(Boolean));
       const dbDocNames = new Set(dbDocs.map(d => `${d.name?.trim().toLowerCase()}_${(d.type || 'Primary').toLowerCase()}`));
 
@@ -13095,9 +13433,9 @@ export default function App() {
         return true;
       });
 
-      // Combine dbDocs with filtered local custom projects
+      // Combine mergedDbDocs with filtered local custom projects
       const combinedCustom = deduplicateProjects([
-        ...dbDocs.map(autoEnrichProjectData),
+        ...mergedDbDocs.map(autoEnrichProjectData),
         ...nonDuplicateLocal.map(autoEnrichProjectData)
       ]);
 

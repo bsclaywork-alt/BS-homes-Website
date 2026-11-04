@@ -36,7 +36,7 @@ service cloud.firestore {
       allow create: if isValidId(projectId) && isValidProject(incoming());
       allow update: if isValidId(projectId) && isValidProject(incoming()) && (
         incoming().diff(existing()).affectedKeys().hasOnly([
-          'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
+          'id', 'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
           'location', 'locationTarget', 
           'zone', 'type', 'propertyType', 'builderCategory', 'builderName',
           'approvalBody', 'floorPlan', 'floorPlanImageUrl',
@@ -50,7 +50,8 @@ service cloud.firestore {
           'carCloseParking', 'balcony', 'comments', 'handedOverDate',
           'registrationStatus', 'approvedAuthority', 'seoKeywords', 'ogImage',
           'metaTitle', 'metaDescription', 'canonicalUrl',
-          'mobileImageUrl', 'mobileVideoUrl', 'createdAt', 'updatedAt'
+          'mobileImageUrl', 'mobileVideoUrl', 'unitsRemaining', 'isInventorySoldOut',
+          'organicViews', 'createdAt', 'updatedAt'
         ])
       );
       allow delete: if isValidId(projectId);
@@ -117,7 +118,11 @@ service cloud.firestore {
              (!('seoKeywords' in data) || (data.seoKeywords is list && data.seoKeywords.size() <= 30)) &&
              (!('ogImage' in data) || (data.ogImage is string && data.ogImage.size() <= 900000)) &&
              (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
-             (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 1000));
+             (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 1000)) &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+             (!('unitsRemaining' in data) || data.unitsRemaining is number) &&
+             (!('isInventorySoldOut' in data) || data.isInventorySoldOut is bool) &&
+             (!('organicViews' in data) || data.organicViews is number);
     }
 
     // Enquiries: Publicly writable (create only), admin readable
