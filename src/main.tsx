@@ -86,12 +86,29 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
-// Register service worker for offline portfolio caching & fast asset delivery
+// Disable the old service worker to prevent stale files after deployment.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
-      // Non-blocking log for offline worker registration
-      console.debug('Service Worker registered with fallback:', err);
-    });
+  window.addEventListener('load', async () => {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+
+      await Promise.all(
+        registrations.map((registration) => registration.unregister())
+      );
+
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+
+        await Promise.all(
+          cacheNames
+            .filter((name) => name.startsWith('bshomez-portfolio-'))
+            .map((name) => caches.delete(name))
+        );
+      }
+
+      console.info('BS Homez: old service worker and caches cleared.');
+    } catch (error) {
+      console.warn('BS Homez: service worker cleanup failed:', error);
+    }
   });
 }
