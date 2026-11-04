@@ -1649,15 +1649,15 @@ const ProjectCard: React.FC<{
           {Boolean(project.isInventorySoldOut || project.sticker === 'Sold Out') ? (
             <span
               key={`soldout-badge-${project.id}`}
-              className="animate-limited-badge px-3 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-black text-[9.5px] sm:text-[10px] uppercase tracking-wider rounded-sm border border-red-400/80 shadow-[0_0_8px_rgba(239,68,68,0.35)] flex items-center gap-1.5 transform-gpu origin-center"
+              className="badge-soldout-static px-2.5 sm:px-3 py-0.5 bg-red-700 text-white font-black text-[9px] sm:text-[10px] uppercase tracking-wider rounded-sm border border-red-400 shadow-sm flex items-center gap-1.5 shrink-0 whitespace-nowrap"
               title="Inventory explicitly marked as Sold Out — Zero Units Remaining"
             >
-              <span className="text-[11px]">⛔</span> SOLD OUT
+              <span className="text-[10px] sm:text-[11px]">⛔</span> SOLD OUT
             </span>
           ) : (
             <>
               {project.sticker === 'Rented Out' && (
-                <span className="px-2 py-0.5 bg-indigo-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.5)] flex items-center gap-1">
+                <span className="px-2 py-0.5 bg-indigo-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.5)] flex items-center gap-1 shrink-0 whitespace-nowrap">
                   <span>🔑</span> RENTED OUT
                 </span>
               )}
@@ -1666,7 +1666,7 @@ const ProjectCard: React.FC<{
                 project.unitsRemaining < 5 ? (
                   <span
                     key={`ltd-badge-${project.id}-${project.unitsRemaining}`}
-                    className="animate-limited-badge px-2.5 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400/80 shadow-[0_0_8px_rgba(239,68,68,0.3)] flex items-center gap-1 transform-gpu origin-center"
+                    className="animate-limited-badge px-2.5 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white font-black text-[9px] sm:text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400/80 shadow-[0_0_8px_rgba(239,68,68,0.3)] flex items-center gap-1 transform-gpu origin-center shrink-0 whitespace-nowrap"
                     title={`Only ${project.unitsRemaining} units left in inventory`}
                   >
                     <span>⚡</span> LIMITED AVAILABILITY ({project.unitsRemaining === 1 ? '1 UNIT LEFT' : `${project.unitsRemaining} UNITS LEFT`})

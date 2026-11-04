@@ -119,8 +119,36 @@
 
 .animate-limited-badge {
   animation: limitedBadgeEntrance 0.45s ease-out both,
-             limitedBadgePulse 8s ease-in-out infinite 0.45s;
+             limitedBadgePulse 8s cubic-bezier(0.4, 0, 0.2, 1) infinite 0.45s;
   transform-origin: center center;
   will-change: transform, opacity, box-shadow;
+  white-space: nowrap;
+}
+
+/* Static, high-contrast style for Sold Out to ignore pulse animation and avoid distraction */
+.badge-soldout-static {
+  animation: none !important;
+  transform: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+  white-space: nowrap;
+}
+
+/* Mobile responsive adjustments below 640px to ensure full visibility without overflow or wrapping */
+@media (max-width: 639px) {
+  .animate-limited-badge {
+    font-size: 8px !important;
+    padding: 1.5px 5px !important;
+    letter-spacing: 0.04em !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+  }
+
+  .badge-soldout-static {
+    font-size: 8px !important;
+    padding: 1.5px 5px !important;
+    letter-spacing: 0.04em !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+  }
 }
 
