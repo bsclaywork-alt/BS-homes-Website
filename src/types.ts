@@ -84,6 +84,8 @@ export interface Project {
   // SEO & Social Optimization
   metaTitle?: string;
   metaDescription?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   ogImage?: string;
   canonicalUrl?: string;
   seoKeywords?: string[];

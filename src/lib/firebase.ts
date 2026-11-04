@@ -4,11 +4,17 @@ import {
   getFirestore, 
   initializeFirestore, 
   persistentLocalCache, 
-  persistentMultipleTabManager 
+  persistentMultipleTabManager,
+  setLogLevel
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+// Set Firestore log level to error to avoid noisy internal idle stream disconnect notices
+try {
+  setLogLevel('error');
+} catch {}
 
 // Initialize Firestore with robust multi-tab persistent cache to seamlessly handle offline/intermittent network
 let firestoreInstance;
@@ -49,17 +55,21 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   const errMsg = error instanceof Error ? error.message : String(error);
   const errCode = (error as { code?: string })?.code || '';
 
-  // Gracefully handle transient connection/offline states and quota limits
+  // Gracefully handle transient connection/offline states, quota limits, and idle stream reconnects
   if (
     errCode === 'unavailable' ||
     errCode === 'failed-precondition' ||
+    errCode === 'cancelled' ||
+    errCode === '1' ||
+    errMsg.includes('CANCELLED') ||
+    errMsg.includes('Disconnecting idle stream') ||
     errMsg.includes('unavailable') ||
     errMsg.includes('offline') ||
     errMsg.includes('Quota') ||
     errMsg.includes('resource-exhausted') ||
     errMsg.includes('Could not reach Cloud Firestore backend')
   ) {
-    console.info(`Firestore operating with local/cached fallback for ${path || 'collection'}.`);
+    console.info(`Firestore listener reconnecting / cached fallback active for ${path || 'collection'}.`);
     return;
   }
 
