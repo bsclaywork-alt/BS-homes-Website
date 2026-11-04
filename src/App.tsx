@@ -2032,83 +2032,102 @@ const ProjectCard: React.FC<{
         </div>
       ) : (
         <>
-          {/* Left Column: Property Visual & Media Showcase */}
-          <div className="w-full md:w-80 lg:w-96 xl:w-[410px] shrink-0 relative overflow-hidden bg-black/80 flex flex-col justify-between min-h-[250px] md:min-h-[350px] border-b md:border-b-0 md:border-r border-white/10 group/img">
-            {/* Property Photo */}
-            <img
-              src={coverImage}
-              alt={project.name}
-              className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700 absolute inset-0 cursor-pointer"
-              onClick={() => setIsMediaViewerOpen(true)}
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/60 pointer-events-none" />
+          {/* Left Column: Property Visual & Media Showcase (Compact Half-Height) */}
+          <div className="w-full md:w-56 lg:w-64 xl:w-72 shrink-0 relative overflow-hidden bg-black/85 flex flex-col justify-between min-h-[140px] md:min-h-[175px] border-b md:border-b-0 md:border-r border-white/10 group/img">
+            {/* Property Photo for Resale/Rental/Admin, or Protected Developer Card for Online Primary */}
+            {canViewProjectImages ? (
+              <>
+                <img
+                  src={coverImage}
+                  alt={project.name}
+                  className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700 absolute inset-0 cursor-pointer"
+                  onClick={() => setIsMediaViewerOpen(true)}
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-black/60 pointer-events-none" />
+              </>
+            ) : (
+              <div 
+                onClick={() => onEnquire(project)}
+                className="w-full h-full absolute inset-0 bg-gradient-to-br from-[#1c1c1c] via-[#111111] to-[#080808] flex flex-col items-center justify-center p-3 text-center cursor-pointer select-none group/lock"
+                title="Direct Builder Portfolio - Inquire for official floor plans and verified gallery"
+              >
+                <div className="w-9 h-9 rounded-full bg-art-gold/15 border border-art-gold/40 flex items-center justify-center text-art-gold mb-1.5 group-hover/lock:scale-110 transition-transform shadow-md">
+                  <Building2 size={18} />
+                </div>
+                <span className="text-[9.5px] uppercase font-mono font-bold tracking-wider text-art-gold block">
+                  Developer Direct
+                </span>
+                <span className="text-[7.5px] uppercase font-mono text-white/50 block mt-0.5">
+                  Verified RERA Portfolio
+                </span>
+                <span className="mt-1.5 px-2 py-0.5 rounded bg-art-gold/20 text-art-gold border border-art-gold/40 text-[7.5px] font-mono uppercase tracking-wider font-bold">
+                  Inquire to View Media
+                </span>
+              </div>
+            )}
 
             {/* Top Overlays: Badges */}
-            <div className="p-3 relative z-10 flex items-start justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 bg-art-gold text-black rounded-sm shadow-md">
-                  {displayType}
-                </span>
-                <span className="text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 bg-black/75 text-white border border-white/20 rounded-sm flex items-center gap-1 backdrop-blur-sm">
-                  <MapPin size={10} className="text-art-gold shrink-0" />
+            <div className="p-2 relative z-10 flex items-start justify-between gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1 flex-wrap">
+                <span className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-black/75 text-white border border-white/20 rounded-sm flex items-center gap-1 backdrop-blur-sm">
+                  <MapPin size={9} className="text-art-gold shrink-0" />
                   {displayZone}
                 </span>
                 {project.handoverStatus && (
                   <span className={cn(
-                    "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border rounded-sm backdrop-blur-sm",
+                    "text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 border rounded-sm backdrop-blur-sm",
                     project.handoverStatus === 'EOI' && "bg-art-gold/25 border-art-gold/50 text-art-gold",
                     project.handoverStatus === 'Under Construction' && "bg-blue-600/30 border-blue-400 text-blue-200",
                     project.handoverStatus === 'Ready to Move' && "bg-emerald-600/30 border-emerald-400 text-emerald-200",
                     project.handoverStatus === 'Handed Over' && "bg-purple-600/30 border-purple-400 text-purple-200",
                     !['EOI', 'Under Construction', 'Ready to Move', 'Handed Over'].includes(project.handoverStatus) && "bg-black/60 border-white/20 text-white"
                   )}>
-                    {project.handoverStatus === 'Under Construction' ? 'Under .Construction' : project.handoverStatus}
+                    {project.handoverStatus === 'Under Construction' ? 'Under .Const' : project.handoverStatus}
                   </span>
                 )}
               </div>
 
               {/* Small Organic Visits Counter */}
               <div 
-                className="flex items-center gap-1 px-2 py-0.5 bg-black/80 border border-white/20 rounded text-[9.5px] font-mono text-white/90 backdrop-blur-sm select-none shadow"
+                className="flex items-center gap-1 px-1.5 py-0.5 bg-black/80 border border-white/20 rounded text-[8.5px] font-mono text-white/90 backdrop-blur-sm select-none shadow"
                 title={`${views.toLocaleString()} organic property views recorded`}
               >
-                <Eye size={11} className="text-art-gold shrink-0" />
+                <Eye size={10} className="text-art-gold shrink-0" />
                 <span className="font-bold text-white tracking-tight">{formatVisitsCount(views)}</span>
-                <span className="text-[8px] uppercase tracking-wider text-white/50">Visits</span>
               </div>
             </div>
 
             {/* Bottom Overlay on Image: Sold Out / Limited / Media button */}
-            <div className="p-3 relative z-10 space-y-2 mt-auto">
+            <div className="p-2 relative z-10 space-y-1.5 mt-auto">
               {/* Sold Out Badge */}
               {Boolean(project.isInventorySoldOut || project.sticker === 'Sold Out') ? (
-                <div className="badge-soldout-static px-3 py-1.5 bg-red-700/95 text-white font-black text-[10px] uppercase tracking-wider rounded-sm border border-red-400 shadow-lg flex items-center justify-center gap-1.5 w-full text-center">
+                <div className="badge-soldout-static px-2 py-1 bg-red-700/95 text-white font-black text-[9px] uppercase tracking-wider rounded-sm border border-red-400 shadow flex items-center justify-center gap-1 w-full text-center">
                   <span>⛔</span> SOLD OUT · WAITLIST ONLY
                 </div>
               ) : (
                 <>
                   {project.sticker === 'Rented Out' && (
-                    <div className="px-2.5 py-1 bg-indigo-600/95 text-white font-black text-[9.5px] uppercase tracking-wider rounded-sm border border-indigo-400 shadow flex items-center justify-center gap-1 w-full text-center">
+                    <div className="px-2 py-0.5 bg-indigo-600/95 text-white font-black text-[8.5px] uppercase tracking-wider rounded-sm border border-indigo-400 shadow flex items-center justify-center gap-1 w-full text-center">
                       <span>🔑</span> RENTED OUT
                     </div>
                   )}
                   {project.unitsRemaining !== undefined && project.unitsRemaining !== null && (
                     project.unitsRemaining < 5 ? (
-                      <div className="animate-limited-badge px-3 py-1 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white font-black text-[9.5px] uppercase tracking-wider rounded-sm border border-red-400/80 shadow-lg flex items-center justify-center gap-1 text-center">
-                        <span>⚡</span> LIMITED AVAILABILITY ({project.unitsRemaining === 1 ? '1 UNIT LEFT' : `${project.unitsRemaining} UNITS LEFT`})
+                      <div className="animate-limited-badge px-2 py-0.5 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white font-black text-[8.5px] uppercase tracking-wider rounded-sm border border-red-400/80 shadow flex items-center justify-center gap-1 text-center">
+                        <span>⚡</span> LIMITED ({project.unitsRemaining === 1 ? '1 UNIT' : `${project.unitsRemaining} UNITS`})
                       </div>
                     ) : (
-                      <div className="px-2.5 py-1 bg-black/80 text-art-gold font-mono font-bold text-[9.5px] uppercase tracking-wider rounded-sm border border-art-gold/40 text-center">
-                        <span>📦</span> {project.unitsRemaining} Units Left
+                      <div className="px-2 py-0.5 bg-black/80 text-art-gold font-mono font-bold text-[8.5px] uppercase tracking-wider rounded-sm border border-art-gold/40 text-center">
+                        <span>📦</span> {project.unitsRemaining} Left
                       </div>
                     )
                   )}
                 </>
               )}
 
-              {/* Media Bar & Floor Plan trigger */}
-              <div className="flex items-center justify-between gap-1.5 flex-wrap">
+              {/* Media Bar (Photos button hidden for online primary) */}
+              <div className="flex items-center justify-between gap-1 flex-wrap">
                 {canViewProjectImages && project.imageUrls && project.imageUrls.length > 0 && (
                   <button
                     type="button"
@@ -2116,11 +2135,11 @@ const ProjectCard: React.FC<{
                       e.stopPropagation();
                       setIsMediaViewerOpen(true);
                     }}
-                    className="px-2.5 py-1 rounded-sm text-[9.5px] font-mono font-bold bg-black/85 hover:bg-emerald-500 text-white hover:text-black border border-white/20 hover:border-emerald-400 transition-all flex items-center gap-1.5 cursor-pointer shadow"
+                    className="px-2 py-0.5 rounded-sm text-[8.5px] font-mono font-bold bg-black/85 hover:bg-emerald-500 text-white hover:text-black border border-white/20 hover:border-emerald-400 transition-all flex items-center gap-1 cursor-pointer shadow"
                     title={isAdmin && isPrimary ? "Admin View: High-Definition Photos" : "View High-Definition Photos"}
                   >
-                    <ImageIcon size={11} className="text-emerald-400" />
-                    <span>{project.imageUrls.length} HD Photos</span>
+                    <ImageIcon size={10} className="text-emerald-400" />
+                    <span>{project.imageUrls.length} Photos</span>
                   </button>
                 )}
                 {(project.videoUrl || project.mobileVideoUrl) && (
@@ -2130,7 +2149,7 @@ const ProjectCard: React.FC<{
                       e.stopPropagation();
                       setIsMediaViewerOpen(true);
                     }}
-                    className="px-2.5 py-1 rounded-sm text-[9.5px] font-mono font-bold bg-black/85 hover:bg-purple-500 text-white hover:text-black border border-white/20 hover:border-purple-400 transition-all flex items-center gap-1 cursor-pointer shadow"
+                    className="px-2 py-0.5 rounded-sm text-[8.5px] font-mono font-bold bg-black/85 hover:bg-purple-500 text-white hover:text-black border border-white/20 hover:border-purple-400 transition-all flex items-center gap-1 cursor-pointer shadow"
                     title="Watch Verified Video Walkthrough"
                   >
                     <span>🎥</span>
@@ -2138,216 +2157,160 @@ const ProjectCard: React.FC<{
                   </button>
                 )}
                 {project.availableFrom && (
-                  <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-cyan-950/90 text-cyan-300 border border-cyan-500/40">
-                    🗓️ From {project.availableFrom}
+                  <span className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold bg-cyan-950/90 text-cyan-300 border border-cyan-500/40">
+                    🗓️ {project.availableFrom}
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Right Column: Complete Details, Writeup, Amenities & Action Bar */}
-          <div className="flex-1 min-w-0 p-4 sm:p-5 md:p-6 flex flex-col justify-between space-y-3.5 bg-gradient-to-b from-[#131313] to-[#0c0c0c]">
+          {/* Right Column: Complete Details, Writeup, Amenities & Action Bar (Compact Half-Height) */}
+          <div className="flex-1 min-w-0 p-3 sm:p-3.5 md:p-4 flex flex-col justify-between space-y-2 bg-gradient-to-b from-[#131313] to-[#0c0c0c]">
             {/* 1. PROJECT NAME FIRST */}
-            <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-2.5">
+            <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-1.5">
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-serif text-white font-bold italic leading-tight group-hover:text-art-gold transition-colors duration-300 tracking-tight break-words">
+                <h3 className="text-base sm:text-lg md:text-xl font-serif text-white font-bold italic leading-tight group-hover:text-art-gold transition-colors duration-200 tracking-tight break-words">
                   {project.name}
                 </h3>
-                <div className="flex items-center gap-2 flex-wrap mt-1 text-[9px] sm:text-[10px]">
+                <div className="flex items-center gap-1.5 flex-wrap mt-0.5 text-[8.5px] sm:text-[9.5px]">
                   <span className="text-art-gold uppercase tracking-wider font-extrabold">
                     {displayPropertyType} {project.segment ? `• ${project.segment}` : ''}
                   </span>
                   {project.builderName && (
-                    <span className="px-2 py-0.5 rounded-sm bg-white/10 text-white font-mono text-[9px] font-semibold">
+                    <span className="px-1.5 py-0.5 rounded-sm bg-white/10 text-white font-mono text-[8.5px] font-semibold">
                       {project.builderName} {project.builderCategory ? `(Cat ${project.builderCategory})` : ''}
-                    </span>
-                  )}
-                  {project.configuration && project.configuration.length > 0 && (
-                    <span className="text-white/80 font-mono font-semibold uppercase tracking-wider">
-                      {project.configuration.join(' | ')}
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Compare & Admin Controls */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {onToggleCompare && (
+              {/* Admin Controls */}
+              {isAdmin && (
+                <div className="flex items-center gap-1 shrink-0">
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleCompare(project);
+                    onClick={() => {
+                      setEditDraft({ ...project });
+                      setIsEditingCard(!isEditingCard);
                     }}
-                    className={cn(
-                      "px-2.5 py-1 rounded-sm text-[9.5px] uppercase tracking-wider font-bold border transition-all flex items-center gap-1 cursor-pointer",
-                      isCompared
-                        ? "bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.3)]"
-                        : "bg-white/10 hover:bg-white/20 text-white border-white/20"
-                    )}
-                    title={isCompared ? "Remove from comparison" : "Add to side-by-side comparison (up to 3)"}
+                    className="px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 flex items-center gap-1 cursor-pointer transition-colors"
+                    title="Edit Project Data"
                   >
-                    <ArrowLeftRight size={10} className={isCompared ? "text-black" : "text-art-gold"} />
-                    <span>{isCompared ? "✓ Compared" : "+ Compare"}</span>
+                    <Edit size={9} /> Edit
                   </button>
-                )}
-
-                {isAdmin && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditDraft({ ...project });
-                        setIsEditingCard(!isEditingCard);
-                      }}
-                      className="px-2 py-1 rounded-sm text-[9px] uppercase tracking-wider font-black bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 flex items-center gap-1 cursor-pointer transition-colors"
-                      title="Edit Project Data"
-                    >
-                      <Edit size={10} /> Edit Data
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onTogglePause(project)}
-                      className={cn(
-                        "px-2 py-1 rounded-sm text-[9px] uppercase tracking-wider font-black border cursor-pointer transition-colors",
-                        project.isPaused ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-white/5 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
-                      )}
-                      title={project.isPaused ? "Unhide project" : "Hide project"}
-                    >
-                      {project.isPaused ? 'Unhide' : 'Hide'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDeleteProject(project)}
-                      className="px-2 py-1 rounded-sm text-[9px] uppercase tracking-wider font-black bg-white/5 hover:bg-red-500/20 text-red-400 border border-red-500/30 cursor-pointer transition-colors"
-                      title="Delete project"
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => onTogglePause(project)}
+                    className={cn(
+                      "px-1.5 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black border cursor-pointer transition-colors",
+                      project.isPaused ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-white/5 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
+                    )}
+                    title={project.isPaused ? "Unhide project" : "Hide project"}
+                  >
+                    {project.isPaused ? 'Unhide' : 'Hide'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteProject(project)}
+                    className="px-1.5 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-white/5 hover:bg-red-500/20 text-red-400 border border-red-500/30 cursor-pointer transition-colors"
+                    title="Delete project"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* 2. PRICING SECOND (Directly following Project Name) */}
-            <div className="flex items-center justify-between gap-3 flex-wrap bg-gradient-to-r from-black/90 via-black/80 to-transparent border border-art-gold/50 px-3.5 py-2 rounded-sm shadow-md">
+            <div className="flex items-center justify-between gap-2 flex-wrap bg-gradient-to-r from-black/90 via-black/80 to-transparent border border-art-gold/40 px-2.5 py-1.5 rounded-sm shadow-sm">
               <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="text-[10px] sm:text-[11px] uppercase tracking-widest text-white/70 font-mono font-bold">
+                <span className="text-[9px] uppercase tracking-widest text-white/60 font-mono font-bold">
                   Price:
                 </span>
-                <span className="text-lg sm:text-xl md:text-2xl font-mono font-black text-art-gold tracking-tight leading-tight">
+                <span className="text-base sm:text-lg font-mono font-black text-art-gold tracking-tight leading-tight">
                   {formattedMainPrice}
                 </span>
-                <span className="text-[8.5px] sm:text-[9px] uppercase tracking-wider text-white/70 font-mono font-semibold pl-2 border-l border-white/20">
+                <span className="text-[8px] uppercase tracking-wider text-white/65 font-mono font-semibold pl-1.5 border-l border-white/20">
                   * Conditions Apply
                 </span>
+                {project.configuration && project.configuration.length > 0 && (
+                  <span className="text-white/80 font-mono font-semibold uppercase text-[8.5px] pl-1.5 border-l border-white/20">
+                    {project.configuration.join(' | ')}
+                  </span>
+                )}
               </div>
 
               {/* Handover quick pill */}
-              <div className="flex items-center gap-2 text-[9.5px] sm:text-[10.5px] font-mono text-white/80">
-                <span className="px-2.5 py-0.5 rounded bg-white/10 text-white/90 border border-white/15">
+              <div className="flex items-center gap-1.5 text-[9px] font-mono text-white/80">
+                <span className="px-2 py-0.5 rounded bg-white/10 text-white/90 border border-white/15">
                   🗓️ {effectiveHandoverDate}
                 </span>
               </div>
             </div>
 
-            {/* Unified Location, Last Price & Handover Strip */}
-            <div className="p-2 sm:p-2.5 bg-white/[0.03] border border-white/15 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] sm:text-[11px]">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <MapPin size={13} className="text-art-gold shrink-0" />
-                <span className="text-xs sm:text-sm font-semibold text-white break-words">
+            {/* Unified Location & Last Price Strip */}
+            <div className="px-2.5 py-1 bg-white/[0.025] border border-white/15 rounded-sm flex items-center justify-between gap-2 text-[9.5px] sm:text-[10px]">
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                <MapPin size={11} className="text-art-gold shrink-0" />
+                <span className="font-semibold text-white truncate">
                   {project.location}
                 </span>
                 <a
                   href={googleMapsSearchUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[8.5px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-0.5 font-mono font-bold transition-colors px-2 py-0.5 bg-art-gold/15 border border-art-gold/40 rounded-sm shrink-0"
+                  className="text-[8px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-0.5 font-mono font-bold transition-colors px-1.5 py-0.5 bg-art-gold/15 border border-art-gold/40 rounded shrink-0"
                 >
-                  <ExternalLink size={9} /> Map
+                  <ExternalLink size={8} /> Map
                 </a>
               </div>
 
-              <div className="flex items-center gap-2 text-[9.5px] sm:text-[10.5px] font-mono shrink-0 border-t sm:border-t-0 sm:border-l border-white/15 pt-1 sm:pt-0 sm:pl-2.5">
-                <span className="text-white font-black tracking-tight" title="Last Verified Price">
+              <div className="flex items-center gap-1.5 text-[9px] font-mono shrink-0 text-white/70">
+                <span className="text-white font-bold" title="Last Verified Price">
                   {effectiveLastPrice}
                 </span>
-                <span className="text-white/40">•</span>
-                <span className="text-white/90 font-semibold">
-                  {effectiveHandoverDate}
-                </span>
               </div>
             </div>
 
-            {/* Curated Writeup (Project Overview & Highlights in Decent Typography) */}
+            {/* Curated Writeup (Compact 1-2 line clamp) */}
             {project.description && (
-              <div className="bg-white/[0.025] p-3 rounded-sm border border-white/15 space-y-1.5">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider text-art-gold font-extrabold">
-                    Overview &amp; Corridor Highlights
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleToggleAmenities}
-                    className={cn(
-                      "text-[9px] sm:text-[9.5px] uppercase tracking-wider font-bold cursor-pointer transition-all px-2.5 py-0.5 rounded border flex items-center gap-1.5 shrink-0",
-                      showNearbyAmenities
-                        ? "bg-emerald-500 text-black border-emerald-400 font-black shadow-[0_0_10px_rgba(16,185,129,0.35)]"
-                        : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40"
-                    )}
-                    title="Toggle Google Search Grounding to find verified schools, hospitals, and transit within 2km"
-                  >
-                    <Compass size={11} className={showNearbyAmenities ? "text-black animate-spin" : "text-emerald-400"} />
-                    <span>{showNearbyAmenities ? "Hide 2km Amenities" : "Nearby (2km Radius)"}</span>
-                    {isLoadingAmenities && <Loader2 size={10} className="animate-spin ml-0.5" />}
-                  </button>
-                </div>
-                <p className="text-xs sm:text-[13px] text-white/85 font-sans leading-relaxed line-clamp-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] text-white/80 font-sans leading-tight line-clamp-1 flex-1">
                   {project.description}
                 </p>
+                <button
+                  type="button"
+                  onClick={handleToggleAmenities}
+                  className={cn(
+                    "text-[8px] uppercase tracking-wider font-bold cursor-pointer transition-all px-2 py-0.5 rounded border flex items-center gap-1 shrink-0",
+                    showNearbyAmenities
+                      ? "bg-emerald-500 text-black border-emerald-400 font-black shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                      : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40"
+                  )}
+                  title="Toggle Google Search Grounding to find verified schools, hospitals, and transit within 2km"
+                >
+                  <Compass size={10} className={showNearbyAmenities ? "text-black animate-spin" : "text-emerald-400"} />
+                  <span>{showNearbyAmenities ? "Hide 2km" : "Nearby 2km"}</span>
+                  {isLoadingAmenities && <Loader2 size={9} className="animate-spin" />}
+                </button>
               </div>
             )}
 
-            {/* Curated Lifestyle Amenities in Decent Fonts */}
+            {/* Curated Lifestyle Amenities Top 4 */}
             {project.features && project.features.length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[9px] uppercase tracking-widest text-white/50 font-mono block">
-                  Curated Amenities &amp; Lifestyle Infrastructure
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {project.features.slice(0, 5).map((feat, idx) => (
-                    <span
-                      key={idx}
-                      className="text-[10.5px] sm:text-xs font-sans font-medium text-white/90 bg-white/[0.06] hover:bg-white/10 border border-white/15 px-2.5 py-1 rounded-sm flex items-center gap-1.5 transition-colors"
-                    >
-                      <Sparkles size={10} className="text-art-gold shrink-0" />
-                      <span>{feat}</span>
-                    </span>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-1">
+                {project.features.slice(0, 4).map((feat, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[9.5px] font-sans font-medium text-white/85 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-sm flex items-center gap-1"
+                  >
+                    <Sparkles size={8} className="text-art-gold shrink-0" />
+                    <span>{feat}</span>
+                  </span>
+                ))}
               </div>
             )}
-
-            {/* Quick Micro-Specs Strip */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2 bg-white/[0.025] border border-white/10 rounded-sm font-mono text-[9px] sm:text-[10px]">
-              <div>
-                <span className="text-white/50 block text-[7.5px] sm:text-[8px] uppercase">RERA / Approval</span>
-                <span className="text-art-gold font-bold truncate block">{project.approvalBody || 'RERA Verified'}</span>
-              </div>
-              <div>
-                <span className="text-white/50 block text-[7.5px] sm:text-[8px] uppercase">RERA No.</span>
-                <span className="text-white font-medium truncate block">{project.reraNumber || 'PRM/KA/RERA Verified'}</span>
-              </div>
-              <div>
-                <span className="text-white/50 block text-[7.5px] sm:text-[8px] uppercase">Scale</span>
-                <span className="text-white font-medium truncate block">{project.projectSize || project.suba || 'Gated Enclave'}</span>
-              </div>
-              <div>
-                <span className="text-white/50 block text-[7.5px] sm:text-[8px] uppercase">Elevation</span>
-                <span className="text-white font-medium truncate block">{project.floorsHeight || project.noOfTowers || 'Landmark Towers'}</span>
-              </div>
-            </div>
 
             {/* Expandable Rich Specifications Drawer */}
             <AnimatePresence>
@@ -2627,24 +2590,24 @@ const ProjectCard: React.FC<{
 
 const ProjectCardSkeleton = () => {
   return (
-    <div className="group relative flex flex-col md:flex-row bg-[#111111] border border-white/20 overflow-hidden w-full max-w-full box-border rounded-lg shadow-lg">
+    <div className="group relative flex flex-col md:flex-row bg-[#111111] border border-white/20 overflow-hidden w-full max-w-full box-border rounded-lg shadow-md">
       {/* Left Media Skeleton */}
-      <div className="w-full md:w-80 lg:w-96 xl:w-[410px] h-56 sm:h-64 md:h-auto min-h-[220px] md:min-h-[280px] bg-white/[0.04] shimmer-bg relative shrink-0" />
+      <div className="w-full md:w-56 lg:w-64 xl:w-72 h-36 sm:h-44 md:h-auto min-h-[140px] md:min-h-[175px] bg-white/[0.04] shimmer-bg relative shrink-0" />
       {/* Right Details Skeleton */}
-      <div className="flex-1 min-w-0 p-4 sm:p-5 md:p-6 flex flex-col space-y-3.5">
-        <div className="flex items-center justify-between gap-3">
+      <div className="flex-1 min-w-0 p-3 sm:p-3.5 md:p-4 flex flex-col space-y-2">
+        <div className="flex items-center justify-between gap-2">
           <div className="bg-white/10 h-4 w-1/3 rounded-sm shimmer-bg" />
-          <div className="bg-art-gold/25 h-7 w-28 rounded-sm shimmer-bg" />
+          <div className="bg-art-gold/25 h-5 w-20 rounded-sm shimmer-bg" />
         </div>
-        <div className="bg-white/20 h-6 sm:h-7 w-3/5 rounded-sm shimmer-bg" />
-        <div className="bg-white/[0.05] h-4 w-1/2 rounded-sm shimmer-bg" />
-        <div className="bg-white/[0.03] h-14 w-full rounded-sm shimmer-bg" />
-        <div className="flex gap-2">
-          <div className="bg-white/[0.06] h-6 w-24 rounded-sm shimmer-bg" />
-          <div className="bg-white/[0.06] h-6 w-28 rounded-sm shimmer-bg" />
-          <div className="bg-white/[0.06] h-6 w-20 rounded-sm shimmer-bg" />
+        <div className="bg-white/20 h-5 w-1/2 rounded-sm shimmer-bg" />
+        <div className="bg-white/[0.05] h-3.5 w-2/5 rounded-sm shimmer-bg" />
+        <div className="bg-white/[0.03] h-6 w-full rounded-sm shimmer-bg" />
+        <div className="flex gap-1.5">
+          <div className="bg-white/[0.06] h-4 w-16 rounded-sm shimmer-bg" />
+          <div className="bg-white/[0.06] h-4 w-20 rounded-sm shimmer-bg" />
+          <div className="bg-white/[0.06] h-4 w-14 rounded-sm shimmer-bg" />
         </div>
-        <div className="bg-white/[0.04] h-10 w-full rounded-sm shimmer-bg mt-auto" />
+        <div className="bg-white/[0.04] h-7 w-full rounded-sm shimmer-bg mt-auto" />
       </div>
     </div>
   );
@@ -3056,16 +3019,6 @@ const ProjectGrid = ({
   const [selectedHeaderStatus, setSelectedHeaderStatus] = useState<'All' | 'EOI' | 'Under Construction' | 'Ready to Move' | 'Handed Over'>('All');
   const [selectedTag, setSelectedTag] = useState<string>('All');
 
-  const quickProjectTags = [
-    { id: 'All', label: 'All Attributes' },
-    { id: 'Vastu-Compliant', label: 'Vastu-Compliant' },
-    { id: 'Corner Units', label: 'Corner Units' },
-    { id: 'Sea-view', label: 'Sea-view / Lakefront' },
-    { id: 'Penthouse', label: 'Penthouse / Duplex' },
-    { id: 'Gated Community', label: 'Gated Community' },
-    { id: 'High ROI', label: 'High ROI' }
-  ];
-
   const portfolioTypes: Array<'All' | 'Primary' | 'Resale' | 'Rental'> = ['All', 'Primary', 'Resale', 'Rental'];
   const corridors: Array<string> = [
     'All',
@@ -3155,7 +3108,6 @@ const ProjectGrid = ({
 
   const uniqueDisplayedProjects = deduplicateProjects(displayedProjects);
 
-  const [activeFilterTab, setActiveFilterTab] = useState<'portfolio' | 'corridor' | 'asset' | 'status'>('portfolio');
 
   // Per-page display options: default 10, options 10, 20, 30, 40, 50
   const [pageSize, setPageSize] = useState<number>(10);
@@ -3228,450 +3180,131 @@ const ProjectGrid = ({
       <div className="absolute left-12 top-0 w-px h-full bg-white/5 hidden lg:block" />
       
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 lg:gap-8 mb-5 sm:mb-6">
-          <div>
-            <span className="text-art-gold text-[9.5px] sm:text-[10px] uppercase tracking-[0.35em] sm:tracking-[0.5em] font-black block mb-2 sm:mb-3">Archive / Portfolios</span>
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-serif text-white tracking-tight italic">
-              Artisanal <span className="not-italic text-art-gold">Portraits.</span>
-            </h2>
-          </div>
-          <div className="flex flex-col sm:items-end gap-2 pb-2 sm:pb-3 border-b border-art-gold/20">
-            <p className="text-white/60 uppercase tracking-[0.16em] sm:tracking-[0.2em] font-bold text-[10.5px] sm:text-xs text-left sm:text-right">
-              Whitefield · Hoskote · Varthur · Gunjur · Hosa Road · Kasavanahalli · Sarjapur · Electronic City · Marathalli · Bellandur
-            </p>
-            {isAdmin && (
-              <div className="flex flex-wrap items-center gap-2">
-                {onToggleShowHidden && (
+        {/* Anchor for smooth scroll when changing pages */}
+        <div id="portfolios-archive-anchor" className="scroll-mt-40" />
+
+        {/* Frozen Sticky Header: Artisanal Portraits Title, Corridors, Search & Pagination */}
+        <div className="sticky top-[50px] sm:top-[56px] z-30 bg-[#0c0c0c]/95 backdrop-blur-md pb-2 pt-2 border-b border-art-gold/30 shadow-[0_10px_35px_rgba(0,0,0,0.85)] -mx-3 sm:-mx-6 md:-mx-10 px-3 sm:px-6 md:px-10 mb-4 transition-all">
+          {/* Top Row: Section Title, Corridor Breadcrumbs & Admin Actions */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 mb-2 border-b border-white/10">
+            <div>
+              <span className="text-art-gold text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.25em] sm:tracking-[0.35em] font-black block">Archive / Portfolios</span>
+              <h2 className="text-lg sm:text-2xl md:text-3xl font-serif text-white tracking-tight italic leading-tight">
+                Artisanal <span className="not-italic text-art-gold">Portraits.</span>
+              </h2>
+            </div>
+            <div className="flex flex-col sm:items-end gap-1">
+              <p className="text-white/60 uppercase tracking-[0.12em] sm:tracking-[0.16em] font-bold text-[9px] sm:text-[10px] text-left sm:text-right hidden sm:block">
+                Whitefield · Hoskote · Varthur · Gunjur · Hosa Road · Kasavanahalli · Sarjapur · Electronic City · Bellandur
+              </p>
+              {isAdmin && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {onToggleShowHidden && (
+                    <button
+                      type="button"
+                      onClick={onToggleShowHidden}
+                      className={cn(
+                        "px-2.5 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.14em] font-black border transition-all cursor-pointer",
+                        showHidden
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
+                          : "bg-white/5 text-white/60 border-white/15 hover:text-white"
+                      )}
+                    >
+                      {showHidden ? `Hide (${hiddenCount})` : `Show Hidden (${hiddenCount})`}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={onToggleShowHidden}
-                    className={cn(
-                      "px-3 py-2 rounded-sm text-[9.5px] uppercase tracking-[0.18em] font-black border transition-all cursor-pointer",
-                      showHidden
-                        ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
-                        : "bg-white/5 text-white/60 border-white/15 hover:text-white"
-                    )}
+                    onClick={onOpenNewProjectModal}
+                    className="bg-art-gold hover:bg-white text-black px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-[0_0_15px_rgba(197,160,89,0.3)] flex items-center gap-1 cursor-pointer w-max"
                   >
-                    {showHidden ? `Hide Hidden (${hiddenCount})` : `Show Hidden (${hiddenCount})`}
+                    <Sparkles size={11} />
+                    + Add Project
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Portfolios Top Search Bar */}
+          <div className="mb-2 p-2 sm:p-2.5 bg-black/85 border border-white/20 rounded-md shadow-md">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="relative flex-1 flex items-center">
+                <Search size={15} className="absolute left-2.5 text-art-gold shrink-0 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by project name, corridor (Whitefield, Hoskote...), 2/3/4 BHK, amenities, RERA..."
+                  className="w-full bg-white/[0.05] border border-white/20 focus:border-art-gold text-white placeholder-white/40 text-xs sm:text-[13px] pl-8 pr-7 py-1.5 sm:py-2 rounded-sm outline-none transition-all font-sans"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 text-white/50 hover:text-white transition-colors p-1 cursor-pointer"
+                    title="Clear search"
+                  >
+                    <X size={13} />
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={onOpenNewProjectModal}
-                  className="bg-art-gold hover:bg-white text-black px-4 py-2 rounded-sm text-[9.5px] uppercase tracking-[0.2em] font-black transition-all shadow-[0_0_20px_rgba(197,160,89,0.3)] flex items-center gap-1.5 cursor-pointer w-max"
-                >
-                  <Sparkles size={13} />
-                  + Add Project
-                </button>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Portfolios Top Search Bar */}
-        <div className="mb-4 p-2.5 sm:p-3.5 bg-black/80 border border-white/20 rounded-md shadow-[0_4px_25px_rgba(0,0,0,0.6)]">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-            <div className="relative flex-1 flex items-center">
-              <Search size={16} className="absolute left-3 text-art-gold shrink-0 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search portfolios by project name, corridor (Whitefield, Hoskote...), 2/3/4 BHK, amenities, RERA..."
-                className="w-full bg-white/[0.05] border border-white/20 focus:border-art-gold text-white placeholder-white/40 text-xs sm:text-sm pl-9 pr-8 py-2 sm:py-2.5 rounded-sm outline-none transition-all font-sans"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 text-white/50 hover:text-white transition-colors p-1 cursor-pointer"
-                  title="Clear search"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-mono font-bold px-2.5 py-1.5 bg-white/5 border border-white/15 text-white/80 rounded-sm">
-                <span className="text-art-gold font-black">{displayedProjects.length}</span> Portfolios
-              </span>
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="text-[9.5px] uppercase tracking-wider text-art-gold hover:text-white font-mono cursor-pointer px-2.5 py-1.5 border border-art-gold/30 rounded-sm bg-art-gold/10 transition-colors"
-                >
-                  Clear Search
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Quick-Filter Tag Bar under #projects */}
-        <div className="mb-4 p-3 sm:p-3.5 bg-black/60 border border-white/10 rounded-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-            <div className="flex items-center gap-1.5">
-              <Sparkles size={12} className="text-art-gold" />
-              <span className="text-[9.5px] sm:text-[10px] uppercase tracking-[0.2em] text-art-gold font-bold">
-                Quick-Filter Portfolio Attributes (Sea-view · Corner Units · Vastu-Compliant · Penthouses)
-              </span>
-            </div>
-            {selectedTag !== 'All' && (
-              <button
-                type="button"
-                onClick={() => setSelectedTag('All')}
-                className="text-[9px] uppercase tracking-widest text-white/50 hover:text-art-gold transition-colors font-mono cursor-pointer self-start sm:self-auto"
-              >
-                Clear Attribute Filter (✕ {selectedTag})
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {quickProjectTags.map(tag => (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => setSelectedTag(tag.id)}
-                className={cn(
-                  "px-3 py-1.5 text-[9.5px] uppercase tracking-wider font-mono font-bold rounded-sm border transition-all cursor-pointer whitespace-nowrap",
-                  selectedTag === tag.id
-                    ? "bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.4)] scale-[1.02]"
-                    : "bg-white/[0.03] text-white/70 border-white/10 hover:border-art-gold/50 hover:text-white"
+              <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-mono font-bold px-2 py-1 bg-white/5 border border-white/15 text-white/80 rounded-sm">
+                  <span className="text-art-gold font-black">{displayedProjects.length}</span> Portfolios
+                </span>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="text-[9px] uppercase tracking-wider text-art-gold hover:text-white font-mono cursor-pointer px-2 py-1 border border-art-gold/30 rounded-sm bg-art-gold/10 transition-colors"
+                  >
+                    Clear
+                  </button>
                 )}
-              >
-                {tag.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Dedicated Filter Category Tabs (Separate Tabs - Not Stacked Scrolling) */}
-        <div className="mb-8 bg-white/[0.02] border border-white/10 rounded-sm overflow-hidden">
-          {/* Tab Header Strip */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 bg-black/40 p-2">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full sm:w-auto py-0.5">
-              {[
-                { id: 'portfolio', label: `01. Portfolio Type (${selectedType})` },
-                { id: 'corridor', label: `02. Location Corridor (${selectedCorridor})` },
-                { id: 'asset', label: `03. Property Type (${selectedPropType === 'All' ? 'All' : selectedPropType === 'Plot' ? 'Plots' : selectedPropType === 'Apartment' ? 'Apartments' : 'Villas'})` },
-                { id: 'status', label: `04. Present Status (${selectedHeaderStatus})` }
-              ].map((tabItem) => (
-                <button
-                  key={tabItem.id}
-                  type="button"
-                  onClick={() => setActiveFilterTab(tabItem.id as any)}
-                  className={cn(
-                    "px-4 py-2.5 text-[10px] uppercase tracking-[0.16em] font-black rounded-sm transition-all cursor-pointer whitespace-nowrap border",
-                    activeFilterTab === tabItem.id
-                      ? "bg-art-gold text-black border-art-gold shadow-[0_0_15px_rgba(197,160,89,0.3)]"
-                      : "bg-white/[0.03] text-white/60 border-white/10 hover:text-white hover:border-white/25"
-                  )}
-                >
-                  {tabItem.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {onOpenCompareModal && (
-                <button
-                  type="button"
-                  onClick={onOpenCompareModal}
-                  className={cn(
-                    "px-3.5 py-2 text-[10px] uppercase tracking-[0.16em] font-black rounded-sm transition-all cursor-pointer flex items-center gap-1.5 border",
-                    comparedProjectIds.length > 0
-                      ? "bg-art-gold text-black border-art-gold shadow-[0_0_15px_rgba(197,160,89,0.3)] animate-pulse"
-                      : "bg-white/[0.04] text-white/70 hover:text-white border-white/10 hover:border-white/20"
-                  )}
-                  title="Open side-by-side comparison matrix"
-                >
-                  <ArrowLeftRight size={12} className={comparedProjectIds.length > 0 ? "text-black" : "text-art-gold"} />
-                  <span>Compare ({comparedProjectIds.length}/3)</span>
-                </button>
-              )}
-
-              {activeFiltersCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedType('All');
-                    setSelectedCorridor('All');
-                    setSelectedPropType('All');
-                    setSelectedHeaderStatus('All');
-                    setSelectedTag('All');
-                  }}
-                  className="px-3.5 py-2 text-[9px] uppercase tracking-widest font-black text-art-gold hover:text-white border border-art-gold/30 rounded-sm cursor-pointer"
-                >
-                  Reset All ({activeFiltersCount})
-                </button>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* Active Filter Tab Content Panel */}
-          <div className="p-5 sm:p-6">
-            {activeFilterTab === 'portfolio' && (
-              <div>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black block mb-3">
-                  Select Portfolio Category (All · Primary · Resale · Rental)
-                </span>
-                <div className="flex flex-wrap items-center gap-2">
-                  {portfolioTypes.map(typeItem => (
-                    <button
-                      key={typeItem}
-                      type="button"
-                      onClick={() => setSelectedType(typeItem)}
-                      className={cn(
-                        "px-6 py-3 text-[10px] uppercase tracking-[0.18em] font-black rounded-sm transition-all cursor-pointer whitespace-nowrap border",
-                        selectedType === typeItem
-                          ? "bg-art-gold text-black border-art-gold shadow-[0_0_20px_rgba(197,160,89,0.3)]"
-                          : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:border-white/30"
-                      )}
-                    >
-                      {typeItem === 'All' ? 'All Portfolios' : typeItem}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {activeFilterTab === 'corridor' && (
-              <div>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black block mb-3">
-                  Select Micro-Market Corridor
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {corridors.map(corridor => (
-                    <button
-                      key={corridor}
-                      type="button"
-                      onClick={() => setSelectedCorridor(corridor)}
-                      className={cn(
-                        "px-4 py-2.5 text-[10px] uppercase tracking-[0.16em] font-black rounded-sm border transition-all cursor-pointer whitespace-nowrap",
-                        selectedCorridor === corridor
-                          ? "bg-art-gold text-black border-art-gold shadow-[0_0_20px_rgba(197,160,89,0.3)]"
-                          : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:border-white/30"
-                      )}
-                    >
-                      {corridor === 'All' ? 'All Corridors' : corridor}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {activeFilterTab === 'asset' && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black">
-                    Select Property Asset Type (Apartments · Villas · Plots)
-                  </span>
-                  {selectedPropType === 'Plot' && (
-                    <span className="text-[9px] font-mono uppercase text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-sm border border-emerald-500/30">
-                      Plotted Land &amp; Villa Plots Active
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {propertyTypesList.map(pt => (
-                    <button
-                      key={pt}
-                      type="button"
-                      onClick={() => setSelectedPropType(pt)}
-                      className={cn(
-                        "px-5 py-2.5 text-[10px] uppercase tracking-[0.18em] font-black rounded-sm border transition-all cursor-pointer whitespace-nowrap",
-                        selectedPropType === pt
-                          ? "bg-art-gold text-black border-art-gold shadow-[0_0_20px_rgba(197,160,89,0.3)]"
-                          : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:border-white/30"
-                      )}
-                    >
-                      {pt === 'All' ? 'All Asset Types' : pt === 'Plot' ? 'Plots (Villa Plots & Plotted Land)' : pt === 'Apartment' ? 'Apartments' : 'Villas'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeFilterTab === 'status' && (
-              <div>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black block mb-3">
-                  Select Present Handover Status (EOI · Under .Construction · Ready To Move · Handed Over)
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                  {statusHeaders.map(header => (
-                    <button
-                      key={header.key}
-                      type="button"
-                      onClick={() => setSelectedHeaderStatus(header.key)}
-                      className={cn(
-                        "py-3 px-4 text-[10px] uppercase tracking-[0.18em] font-black rounded-sm border transition-all cursor-pointer text-center whitespace-nowrap",
-                        selectedHeaderStatus === header.key
-                          ? "bg-art-gold text-black border-art-gold shadow-[0_0_15px_rgba(197,160,89,0.25)]"
-                          : "bg-black/40 text-white/60 border-white/10 hover:text-white hover:border-white/25"
-                      )}
-                    >
-                      {header.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Dynamic Portfolio Commission Banners for Primary, Resale & Rental */}
-        <AnimatePresence mode="wait">
-          {selectedType === 'Resale' && (
-            <motion.div
-              key="resale-commission-banner"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="mb-8 p-5 sm:p-6 bg-gradient-to-r from-art-gold/20 via-art-gold/10 to-transparent border border-art-gold/50 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_0_30px_rgba(197,160,89,0.15)]"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-sm bg-art-gold text-black flex items-center justify-center shrink-0 font-serif italic text-xl font-black">
-                  2%
-                </div>
-                <div>
-                  <span className="text-[9px] uppercase tracking-[0.3em] text-art-gold font-black block mb-1">
-                    Resale Advisory Mandate • Transparent Brokerage Terms
-                  </span>
-                  <h4 className="text-lg sm:text-2xl font-serif italic text-white">
-                    2% Commission on Successful Sale
-                  </h4>
-                  <p className="text-[11px] text-white/65 mt-0.5 font-sans">
-                    End-to-end title verification, Khata transfer, legal documentation, and direct owner-to-buyer closure support. **
-                  </p>
-                </div>
-              </div>
-              <span className="px-4 py-2 bg-art-gold text-black text-[9px] uppercase tracking-[0.25em] font-black rounded-sm self-start sm:self-center whitespace-nowrap">
-                2% On Successful Sale
+          {/* Page Size & Portfolio Count Summary Bar (Inside Frozen Header) */}
+          <div className="px-3 py-1.5 bg-[#111111]/90 border border-white/15 rounded-md flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-mono text-white/70">
+                Displaying <span className="text-art-gold font-bold">{totalProjects === 0 ? 0 : startIndex + 1}–{endIndex}</span> of <span className="text-white font-bold">{totalProjects}</span> Portfolios
               </span>
-            </motion.div>
-          )}
-
-          {selectedType === 'Rental' && (
-            <motion.div
-              key="rental-commission-banner"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="mb-8 p-5 sm:p-6 bg-gradient-to-r from-emerald-500/20 via-art-gold/10 to-transparent border border-art-gold/50 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_0_30px_rgba(197,160,89,0.15)]"
-            >
-              <div className="flex items-center gap-4">
-                <div className="px-3.5 h-12 rounded-sm bg-art-gold text-black flex items-center justify-center shrink-0 font-serif italic text-base font-black whitespace-nowrap">
-                  1 Month
-                </div>
-                <div>
-                  <span className="text-[9px] uppercase tracking-[0.3em] text-art-gold font-black block mb-1">
-                    Executive Rental & Leasing Desk • Transparent Fee Structure
-                  </span>
-                  <h4 className="text-lg sm:text-2xl font-serif italic text-white">
-                    1 Month Rent as Commission
-                  </h4>
-                  <p className="text-[11px] text-white/65 mt-0.5 font-sans">
-                    Includes tenant background verification, rental agreement drafting
-                  </p>
-                </div>
-              </div>
-              <span className="px-4 py-2 bg-art-gold text-black text-[9px] uppercase tracking-[0.25em] font-black rounded-sm self-start sm:self-center whitespace-nowrap">
-                1 Month Rent A Commission
-              </span>
-            </motion.div>
-          )}
-
-          {selectedType === 'Primary' && (
-            <motion.div
-              key="primary-commission-banner"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="mb-8 p-4 sm:p-5 bg-white/[0.02] border border-art-gold/30 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-            >
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1.5 bg-art-gold text-black font-serif italic font-black text-sm rounded-sm">0% Fee</span>
-                <div>
-                  <h4 className="text-sm sm:text-base font-serif italic text-white">
-                    0% Brokerage Fee on All Primary Builder Acquisitions
-                  </h4>
-                  <p className="text-[10px] text-white/50">
-                    Direct developer inventory with verified RERA compliance, transparent pricing, and 0% buyer brokerage.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {selectedPropType === 'Plot' && (
-            <motion.div
-              key="plots-banner"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="mb-8 p-4 sm:p-5 bg-emerald-500/10 border border-emerald-500/30 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-            >
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1.5 bg-emerald-500 text-black font-mono font-black text-xs uppercase tracking-widest rounded-sm">
-                  Villa Plots
+              {totalPages > 1 && (
+                <span className="text-[8.5px] uppercase tracking-wider font-mono px-1.5 py-0.2 rounded-sm bg-white/10 text-white/60 border border-white/10">
+                  Page {activePage} of {totalPages}
                 </span>
-                <div>
-                  <h4 className="text-sm sm:text-base font-serif italic text-white">
-                    Curated Plotted Townships &amp; Villa Plots in Bangalore
-                  </h4>
-                  <p className="text-[10px] text-white/70">
-                    BDA, BMRDA, BIAPA &amp; STRR approved A-Khata plots across Whitefield, Hoskote, Sarjapur, Varthur &amp; Electronic City with complete infrastructural verification.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        {/* Anchor for smooth scroll when changing pages */}
-        <div id="portfolios-archive-anchor" className="scroll-mt-28" />
+              )}
+            </div>
 
-        {/* Page Size & Portfolio Count Summary Bar */}
-        <div className="mb-4 sm:mb-5 px-4 py-3 bg-[#111111]/90 border border-white/15 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-mono text-white/70">
-              Displaying <span className="text-art-gold font-bold">{totalProjects === 0 ? 0 : startIndex + 1}–{endIndex}</span> of <span className="text-white font-bold">{totalProjects}</span> Portfolios
-            </span>
-            {totalPages > 1 && (
-              <span className="text-[9.5px] uppercase tracking-wider font-mono px-2 py-0.5 rounded-sm bg-white/10 text-white/60 border border-white/10">
-                Page {activePage} of {totalPages}
+            {/* Options to view in same page: 10, 20, 30, 40, 50 */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[8.5px] uppercase tracking-widest text-white/60 font-mono font-bold whitespace-nowrap">
+                Per Page:
               </span>
-            )}
-          </div>
-
-          {/* Options to view in same page: 10, 20, 30, 40, 50 */}
-          <div className="flex items-center gap-2">
-            <span className="text-[9.5px] uppercase tracking-widest text-white/60 font-mono font-bold whitespace-nowrap">
-              Per Page:
-            </span>
-            <div className="flex items-center gap-1 bg-black/60 p-1 rounded-md border border-white/10">
-              {PAGE_SIZE_OPTIONS.map((size) => (
-                <button
-                  key={`top-pagesize-${size}`}
-                  type="button"
-                  onClick={() => setPageSize(size)}
-                  className={cn(
-                    "px-2.5 py-1 text-[10px] font-mono font-bold rounded transition-all cursor-pointer",
-                    pageSize === size
-                      ? "bg-art-gold text-black border border-art-gold shadow-[0_0_10px_rgba(197,160,89,0.35)]"
-                      : "text-white/70 hover:text-white hover:bg-white/10"
-                  )}
-                  title={`Show ${size} projects per page`}
-                >
-                  {size}
-                </button>
-              ))}
+              <div className="flex items-center gap-0.5 bg-black/60 p-0.5 rounded border border-white/10">
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <button
+                    key={`top-pagesize-${size}`}
+                    type="button"
+                    onClick={() => setPageSize(size)}
+                    className={cn(
+                      "px-2 py-0.5 text-[9px] font-mono font-bold rounded transition-all cursor-pointer",
+                      pageSize === size
+                        ? "bg-art-gold text-black border border-art-gold shadow-[0_0_8px_rgba(197,160,89,0.35)]"
+                        : "text-white/70 hover:text-white hover:bg-white/10"
+                    )}
+                    title={`Show ${size} projects per page`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
