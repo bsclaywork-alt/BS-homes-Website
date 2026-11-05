@@ -924,6 +924,97 @@ Return only comma-separated keywords.`,
     }
   });
 
+  // AI-Powered Image Accessibility Alt Text Generator using Gemini
+  app.post("/api/ai/alt-text-generate", async (req, res) => {
+    try {
+      const {
+        projectName,
+        description,
+        location,
+        propertyType,
+        features,
+        imageUrls,
+        coverImage
+      } = req.body;
+
+      const cleanName = String(projectName || "Property").trim();
+      const cleanDesc = String(description || "").trim();
+      const cleanLoc = String(location || "Bangalore").trim();
+      const cleanType = String(propertyType || "Apartment").trim();
+      const cleanFeatures = Array.isArray(features) ? features.slice(0, 5).join(", ") : "";
+      const imagesCount = Array.isArray(imageUrls) ? imageUrls.length : (coverImage ? 1 : 0);
+
+      // 1. First attempt with Gemini API
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (apiKey) {
+        try {
+          const ai = new GoogleGenAI({
+            apiKey,
+            httpOptions: {
+              headers: { 'User-Agent': 'aistudio-build' }
+            }
+          });
+
+          const prompt = `You are a web accessibility and luxury real estate specialist. Analyze the following property details, architecture, images context, and description to generate concise, highly descriptive accessibility alternative text (alt text) for screen readers and SEO complying with WCAG guidelines:
+- Property Name: ${cleanName}
+- Property Category: ${cleanType}
+- Geographical Location: ${cleanLoc}
+- Project Overview & Description: ${cleanDesc}
+- Architectural Amenities & Features: ${cleanFeatures}
+- Visual Imagery Context: ${imagesCount} architectural render(s) and high-resolution photo asset(s).
+
+Rules:
+1. Describe the exterior elevation, architectural aesthetic, landscaping, or setting clearly.
+2. Keep it concise, natural, and accessible (1 to 2 sentences, 100 to 140 characters ideal).
+3. Do NOT include phrases like 'image of', 'photo of', or 'picture of'.
+4. Return ONLY the alt text string, with no quotes, markdown, or extra explanations.`;
+
+          const geminiPromise = ai.models.generateContent({
+            model: "gemini-3.8-flash",
+            contents: prompt,
+            config: {
+              temperature: 0.3,
+              maxOutputTokens: 150
+            }
+          });
+
+          const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+          const aiResult: any = await Promise.race([geminiPromise, timeoutPromise]);
+
+          if (aiResult?.text) {
+            const rawAlt = aiResult.text.replace(/["`\n]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (rawAlt && rawAlt.length > 15) {
+              return res.json({
+                success: true,
+                altText: rawAlt,
+                source: "gemini_ai"
+              });
+            }
+          }
+        } catch (geminiErr) {
+          console.warn("Gemini alt text generation error:", geminiErr);
+        }
+      }
+
+      // Fallback: Intelligent heuristic accessibility generator based on description and amenities
+      const featuresPart = cleanFeatures ? ` featuring ${cleanFeatures}` : "";
+      const descSnippet = cleanDesc ? ` ${cleanDesc.slice(0, 60).replace(/\.+$/, '')}.` : "";
+      const fallbackAlt = `${cleanName} - Luxury ${cleanType.toLowerCase()} architecture in ${cleanLoc}${featuresPart}.${descSnippet}`.slice(0, 150);
+
+      return res.json({
+        success: true,
+        altText: fallbackAlt,
+        source: "fallback"
+      });
+    } catch (err: any) {
+      console.error("Error generating alt text:", err);
+      return res.status(500).json({
+        success: false,
+        error: err?.message || "Failed to generate alt text"
+      });
+    }
+  });
+
   // Helper function to inject property-specific SEO Meta tags & JSON-LD into HTML
   function injectPropertyMetaTags(html: string, projectQuery: string, baseUrl: string): string {
     if (!projectQuery) return html;

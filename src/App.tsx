@@ -123,6 +123,7 @@ import { InvestmentCalculator } from './components/InvestmentCalculator';
 import { ProjectComparisonModal } from './components/ProjectComparisonModal';
 import { SocialShareButtons } from './components/SocialShareButtons';
 import { SEOPreviewModal } from './components/SEOPreviewModal';
+import { PropertyMetaDataModal } from './components/PropertyMetaDataModal';
 import { MediaUploadCompressor } from './components/MediaUploadCompressor';
 import { MediaViewerModal } from './components/MediaViewerModal';
 import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
@@ -1105,6 +1106,23 @@ export const getProjectColorBorder = (project: Project, index?: number): string 
   return colorBorders[seed % colorBorders.length];
 };
 
+const cleanProjectDescription = (desc?: string): string => {
+  if (!desc) return '';
+  return desc
+    .replace(/Nearby Connectivity\s*\([^)]*\)\s*:[^.]*(\.|$)/gi, '')
+    .replace(/Nearby Connectivity\s*:[^.]*(\.|$)/gi, '')
+    .replace(/Near\s*by\s*n?2\s*kms?[^.]*(\.|$)/gi, '')
+    .replace(/Nearby\s*2\s*kms?[^.]*(\.|$)/gi, '')
+    .replace(/Nearby\s*within\s*2\s*km[^.]*(\.|$)/gi, '')
+    .replace(/Schools:.*?(\||$)/gi, '')
+    .replace(/Hospitals:.*?(\||$)/gi, '')
+    .replace(/IT Hubs:.*?(\||$)/gi, '')
+    .replace(/Malls:.*?(\||$)/gi, '')
+    .replace(/Bus Stop & Transit:.*?(\.|$)/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+};
+
 const ProjectCard: React.FC<{ 
   project: Project; 
   index?: number;
@@ -1117,6 +1135,7 @@ const ProjectCard: React.FC<{
   onSaveProject: (updated: Project) => Promise<void>;
   onDeleteProject: (p: Project) => Promise<void>;
   onTogglePause: (p: Project) => Promise<void>;
+  onOpenMetaData?: (p: Project) => void;
 }> = ({ 
   project, 
   index = 0,
@@ -1128,7 +1147,8 @@ const ProjectCard: React.FC<{
   onDownload, 
   onSaveProject, 
   onDeleteProject, 
-  onTogglePause 
+  onTogglePause,
+  onOpenMetaData
 }) => {
   const [showMap, setShowMap] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -1567,7 +1587,7 @@ const ProjectCard: React.FC<{
         opacity: { duration: 0.4 }
       }}
       className={cn(
-        "group relative flex flex-col md:flex-row bg-[#111111] transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-lg",
+        "project-grid-item group relative flex flex-col md:flex-row bg-[#111111] transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-lg",
         getProjectColorBorder(project, index),
         isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
       )}
@@ -2032,10 +2052,28 @@ const ProjectCard: React.FC<{
         </div>
       ) : (
         <>
-          {/* Left Column: Property Visual & Media Showcase (Compact Half-Height) */}
-          <div className="w-full md:w-56 lg:w-64 xl:w-72 shrink-0 relative overflow-hidden bg-black/85 flex flex-col justify-between min-h-[140px] md:min-h-[175px] border-b md:border-b-0 md:border-r border-white/10 group/img">
-            {/* Property Photo for Resale/Rental/Admin, or Protected Developer Card for Online Primary */}
-            {canViewProjectImages ? (
+          {/* Left Column: Property Visual & Media Showcase (Compact Ultra-Sleek Height) */}
+          <div className="w-full md:w-44 lg:w-48 xl:w-52 shrink-0 relative overflow-hidden bg-gradient-to-br from-[#181818] via-[#111111] to-[#0a0a0a] flex flex-col justify-between min-h-[110px] md:min-h-[135px] border-b md:border-b-0 md:border-r border-white/10 group/img">
+            {isPrimary ? (
+              /* Hide project images and display official BS Homez logo for Primary projects */
+              <div 
+                onClick={() => onEnquire(project)}
+                className="w-full h-full absolute inset-0 bg-gradient-to-br from-[#1b1b1b] via-[#121212] to-[#0a0a0a] flex flex-col items-center justify-center p-2 text-center cursor-pointer select-none group/logo-card"
+                title="BS Homez Verified Primary Portfolio - Click to Inquire"
+              >
+                <div className="relative flex flex-col items-center justify-center scale-90 sm:scale-95 group-hover/logo-card:scale-100 transition-transform duration-300">
+                  <Logo className="w-28 sm:w-32 h-auto drop-shadow-[0_2px_10px_rgba(227,37,38,0.25)]" />
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 rounded bg-art-gold/15 text-art-gold border border-art-gold/30 text-[7.5px] font-mono uppercase tracking-widest font-black">
+                      Primary Partner
+                    </span>
+                    <span className="text-[7px] uppercase font-mono text-white/50 tracking-wider">
+                      Verified
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : canViewProjectImages ? (
               <>
                 <img
                   src={coverImage}
@@ -2049,20 +2087,17 @@ const ProjectCard: React.FC<{
             ) : (
               <div 
                 onClick={() => onEnquire(project)}
-                className="w-full h-full absolute inset-0 bg-gradient-to-br from-[#1c1c1c] via-[#111111] to-[#080808] flex flex-col items-center justify-center p-3 text-center cursor-pointer select-none group/lock"
+                className="w-full h-full absolute inset-0 bg-gradient-to-br from-[#1c1c1c] via-[#111111] to-[#080808] flex flex-col items-center justify-center p-2.5 text-center cursor-pointer select-none group/lock"
                 title="Direct Builder Portfolio - Inquire for official floor plans and verified gallery"
               >
-                <div className="w-9 h-9 rounded-full bg-art-gold/15 border border-art-gold/40 flex items-center justify-center text-art-gold mb-1.5 group-hover/lock:scale-110 transition-transform shadow-md">
-                  <Building2 size={18} />
+                <div className="w-8 h-8 rounded-full bg-art-gold/15 border border-art-gold/40 flex items-center justify-center text-art-gold mb-1 group-hover/lock:scale-110 transition-transform shadow-md">
+                  <Building2 size={16} />
                 </div>
-                <span className="text-[9.5px] uppercase font-mono font-bold tracking-wider text-art-gold block">
+                <span className="text-[8.5px] uppercase font-mono font-bold tracking-wider text-art-gold block">
                   Developer Direct
                 </span>
-                <span className="text-[7.5px] uppercase font-mono text-white/50 block mt-0.5">
+                <span className="text-[7px] uppercase font-mono text-white/50 block mt-0.5">
                   Verified RERA Portfolio
-                </span>
-                <span className="mt-1.5 px-2 py-0.5 rounded bg-art-gold/20 text-art-gold border border-art-gold/40 text-[7.5px] font-mono uppercase tracking-wider font-bold">
-                  Inquire to View Media
                 </span>
               </div>
             )}
@@ -2128,7 +2163,7 @@ const ProjectCard: React.FC<{
 
               {/* Media Bar (Photos button hidden for online primary) */}
               <div className="flex items-center justify-between gap-1 flex-wrap">
-                {canViewProjectImages && project.imageUrls && project.imageUrls.length > 0 && (
+                {!isPrimary && canViewProjectImages && project.imageUrls && project.imageUrls.length > 0 && (
                   <button
                     type="button"
                     onClick={(e) => {
@@ -2165,8 +2200,8 @@ const ProjectCard: React.FC<{
             </div>
           </div>
 
-          {/* Right Column: Complete Details, Writeup, Amenities & Action Bar (Compact Half-Height) */}
-          <div className="flex-1 min-w-0 p-3 sm:p-3.5 md:p-4 flex flex-col justify-between space-y-2 bg-gradient-to-b from-[#131313] to-[#0c0c0c]">
+          {/* Right Column: Complete Details, Writeup, Amenities & Action Bar (Ultra-Compact Height) */}
+          <div className="flex-1 min-w-0 p-2.5 sm:p-3 flex flex-col justify-between space-y-1.5 bg-gradient-to-b from-[#131313] to-[#0c0c0c]">
             {/* 1. PROJECT NAME FIRST */}
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-1.5">
               <div className="flex-1 min-w-0">
@@ -2185,41 +2220,56 @@ const ProjectCard: React.FC<{
                 </div>
               </div>
 
-              {/* Admin Controls */}
-              {isAdmin && (
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditDraft({ ...project });
-                      setIsEditingCard(!isEditingCard);
-                    }}
-                    className="px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 flex items-center gap-1 cursor-pointer transition-colors"
-                    title="Edit Project Data"
-                  >
-                    <Edit size={9} /> Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onTogglePause(project)}
-                    className={cn(
-                      "px-1.5 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black border cursor-pointer transition-colors",
-                      project.isPaused ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-white/5 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
-                    )}
-                    title={project.isPaused ? "Unhide project" : "Hide project"}
-                  >
-                    {project.isPaused ? 'Unhide' : 'Hide'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteProject(project)}
-                    className="px-1.5 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-white/5 hover:bg-red-500/20 text-red-400 border border-red-500/30 cursor-pointer transition-colors"
-                    title="Delete project"
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
+              {/* Actions & Admin Controls */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenMetaData?.(project);
+                  }}
+                  className="add-meta-data-btn px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 flex items-center gap-1 cursor-pointer transition-colors shadow-sm"
+                  title="Add Meta Data & SEO"
+                >
+                  <Sparkles size={9} />
+                  <span>Add Meta Data</span>
+                </button>
+
+                {isAdmin && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditDraft({ ...project });
+                        setIsEditingCard(!isEditingCard);
+                      }}
+                      className="px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Edit Project Data"
+                    >
+                      <Edit size={9} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onTogglePause(project)}
+                      className={cn(
+                        "px-1.5 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black border cursor-pointer transition-colors",
+                        project.isPaused ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-white/5 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
+                      )}
+                      title={project.isPaused ? "Unhide project" : "Hide project"}
+                    >
+                      {project.isPaused ? 'Unhide' : 'Hide'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteProject(project)}
+                      className="px-1.5 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-white/5 hover:bg-red-500/20 text-red-400 border border-red-500/30 cursor-pointer transition-colors"
+                      title="Delete project"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 2. PRICING SECOND (Directly following Project Name) */}
@@ -2273,28 +2323,11 @@ const ProjectCard: React.FC<{
               </div>
             </div>
 
-            {/* Curated Writeup (Compact 1-2 line clamp) */}
-            {project.description && (
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[11px] text-white/80 font-sans leading-tight line-clamp-1 flex-1">
-                  {project.description}
-                </p>
-                <button
-                  type="button"
-                  onClick={handleToggleAmenities}
-                  className={cn(
-                    "text-[8px] uppercase tracking-wider font-bold cursor-pointer transition-all px-2 py-0.5 rounded border flex items-center gap-1 shrink-0",
-                    showNearbyAmenities
-                      ? "bg-emerald-500 text-black border-emerald-400 font-black shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-                      : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40"
-                  )}
-                  title="Toggle Google Search Grounding to find verified schools, hospitals, and transit within 2km"
-                >
-                  <Compass size={10} className={showNearbyAmenities ? "text-black animate-spin" : "text-emerald-400"} />
-                  <span>{showNearbyAmenities ? "Hide 2km" : "Nearby 2km"}</span>
-                  {isLoadingAmenities && <Loader2 size={9} className="animate-spin" />}
-                </button>
-              </div>
+            {/* Curated Writeup (Clean without Nearby 2km text) */}
+            {cleanProjectDescription(project.description) && (
+              <p className="text-[11px] text-white/80 font-sans leading-tight line-clamp-1">
+                {cleanProjectDescription(project.description)}
+              </p>
             )}
 
             {/* Curated Lifestyle Amenities Top 4 */}
@@ -2592,9 +2625,9 @@ const ProjectCardSkeleton = () => {
   return (
     <div className="group relative flex flex-col md:flex-row bg-[#111111] border border-white/20 overflow-hidden w-full max-w-full box-border rounded-lg shadow-md">
       {/* Left Media Skeleton */}
-      <div className="w-full md:w-56 lg:w-64 xl:w-72 h-36 sm:h-44 md:h-auto min-h-[140px] md:min-h-[175px] bg-white/[0.04] shimmer-bg relative shrink-0" />
+      <div className="w-full md:w-44 lg:w-48 xl:w-52 h-28 sm:h-32 md:h-auto min-h-[110px] md:min-h-[135px] bg-white/[0.04] shimmer-bg relative shrink-0" />
       {/* Right Details Skeleton */}
-      <div className="flex-1 min-w-0 p-3 sm:p-3.5 md:p-4 flex flex-col space-y-2">
+      <div className="flex-1 min-w-0 p-2.5 sm:p-3 flex flex-col space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <div className="bg-white/10 h-4 w-1/3 rounded-sm shimmer-bg" />
           <div className="bg-art-gold/25 h-5 w-20 rounded-sm shimmer-bg" />
@@ -2993,6 +3026,7 @@ const ProjectGrid = ({
   onDeleteProject,
   onTogglePause,
   onOpenNewProjectModal,
+  onOpenMetaData,
   isLoading 
 }: { 
   projects: Project[]; 
@@ -3009,6 +3043,7 @@ const ProjectGrid = ({
   onDeleteProject: (p: Project) => Promise<void>;
   onTogglePause: (p: Project) => Promise<void>;
   onOpenNewProjectModal: () => void;
+  onOpenMetaData?: (p?: Project) => void;
   isLoading?: boolean;
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -3045,68 +3080,72 @@ const ProjectGrid = ({
     { key: 'Handed Over', label: 'Handed Over' }
   ];
 
-  const displayedProjects = projects.filter(p => {
-    if (LEGACY_PROJECT_NAMES.includes(p.name)) return false;
-    if (p.isDeleted) return false;
-    if (!(isAdmin && showHidden) && p.isPaused) return false;
+  const displayedProjects = React.useMemo(() => {
+    return projects.filter(p => {
+      if (LEGACY_PROJECT_NAMES.includes(p.name)) return false;
+      if (p.isDeleted) return false;
+      if (!(isAdmin && showHidden) && p.isPaused) return false;
 
-    // Live search query matching across all relevant property attributes
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const matchesName = p.name?.toLowerCase().includes(q);
-      const matchesLocation = p.location?.toLowerCase().includes(q);
-      const matchesZone = p.zone?.toLowerCase().includes(q);
-      const matchesDesc = p.description?.toLowerCase().includes(q);
-      const matchesConfig = p.configuration?.some(c => c.toLowerCase().includes(q));
-      const matchesFeatures = p.features?.some(f => f.toLowerCase().includes(q));
-      const matchesPropType = p.propertyType?.toLowerCase().includes(q);
-      const matchesType = p.type?.toLowerCase().includes(q);
-      const matchesRera = p.reraNumber?.toLowerCase().includes(q);
-      const matchesApproval = p.approvalBody?.toLowerCase().includes(q);
-      const matchesFloorPlan = p.floorPlan?.toLowerCase().includes(q);
-      const matchesStatus = p.handoverStatus?.toLowerCase().includes(q);
-      if (!matchesName && !matchesLocation && !matchesZone && !matchesDesc && !matchesConfig && !matchesFeatures && !matchesPropType && !matchesType && !matchesRera && !matchesApproval && !matchesFloorPlan && !matchesStatus) {
-        return false;
+      // Live search query matching across all relevant property attributes
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesName = p.name?.toLowerCase().includes(q);
+        const matchesLocation = p.location?.toLowerCase().includes(q);
+        const matchesZone = p.zone?.toLowerCase().includes(q);
+        const matchesDesc = p.description?.toLowerCase().includes(q);
+        const matchesConfig = p.configuration?.some(c => c.toLowerCase().includes(q));
+        const matchesFeatures = p.features?.some(f => f.toLowerCase().includes(q));
+        const matchesPropType = p.propertyType?.toLowerCase().includes(q);
+        const matchesType = p.type?.toLowerCase().includes(q);
+        const matchesRera = p.reraNumber?.toLowerCase().includes(q);
+        const matchesApproval = p.approvalBody?.toLowerCase().includes(q);
+        const matchesFloorPlan = p.floorPlan?.toLowerCase().includes(q);
+        const matchesStatus = p.handoverStatus?.toLowerCase().includes(q);
+        if (!matchesName && !matchesLocation && !matchesZone && !matchesDesc && !matchesConfig && !matchesFeatures && !matchesPropType && !matchesType && !matchesRera && !matchesApproval && !matchesFloorPlan && !matchesStatus) {
+          return false;
+        }
       }
-    }
 
-    const normalizedType = p.type === 'Primary Sale' ? 'Primary' : p.type;
-    if (selectedType !== 'All' && normalizedType !== selectedType) return false;
+      const normalizedType = p.type === 'Primary Sale' ? 'Primary' : p.type;
+      if (selectedType !== 'All' && normalizedType !== selectedType) return false;
 
-    const normalizedZone = p.zone === 'Bangalore East' ? 'East Bangalore' : p.zone;
-    if (selectedCorridor !== 'All') {
-      const corridorLower = selectedCorridor.toLowerCase();
-      const matchesZone = normalizedZone.toLowerCase() === corridorLower;
-      const matchesLocation = p.location.toLowerCase().includes(corridorLower);
-      const matchesEastGroup =
-        selectedCorridor === 'East Bangalore' &&
-        ['East Bangalore', 'Whitefield', 'Hoskote', 'Varthur', 'Gunjur', 'Marathalli'].includes(normalizedZone);
-      if (!matchesZone && !matchesLocation && !matchesEastGroup) {
-        return false;
+      const normalizedZone = p.zone === 'Bangalore East' ? 'East Bangalore' : p.zone;
+      if (selectedCorridor !== 'All') {
+        const corridorLower = selectedCorridor.toLowerCase();
+        const matchesZone = normalizedZone.toLowerCase() === corridorLower;
+        const matchesLocation = p.location.toLowerCase().includes(corridorLower);
+        const matchesEastGroup =
+          selectedCorridor === 'East Bangalore' &&
+          ['East Bangalore', 'Whitefield', 'Hoskote', 'Varthur', 'Gunjur', 'Marathalli'].includes(normalizedZone);
+        if (!matchesZone && !matchesLocation && !matchesEastGroup) {
+          return false;
+        }
       }
-    }
 
-    const normalizedPropType = p.propertyType === 'Flat' ? 'Apartment' : p.propertyType;
-    if (selectedPropType !== 'All' && normalizedPropType !== selectedPropType) return false;
+      const normalizedPropType = p.propertyType === 'Flat' ? 'Apartment' : p.propertyType;
+      if (selectedPropType !== 'All' && normalizedPropType !== selectedPropType) return false;
 
-    if (selectedHeaderStatus !== 'All' && p.handoverStatus !== selectedHeaderStatus) return false;
+      if (selectedHeaderStatus !== 'All' && p.handoverStatus !== selectedHeaderStatus) return false;
 
-    if (selectedTag !== 'All') {
-      const tagLower = selectedTag.toLowerCase();
-      const hasTag = (p.features && p.features.some(f => f.toLowerCase().includes(tagLower))) ||
-        p.description?.toLowerCase().includes(tagLower) ||
-        (tagLower === 'sea-view' && (p.description?.toLowerCase().includes('lake') || p.description?.toLowerCase().includes('water') || p.description?.toLowerCase().includes('sea') || p.name.toLowerCase().includes('lake') || p.features?.some(f => f.toLowerCase().includes('lake') || f.toLowerCase().includes('water')))) ||
-        (tagLower === 'corner units' && (p.description?.toLowerCase().includes('corner') || p.features?.some(f => f.toLowerCase().includes('corner')))) ||
-        (tagLower === 'vastu-compliant' && (p.description?.toLowerCase().includes('vastu') || p.description?.toLowerCase().includes('vaastu') || p.features?.some(f => f.toLowerCase().includes('vastu')))) ||
-        (tagLower === 'penthouse' && (p.configuration?.some(c => c.toLowerCase().includes('4') || c.toLowerCase().includes('5') || c.toLowerCase().includes('penthouse')) || p.description?.toLowerCase().includes('penthouse'))) ||
-        (tagLower === 'high roi' && (p.description?.toLowerCase().includes('roi') || p.features?.some(f => f.toLowerCase().includes('roi')) || p.segment?.toLowerCase().includes('luxury')));
-      if (!hasTag) return false;
-    }
+      if (selectedTag !== 'All') {
+        const tagLower = selectedTag.toLowerCase();
+        const hasTag = (p.features && p.features.some(f => f.toLowerCase().includes(tagLower))) ||
+          p.description?.toLowerCase().includes(tagLower) ||
+          (tagLower === 'sea-view' && (p.description?.toLowerCase().includes('lake') || p.description?.toLowerCase().includes('water') || p.description?.toLowerCase().includes('sea') || p.name.toLowerCase().includes('lake') || p.features?.some(f => f.toLowerCase().includes('lake') || f.toLowerCase().includes('water')))) ||
+          (tagLower === 'corner units' && (p.description?.toLowerCase().includes('corner') || p.features?.some(f => f.toLowerCase().includes('corner')))) ||
+          (tagLower === 'vastu-compliant' && (p.description?.toLowerCase().includes('vastu') || p.description?.toLowerCase().includes('vaastu') || p.features?.some(f => f.toLowerCase().includes('vastu')))) ||
+          (tagLower === 'penthouse' && (p.configuration?.some(c => c.toLowerCase().includes('4') || c.toLowerCase().includes('5') || c.toLowerCase().includes('penthouse')) || p.description?.toLowerCase().includes('penthouse'))) ||
+          (tagLower === 'high roi' && (p.description?.toLowerCase().includes('roi') || p.features?.some(f => f.toLowerCase().includes('roi')) || p.segment?.toLowerCase().includes('luxury')));
+        if (!hasTag) return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [projects, isAdmin, showHidden, searchQuery, selectedType, selectedCorridor, selectedPropType, selectedHeaderStatus, selectedTag]);
 
-  const uniqueDisplayedProjects = deduplicateProjects(displayedProjects);
+  const uniqueDisplayedProjects = React.useMemo(() => {
+    return deduplicateProjects(displayedProjects);
+  }, [displayedProjects]);
 
 
   // Per-page display options: default 10, options 10, 20, 30, 40, 50
@@ -3197,32 +3236,43 @@ const ProjectGrid = ({
               <p className="text-white/60 uppercase tracking-[0.12em] sm:tracking-[0.16em] font-bold text-[9px] sm:text-[10px] text-left sm:text-right hidden sm:block">
                 Whitefield · Hoskote · Varthur · Gunjur · Hosa Road · Kasavanahalli · Sarjapur · Electronic City · Bellandur
               </p>
-              {isAdmin && (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {onToggleShowHidden && (
+              <div className="flex flex-wrap items-center gap-1.5 justify-start sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => onOpenMetaData?.(displayedProjects[0])}
+                  className="add-meta-data-btn bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-[0_0_15px_rgba(197,160,89,0.2)] flex items-center gap-1 cursor-pointer w-max"
+                  title="Add or edit SEO meta titles, meta descriptions, and keywords"
+                >
+                  <Sparkles size={11} />
+                  <span>Add Meta Data</span>
+                </button>
+                {isAdmin && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {onToggleShowHidden && (
+                      <button
+                        type="button"
+                        onClick={onToggleShowHidden}
+                        className={cn(
+                          "px-2.5 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.14em] font-black border transition-all cursor-pointer",
+                          showHidden
+                            ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
+                            : "bg-white/5 text-white/60 border-white/15 hover:text-white"
+                        )}
+                      >
+                        {showHidden ? `Hide (${hiddenCount})` : `Show Hidden (${hiddenCount})`}
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={onToggleShowHidden}
-                      className={cn(
-                        "px-2.5 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.14em] font-black border transition-all cursor-pointer",
-                        showHidden
-                          ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
-                          : "bg-white/5 text-white/60 border-white/15 hover:text-white"
-                      )}
+                      onClick={onOpenNewProjectModal}
+                      className="bg-art-gold hover:bg-white text-black px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-[0_0_15px_rgba(197,160,89,0.3)] flex items-center gap-1 cursor-pointer w-max"
                     >
-                      {showHidden ? `Hide (${hiddenCount})` : `Show Hidden (${hiddenCount})`}
+                      <Sparkles size={11} />
+                      + Add Project
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={onOpenNewProjectModal}
-                    className="bg-art-gold hover:bg-white text-black px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-[0_0_15px_rgba(197,160,89,0.3)] flex items-center gap-1 cursor-pointer w-max"
-                  >
-                    <Sparkles size={11} />
-                    + Add Project
-                  </button>
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -3350,6 +3400,7 @@ const ProjectGrid = ({
                 onSaveProject={onSaveProject}
                 onDeleteProject={onDeleteProject}
                 onTogglePause={onTogglePause}
+                onOpenMetaData={onOpenMetaData}
               />
             ))
           )}
@@ -4292,7 +4343,7 @@ const ProjectForm = ({
         };
         setFormData(merged);
         setAutoCheckBanner(
-          `Auto-synced "${merged.name}" (Cat ${resolvedCat}): Images, Last Price (${merged.lastPrice}), Handover Date (${merged.handoverDate}), RERA (${merged.reraNumber}), Approval Body (${merged.approvalBody}), Floor Plan & Nearby Connectivity updated.`
+          `Auto-synced "${merged.name}" (Cat ${resolvedCat}): Images, Last Price (${merged.lastPrice}), Handover Date (${merged.handoverDate}), RERA (${merged.reraNumber}), Approval Body (${merged.approvalBody}), Floor Plan & Details updated.`
         );
         return merged;
       }
@@ -9872,7 +9923,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BBMP & BDA Approved',
     floorPlan: '3 BHK Classic (1773 Sq.Ft.) · 3.5 BHK Luxe (1962 Sq.Ft.) · 4 BHK + Maid (2616 Sq.Ft.)',
-    description: 'Iconic lakefront high-rise residential sanctuary at Location: Whitefield - Varthur Main Road (Ramagondanahalli), overlooking Varthur Lake. Designed with two-side open Vaastu residences, expansive sky-decks, and 84% landscaped biophilic open greens. Nearby Connectivity (Whitefield): Schools: The Deens Academy (2.1 km), Greenwood High International (4.5 km), Ryan International (3.2 km) | Hospitals: Manipal Hospital Varthur Road (1.2 km), Columbia Asia / Manipal Whitefield (2.8 km), Vydehi Hospital (4.1 km) | IT Hubs: Sigma Soft Tech Park (0.6 km), ITPL / ITPB Whitefield (3.8 km), Prestige Tech Cloud (3.0 km) | Malls: Nexus Forum Shantiniketan Mall (3.6 km), Virginia Mall (1.1 km), Phoenix Marketcity (7.2 km) | Bus Stop & Transit: Ramagondanahalli BMTC Bus Stop (0.2 km), Hope Farm Metro Station (3.4 km).',
+    description: 'Iconic lakefront high-rise residential sanctuary at Location: Whitefield - Varthur Main Road (Ramagondanahalli), overlooking Varthur Lake. Designed with two-side open Vaastu residences, expansive sky-decks, and 84% landscaped biophilic open greens.',
     price: 'Rs. 2.35 Cr - Rs. 3.85 Cr*',
     lastPrice: 'Rs. 2.42 Cr onwards*',
     location: 'Whitefield - Varthur Road (Ramagondanahalli)',
@@ -9909,7 +9960,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BBMP OC Received',
     floorPlan: '3 BHK Garden Suite (1690 Sq.Ft.) · 4 BHK Corner (2190 Sq.Ft.)',
-    description: 'Ready-to-move boutique forest-themed residences nestled at Location: Whitefield ITPL Main Road (Pattandur Agrahara). Surrounded by 15+ native botanical tree species, offering immediate possession with Occupancy Certificate received and zero GST. Nearby Connectivity (Whitefield ITPL): Schools: Gopalan International School (2.3 km), Deens Academy Whitefield (1.8 km), Glentree Academy (2.9 km) | Hospitals: Vydehi Super Specialty Hospital (1.4 km), Manipal Hospital Whitefield (1.9 km), Aster Whitefield Hospital (2.5 km) | IT Hubs: Brigade Tech Gardens (0.8 km), ITPL Main Campus (1.2 km), EPIP Zone SAP Labs (1.6 km) | Malls: Park Square Mall ITPL (1.2 km), Nexus Shantiniketan Mall (2.1 km), Inorbit Mall (1.5 km) | Bus Stop & Transit: GR Tech Park BMTC Bus Stop (0.3 km), Pattandur Agrahara Metro Station (0.9 km).',
+    description: 'Ready-to-move boutique forest-themed residences nestled at Location: Whitefield ITPL Main Road (Pattandur Agrahara). Surrounded by 15+ native botanical tree species, offering immediate possession with Occupancy Certificate received and zero GST.',
     price: 'Rs. 2.15 Cr - Rs. 3.40 Cr*',
     lastPrice: 'Rs. 2.22 Cr (Verified Resale)*',
     location: 'Whitefield ITPL Main Road (Pattandur Agrahara)',
@@ -9946,7 +9997,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BBMP OC Received',
     floorPlan: '3 BHK C20 Simplex + Garden (2450 Sq.Ft.) · 4 BHK D60 Duplex Villa (5924 Sq.Ft.)',
-    description: 'Earth-sheltered handcrafted duplex sky-villas and simplexes at Location: Whitefield EPIP Zone (Nallurahalli Road), curated for expatriate and CXO corporate leases. Every residence features a private landscaped terrace garden, wooden deck, and water body. Nearby Connectivity (Whitefield EPIP): Schools:Vydehi School of Excellence (0.9 km), Gopalan National School (2.2 km), Deens Academy (2.5 km) | Hospitals: Vydehi Institute of Medical Sciences (0.8 km), Sri Sathya Sai Super Speciality Hospital (1.6 km), Manipal Hospital (2.4 km) | IT Hubs: SAP Labs Campus (1.1 km), Qualcomm & GE EPIP Zone (0.7 km), ITPL (2.2 km) | Malls: Inorbit Mall Whitefield (1.2 km), Nexus Shantiniketan (2.4 km), Phoenix Marketcity (5.5 km) | Bus Stop & Transit: Vydehi EPIP BMTC Bus Stop (0.3 km), Sri Sathya Sai Hospital Metro Station (1.1 km).',
+    description: 'Earth-sheltered handcrafted duplex sky-villas and simplexes at Location: Whitefield EPIP Zone (Nallurahalli Road), curated for expatriate and CXO corporate leases. Every residence features a private landscaped terrace garden, wooden deck, and water body.',
     price: 'Rs. 1.35 L / month - Rs. 2.60 L / month*',
     lastPrice: 'Rs. 1.40 L / month (Corporate Lease)*',
     location: 'Whitefield EPIP Zone (Beside Vydehi & SAP Labs)',
@@ -9985,7 +10036,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BMRDA / HPA & RERA Approved',
     floorPlan: '4 BHK Row Villa Dual Courtyard (3009 Sq.Ft.) · 4 BHK Triplex Villa (4340 Sq.Ft.)',
-    description: 'Spanish-inspired boutique row villas at Location: Hoskote - Old Madras Road Corridor (Kannamangala - Ardendale Link). Crafted with terracotta roofs, private double-height courtyards, and serene pedestrian boulevards. Nearby Connectivity (Hoskote - OMR): Schools:Vibgyor High Kadugodi (3.2 km), Narayana E-Techno School Hoskote (4.1 km), Capstone High (3.8 km) | Hospitals: MVJ Medical College & Research Hospital (4.5 km), Manipal Hospital Whitefield (7.8 km), Ovum Woman & Child Hospital (3.9 km) | IT Hubs: Bearys Global Research Triangle (2.6 km), Aero SEZ & Budigere Tech Corridor (6.5 km), ITPL Whitefield (6.8 km) | Malls: Orion Uptown Mall OMR (3.4 km), SBR Lucky Mall (3.9 km), Nexus Shantiniketan (7.5 km) | Bus Stop & Transit: Kannamangala Gate BMTC Bus Stop (0.6 km), Kadugodi Tree Park Metro Station (4.2 km).',
+    description: 'Spanish-inspired boutique row villas at Location: Hoskote - Old Madras Road Corridor (Kannamangala - Ardendale Link). Crafted with terracotta roofs, private double-height courtyards, and serene pedestrian boulevards.',
     price: 'Rs. 4.65 Cr - Rs. 6.40 Cr*',
     lastPrice: 'Rs. 4.78 Cr onwards*',
     location: 'Hoskote - Old Madras Road (Kannamangala)',
@@ -10021,7 +10072,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BMRDA / HPA OC Received',
     floorPlan: '2 BHK Smart (1115 Sq.Ft.) · 3 BHK Family (1465 Sq.Ft.)',
-    description: 'Well-established ready-to-move gated community at Location: Hoskote Town - NH-75 Old Madras Road Corridor. Offering Vaastu-compliant corner apartments with clear resale documentation, immediate registration, and direct STRR connectivity. Nearby Connectivity (Hoskote NH-75): Schools:The Brigade School OMR (5.8 km), Global Residential School Hoskote (1.8 km), Citizen Public School (1.4 km) | Hospitals: MVJ Medical College & Super Specialty Hospital (1.5 km), Silicon City Hospital Hoskote (1.9 km), Mission Hospital (2.2 km) | IT Hubs & Hubs: Hoskote Auto & Logistics SEZ (2.8 km), Bearys Global Research Triangle (6.2 km), Whitefield ITPL (11.5 km) | Malls: Orion Uptown Mall OMR (5.4 km), Hoskote Town Central Plaza (1.2 km) | Bus Stop & Transit: Hoskote Toll Gate BMTC Bus Stop (0.4 km), Kadugodi Whitefield Metro Station (9.8 km).',
+    description: 'Well-established ready-to-move gated community at Location: Hoskote Town - NH-75 Old Madras Road Corridor. Offering Vaastu-compliant corner apartments with clear resale documentation, immediate registration, and direct STRR connectivity.',
     price: 'Rs. 68 Lakhs - Rs. 96 Lakhs*',
     lastPrice: 'Rs. 72 Lakhs (Verified Resale)*',
     location: 'Hoskote Town - NH-75 Old Madras Road',
@@ -10060,7 +10111,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BMRDA & BBMP OC Received',
     floorPlan: '3 BHK Executive (1670 Sq.Ft.) · 3.5 BHK + Study (1980 Sq.Ft.)',
-    description: 'Mixed-use landmark township at Location: Hoskote - Budigere Cross Junction on Old Madras Road (Kattamnallur). Semi-furnished sky-view apartments available for immediate family and corporate rental right beside Orion Uptown Mall. Nearby Connectivity (Hoskote - Budigere Cross): Schools:Vibgyor High Kadugodi (3.5 km), New Baldwin International School (2.1 km), One World International School (2.8 km) | Hospitals: East Point Medical College Hospital (4.2 km), MVJ Hospital (4.8 km), Manipal Hospital Whitefield (8.2 km) | IT Hubs: Signature Business Park on Campus (0.1 km), Bearys Global Research Triangle (2.9 km), Whitefield ITPL (7.4 km) | Malls: Orion Uptown Mall (0.1 km walk-in), SBR Lucky Mall (4.2 km) | Bus Stop & Transit: Budigere Cross BMTC Bus Stop (0.2 km), Whitefield (Kadugodi) Metro Station (5.6 km).',
+    description: 'Mixed-use landmark township at Location: Hoskote - Budigere Cross Junction on Old Madras Road (Kattamnallur). Semi-furnished sky-view apartments available for immediate family and corporate rental right beside Orion Uptown Mall.',
     price: 'Rs. 45,000 / month - Rs. 68,000 / month*',
     lastPrice: 'Rs. 48,000 / month (Latest Lease)*',
     location: 'Hoskote - Budigere Cross OMR (Kattamnallur)',
@@ -10098,7 +10149,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BDA & Karnataka RERA Approved',
     floorPlan: '3 BHK Regal (2005 Sq.Ft.) · 4 BHK + Maid (2540 Sq.Ft.) · 5 BHK Studio (3700 Sq.Ft.)',
-    description: 'Flagship 107-acre integrated lakefront township at Location: Varthur Main Road (Opposite Varthur Lake, Whitefield-Varthur Corridor). Phase 1 offers ultra-luxury high-rise residences with panoramic water views and a 1,05,000 Sq.Ft. imperial clubhouse. Nearby Connectivity (Varthur): Schools:Greenwood High International (3.4 km), Chrysalis High Varthur (1.9 km), The Deens Academy (3.1 km), Inventure Academy (4.2 km) | Hospitals: Manipal Hospital Varthur Road (1.8 km), Sahasra Hospital Varthur (0.9 km), Columbia Asia Whitefield (3.2 km) | IT Hubs: Prestige Tech Park in Township (0.2 km), Sigma Soft Tech Park (1.4 km), ITPL Whitefield (4.8 km), RMZ Ecoworld (7.5 km) | Malls: Virginia Mall (1.6 km), Nexus Forum Value Mall (2.4 km), Nexus Shantiniketan (4.9 km) | Bus Stop & Transit: Varthur Kodi BMTC Bus Stop (0.3 km), Hope Farm Metro Station (4.5 km).',
+    description: 'Flagship 107-acre integrated lakefront township at Location: Varthur Main Road (Opposite Varthur Lake, Whitefield-Varthur Corridor). Phase 1 offers ultra-luxury high-rise residences with panoramic water views and a 1,05,000 Sq.Ft. imperial clubhouse.',
     price: 'Rs. 2.85 Cr - Rs. 5.20 Cr*',
     lastPrice: 'Rs. 2.92 Cr onwards*',
     location: 'Varthur Main Road (Opposite Varthur Lake)',
@@ -10134,7 +10185,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BDA OC Received & RERA Verified',
     floorPlan: '2 BHK Luxe (1242 Sq.Ft.) · 3 BHK Regal (1656 Sq.Ft.) · 3 BHK Grand (1905 Sq.Ft.)',
-    description: 'Award-winning 47-acre smart integrated township at Location: Varthur - Whitefield Main Road (Near Varthur Police Station). Handed-over residences available for immediate resale with multiplex, retail boulevard, office spaces, and lush central greens inside the campus. Nearby Connectivity (Varthur - Sarjapur Road): Schools:Greenwood High ICSE/IB (1.8 km), Oakridge International School (2.6 km), Inventure Academy (2.9 km), Chrysalis High (1.4 km) | Hospitals: Sahasra Hospital Varthur (1.1 km), Manipal Hospital Varthur Road (3.1 km), Belenus Champion Hospital (4.5 km) | IT Hubs: Wipro SEZ Kodathi (5.8 km), RGA Tech Park (6.2 km), ITPL Whitefield (6.4 km), Sigma Tech Park (2.9 km) | Malls: Utopia High-Street Retail & Multiplex (0.1 km on campus), Virginia Mall (3.2 km), Nexus Value Mall (3.8 km) | Bus Stop & Transit: Varthur Police Station BMTC Bus Stop (0.2 km), Kadugodi / Hope Farm Metro (5.9 km).',
+    description: 'Award-winning 47-acre smart integrated township at Location: Varthur - Whitefield Main Road (Near Varthur Police Station). Handed-over residences available for immediate resale with multiplex, retail boulevard, office spaces, and lush central greens inside the campus.',
     price: 'Rs. 1.58 Cr - Rs. 2.45 Cr*',
     lastPrice: 'Rs. 1.64 Cr (Verified Resale)*',
     location: 'Varthur - Whitefield Main Road (Varthur Town)',
@@ -10170,7 +10221,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BDA OC Received',
     floorPlan: '3 BHK Apartment (1655 - 2321 Sq.Ft.) · 4 BHK Disney-Themed Villa (3117 Sq.Ft.)',
-    description: '102-acre Disney-themed lakefront township at Location: Varthur - Gunjur Main Road overlooking Varthur Lake. Semi-furnished and fully-furnished luxury apartments and villas available for immediate corporate lease. Nearby Connectivity (Varthur - Gunjur): Schools:Oakridge International School (1.6 km), Greenwood High (1.9 km), Inventure Academy (2.2 km), Global Indian International School (2.5 km) | Hospitals: Sahasra Hospital Varthur (1.5 km), Manipal Hospital Varthur Road (3.8 km), Spandana Hospital (2.8 km) | IT Hubs: Wipro Corporate SEZ (5.2 km), RGA Tech Park Sarjapur Road (5.5 km), Cessna Business Park ORR (7.4 km), ITPL Whitefield (7.2 km) | Malls: Virginia Mall (3.9 km), Market Square Mall Sarjapur Road (5.6 km), Nexus Forum Value Mall (4.3 km) | Bus Stop & Transit: Gunjur - Varthur BMTC Bus Stop (0.3 km), Carmelaram Railway Station (4.4 km).',
+    description: '102-acre Disney-themed lakefront township at Location: Varthur - Gunjur Main Road overlooking Varthur Lake. Semi-furnished and fully-furnished luxury apartments and villas available for immediate corporate lease.',
     price: 'Rs. 68,000 / month - Rs. 1.35 L / month*',
     lastPrice: 'Rs. 72,000 / month (Latest Verified Lease)*',
     location: 'Varthur - Gunjur Main Road (Varthur Lakefront)',
@@ -10208,7 +10259,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BBMP & BDA Approved',
     floorPlan: '3 BHK (1915 Sq.Ft.) · 3.5 BHK (2178 Sq.Ft.) · 4 BHK (2481 Sq.Ft.)',
-    description: 'Meandering Santorini-themed luxury enclave nestled at Location: Gunjur - Panathur Main Road (Off Marathahalli-ORR Corridor). Designed with blue-domed Mediterranean architecture, cascading water plazas, and three iconic clubhouses totaling 77,850 Sq.Ft. Nearby Connectivity (Gunjur - Panathur): Schools:New Horizon Gurukul (3.2 km), VIBGYOR High Marathahalli (2.6 km), Chrysalis High Gunjur (2.8 km), Gear Innovative International (3.4 km) | Hospitals: Sakra World Hospital Bellandur (3.9 km), Manipal Hospital Varthur Road (4.1 km), Maya Multi Specialty Hospital (2.1 km) | IT Hubs: Embassy TechVillage ORR (3.4 km), Prestige Tech Park Kadubeesanahalli (2.9 km), Cessna Business Park (2.7 km), RMZ Ecoworld (4.2 km) | Malls: Brookfield Mall (4.8 km), Central Mall Bellandur (4.5 km), Virginia Mall (4.3 km) | Bus Stop & Transit: Panathur Dinne BMTC Bus Stop (0.5 km), Belandur Road Railway Station (1.2 km), Upcoming Kadubeesanahalli ORR Metro (2.8 km).',
+    description: 'Meandering Santorini-themed luxury enclave nestled at Location: Gunjur - Panathur Main Road (Off Marathahalli-ORR Corridor). Designed with blue-domed Mediterranean architecture, cascading water plazas, and three iconic clubhouses totaling 77,850 Sq.Ft.',
     price: 'Rs. 2.48 Cr - Rs. 4.55 Cr*',
     lastPrice: 'Rs. 2.55 Cr onwards*',
     location: 'Gunjur - Panathur Main Road',
@@ -10244,7 +10295,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP OC Received & RERA Approved',
     floorPlan: '2 BHK Comfort (1106 Sq.Ft.) · 3 BHK Grand (1452 - 1756 Sq.Ft.)',
-    description: 'Ready-to-move luxury gated apartment community at Location: Gunjur Palya - Sarjapur-Varthur Main Road. Surrounded by lush greenery and international schools, offering verified resale apartments with zero GST and immediate possession. Nearby Connectivity (Gunjur Palya): Schools:Chrysalis High Gunjur (0.9 km), Krupanidhi Group of Institutions (0.6 km), Greenwood High (2.4 km), Oakridge International (2.8 km) | Hospitals: Spandana Hospital Gunjur (1.2 km), Belenus Champion Hospital (3.8 km), Manipal Hospital Sarjapur Road (5.2 km) | IT Hubs: Wipro SEZ Kodathi (3.6 km), RGA Tech Park Sarjapur Road (4.1 km), Vaishnavi Tech Park (6.2 km) | Malls: Market Square Mall Sarjapur Road (4.5 km), Decathlon Anubhava Sarjapur Road (3.4 km), Virginia Mall (5.1 km) | Bus Stop & Transit: Gunjur Palya BMTC Bus Stop (0.2 km), Carmelaram Railway Station (2.9 km).',
+    description: 'Ready-to-move luxury gated apartment community at Location: Gunjur Palya - Sarjapur-Varthur Main Road. Surrounded by lush greenery and international schools, offering verified resale apartments with zero GST and immediate possession.',
     price: 'Rs. 1.18 Cr - Rs. 1.72 Cr*',
     lastPrice: 'Rs. 1.24 Cr (Verified Resale)*',
     location: 'Gunjur Palya - Varthur-Sarjapur Road',
@@ -10280,7 +10331,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP OC Received',
     floorPlan: '2 BHK Executive (1205 Sq.Ft.) · 3 BHK Corner (1675 Sq.Ft.)',
-    description: 'High-rise residential community at Location: Gunjur - Varthur Main Road Junction (Opposite Prestige Lakeside Habitat). Semi-furnished corner apartments with modular kitchen, wardrobes, and panoramic views available for immediate family and IT professional lease. Nearby Connectivity (Gunjur Village): Schools:Chrysalis High Gunjur (1.1 km), Oakridge International (1.8 km), Greenwood High (2.1 km), Global Indian International School (2.3 km) | Hospitals: Sahasra Hospital (1.7 km), Spandana Hospital (1.4 km), Manipal Hospital Varthur Road (4.0 km) | IT Hubs: Wipro Corporate Campus (4.6 km), RGA Tech Park (4.9 km), Sigma Soft Tech Park (3.8 km), Cessna Tech Park (6.8 km) | Malls: Virginia Mall Whitefield (4.1 km), Nexus Value Mall (4.5 km), Market Square Mall (5.0 km) | Bus Stop & Transit: Gunjur Bus Depot & BMTC Stop (0.2 km), Carmelaram Station (3.8 km).',
+    description: 'High-rise residential community at Location: Gunjur - Varthur Main Road Junction (Opposite Prestige Lakeside Habitat). Semi-furnished corner apartments with modular kitchen, wardrobes, and panoramic views available for immediate family and IT professional lease.',
     price: 'Rs. 46,000 / month - Rs. 68,000 / month*',
     lastPrice: 'Rs. 49,000 / month (Verified Lease)*',
     location: 'Gunjur - Varthur Main Road Junction',
@@ -10318,7 +10369,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP & BDA Approved',
     floorPlan: '3 BHK Lakeview (1503 Sq.Ft.) · 3 BHK Luxe (1833 Sq.Ft.) · 4 BHK (2185 Sq.Ft.)',
-    description: 'Biophilic lakefront high-rise enclave at Location: Hosa Road - Begur Lakefront Corridor (Off Hosur Road), overlooking a serene 52-acre natural lake. Designed with 85% open green spaces, zero-carbon water recycling, and direct access to Hosa Road Metro Station. Nearby Connectivity (Hosa Road): Schools:PES University EC Campus (2.2 km), Vibgyor High Electronic City (2.8 km), Orchids The International School (2.4 km), Notre Dame Academy (1.6 km) | Hospitals: Springleaf Hospital (2.5 km), Kauvery Hospital Electronic City (3.2 km), Narayana Institute of Cardiac Sciences (6.4 km), Motherhood Hospital (4.8 km) | IT Hubs: Infosys HQ Electronic City Phase 1 (3.8 km), Wipro Electronic City (4.2 km), Tech Mahindra & TCS (4.5 km), RMZ Ecospace Bellandur (7.9 km) | Malls: M5 Ecity Mall (3.4 km), Royal Meenakshi Mall (6.8 km), Market Square Mall (6.5 km) | Bus Stop & Transit: Hosa Road Junction BMTC Bus Stop (1.4 km), Hosa Road Yellow Line Metro Station (1.6 km).',
+    description: 'Biophilic lakefront high-rise enclave at Location: Hosa Road - Begur Lakefront Corridor (Off Hosur Road), overlooking a serene 52-acre natural lake. Designed with 85% open green spaces, zero-carbon water recycling, and direct access to Hosa Road Metro Station.',
     price: 'Rs. 1.72 Cr - Rs. 2.55 Cr*',
     lastPrice: 'Rs. 1.78 Cr onwards*',
     location: 'Hosa Road - Begur Lakefront Corridor',
@@ -10354,7 +10405,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BDA & BBMP OC Received',
     floorPlan: '3 BHK Classic (1810 Sq.Ft.) · 3 BHK + Maid (2135 Sq.Ft.) · 4 BHK Penthouse (3120 Sq.Ft.)',
-    description: 'Landmark hilltop-inspired ready-to-move luxury community at Location: Hosa Road - Haralur Link Road (PWD Quarters / Silver County Road). Offering panoramic views of Kasavanahalli and Hosa Road lakes with a massive 50,000 Sq.Ft. clubhouse and zero GST resale units. Nearby Connectivity (Hosa Road - Haralur): Schools:Vibgyor High Haralur (1.4 km), Orchids International School (1.8 km), Cambridge Public School HSR (2.9 km), Freedom International HSR (3.2 km) | Hospitals: Manipal Hospital Sarjapur Road (3.8 km), Kauvery Hospital (3.5 km), Narayana Multispeciality HSR (3.1 km), Motherhood Sarjapur (3.6 km) | IT Hubs: AMR Tech Park Hosur Road (4.1 km), RMZ Ecospace Bellandur (4.8 km), Wipro Corporate Office Sarjapur Road (4.4 km), Electronic City Phase 1 (5.5 km) | Malls: Market Square Mall Sarjapur Road (3.9 km), M5 Ecity Mall (4.8 km), HSR High Street (3.0 km) | Bus Stop & Transit: Haralur Cross / Silver County BMTC Bus Stop (0.4 km), Hosa Road Metro Station (2.9 km).',
+    description: 'Landmark hilltop-inspired ready-to-move luxury community at Location: Hosa Road - Haralur Link Road (PWD Quarters / Silver County Road). Offering panoramic views of Kasavanahalli and Hosa Road lakes with a massive 50,000 Sq.Ft. clubhouse and zero GST resale units.',
     price: 'Rs. 2.05 Cr - Rs. 3.25 Cr*',
     lastPrice: 'Rs. 2.12 Cr (Verified Resale)*',
     location: 'Hosa Road - Haralur Link Road (Silver County)',
@@ -10390,7 +10441,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BDA & BBMP OC Received',
     floorPlan: '3 BHK Comfort (1666 Sq.Ft.) · 3 BHK Grand (1929 Sq.Ft.) · 4 BHK (2340 Sq.Ft.)',
-    description: 'Sprawling 12.8-acre handed-over residential sanctuary at Location: Hosa Road - Off Sarjapur Haralur Corridor (Lakedew Residency Road). Surrounded by 80% open botanical gardens and Japanese zen ponds, available for immediate family and corporate rental. Nearby Connectivity (Hosa Road - Haralur): Schools:Vibgyor High Haralur (0.8 km), National Public School HSR (3.4 km), EuroSchool HSR (2.9 km) | Hospitals: Narayana Multispeciality Hospital HSR (2.8 km), Manipal Hospital Sarjapur Road (3.5 km), Motherhood Hospital (3.2 km) | IT Hubs: RMZ Ecospace Bellandur (4.2 km), Wipro Corporate HQ (3.9 km), Vaishnavi Tech Park (3.6 km), AMR Tech Park (3.8 km) | Malls: Market Square Mall (3.5 km), Central Mall Bellandur (4.4 km), HSR Sector 2 High Street (2.6 km) | Bus Stop & Transit: Haralur Lakedew BMTC Bus Stop (0.3 km), Kudlu Gate & Hosa Road Metro Stations (2.8 km).',
+    description: 'Sprawling 12.8-acre handed-over residential sanctuary at Location: Hosa Road - Off Sarjapur Haralur Corridor (Lakedew Residency Road). Surrounded by 80% open botanical gardens and Japanese zen ponds, available for immediate family and corporate rental.',
     price: 'Rs. 62,000 / month - Rs. 88,000 / month*',
     lastPrice: 'Rs. 65,000 / month (Verified Lease)*',
     location: 'Hosa Road - Haralur Main Road (Lakedew Corridor)',
@@ -10428,7 +10479,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BMRDA / BBMP & RERA Approved',
     floorPlan: '3 BHK Smart (1458 Sq.Ft.) · 3 BHK Luxe (1785 Sq.Ft.) · 4 BHK (2210 Sq.Ft.)',
-    description: 'Sustainable eco-luxury residential township at Location: Kasavanahalli - Off Sarjapur Road Corridor (Kodathi - Kasavanahalli Link). Designed with 68% open green spaces, 15+ outdoor sports courts, and high-efficiency layouts minutes from Wipro Corporate Office. Nearby Connectivity (Kasavanahalli - Off Sarjapur): Schools:Delhi Public School (DPS) East (2.2 km), Prakriya Green Wisdom School (1.8 km), Harvest International School (1.6 km), Asia Pacific World School (2.9 km) | Hospitals: Belenus Champion Hospital (2.4 km), Motherhood Hospital Sarjapur Road (3.1 km), Manipal Hospital Sarjapur Road (3.8 km), Sakra World Hospital (5.4 km) | IT Hubs: Wipro SEZ Campus (1.9 km), RGA Tech Park (2.1 km), RMZ Ecoworld Bellandur (4.8 km), Vaishnavi Tech Park (4.2 km) | Malls: Market Square Mall Sarjapur Road (2.9 km), Decathlon Sarjapur Road (1.7 km), Central Mall Bellandur (5.1 km) | Bus Stop & Transit: Kasavanahalli / Kodathi Gate BMTC Bus Stop (0.5 km), Carmelaram Railway Station (2.2 km), Upcoming Iblur ORR Metro (4.8 km).',
+    description: 'Sustainable eco-luxury residential township at Location: Kasavanahalli - Off Sarjapur Road Corridor (Kodathi - Kasavanahalli Link). Designed with 68% open green spaces, 15+ outdoor sports courts, and high-efficiency layouts minutes from Wipro Corporate Office.',
     price: 'Rs. 1.65 Cr - Rs. 2.48 Cr*',
     lastPrice: 'Rs. 1.72 Cr onwards*',
     location: 'Kasavanahalli - Off Sarjapur Road Corridor',
@@ -10464,7 +10515,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP OC Received & RERA Verified',
     floorPlan: '3 BHK Boutique Residence (1790 Sq.Ft.) · 4 BHK Triplex Villa (3250 Sq.Ft.)',
-    description: 'Boutique earth-toned luxury villas and low-density residences at Location: Kasavanahalli Main Road (Adjacent to Kasavanahalli Lake & HSR Extension). Offering private landscaped plunge decks, Italian marble flooring, and clear resale title. Nearby Connectivity (Kasavanahalli Main Road): Schools:Asia Pacific World School (0.8 km), Vibgyor High Haralur (1.5 km), BRS Global School (0.6 km), Orchids International School (1.4 km) | Hospitals: Manipal Hospital Sarjapur Road (2.1 km), Motherhood Hospital (1.9 km), Cloudnine Hospital Bellandur (3.2 km), Sakra World Hospital (4.1 km) | IT Hubs: Wipro Corporate HQ (1.8 km), Vaishnavi Tech Park (2.2 km), RMZ Ecospace & Ecoworld Bellandur (3.4 km), RGA Tech Park (2.9 km) | Malls: Market Square Mall Sarjapur Road (1.7 km), Central Mall Bellandur (3.3 km), Total Mall Sarjapur Road (1.9 km) | Bus Stop & Transit: Kasavanahalli Lake BMTC Bus Stop (0.2 km), Upcoming Iblur Junction Metro Station (2.6 km).',
+    description: 'Boutique earth-toned luxury villas and low-density residences at Location: Kasavanahalli Main Road (Adjacent to Kasavanahalli Lake & HSR Extension). Offering private landscaped plunge decks, Italian marble flooring, and clear resale title.',
     price: 'Rs. 2.65 Cr - Rs. 4.40 Cr*',
     lastPrice: 'Rs. 2.75 Cr (Verified Resale)*',
     location: 'Kasavanahalli Main Road (Beside Kasavanahalli Lake)',
@@ -10500,7 +10551,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP OC Received',
     floorPlan: '3 BHK Executive (1745 Sq.Ft.) · 3.5 BHK Luxe (1990 Sq.Ft.)',
-    description: 'Handed-over contemporary luxury apartment enclave at Location: Kasavanahalli - Haralur Main Road. Semi-furnished Vaastu-compliant corner units available for immediate executive rental with proximity to RMZ Ecoworld and Wipro SEZ. Nearby Connectivity (Kasavanahalli - Haralur): Schools:Vibgyor High Haralur (0.7 km), Asia Pacific World School (1.1 km),Amrita Vidyalayam (1.6 km), National Public School HSR (3.5 km) | Hospitals: Motherhood Hospital Sarjapur Road (1.8 km), Manipal Hospital Sarjapur Road (2.0 km), Sakra World Hospital (3.9 km), Narayana Multispeciality HSR (3.0 km) | IT Hubs: Wipro Corporate HQ (1.6 km), Vaishnavi Tech Park (2.0 km), RMZ Ecospace Bellandur (3.1 km), Embassy TechVillage (4.2 km) | Malls: Market Square Mall (1.6 km), Soul Space Spirit Centro Mall Bellandur (3.0 km), HSR High Street (2.8 km) | Bus Stop & Transit: Kasavanahalli Cross BMTC Bus Stop (0.3 km), Upcoming Iblur Metro Station (2.4 km).',
+    description: 'Handed-over contemporary luxury apartment enclave at Location: Kasavanahalli - Haralur Main Road. Semi-furnished Vaastu-compliant corner units available for immediate executive rental with proximity to RMZ Ecoworld and Wipro SEZ.',
     price: 'Rs. 65,000 / month - Rs. 85,000 / month*',
     lastPrice: 'Rs. 68,000 / month (Latest Verified Lease)*',
     location: 'Kasavanahalli - Haralur Main Road',
@@ -10540,7 +10591,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BBMP / BMRDA & Karnataka RERA Approved',
     floorPlan: '3 BHK Luxe (1998 Sq.Ft.) · 3.5 BHK Regal (2415 Sq.Ft.) · 4 BHK + Maid (2898 Sq.Ft.)',
-    description: 'Forest-themed landmark township at Location: Whitefield - Budigere Cross Junction (Old Madras Road Corridor) featuring 1,500+ fully grown native trees, a 68,000 Sq.Ft. imperial clubhouse, and high-street retail boulevard. Nearby Connectivity (Whitefield - Budigere Cross): Schools: Vibgyor High Kadugodi (3.4 km), New Baldwin International School (2.0 km), One World International School (2.6 km) | Hospitals: Manipal Hospital Whitefield (7.9 km), East Point Hospital (4.1 km), MVJ Medical College Hospital (4.7 km) | IT Hubs: Bearys Global Research Triangle (2.7 km), ITPL Whitefield (7.1 km), Aero SEZ Budigere (8.4 km) | Malls: Orion Uptown Mall OMR (0.2 km walk), SBR Lucky Mall (4.0 km), Nexus Shantiniketan (7.4 km) | Bus Stop & Transit: Budigere Cross BMTC Bus Stop (0.2 km), Kadugodi Tree Park Metro Station (5.4 km).',
+    description: 'Forest-themed landmark township at Location: Whitefield - Budigere Cross Junction (Old Madras Road Corridor) featuring 1,500+ fully grown native trees, a 68,000 Sq.Ft. imperial clubhouse, and high-street retail boulevard.',
     price: 'Rs. 2.15 Cr - Rs. 3.45 Cr*',
     lastPrice: 'Rs. 2.22 Cr onwards*',
     location: 'Whitefield - Budigere Cross (Old Madras Road)',
@@ -10576,7 +10627,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BDA & Karnataka RERA Approved',
     floorPlan: '3 BHK Classic (1650 Sq.Ft.) · 3 BHK Grand (2027 Sq.Ft.) · 4 BHK Luxe (2491 Sq.Ft.)',
-    description: 'Nature-first luxury residential enclave at Location: Varthur - Sarjapur Main Road (Dommasandra Circle Link), preserving 500+ heritage trees and 80% open landscaped greens right in the education and IT belt. Nearby Connectivity (Varthur - Sarjapur Road): Schools: Greenwood High International (1.1 km), Oakridge International School (1.4 km), Inventure Academy (1.7 km), TISB (2.2 km) | Hospitals: Manipal Hospital Varthur Road (4.4 km), Sahasra Hospital Varthur (2.8 km), Belenus Champion Hospital (4.1 km) | IT Hubs: Wipro SEZ Kodathi (4.5 km), RGA Tech Park Sarjapur Road (4.9 km), Prestige Tech Park (8.2 km), ITPL Whitefield (8.8 km) | Malls: Virginia Mall (5.2 km), Market Square Mall Sarjapur Road (5.4 km), Decathlon Sarjapur Road (4.0 km) | Bus Stop & Transit: Dommasandra / Sulikunte BMTC Bus Stop (0.2 km), Carmelaram Station (4.2 km).',
+    description: 'Nature-first luxury residential enclave at Location: Varthur - Sarjapur Main Road (Dommasandra Circle Link), preserving 500+ heritage trees and 80% open landscaped greens right in the education and IT belt.',
     price: 'Rs. 1.98 Cr - Rs. 3.18 Cr*',
     lastPrice: 'Rs. 2.06 Cr onwards*',
     location: 'Varthur - Sarjapur Main Road (Dommasandra)',
@@ -10612,7 +10663,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '3 BHK Regal (1950 Sq.Ft.) · 3.5 BHK Luxe (2300 Sq.Ft.) · 4 BHK Sky Villa (3050 Sq.Ft.)',
-    description: 'Ultra-luxury waterfront residential landmark at Location: Hosa Road - Begur / Akshayanagar Lakefront Corridor, overlooking the serene Hullimavu-Begur Lake with expansive wrap-around sundecks and Club Saint Amand hospitality. Nearby Connectivity (Hosa Road - Begur Lakefront): Schools: Vibgyor High Electronic City / BTM (1.8 km), National Public School Gottigere (2.6 km), Notre Dame Academy (2.1 km), Mitra Academy (2.4 km) | Hospitals: Fortis Hospital Bannerghatta (3.2 km), Apollo Hospital (3.5 km), Kauvery Hospital Electronic City (4.6 km) | IT Hubs: Infosys Electronic City Phase 1 (5.4 km), Kalyani Magnum Tech Park (4.1 km), AMR Tech Park Hosur Road (3.8 km), RMZ Ecospace (8.2 km) | Malls: Royal Meenakshi Mall (2.4 km), Vega City Mall (4.2 km), M5 Ecity Mall (4.9 km) | Bus Stop & Transit: Begur Koppa Road BMTC Bus Stop (0.3 km), Hosa Road & Hulimavu Metro Stations (2.5 km).',
+    description: 'Ultra-luxury waterfront residential landmark at Location: Hosa Road - Begur / Akshayanagar Lakefront Corridor, overlooking the serene Hullimavu-Begur Lake with expansive wrap-around sundecks and Club Saint Amand hospitality.',
     price: 'Rs. 2.65 Cr - Rs. 4.30 Cr*',
     lastPrice: 'Rs. 2.74 Cr onwards*',
     location: 'Hosa Road - Begur Lakefront Corridor',
@@ -10648,7 +10699,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BMRDA / STRR & RERA Approved',
     floorPlan: 'Villa Plots: 1800 Sq.Ft. (30x60) · 2400 Sq.Ft. (40x60) · 3200 Sq.Ft. Custom Earth Villa Plots',
-    description: 'Handcrafted botanical plotted villa estate at Location: Hoskote - Devanahalli STRR Link Corridor, featuring a 10-acre central tree museum, eucalyptus boulevard, underground utilities, and red-brick clubhouse. Nearby Connectivity (Hoskote STRR Corridor): Schools: Akash International School (4.2 km), Sterling English School (3.5 km), Vibgyor High (7.8 km) | Hospitals: MVJ Medical College & Research Hospital (6.5 km), Ramaiah Leena Hospital (5.2 km), Manipal Hospital (11.2 km) | IT Hubs: Aerospace SEZ & KIADB Hardware Park (5.8 km), Hoskote Logistics & Auto Hub (6.0 km), Bearys Global Research Triangle (8.5 km) | Malls: Orion Uptown Mall OMR (8.2 km), Galleria Mall (11.5 km) | Bus Stop & Transit: STRR Junction BMTC Bus Stop (0.4 km), Upcoming STRR / Airport Metro Link (4.8 km).',
+    description: 'Handcrafted botanical plotted villa estate at Location: Hoskote - Devanahalli STRR Link Corridor, featuring a 10-acre central tree museum, eucalyptus boulevard, underground utilities, and red-brick clubhouse.',
     price: 'Rs. 1.68 Cr - Rs. 3.40 Cr*',
     lastPrice: 'Rs. 1.75 Cr onwards*',
     location: 'Hoskote - STRR Botanical Corridor',
@@ -10686,7 +10737,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '3 BHK Lakeview (1685 Sq.Ft.) · 3.5 BHK Regal (2015 Sq.Ft.) · 4 BHK Luxe (2540 Sq.Ft.)',
-    description: 'Biophilic lakefront high-rise enclave at Location: Whitefield Borewell Road (Nallurahalli - Siddapura Lakefront), bordered by 500+ meters of serene lake promenade and 82% open green gardens. Nearby Connectivity (Whitefield Borewell Road): Schools: Deens Academy Whitefield (1.4 km), Vydehi School of Excellence (1.9 km), Glentree Academy (1.6 km), Ryan International (2.8 km) | Hospitals: Manipal Hospital Varthur Road (1.6 km), Vydehi Super Specialty Hospital (2.1 km), Columbia Asia Whitefield (1.9 km) | IT Hubs: Sigma Soft Tech Park (1.1 km), ITPL / ITPB Whitefield (2.8 km), EPIP Zone SAP Labs (2.3 km), Brigade Tech Gardens (2.5 km) | Malls: Virginia Mall (1.4 km), Inorbit Mall Whitefield (2.2 km), Nexus Forum Shantiniketan (2.9 km) | Bus Stop & Transit: Borewell Road / Nallurahalli BMTC Bus Stop (0.3 km), Nallurahalli Metro Station (1.8 km).',
+    description: 'Biophilic lakefront high-rise enclave at Location: Whitefield Borewell Road (Nallurahalli - Siddapura Lakefront), bordered by 500+ meters of serene lake promenade and 82% open green gardens.',
     price: 'Rs. 2.08 Cr - Rs. 3.35 Cr*',
     lastPrice: 'Rs. 2.16 Cr onwards*',
     location: 'Whitefield Borewell Road (Nallurahalli Lakefront)',
@@ -10722,7 +10773,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP / BDA & RERA Approved',
     floorPlan: '2 BHK Premium (980 Sq.Ft.) · 3 BHK Smart (1385 Sq.Ft.) · 3 BHK Luxe (1610 Sq.Ft.)',
-    description: 'Tropical resort-themed residential community at Location: Off Sarjapur Road - Choodasandra (Hosa Road - Kasavanahalli Link Corridor), featuring zero-dead-space floor plans and a lush central palm lagoon. Nearby Connectivity (Off Sarjapur Road - Choodasandra): Schools: Notre Dame Academy (0.8 km), Harvest International School (2.1 km), Vibgyor High Haralur (2.4 km), DPS East (3.8 km) | Hospitals: Springleaf Hospital (1.9 km), Motherhood Hospital Sarjapur Road (2.9 km), Manipal Hospital Sarjapur Road (3.4 km) | IT Hubs: Wipro Corporate HQ (2.6 km), RGA Tech Park (3.1 km), AMR Tech Park Hosur Road (3.9 km), Infosys Electronic City (4.8 km) | Malls: Market Square Mall Sarjapur Road (3.2 km), M5 Ecity Mall (4.1 km), Decathlon Sarjapur Road (2.8 km) | Bus Stop & Transit: Choodasandra Circle BMTC Bus Stop (0.3 km), Hosa Road Metro Station (2.6 km).',
+    description: 'Tropical resort-themed residential community at Location: Off Sarjapur Road - Choodasandra (Hosa Road - Kasavanahalli Link Corridor), featuring zero-dead-space floor plans and a lush central palm lagoon.',
     price: 'Rs. 1.24 Cr - Rs. 1.88 Cr*',
     lastPrice: 'Rs. 1.29 Cr onwards*',
     location: 'Off Sarjapur Road - Choodasandra (Hosa Road Link)',
@@ -10758,7 +10809,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '3 BHK Classic (1560 Sq.Ft.) · 3 BHK + Maid (1895 Sq.Ft.) · 4 BHK Grand (2380 Sq.Ft.)',
-    description: 'Biophilic living sanctuary at Location: Kasavanahalli - Off Sarjapur Road (Kodathi Gate adjacent to Wipro SEZ), built around 100+ preserved mango and banyan trees with a 55,000 Sq.Ft. clubhouse. Nearby Connectivity (Kasavanahalli - Kodathi): Schools: Prakriya Green Wisdom School (0.9 km), DPS East (1.8 km), Harvest International School (1.4 km), Greenwood High (3.2 km) | Hospitals: Belenus Champion Hospital (1.9 km), Motherhood Hospital (2.8 km), Manipal Hospital Sarjapur Road (3.5 km), Sakra World Hospital (5.1 km) | IT Hubs: Wipro SEZ Campus (0.8 km), RGA Tech Park (1.2 km), Vaishnavi Tech Park (3.9 km), RMZ Ecoworld (4.6 km) | Malls: Decathlon Sarjapur Road (0.9 km), Market Square Mall (2.7 km), Central Mall Bellandur (4.8 km) | Bus Stop & Transit: Kodathi Gate BMTC Bus Stop (0.2 km), Carmelaram Railway Station (1.6 km).',
+    description: 'Biophilic living sanctuary at Location: Kasavanahalli - Off Sarjapur Road (Kodathi Gate adjacent to Wipro SEZ), built around 100+ preserved mango and banyan trees with a 55,000 Sq.Ft. clubhouse.',
     price: 'Rs. 1.74 Cr - Rs. 2.68 Cr*',
     lastPrice: 'Rs. 1.81 Cr onwards*',
     location: 'Kasavanahalli - Kodathi (Off Sarjapur Road)',
@@ -10794,7 +10845,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BMRDA / STRR & RERA Approved (A-Khata)',
     floorPlan: 'Villa Plots: 1200 Sq.Ft. (30x40) · 1500 Sq.Ft. (30x50) · 2400 Sq.Ft. (40x60) Corner Plots',
-    description: 'Nature-themed 71-acre plotted development at Location: Sarjapur - Attibele Road (Sompura Gate, South-East Bangalore), featuring 12 themed botanical parks, underground infrastructure, and a ready luxury clubhouse. Nearby Connectivity (Sarjapur - Sompura Gate): Schools: Indus International School (2.4 km), Azim Premji University (1.9 km), Greenwood High (8.2 km), Silver Oaks International (4.6 km) | Hospitals: Town Hospital Sarjapur (2.1 km), Spandana Hospital (4.5 km), Narayana Health City (9.2 km) | IT Hubs: Proposed Infosys 202-Acre Sarjapur Campus (2.8 km), Wipro SEZ Kodathi (9.4 km), Electronic City Phase 2 (10.5 km) | Malls: D-Mart Sarjapur (2.2 km), Market Square Mall (9.8 km), M5 Ecity Mall (10.2 km) | Bus Stop & Transit: Sompura Gate BMTC Bus Stop (0.2 km), Upcoming Sarjapur Red Line Metro Terminus (2.5 km).',
+    description: 'Nature-themed 71-acre plotted development at Location: Sarjapur - Attibele Road (Sompura Gate, South-East Bangalore), featuring 12 themed botanical parks, underground infrastructure, and a ready luxury clubhouse.',
     price: 'Rs. 92 Lakhs - Rs. 1.95 Cr*',
     lastPrice: 'Rs. 96 Lakhs onwards*',
     location: 'Sarjapur - Sompura Gate (STRR Link Road)',
@@ -10830,7 +10881,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BMRDA & Karnataka RERA Approved',
     floorPlan: 'Plots: 600 Sq.Ft. · 1200 Sq.Ft. (30x40) · 1500 Sq.Ft. (30x50) · 1800 Sq.Ft.',
-    description: 'Boutique gated plotted community at Location: Hoskote - Old Madras Road Highway Corridor, crafted with wide black-top avenues, landscaped tree boulevards, and a modern lifestyle clubhouse. Nearby Connectivity (Hoskote - OMR): Schools: Capstone High International School (1.8 km), Vibgyor High Kadugodi (6.4 km), Global Residential School Hoskote (2.2 km) | Hospitals: MVJ Medical College & Research Hospital (1.9 km), Silicon City Hospital Hoskote (2.4 km), Manipal Hospital Whitefield (9.8 km) | IT Hubs: Hoskote Industrial & Auto SEZ (3.2 km), Aero SEZ Devanahalli Link (9.5 km), Bearys Global Research Triangle (5.8 km), ITPL Whitefield (10.5 km) | Malls: Orion Uptown Mall OMR (4.8 km), SBR Lucky Mall (5.5 km) | Bus Stop & Transit: Dandupalya / Hoskote OMR BMTC Bus Stop (0.3 km), Kadugodi Metro Station (8.8 km).',
+    description: 'Boutique gated plotted community at Location: Hoskote - Old Madras Road Highway Corridor, crafted with wide black-top avenues, landscaped tree boulevards, and a modern lifestyle clubhouse.',
     price: 'Rs. 64 Lakhs - Rs. 1.42 Cr*',
     lastPrice: 'Rs. 68 Lakhs onwards*',
     location: 'Hoskote - Old Madras Road (NH-75 Corridor)',
@@ -10868,7 +10919,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BMRDA / BBMP & RERA Approved',
     floorPlan: '4 BHK Triplex Villa (2550 Sq.Ft.) · 4 BHK Corner Villa (3280 Sq.Ft.) · 5 BHK Mansion (3950 Sq.Ft.)',
-    description: 'Contemporary gated triplex villa community at Location: Whitefield - Soukya Road (Kadugodi Extension), offering independent private gardens, terrace gazebos, and low-density serene living. Nearby Connectivity (Whitefield - Soukya Road): Schools: Deens Academy Gunjur / Whitefield (3.2 km), Pragathi School (2.4 km), Vibgyor High Kadugodi (3.6 km), Chrysalis High (3.9 km) | Hospitals: Soukya International Holistic Health Centre (0.6 km), Sri Sathya Sai Hospital (5.4 km), Manipal Hospital Whitefield (5.8 km) | IT Hubs: Bearys Global Research Triangle (3.5 km), ITPL Whitefield (5.2 km), EPIP Zone (5.9 km) | Malls: SBR Lucky Mall (3.4 km), Orion Uptown Mall (4.6 km), Nexus Shantiniketan (5.8 km) | Bus Stop & Transit: Soukya Road BMTC Bus Stop (0.2 km), Whitefield (Kadugodi) Metro Station & Railway Station (3.9 km).',
+    description: 'Contemporary gated triplex villa community at Location: Whitefield - Soukya Road (Kadugodi Extension), offering independent private gardens, terrace gazebos, and low-density serene living.',
     price: 'Rs. 2.45 Cr - Rs. 3.65 Cr*',
     lastPrice: 'Rs. 2.52 Cr onwards*',
     location: 'Whitefield - Soukya Road (Kadugodi Extension)',
@@ -10904,7 +10955,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BBMP OC Received & RERA Approved',
     floorPlan: '3 BHK Smart (1675 Sq.Ft.) · 3 BHK Grand (1780 Sq.Ft.)',
-    description: 'Spanish-courtyard inspired primary residential enclave at Location: Kasavanahalli - Off Sarjapur Road (Behind Wipro Corporate Office), crafted with Mivan construction, cross-ventilated corner layouts, and ready club amenities. Nearby Connectivity (Kasavanahalli - Off Sarjapur): Schools: BRS Global School (0.5 km), Asia Pacific World School (0.9 km), Vibgyor High Haralur (1.6 km), DPS East (2.6 km) | Hospitals: Motherhood Hospital Sarjapur Road (1.6 km), Manipal Hospital Sarjapur Road (1.9 km), Belenus Champion Hospital (2.1 km) | IT Hubs: Wipro Corporate HQ (1.2 km), RGA Tech Park (2.4 km), Vaishnavi Tech Park (1.9 km), RMZ Ecoworld (3.5 km) | Malls: Market Square Mall Sarjapur Road (1.5 km), Decathlon Sarjapur Road (2.1 km), Central Mall Bellandur (3.4 km) | Bus Stop & Transit: Kasavanahalli Main BMTC Bus Stop (0.3 km), Carmelaram Station (2.6 km), Upcoming Iblur Metro (2.5 km).',
+    description: 'Spanish-courtyard inspired primary residential enclave at Location: Kasavanahalli - Off Sarjapur Road (Behind Wipro Corporate Office), crafted with Mivan construction, cross-ventilated corner layouts, and ready club amenities.',
     price: 'Rs. 1.54 Cr - Rs. 1.82 Cr*',
     lastPrice: 'Rs. 1.59 Cr onwards*',
     location: 'Kasavanahalli Main Road (Behind Wipro HQ)',
@@ -10940,7 +10991,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BMRDA / BBMP & RERA Approved',
     floorPlan: '2 BHK Smart (1165 Sq.Ft.) · 3 BHK Comfort (1540 Sq.Ft.) · 3 BHK Luxe (1790 Sq.Ft.)',
-    description: 'Modern family-focused gated community at Location: Hoskote - Old Madras Road (Budigere Cross - Kattamnallur), designed with Vaastu-compliant east/north facing homes, podium gardens, and high rental yield potential. Nearby Connectivity (Hoskote - OMR): Schools: Gopalan National School (3.8 km), Vibgyor High Kadugodi (3.6 km), New Baldwin International (1.9 km) | Hospitals: East Point Hospital (3.9 km), MVJ Hospital (4.4 km), Sri Sathya Sai Hospital (6.8 km) | IT Hubs: Bearys Global Research Triangle (2.4 km), Signature Business Park (0.5 km), ITPL Whitefield (7.2 km) | Malls: Orion Uptown Mall OMR (0.5 km), Gopalan Grand Mall (9.2 km), SBR Lucky Mall (4.1 km) | Bus Stop & Transit: Kattamnallur / Budigere Cross BMTC Bus Stop (0.3 km), Kadugodi Metro Station (5.5 km).',
+    description: 'Modern family-focused gated community at Location: Hoskote - Old Madras Road (Budigere Cross - Kattamnallur), designed with Vaastu-compliant east/north facing homes, podium gardens, and high rental yield potential.',
     price: 'Rs. 98 Lakhs - Rs. 1.48 Cr*',
     lastPrice: 'Rs. 1.04 Cr onwards*',
     location: 'Hoskote - Old Madras Road (Kattamnallur)',
@@ -10976,7 +11027,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2.5 BHK (1395 Sq.Ft.) · 3 BHK Regal (1760 Sq.Ft.) · 3.5 BHK Sky Suite (2120 Sq.Ft.)',
-    description: 'High-rise contemporary residential enclave at Location: Varthur - Gunjur Main Road (Beside Krupanidhi & Chrysalis High), featuring sky-bridges, double-height entrance lobbies, and panoramic lake views. Nearby Connectivity (Varthur - Gunjur): Schools: Chrysalis High Gunjur (0.6 km), Oakridge International School (1.9 km), Greenwood High (2.2 km), Global Indian International (2.4 km) | Hospitals: Sahasra Hospital Varthur (1.4 km), Spandana Hospital Gunjur (1.1 km), Manipal Hospital Varthur Road (3.6 km) | IT Hubs: Wipro SEZ Kodathi (4.2 km), RGA Tech Park (4.6 km), Sigma Soft Tech Park (3.4 km), ITPL Whitefield (6.8 km) | Malls: Virginia Mall (3.7 km), Nexus Value Mall (4.2 km), Market Square Mall (4.9 km) | Bus Stop & Transit: Gunjur - Varthur BMTC Bus Stop (0.2 km), Carmelaram Railway Station (3.5 km).',
+    description: 'High-rise contemporary residential enclave at Location: Varthur - Gunjur Main Road (Beside Krupanidhi & Chrysalis High), featuring sky-bridges, double-height entrance lobbies, and panoramic lake views.',
     price: 'Rs. 1.38 Cr - Rs. 2.12 Cr*',
     lastPrice: 'Rs. 1.44 Cr onwards*',
     location: 'Varthur - Gunjur Main Road',
@@ -11012,7 +11063,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2 BHK Luxe (1320 Sq.Ft.) · 3 BHK Grand (1740 Sq.Ft.) · 4 BHK Signature (2390 Sq.Ft.)',
-    description: 'Contemporary lifestyle residential community at Location: Hosa Road - HSR Layout Extension Corridor, offering 65+ world-class lifestyle amenities, vehicle-free central podium, and 75% open landscaped space. Nearby Connectivity (Hosa Road - HSR Extension): Schools: Vibgyor High Haralur (1.2 km), Freedom International School HSR (2.4 km), National Public School HSR (2.9 km), Orchids International (1.5 km) | Hospitals: Narayana Multispeciality Hospital HSR (2.2 km), Manipal Hospital Sarjapur Road (3.4 km), Kauvery Hospital (3.1 km) | IT Hubs: AMR Tech Park Hosur Road (2.9 km), RMZ Ecospace Bellandur (4.4 km), Wipro Corporate HQ (4.2 km), Electronic City Phase 1 (4.9 km) | Malls: Market Square Mall (3.6 km), M5 Ecity Mall (4.4 km), HSR Sector 2 High Street (2.2 km) | Bus Stop & Transit: Hosa Road / Kudlu Gate BMTC Bus Stop (0.5 km), Kudlu Gate & Hosa Road Yellow Line Metro Stations (1.4 km).',
+    description: 'Contemporary lifestyle residential community at Location: Hosa Road - HSR Layout Extension Corridor, offering 65+ world-class lifestyle amenities, vehicle-free central podium, and 75% open landscaped space.',
     price: 'Rs. 1.42 Cr - Rs. 2.38 Cr*',
     lastPrice: 'Rs. 1.48 Cr onwards*',
     location: 'Hosa Road - HSR Extension Corridor',
@@ -11050,7 +11101,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'C',
     approvalBody: 'BBMP & RERA Approved (A-Khata)',
     floorPlan: '2 BHK Smart (1085 Sq.Ft.) · 2.5 BHK Study (1260 Sq.Ft.) · 3 BHK Family (1440 Sq.Ft.)',
-    description: 'Smart value-for-money primary apartment enclave at Location: Whitefield - Immadihalli Main Road (Near Hagadur & Hope Farm Junction), offering spacious balconies, 100% Vaastu compliance, and immediate proximity to Whitefield IT hubs. Nearby Connectivity (Whitefield - Immadihalli): Schools: Deens Academy Whitefield (1.9 km), Glentree Academy (2.1 km), Whitefield Global School (1.6 km), Ryan International (3.4 km) | Hospitals: Manipal Hospital Varthur Road (2.2 km), Columbia Asia Whitefield (2.4 km), Aster Whitefield Hospital (3.8 km) | IT Hubs: Sigma Soft Tech Park (1.9 km), ITPL / ITPB Whitefield (3.2 km), GR Tech Park (2.9 km) | Malls: Virginia Mall (2.0 km), Park Square Mall ITPL (3.2 km), Nexus Forum Shantiniketan (3.9 km) | Bus Stop & Transit: Immadihalli Main BMTC Bus Stop (0.2 km), Hope Farm Channasandra Metro Station (2.6 km).',
+    description: 'Smart value-for-money primary apartment enclave at Location: Whitefield - Immadihalli Main Road (Near Hagadur & Hope Farm Junction), offering spacious balconies, 100% Vaastu compliance, and immediate proximity to Whitefield IT hubs.',
     price: 'Rs. 78 Lakhs - Rs. 1.12 Cr*',
     lastPrice: 'Rs. 82 Lakhs onwards*',
     location: 'Whitefield - Immadihalli Main Road (Hope Farm Link)',
@@ -11086,7 +11137,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'C',
     approvalBody: 'BMRDA / HPA & RERA Approved',
     floorPlan: '2 BHK Compact (1040 Sq.Ft.) · 3 BHK Corner (1350 Sq.Ft.)',
-    description: 'Well-crafted mid-rise residential community at Location: Hoskote Town - NH-75 Old Madras Road (Near MVJ Hospital & Toll Plaza), ideal for first-time homebuyers and high-yield investors along the booming East Bangalore corridor. Nearby Connectivity (Hoskote Town NH-75): Schools: Citizen Public School Hoskote (1.1 km), Global Residential School (1.5 km), The Brigade School OMR (5.4 km) | Hospitals: MVJ Medical College & Research Hospital (1.2 km), Silicon City Hospital (1.6 km), Mission Hospital (1.9 km) | IT Hubs: Hoskote Auto & Logistics SEZ (2.4 km), Bearys Global Research Triangle (5.9 km), ITPL Whitefield (10.8 km) | Malls: Orion Uptown Mall OMR (5.1 km), Hoskote Central Shopping Plaza (0.9 km) | Bus Stop & Transit: Hoskote Bus Stand & NH-75 BMTC Stop (0.3 km), Kadugodi Whitefield Metro Station (9.2 km).',
+    description: 'Well-crafted mid-rise residential community at Location: Hoskote Town - NH-75 Old Madras Road (Near MVJ Hospital & Toll Plaza), ideal for first-time homebuyers and high-yield investors along the booming East Bangalore corridor.',
     price: 'Rs. 58 Lakhs - Rs. 84 Lakhs*',
     lastPrice: 'Rs. 61 Lakhs onwards*',
     location: 'Hoskote Town - NH-75 Old Madras Road',
@@ -11122,7 +11173,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'C',
     approvalBody: 'BBMP & RERA Approved',
     floorPlan: '2 BHK Classic (1120 Sq.Ft.) · 3 BHK Lakefacing (1485 Sq.Ft.)',
-    description: 'Boutique mid-rise residential apartment at Location: Gunjur - Krupanidhi College Road (Varthur-Sarjapur Corridor), offering peaceful residential living with low maintenance charges and quick access to Wipro SEZ and ORR tech parks. Nearby Connectivity (Gunjur - Krupanidhi Road): Schools: Krupanidhi International School & College (0.4 km), Chrysalis High Gunjur (0.8 km), Greenwood High (2.3 km), Oakridge International (2.7 km) | Hospitals: Spandana Hospital Gunjur (0.9 km), Sahasra Hospital Varthur (1.9 km), Belenus Champion Hospital (3.5 km) | IT Hubs: Wipro SEZ Kodathi (3.2 km), RGA Tech Park (3.8 km), Cessna Business Park ORR (5.9 km) | Malls: Decathlon Sarjapur Road (3.1 km), Market Square Mall (4.2 km), Virginia Mall (4.8 km) | Bus Stop & Transit: Krupanidhi College BMTC Bus Stop (0.2 km), Carmelaram Railway Station (2.5 km).',
+    description: 'Boutique mid-rise residential apartment at Location: Gunjur - Krupanidhi College Road (Varthur-Sarjapur Corridor), offering peaceful residential living with low maintenance charges and quick access to Wipro SEZ and ORR tech parks.',
     price: 'Rs. 76 Lakhs - Rs. 1.08 Cr*',
     lastPrice: 'Rs. 79 Lakhs onwards*',
     location: 'Gunjur - Krupanidhi College Road',
@@ -11158,7 +11209,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'C',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2 BHK Smart (1095 Sq.Ft.) · 3 BHK Executive (1425 Sq.Ft.)',
-    description: 'Value-packed primary apartment community at Location: Kasavanahalli - Hosa Road Link (Kaikondrahalli - Rayasandra Corridor), offering modern lifestyle amenities at an attractive price point inside the IT belt. Nearby Connectivity (Kasavanahalli - Hosa Road Link): Schools: Orchids The International School (1.1 km), Vibgyor High Haralur (1.5 km), Notre Dame Academy (1.4 km), BRS Global School (1.2 km) | Hospitals: Motherhood Hospital Sarjapur Road (2.1 km), Manipal Hospital Sarjapur Road (2.4 km), Springleaf Hospital (2.0 km) | IT Hubs: Wipro Corporate HQ (1.9 km), Vaishnavi Tech Park (2.3 km), RGA Tech Park (2.8 km), RMZ Ecospace Bellandur (3.8 km) | Malls: Market Square Mall Sarjapur Road (2.0 km), Central Mall Bellandur (3.7 km) | Bus Stop & Transit: Kasavanahalli / Rayasandra Cross BMTC Bus Stop (0.3 km), Hosa Road Yellow Line Metro Station (2.4 km).',
+    description: 'Value-packed primary apartment community at Location: Kasavanahalli - Hosa Road Link (Kaikondrahalli - Rayasandra Corridor), offering modern lifestyle amenities at an attractive price point inside the IT belt.',
     price: 'Rs. 82 Lakhs - Rs. 1.16 Cr*',
     lastPrice: 'Rs. 85 Lakhs onwards*',
     location: 'Kasavanahalli - Hosa Road Link Corridor',
@@ -11196,7 +11247,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BMRDA & RERA Approved',
     floorPlan: '3 BHK + 3T (1665 Sq.Ft.) · 4 BHK Luxe (2275 Sq.Ft.)',
-    description: 'Handed-over landmark community at Location: Whitefield - Hoskote Main Road (Kannamangala, East Bangalore) featuring high-efficiency luxury residences with expansive private sundecks, 6-acre central linear park, and an active international resident community. Nearby Connectivity (Whitefield - Hoskote Road): Schools:Vibgyor High Kadugodi (2.8 km), Pragathi SchoolInside Township (0.1 km), Deens Academy (5.2 km) | Hospitals: Manipal Hospital Whitefield (6.8 km), Sri Sathya Sai Hospital (6.2 km), MVJ Hospital (4.9 km) | IT Hubs: Bearys Global Research Triangle (1.8 km), ITPL Whitefield (5.9 km), Brigade Tech Gardens (7.2 km) | Malls: Orion Uptown Mall (2.9 km), SBR Lucky Mall (3.4 km), Nexus Shantiniketan (6.8 km) | Bus Stop & Transit: Kannamangala BMTC Bus Stop (0.2 km), Kadugodi Tree Park Metro Station (3.8 km).',
+    description: 'Handed-over landmark community at Location: Whitefield - Hoskote Main Road (Kannamangala, East Bangalore) featuring high-efficiency luxury residences with expansive private sundecks, 6-acre central linear park, and an active international resident community.',
     price: 'Rs. 1.95 Cr - Rs. 2.90 Cr*',
     lastPrice: 'Rs. 2.05 Cr (Latest Verified Transaction)*',
     location: 'Whitefield - Hoskote Main Road (Kannamangala)',
@@ -11232,7 +11283,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BDA & BBMP Approved',
     floorPlan: '3 BHK Executive (1910 Sq.Ft.) · 4 BHK + Staff (2650 Sq.Ft.)',
-    description: 'Executive luxury rental apartments at Location: Bellandur - Outer Ring Road (Behind RMZ Ecoworld). Walking distance to RMZ Ecoworld and Ecospace with resort-grade club amenities. Nearby Connectivity (Bellandur ORR): Schools:New Horizon Gurukul (1.8 km), Gear Innovative International School (1.4 km), Neev Academy (2.9 km), DPS East (5.2 km) | Hospitals: Sakra World Hospital (1.2 km), Manipal Hospital Sarjapur Road (3.4 km), Cloudnine Hospital Bellandur (2.5 km) | IT Hubs: RMZ Ecoworld (0.3 km walk), Intel Campus ORR (0.8 km), Embassy TechVillage (1.9 km), RMZ Ecospace (2.1 km) | Malls: Central Mall Bellandur (2.2 km), Market Square Mall (3.6 km), Brookfield Mall (5.5 km) | Bus Stop & Transit: Devarabisanahalli / Ecoworld BMTC Bus Stop (0.5 km), Upcoming Bellandur & Ecoworld ORR Metro Stations (0.7 km).',
+    description: 'Executive luxury rental apartments at Location: Bellandur - Outer Ring Road (Behind RMZ Ecoworld). Walking distance to RMZ Ecoworld and Ecospace with resort-grade club amenities.',
     price: 'Rs. 85,000 / month - Rs. 1.45 L / month*',
     lastPrice: 'Rs. 92,000 / month (Verified Lease Rate)*',
     location: 'Bellandur - Outer Ring Road (Behind RMZ Ecoworld)',
@@ -11270,7 +11321,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BMRDA & STRR Approved (A-Khata)',
     floorPlan: '30x40 (1200 Sq.Ft.) · 30x50 (1500 Sq.Ft.) · 40x60 (2400 Sq.Ft.) Plotted Land',
-    description: 'Master-planned 50+ acre luxury plotted development at Location: Hoskote - Budigere Cross & STRR Satellite Ring Road Belt. Featuring 60-ft wide asphalted boulevards, underground electrical cabling, piped water network, and a grand 20,000 Sq.Ft. clubhouse ready for immediate villa construction. Nearby Connectivity (Hoskote - STRR): Schools: Vibgyor High Kadugodi (3.6 km), Narayana e-Techno Hoskote (3.2 km), Capstone High (3.5 km) | Hospitals: MVJ Medical College & Hospital (3.8 km), East Point Hospital (4.5 km) | IT Hubs: Bearys Global Research Triangle (3.8 km), Hoskote Industrial SEZ (2.9 km), ITPL Whitefield (8.5 km) | Malls: Orion Uptown Mall OMR (3.9 km) | Bus Stop & Transit: Hoskote STRR Junction BMTC Bus Stop (0.4 km), Whitefield Metro (7.5 km).',
+    description: 'Master-planned 50+ acre luxury plotted development at Location: Hoskote - Budigere Cross & STRR Satellite Ring Road Belt. Featuring 60-ft wide asphalted boulevards, underground electrical cabling, piped water network, and a grand 20,000 Sq.Ft. clubhouse ready for immediate villa construction.',
     price: 'Rs. 85 Lakhs - Rs. 1.65 Cr*',
     lastPrice: 'Rs. 88 Lakhs onwards*',
     location: 'Hoskote - Budigere Cross & STRR Belt, Bangalore',
@@ -11306,7 +11357,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BMRDA & Karnataka RERA Approved',
     floorPlan: '30x40 (1200 Sq.Ft.) · 30x50 (1500 Sq.Ft.) · 40x60 (2400 Sq.Ft.) Villa Plots',
-    description: 'Premier nature-inspired plotted sanctuary at Location: Old Madras Road - Hoskote Expressway Corridor. Offering high-appreciation residential villa plots with 10+ theme gardens, pedestrian-first streetscapes, and priority allotment in the current pre-launch EOI window. Nearby Connectivity (OMR Hoskote): Schools: The Brigade School OMR (4.8 km), New Baldwin International (2.6 km) | Hospitals: MVJ Super Specialty Hospital (3.4 km), Silicon City Hospital (2.8 km) | IT Hubs: Signature Business Park (3.2 km), Whitefield ITPL (9.2 km) | Malls: Orion Uptown Mall (4.1 km) | Bus Stop: Hoskote Highway Stop (0.3 km).',
+    description: 'Premier nature-inspired plotted sanctuary at Location: Old Madras Road - Hoskote Expressway Corridor. Offering high-appreciation residential villa plots with 10+ theme gardens, pedestrian-first streetscapes, and priority allotment in the current pre-launch EOI window.',
     price: 'Rs. 68 Lakhs - Rs. 1.45 Cr*',
     lastPrice: 'Rs. 72 Lakhs onwards*',
     location: 'Old Madras Road - Hoskote Corridor, Bangalore',
@@ -11342,7 +11393,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BBMP & BDA Approved',
     floorPlan: '4 BHK Triplex (3440 Sq.Ft. SBA) · 4.5 BHK Regal Villa (4120 Sq.Ft. SBA)',
-    description: 'English Tudor-style luxury independent triplex villas at Location: Whitefield - Hoskote Extension Corridor. Features gabled roofs, handcrafted brickwork, private garden lawns, and an elite 25,000 Sq.Ft. Clubhouse. Nearby Connectivity (Whitefield Extension): Schools: Vibgyor High Kadugodi (2.8 km), Deens Academy Whitefield (3.6 km) | Hospitals: Manipal Hospital Whitefield (6.2 km), MVJ Hospital (4.2 km) | IT Hubs: Bearys Global Research Triangle (2.4 km), ITPL Whitefield (5.8 km) | Malls: Orion Uptown Mall (2.9 km), Nexus Shantiniketan (6.4 km).',
+    description: 'English Tudor-style luxury independent triplex villas at Location: Whitefield - Hoskote Extension Corridor. Features gabled roofs, handcrafted brickwork, private garden lawns, and an elite 25,000 Sq.Ft. Clubhouse.',
     price: 'Rs. 3.95 Cr - Rs. 5.60 Cr*',
     lastPrice: 'Rs. 4.10 Cr onwards*',
     location: 'Whitefield - Hoskote Extension Corridor, Bangalore',
@@ -11378,7 +11429,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2 BHK Smart (1103 Sq.Ft.) · 3 BHK Luxe (1450 Sq.Ft.) · 3.5 BHK (1740 Sq.Ft.)',
-    description: 'Resort-style contemporary high-rise towers at Location: Sarjapur Road - Carmelaram / Hadosiddapura Corridor. Features 28,000 Sq.Ft. lifestyle clubhouse, 50+ resort amenities, and immediate proximity to Wipro SEZ and RGA Tech Park. Nearby Connectivity (Sarjapur Road): Schools: DPS East (2.4 km), Primus International (2.8 km), Greenwood High (4.1 km) | Hospitals: Manipal Hospital Sarjapur (3.6 km), Motherhood (3.1 km) | IT Hubs: Wipro Corporate Office (1.8 km), RGA Tech Park (2.2 km), RMZ Ecoworld (4.6 km).',
+    description: 'Resort-style contemporary high-rise towers at Location: Sarjapur Road - Carmelaram / Hadosiddapura Corridor. Features 28,000 Sq.Ft. lifestyle clubhouse, 50+ resort amenities, and immediate proximity to Wipro SEZ and RGA Tech Park.',
     price: 'Rs. 1.25 Cr - Rs. 2.10 Cr*',
     lastPrice: 'Rs. 1.32 Cr onwards*',
     location: 'Sarjapur Road - Carmelaram / Hadosiddapura, Bangalore',
@@ -11414,7 +11465,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BBMP & BDA OC Received',
     floorPlan: '3 BHK L20 (2305 Sq.Ft.) · 3.5 BHK H20 (2890 Sq.Ft.) · 4 BHK V35 (3430 Sq.Ft.)',
-    description: 'Earth-sheltered handcrafted luxury residences at Location: East Bangalore - Hennur Corridor. Every home features an expansive landscaped terrace garden with real grass and wooden deck, bespoke wire-cut brick construction, and custom imported woodwork. Ready for immediate handover. Nearby Connectivity: Schools: Legacy School (1.8 km), Delhi Public School North (4.5 km) | Hospitals: Aster CMI Hospital (6.8 km), Regal Hospital (2.1 km) | IT Hubs: Manyata Tech Park (5.4 km), Bagmane Tech Park (8.2 km).',
+    description: 'Earth-sheltered handcrafted luxury residences at Location: East Bangalore - Hennur Corridor. Every home features an expansive landscaped terrace garden with real grass and wooden deck, bespoke wire-cut brick construction, and custom imported woodwork. Ready for immediate handover.',
     price: 'Rs. 2.45 Cr - Rs. 4.20 Cr*',
     lastPrice: 'Rs. 2.58 Cr (Ready Homes)*',
     location: 'East Bangalore - Hennur Corridor, Bangalore',
@@ -11450,7 +11501,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A+',
     approvalBody: 'BMRDA & Karnataka RERA Approved',
     floorPlan: '2 BHK Elegant (1080 Sq.Ft.) · 3 BHK Luxe (1540 Sq.Ft.) · 4 BHK Duplex (2520 Sq.Ft.)',
-    description: '52-acre mega township at Location: East Bangalore - Airport Link Highway Corridor. Features a 45,000 Sq.Ft. clubhouse, 8-acre central lake park, and high-street shopping boulevard. Phase 2 The Hills is currently open for pre-launch EOI applications. Nearby Connectivity: Schools: Stonehill International (4.2 km), Ryan International (5.1 km) | Hospitals: Aster Hospital (8.2 km), Manipal Hospital (9.1 km) | IT Hubs: KIADB Aerospace & Hardware SEZ (2.9 km), IFCI Financial City (4.2 km).',
+    description: '52-acre mega township at Location: East Bangalore - Airport Link Highway Corridor. Features a 45,000 Sq.Ft. clubhouse, 8-acre central lake park, and high-street shopping boulevard. Phase 2 The Hills is currently open for pre-launch EOI applications.',
     price: 'Rs. 1.15 Cr - Rs. 2.65 Cr*',
     lastPrice: 'Rs. 1.22 Cr onwards*',
     location: 'East Bangalore - Airport Link Highway Corridor, Bangalore',
@@ -11488,7 +11539,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BMRDA & RERA Approved (A-Khata)',
     floorPlan: '30x50 (1500 Sq.Ft.) · 40x60 (2400 Sq.Ft.) · 50x60 (3000 Sq.Ft.) Villa Plots',
-    description: 'Eco-conscious 16.8-acre plotted development at Location: Off Hoskote - International Airport Link Corridor. Crafted with native orchards, natural bio-swales, underground services, and ready-to-register A-Khata plots for building bespoke luxury villas. Nearby Connectivity: Schools: Canadian International School (6.2 km), Delhi Public School (5.8 km) | Hospitals: Columbia Asia / Manipal (7.2 km) | IT Hubs: Aerospace SEZ (4.5 km), ITPL (11.2 km).',
+    description: 'Eco-conscious 16.8-acre plotted development at Location: Off Hoskote - International Airport Link Corridor. Crafted with native orchards, natural bio-swales, underground services, and ready-to-register A-Khata plots for building bespoke luxury villas.',
     price: 'Rs. 95 Lakhs - Rs. 1.85 Cr*',
     lastPrice: 'Rs. 98 Lakhs onwards*',
     location: 'Off Hoskote - International Airport Link Corridor, Bangalore',
@@ -11524,7 +11575,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BMRDA & STRR Approved (A-Khata)',
     floorPlan: '30x40 (1200 Sq.Ft.) · 30x50 (1500 Sq.Ft.) · 40x60 (2400 Sq.Ft.) Villa Plots',
-    description: 'Serene 25-acre plotted residential sanctuary along the East Bangalore - STRR Expressway Corridor. Complete with fully grown canopy trees, asphalted avenues, underground utilities, and ready-to-construct plots with clear titles. Nearby Connectivity: Schools: Chrysalis High (3.8 km), Vibgyor High (4.2 km) | Hospitals: MVJ Hospital (3.5 km) | Transit: STRR Main Road (0.2 km).',
+    description: 'Serene 25-acre plotted residential sanctuary along the East Bangalore - STRR Expressway Corridor. Complete with fully grown canopy trees, asphalted avenues, underground utilities, and ready-to-construct plots with clear titles.',
     price: 'Rs. 78 Lakhs - Rs. 1.60 Cr*',
     lastPrice: 'Rs. 82 Lakhs onwards*',
     location: 'East Bangalore - STRR Expressway Corridor, Bangalore',
@@ -11560,7 +11611,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2 BHK (1280 Sq.Ft.) · 3 BHK (1650 - 1880 Sq.Ft.) · 4 BHK Sky Villa (2450 Sq.Ft.)',
-    description: 'Nature-infused biophilic high-rise towers at Location: Whitefield - Borewell Road & ITPL Corridor. Features 35,000 Sq.Ft. dual clubhouse, sky-gardens, lakefront view decks, and seamless access to ITPL and Hope Farm Metro. Nearby Connectivity (Whitefield Borewell): Schools: Deens Academy (1.8 km), Ryan International (2.4 km) | Hospitals: Manipal Hospital Whitefield (1.9 km), Vydehi (2.8 km) | IT Hubs: ITPL (1.8 km), Brigade Tech Gardens (2.1 km).',
+    description: 'Nature-infused biophilic high-rise towers at Location: Whitefield - Borewell Road & ITPL Corridor. Features 35,000 Sq.Ft. dual clubhouse, sky-gardens, lakefront view decks, and seamless access to ITPL and Hope Farm Metro.',
     price: 'Rs. 1.48 Cr - Rs. 2.35 Cr*',
     lastPrice: 'Rs. 1.55 Cr onwards*',
     location: 'Whitefield - Borewell Road & ITPL Corridor, Bangalore',
@@ -11596,7 +11647,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '3 BHK (1620 Sq.Ft.) · 3.5 BHK (1940 Sq.Ft.) · 4 BHK (2350 Sq.Ft.)',
-    description: 'Eco-conscious forest living apartment enclave at Location: Sarjapur Road - Kodathi Corridor. Features a 55,000 Sq.Ft. clubhouse, natural foliage forest walk, and zero wall sharing between residences. EOI window active for Tower Solstice. Nearby Connectivity (Sarjapur - Kodathi): Schools: DPS East (1.8 km), Harvest International (1.4 km) | Hospitals: Belenus Hospital (1.9 km), Manipal Hospital (3.2 km) | IT Hubs: Wipro SEZ (1.5 km), RGA Tech Park (1.8 km).',
+    description: 'Eco-conscious forest living apartment enclave at Location: Sarjapur Road - Kodathi Corridor. Features a 55,000 Sq.Ft. clubhouse, natural foliage forest walk, and zero wall sharing between residences. EOI window active for Tower Solstice.',
     price: 'Rs. 1.35 Cr - Rs. 2.25 Cr*',
     lastPrice: 'Rs. 1.42 Cr onwards*',
     location: 'Sarjapur Road - Kodathi Corridor, Bangalore',
@@ -11632,7 +11683,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'A',
     approvalBody: 'BMRDA & BBMP OC Received',
     floorPlan: '2 BHK (1015 Sq.Ft.) · 2.5 BHK (1225 Sq.Ft.) · 3 BHK (1485 Sq.Ft.)',
-    description: 'Award-winning ready-to-move township at Location: Whitefield - Hoskote Road (Budigere Cross). Offering OC-received smart residential homes with zero GST, 19.5 acres of lush landscaped spaces, and direct connectivity to OMR and Whitefield IT belt. Nearby Connectivity: Schools: Vibgyor High (2.9 km), New Baldwin (1.8 km) | Hospitals: East Point Hospital (3.2 km) | IT Hubs: Bearys Global Research Triangle (2.4 km), ITPL (6.8 km).',
+    description: 'Award-winning ready-to-move township at Location: Whitefield - Hoskote Road (Budigere Cross). Offering OC-received smart residential homes with zero GST, 19.5 acres of lush landscaped spaces, and direct connectivity to OMR and Whitefield IT belt.',
     price: 'Rs. 88 Lakhs - Rs. 1.38 Cr*',
     lastPrice: 'Rs. 92 Lakhs (Ready to Move)*',
     location: 'Whitefield - Hoskote Road (Budigere Cross), Bangalore',
@@ -11670,7 +11721,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BMRDA & RERA Approved (A-Khata)',
     floorPlan: '30x40 (1200 Sq.Ft.) · 30x50 (1500 Sq.Ft.) Plotted Land',
-    description: 'Boutique gated plotted community at Location: Varthur - Gunjur Link Road. Ready for immediate registration and villa construction with paved internal roads, underground drainage, and individual water connections. Nearby Connectivity (Varthur - Gunjur): Schools: Chrysalis High (1.2 km), Oakridge International (2.2 km) | Hospitals: Sahasra Hospital (1.6 km) | IT Hubs: Wipro SEZ (4.5 km), ITPL (6.5 km).',
+    description: 'Boutique gated plotted community at Location: Varthur - Gunjur Link Road. Ready for immediate registration and villa construction with paved internal roads, underground drainage, and individual water connections.',
     price: 'Rs. 65 Lakhs - Rs. 1.18 Cr*',
     lastPrice: 'Rs. 68 Lakhs onwards*',
     location: 'Varthur - Gunjur Link Road, Bangalore',
@@ -11706,7 +11757,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BBMP & RERA Approved (OC Received)',
     floorPlan: '2 BHK (1180 Sq.Ft.) · 3 BHK (1560 Sq.Ft.) · 3 BHK Lakeview (1780 Sq.Ft.)',
-    description: 'Ready-to-move mid-rise luxury residential community at Location: Gunjur - Varthur Link Road. Features an open central courtyard, clubhouse, swimming pool, and zero GST resale and primary inventory. Nearby Connectivity: Schools: Krupanidhi College (0.5 km), Chrysalis High (1.1 km) | Hospitals: Spandana Hospital (1.2 km) | IT Hubs: Wipro SEZ (3.8 km), RGA Tech Park (4.2 km).',
+    description: 'Ready-to-move mid-rise luxury residential community at Location: Gunjur - Varthur Link Road. Features an open central courtyard, clubhouse, swimming pool, and zero GST resale and primary inventory.',
     price: 'Rs. 1.12 Cr - Rs. 1.68 Cr*',
     lastPrice: 'Rs. 1.18 Cr (Ready Homes)*',
     location: 'Gunjur - Varthur Link Road, Bangalore',
@@ -11742,7 +11793,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2 BHK (1190 Sq.Ft.) · 3 BHK (1540 Sq.Ft.) · 3.5 BHK (1820 Sq.Ft.)',
-    description: 'Contemporary high-rise residential towers at Location: Hosa Road - Kudlu Gate Corridor. Features lake views, football turf, infinity pool, and seamless connectivity to the upcoming Yellow Line Metro and Electronic City IT parks. Nearby Connectivity: Schools: Vibgyor High (1.6 km) | Hospitals: Springleaf Hospital (2.1 km), Kauvery (3.0 km) | IT Hubs: AMR Tech Park (2.4 km), Infosys E-City (4.2 km).',
+    description: 'Contemporary high-rise residential towers at Location: Hosa Road - Kudlu Gate Corridor. Features lake views, football turf, infinity pool, and seamless connectivity to the upcoming Yellow Line Metro and Electronic City IT parks.',
     price: 'Rs. 1.28 Cr - Rs. 1.95 Cr*',
     lastPrice: 'Rs. 1.34 Cr onwards*',
     location: 'Hosa Road - Kudlu Gate Corridor, Bangalore',
@@ -11778,7 +11829,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2 BHK (1090 Sq.Ft.) · 3 BHK (1480 Sq.Ft.) · 3 BHK Royale (1690 Sq.Ft.)',
-    description: 'Resort-themed high-rise community at Location: East Bangalore - Budigere & Old Madras Link. Offering 75+ lifestyle amenities, expansive landscaped central podium, and attractive pre-launch EOI pricing for smart residential buyers. Nearby Connectivity: Schools: New Baldwin International (1.9 km) | Hospitals: East Point Hospital (2.8 km) | IT Hubs: Bearys Tech Park (2.9 km), ITPL (6.8 km).',
+    description: 'Resort-themed high-rise community at Location: East Bangalore - Budigere & Old Madras Link. Offering 75+ lifestyle amenities, expansive landscaped central podium, and attractive pre-launch EOI pricing for smart residential buyers.',
     price: 'Rs. 95 Lakhs - Rs. 1.55 Cr*',
     lastPrice: 'Rs. 99 Lakhs onwards*',
     location: 'East Bangalore - Budigere & Old Madras Link, Bangalore',
@@ -11814,7 +11865,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'B',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2 BHK Smart (1150 Sq.Ft.) · 3 BHK Family (1520 Sq.Ft.)',
-    description: 'Lakeview residential apartment community at Location: Electronic City - Hosa Road Link Corridor. Features Vaastu compliant layouts, clubhouse with indoor games, gym, and swift connectivity to Electronic City Phase 1 tech campuses. Nearby Connectivity: Schools: Orchids The International (1.8 km) | Hospitals: Kauvery Hospital (2.5 km) | IT Hubs: Infosys Campus (3.5 km), Wipro E-City (3.8 km).',
+    description: 'Lakeview residential apartment community at Location: Electronic City - Hosa Road Link Corridor. Features Vaastu compliant layouts, clubhouse with indoor games, gym, and swift connectivity to Electronic City Phase 1 tech campuses.',
     price: 'Rs. 89 Lakhs - Rs. 1.35 Cr*',
     lastPrice: 'Rs. 94 Lakhs onwards*',
     location: 'Electronic City - Hosa Road Link Corridor, Bangalore',
@@ -11852,7 +11903,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'C',
     approvalBody: 'BMRDA & STRR Approved (A-Khata)',
     floorPlan: '30x40 (1200 Sq.Ft.) · 30x50 (1500 Sq.Ft.) Villa Plots',
-    description: 'Approved plotted development at Location: Hoskote - Kattamnallur STRR Belt. Offering clear A-Khata villa plots with asphalted roads, water connection, and immediate registration for residential villa construction. Nearby Connectivity: Schools: Citizen Public School (1.4 km) | Hospitals: MVJ Hospital (2.5 km) | Highway: STRR Link Road (0.2 km).',
+    description: 'Approved plotted development at Location: Hoskote - Kattamnallur STRR Belt. Offering clear A-Khata villa plots with asphalted roads, water connection, and immediate registration for residential villa construction.',
     price: 'Rs. 42 Lakhs - Rs. 75 Lakhs*',
     lastPrice: 'Rs. 45 Lakhs onwards*',
     location: 'Hoskote - Kattamnallur STRR Belt, Bangalore',
@@ -11888,7 +11939,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'C',
     approvalBody: 'BMRDA / BDA Approved',
     floorPlan: '30x40 (1200 Sq.Ft.) · 30x50 (1500 Sq.Ft.) Villa Plots',
-    description: 'Pre-launch plotted development at Location: Electronic City Phase 2 - Chandapura Belt. Features wide internal roads, underground drainage, and early bird EOI allotment prices for IT professionals and high-yield investors. Nearby Connectivity: Schools: Delhi Public School E-City (2.8 km) | Hospitals: Narayana Hrudayalaya (3.5 km) | IT Hubs: Electronic City Phase 2 (4.2 km).',
+    description: 'Pre-launch plotted development at Location: Electronic City Phase 2 - Chandapura Belt. Features wide internal roads, underground drainage, and early bird EOI allotment prices for IT professionals and high-yield investors.',
     price: 'Rs. 38 Lakhs - Rs. 68 Lakhs*',
     lastPrice: 'Rs. 41 Lakhs onwards*',
     location: 'Electronic City Phase 2 - Chandapura Belt, Bangalore',
@@ -11924,7 +11975,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'C',
     approvalBody: 'BBMP Approved (A-Khata)',
     floorPlan: '2 BHK (1060 Sq.Ft.) · 3 BHK (1390 Sq.Ft.)',
-    description: 'Ready-to-move boutique apartment building at Location: Whitefield - Channasandra / Kadugodi Link. 100% Vaastu compliant, low maintenance charges, and immediate occupancy with occupancy certificate verified. Nearby Connectivity (Whitefield Channasandra): Schools: Whitefield Global School (1.4 km), Glentree Academy (1.8 km) | Hospitals: Columbia Asia Whitefield (2.8 km) | Metro: Channasandra / Kadugodi Metro (1.2 km).',
+    description: 'Ready-to-move boutique apartment building at Location: Whitefield - Channasandra / Kadugodi Link. 100% Vaastu compliant, low maintenance charges, and immediate occupancy with occupancy certificate verified.',
     price: 'Rs. 65 Lakhs - Rs. 92 Lakhs*',
     lastPrice: 'Rs. 68 Lakhs (Ready Homes)*',
     location: 'Whitefield - Channasandra / Kadugodi Link, Bangalore',
@@ -11960,7 +12011,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'C',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2 BHK Smart (1120 Sq.Ft.) · 3 BHK Comfort (1460 Sq.Ft.)',
-    description: 'Under-construction contemporary residential enclave at Location: Marathahalli - Outer Ring Road Corridor. Features modern lifestyle amenities, covered basement car parking, and unbeatable connectivity to ORR IT corridor and Whitefield. Nearby Connectivity: Schools: Ryan International (2.4 km) | Hospitals: Sakra World Hospital (3.2 km) | IT Hubs: Prestige Tech Park (1.8 km), Cessna (2.2 km).',
+    description: 'Under-construction contemporary residential enclave at Location: Marathahalli - Outer Ring Road Corridor. Features modern lifestyle amenities, covered basement car parking, and unbeatable connectivity to ORR IT corridor and Whitefield.',
     price: 'Rs. 79 Lakhs - Rs. 1.18 Cr*',
     lastPrice: 'Rs. 83 Lakhs onwards*',
     location: 'Marathahalli - Outer Ring Road Corridor, Bangalore',
@@ -11996,7 +12047,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     builderCategory: 'C',
     approvalBody: 'BBMP & Karnataka RERA Approved',
     floorPlan: '2 BHK Executive (1140 Sq.Ft.) · 3 BHK (1495 Sq.Ft.)',
-    description: 'Mid-rise value residential community at Location: Kasavanahalli - Harlur Link Road. Well-ventilated corner units with low maintenance charges, dedicated parking, and swift access to Wipro Corporate Office and RMZ Ecospace Bellandur. Nearby Connectivity: Schools: Vibgyor Haralur (1.2 km), Asia Pacific (1.5 km) | Hospitals: Motherhood (2.0 km) | IT Hubs: Wipro HQ (1.8 km), Ecospace (3.2 km).',
+    description: 'Mid-rise value residential community at Location: Kasavanahalli - Harlur Link Road. Well-ventilated corner units with low maintenance charges, dedicated parking, and swift access to Wipro Corporate Office and RMZ Ecospace Bellandur.',
     price: 'Rs. 84 Lakhs - Rs. 1.22 Cr*',
     lastPrice: 'Rs. 87 Lakhs onwards*',
     location: 'Kasavanahalli - Harlur Link Road, Bangalore',
@@ -12124,12 +12175,8 @@ const autoEnrichProjectData = (p: Project): Project => {
     ? resolvedImages[0]
     : (p.mobileImageUrl || curatedMatch?.mobileImageUrl || '');
 
-  const defaultConnectivitySuffix = `Nearby Connectivity (${resolvedZone}): Schools: Deens Academy / Greenwood High / Vibgyor High (1.8 km) | Hospitals: Manipal Hospital / Sakra World / Motherhood Hospital (2.4 km) | IT Hubs: ITPL Whitefield / Wipro SEZ / RMZ Ecoworld (3.2 km) | Malls: Nexus Shantiniketan / Orion Uptown / Market Square Mall (2.9 km) | Bus Stop & Transit: ${resolvedZone} Main BMTC Bus Stop (0.3 km), Nearest Metro Station (2.6 km).`;
-
   const rawDesc = curatedMatch?.description || p.description || `${p.name} by ${resolvedBuilderName} in ${p.location || resolvedZone}, Bangalore.`;
-  const enrichedDescription = rawDesc.includes('Nearby Connectivity')
-    ? rawDesc
-    : `${rawDesc} ${defaultConnectivitySuffix}`;
+  const cleanedDescription = cleanProjectDescription(rawDesc);
 
   const resolvedPrice = formatPriceWithCondition(p.price || curatedMatch?.price || 'Rs. 1.65 Cr onwards*');
   const resolvedLastPrice = formatPriceWithCondition(p.lastPrice || curatedMatch?.lastPrice || resolvedPrice);
@@ -12160,7 +12207,7 @@ const autoEnrichProjectData = (p: Project): Project => {
     approvalBody: p.approvalBody || curatedMatch?.approvalBody || 'BBMP / BDA & Karnataka RERA Approved',
     floorPlan: p.floorPlan || curatedMatch?.floorPlan || '2 BHK (1220 Sq.Ft.) · 3 BHK (1685 Sq.Ft.) · 4 BHK (2340 Sq.Ft.)',
     reraNumber: p.reraNumber || curatedMatch?.reraNumber || 'PRM/KA/RERA/1251/446/PR/Verified',
-    description: enrichedDescription,
+    description: cleanedDescription,
     imageUrls: resolvedImages,
     mobileImageUrl: resolvedCoverImage,
     ogImage: p.ogImage || resolvedCoverImage,
@@ -12364,6 +12411,59 @@ export default function App() {
 
   const handleClearCompare = () => {
     setComparedProjectIds([]);
+  };
+
+  // --- Property Meta Data & SEO Modal State ---
+  const [isPropertyMetaDataModalOpen, setIsPropertyMetaDataModalOpen] = useState(false);
+  const [metaDataTargetProject, setMetaDataTargetProject] = useState<Project | null>(null);
+
+  const handleOpenPropertyMetaDataModal = (project?: Project) => {
+    setMetaDataTargetProject(project || projects[0] || null);
+    setIsPropertyMetaDataModalOpen(true);
+  };
+
+  const handleSavePropertyMetaData = async (
+    projectId: string, 
+    meta: { 
+      metaTitle: string; 
+      metaDescription: string; 
+      seoKeywords: string[];
+      imageAltText?: string;
+    }
+  ) => {
+    // 1. Update in local state immediately for instant responsive UI
+    setProjects(prev => prev.map(p => {
+      if (p.id === projectId || p.name === projectId) {
+        return {
+          ...p,
+          metaTitle: meta.metaTitle,
+          seoTitle: meta.metaTitle,
+          metaDescription: meta.metaDescription,
+          seoDescription: meta.metaDescription,
+          seoKeywords: meta.seoKeywords,
+          ...(meta.imageAltText ? { imageAltText: meta.imageAltText } : {})
+        };
+      }
+      return p;
+    }));
+
+    // 2. Persist to Firestore if target has valid ID
+    try {
+      const target = projects.find(p => p.id === projectId || p.name === projectId);
+      if (target && target.id) {
+        await updateDoc(doc(db, 'projects', target.id), {
+          metaTitle: meta.metaTitle,
+          seoTitle: meta.metaTitle,
+          metaDescription: meta.metaDescription,
+          seoDescription: meta.metaDescription,
+          seoKeywords: meta.seoKeywords,
+          ...(meta.imageAltText ? { imageAltText: meta.imageAltText } : {}),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    } catch (e) {
+      console.warn('Could not persist SEO metadata to Firestore:', e);
+    }
   };
 
   const handleAddProjectToCompare = (proj: Project) => {
@@ -13369,6 +13469,7 @@ export default function App() {
               setEditingProject(null);
               setShowProjectModal(true);
             }}
+            onOpenMetaData={handleOpenPropertyMetaDataModal}
             isLoading={isLoading} 
           />
         )}
@@ -13902,6 +14003,15 @@ export default function App() {
         currentImageUrl={currentSeoSnapshot.imageUrl}
         activeTab={activeMainTab}
         selectedProject={selectedProject}
+      />
+
+      {/* Property Specific SEO Meta Data & Accessibility Modal */}
+      <PropertyMetaDataModal
+        isOpen={isPropertyMetaDataModalOpen}
+        onClose={() => setIsPropertyMetaDataModalOpen(false)}
+        projects={projectsForGrid}
+        initialProject={metaDataTargetProject}
+        onSaveMetaData={handleSavePropertyMetaData}
       />
 
       <AIChatAssistant />
