@@ -3094,6 +3094,28 @@ const ProjectGrid = ({
     { key: 'Handed Over', label: 'Handed Over' }
   ];
 
+  // Dynamic live counts for direct category filters: All Types, Primary, Rental, Resale
+  const typeCounts = React.useMemo(() => {
+    let all = 0;
+    let primary = 0;
+    let rental = 0;
+    let resale = 0;
+
+    projects.forEach(p => {
+      if (LEGACY_PROJECT_NAMES.includes(p.name)) return;
+      if (p.isDeleted) return;
+      if (!(isAdmin && showHidden) && p.isPaused) return;
+
+      all++;
+      const norm = p.type === 'Primary Sale' ? 'Primary' : p.type;
+      if (norm === 'Primary') primary++;
+      else if (norm === 'Rental') rental++;
+      else if (norm === 'Resale') resale++;
+    });
+
+    return { All: all, Primary: primary, Rental: rental, Resale: resale };
+  }, [projects, isAdmin, showHidden]);
+
   const displayedProjects = React.useMemo(() => {
     return projects.filter(p => {
       if (LEGACY_PROJECT_NAMES.includes(p.name)) return false;
@@ -3341,9 +3363,163 @@ const ProjectGrid = ({
             </div>
           </div>
 
+          {/* Direct Category Filters: Primary, Rental, Resale, All Types */}
+          <div className="mb-2 p-1.5 sm:p-2 bg-[#101010]/95 border border-white/20 rounded-md shadow-md backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+              {/* Direct Filter Buttons */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-art-gold font-mono font-bold mr-1 hidden sm:inline">
+                  Direct Filters:
+                </span>
 
+                {/* Option 1: All Types */}
+                <button
+                  type="button"
+                  data-testid="filter-direct-all-types"
+                  onClick={() => setSelectedType('All')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase font-extrabold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border shadow-sm",
+                    selectedType === 'All'
+                      ? "bg-gradient-to-r from-art-gold via-amber-400 to-yellow-500 text-black border-art-gold font-black shadow-[0_2px_12px_rgba(197,160,89,0.35)] scale-[1.02]"
+                      : "bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/10 border-white/15"
+                  )}
+                  title="Show all property listings across all categories"
+                >
+                  <LayoutGrid size={13} className={selectedType === 'All' ? 'text-black' : 'text-art-gold'} />
+                  <span>All Types</span>
+                  <span className={cn(
+                    "text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold",
+                    selectedType === 'All' ? "bg-black/25 text-black" : "bg-white/10 text-white/60"
+                  )}>
+                    {typeCounts.All}
+                  </span>
+                </button>
 
-          {/* Page Size & Portfolio Count Summary Bar (Inside Frozen Header) */}
+                {/* Option 2: Primary */}
+                <button
+                  type="button"
+                  data-testid="filter-direct-primary"
+                  onClick={() => setSelectedType('Primary')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase font-extrabold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border shadow-sm",
+                    selectedType === 'Primary'
+                      ? "bg-gradient-to-r from-art-gold via-amber-400 to-yellow-500 text-black border-art-gold font-black shadow-[0_2px_12px_rgba(197,160,89,0.35)] scale-[1.02]"
+                      : "bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/10 border-white/15"
+                  )}
+                  title="Direct builder & new launch primary sale properties (0% brokerage)"
+                >
+                  <Sparkles size={13} className={selectedType === 'Primary' ? 'text-black' : 'text-art-gold'} />
+                  <span>Primary</span>
+                  <span className={cn(
+                    "text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold",
+                    selectedType === 'Primary' ? "bg-black/25 text-black" : "bg-white/10 text-white/60"
+                  )}>
+                    {typeCounts.Primary}
+                  </span>
+                </button>
+
+                {/* Option 3: Rental */}
+                <button
+                  type="button"
+                  data-testid="filter-direct-rental"
+                  onClick={() => setSelectedType('Rental')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase font-extrabold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border shadow-sm",
+                    selectedType === 'Rental'
+                      ? "bg-gradient-to-r from-art-gold via-amber-400 to-yellow-500 text-black border-art-gold font-black shadow-[0_2px_12px_rgba(197,160,89,0.35)] scale-[1.02]"
+                      : "bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/10 border-white/15"
+                  )}
+                  title="Verified premium rental homes in Bangalore"
+                >
+                  <Home size={13} className={selectedType === 'Rental' ? 'text-black' : 'text-blue-400'} />
+                  <span>Rental</span>
+                  <span className={cn(
+                    "text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold",
+                    selectedType === 'Rental' ? "bg-black/25 text-black" : "bg-white/10 text-white/60"
+                  )}>
+                    {typeCounts.Rental}
+                  </span>
+                </button>
+
+                {/* Option 4: Resale */}
+                <button
+                  type="button"
+                  data-testid="filter-direct-resale"
+                  onClick={() => setSelectedType('Resale')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase font-extrabold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border shadow-sm",
+                    selectedType === 'Resale'
+                      ? "bg-gradient-to-r from-art-gold via-amber-400 to-yellow-500 text-black border-art-gold font-black shadow-[0_2px_12px_rgba(197,160,89,0.35)] scale-[1.02]"
+                      : "bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/10 border-white/15"
+                  )}
+                  title="Immediate possession resale apartments, villas, and plots"
+                >
+                  <RotateCcw size={13} className={selectedType === 'Resale' ? 'text-black' : 'text-emerald-400'} />
+                  <span>Resale</span>
+                  <span className={cn(
+                    "text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold",
+                    selectedType === 'Resale' ? "bg-black/25 text-black" : "bg-white/10 text-white/60"
+                  )}>
+                    {typeCounts.Resale}
+                  </span>
+                </button>
+              </div>
+
+              {/* Corridor & Typology Refinement Selectors */}
+              <div className="flex items-center gap-1.5 flex-wrap justify-between sm:justify-end">
+                <div className="flex items-center gap-1">
+                  <span className="text-[8.5px] uppercase font-mono text-white/40 hidden lg:inline">
+                    Corridor:
+                  </span>
+                  <select
+                    value={selectedCorridor}
+                    onChange={(e) => setSelectedCorridor(e.target.value)}
+                    className="bg-black/80 border border-white/20 text-white text-[10px] rounded px-2 py-1 outline-none focus:border-art-gold font-mono cursor-pointer"
+                    title="Filter by corridor micro-market"
+                  >
+                    <option value="All">All Corridors ({corridors.length - 1})</option>
+                    {corridors.filter(c => c !== 'All').map(c => (
+                      <option key={`corr-${c}`} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <span className="text-[8.5px] uppercase font-mono text-white/40 hidden lg:inline">
+                    Typology:
+                  </span>
+                  <select
+                    value={selectedPropType}
+                    onChange={(e) => setSelectedPropType(e.target.value as any)}
+                    className="bg-black/80 border border-white/20 text-white text-[10px] rounded px-2 py-1 outline-none focus:border-art-gold font-mono cursor-pointer"
+                    title="Filter by Apartment, Villa, Plot"
+                  >
+                    <option value="All">All Typologies</option>
+                    <option value="Apartment">Apartment</option>
+                    <option value="Villa">Villa</option>
+                    <option value="Plot">Plot</option>
+                  </select>
+                </div>
+
+                {(selectedType !== 'All' || selectedCorridor !== 'All' || selectedPropType !== 'All' || searchQuery) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedType('All');
+                      setSelectedCorridor('All');
+                      setSelectedPropType('All');
+                      setSearchQuery('');
+                    }}
+                    className="text-[9px] uppercase tracking-wider text-art-gold hover:text-white font-mono cursor-pointer px-2 py-1 bg-art-gold/10 hover:bg-art-gold/20 rounded border border-art-gold/30 transition-colors whitespace-nowrap flex items-center gap-1"
+                    title="Reset all active filters back to All Types"
+                  >
+                    <X size={10} />
+                    <span>Reset</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
           <div className="px-3 py-1.5 bg-[#111111]/90 border border-white/15 rounded-md flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-mono text-white/70">
