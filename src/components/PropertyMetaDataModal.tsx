@@ -13,9 +13,12 @@ import {
   ChevronDown,
   Wand2,
   FileText,
-  Eye
+  Eye,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Project } from '../types';
+import { compileProjectImageAltAudit, downloadSeoAuditCsv } from '../lib/seoAuditReport';
+import { SeoAuditReportModal } from './SeoAuditReportModal';
 
 interface PropertyMetaDataModalProps {
   isOpen: boolean;
@@ -55,6 +58,7 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
   const [isAutoGeneratingAll, setIsAutoGeneratingAll] = useState(false);
   const [isGeneratingAltText, setIsGeneratingAltText] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
@@ -343,6 +347,38 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
     }
   };
 
+  // Requirement: 'Generate SEO Audit Report' Handler
+  // Compiles a summary of missing alt text for all images in the project and provides a downloadable CSV report for the admin
+  const handleGenerateSeoAuditReport = () => {
+    if (!currentProject) return;
+
+    try {
+      // 1. Compile the audit summary for all images in this project
+      const summary = compileProjectImageAltAudit(currentProject, imageAltText);
+
+      // 2. Trigger instant CSV download
+      const dateStr = new Date().toISOString().split('T')[0];
+      const targetSlug = currentProject.name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      const filename = `seo_alt_text_audit_${targetSlug}_${dateStr}.csv`;
+      
+      downloadSeoAuditCsv(
+        summary.items, 
+        filename, 
+        `BS Homez SEO Alt Text Audit Report - ${currentProject.name}`
+      );
+
+      // 3. Open the on-screen detailed audit modal
+      setIsAuditModalOpen(true);
+      setSuccessMessage(
+        `Audited ${summary.totalImages} images for ${currentProject.name} (${summary.missingCount} missing alt text). Downloaded CSV report!`
+      );
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (err: any) {
+      console.error('Error compiling SEO audit report:', err);
+      setErrorMessage('Failed to compile SEO audit report. Please try again.');
+    }
+  };
+
   // Manual Save Handler
   const handleSave = async () => {
     if (!currentProject) return;
@@ -520,10 +556,11 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
             {/* Generate Alt Text Button */}
             <button
               type="button"
+              data-testid="generate-alt-text-btn"
               onClick={handleGenerateAltText}
               disabled={isGeneratingAltText}
-              className="px-2.5 py-1 rounded-sm bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/50 font-bold text-[8.5px] uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all disabled:opacity-50"
-              title="Generate accessible descriptive alt text for project images using AI"
+              className="generate-alt-text-btn px-2.5 py-1 rounded-sm bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/50 font-bold text-[8.5px] uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all disabled:opacity-50"
+              title="Generate accessible descriptive alt text for project images using Gemini AI"
             >
               {isGeneratingAltText ? (
                 <Loader2 size={11} className="animate-spin" />
@@ -568,6 +605,18 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
                   <span>Auto-Generate All</span>
                 </>
               )}
+            </button>
+
+            {/* Requirement: 'Generate SEO Audit Report' Button */}
+            <button
+              type="button"
+              data-testid="generate-seo-audit-report-btn"
+              onClick={handleGenerateSeoAuditReport}
+              className="generate-seo-audit-report-btn px-2.5 py-1 rounded-sm bg-blue-600/30 hover:bg-blue-600 text-blue-200 hover:text-white border border-blue-500/50 font-bold text-[8.5px] uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all shadow-sm"
+              title="Compiles a summary of missing alt text for all images in the project and provides a downloadable CSV report for the admin"
+            >
+              <FileSpreadsheet size={11} />
+              <span>Generate SEO Audit Report</span>
             </button>
           </div>
         </div>
@@ -659,13 +708,33 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
                     <ImageIcon size={10} />
                     <span>3. Image Alt Text (Accessibility &amp; Image SEO)</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={handleGenerateAltText}
-                    className="text-[8px] uppercase tracking-wider text-purple-400 hover:text-white font-mono cursor-pointer transition-colors"
-                  >
-                    + Auto-Draft
-                  </button>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      data-testid="generate-alt-text-field-btn"
+                      onClick={handleGenerateAltText}
+                      disabled={isGeneratingAltText}
+                      className="generate-alt-text-btn text-[8.5px] uppercase tracking-wider text-purple-300 hover:text-white font-mono font-bold cursor-pointer transition-colors flex items-center gap-1 disabled:opacity-50"
+                      title="Generate descriptive accessibility alt text using Gemini AI"
+                    >
+                      {isGeneratingAltText ? (
+                        <Loader2 size={10} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={10} className="text-purple-400" />
+                      )}
+                      <span>Generate Alt Text</span>
+                    </button>
+                    <span className="text-white/20 text-[9px]">|</span>
+                    <button
+                      type="button"
+                      onClick={handleGenerateSeoAuditReport}
+                      className="text-[8.5px] uppercase tracking-wider text-blue-300 hover:text-white font-mono font-bold cursor-pointer transition-colors flex items-center gap-1"
+                      title="Audit all images in this project for missing alt text and download CSV report"
+                    >
+                      <FileSpreadsheet size={10} />
+                      <span>Audit Report (CSV)</span>
+                    </button>
+                  </div>
                 </div>
                 <input
                   type="text"
@@ -828,35 +897,60 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-3 border-t border-white/10 bg-black/60 flex items-center justify-between gap-2 shrink-0">
+        <div className="p-3 border-t border-white/10 bg-black/60 flex flex-wrap items-center justify-between gap-2 shrink-0">
           <button
             type="button"
-            onClick={onClose}
-            className="px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/5 border border-white/15 transition-colors cursor-pointer"
+            data-testid="generate-seo-audit-report-footer-btn"
+            onClick={handleGenerateSeoAuditReport}
+            className="generate-seo-audit-report-btn px-3 py-1.5 rounded-sm bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/40 text-[9.5px] uppercase font-bold tracking-wider flex items-center gap-1.5 cursor-pointer transition-all shadow-sm"
+            title="Compile summary of missing alt text for all images in the project and provide a downloadable CSV report for the admin"
           >
-            Cancel
+            <FileSpreadsheet size={12} />
+            <span>Generate SEO Audit Report</span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving || isAutoGeneratingAll}
-            className="px-5 py-2 rounded-sm bg-art-gold hover:bg-white text-black font-extrabold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-lg disabled:opacity-50"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 size={13} className="animate-spin" />
-                <span>Saving to Listing...</span>
-              </>
-            ) : (
-              <>
-                <Save size={13} />
-                <span>Save Meta Data</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/5 border border-white/15 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving || isAutoGeneratingAll}
+              className="px-5 py-2 rounded-sm bg-art-gold hover:bg-white text-black font-extrabold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-lg disabled:opacity-50"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  <span>Saving to Listing...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={13} />
+                  <span>Save Meta Data</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </motion.div>
+
+      {/* SEO Alt Text Audit & Downloadable CSV Report Modal */}
+      <SeoAuditReportModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+        project={currentProject}
+        allProjects={projects}
+        currentAltTextOverride={imageAltText}
+        onApplyRecommendedAltText={(recommended) => {
+          setImageAltText(recommended);
+        }}
+      />
     </div>
   );
 };

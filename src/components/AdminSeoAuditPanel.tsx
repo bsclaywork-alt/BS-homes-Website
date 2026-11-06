@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Project } from '../types';
+import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from '../lib/seoAuditReport';
+import { SeoAuditReportModal } from './SeoAuditReportModal';
 
 interface AdminSeoAuditPanelProps {
   projects: Project[];
@@ -56,6 +58,7 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
   const [previewSnippetProject, setPreviewSnippetProject] = useState<Project | null>(null);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [isAltAuditModalOpen, setIsAltAuditModalOpen] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'info' | 'error' = 'info', duration = 3500) => {
     setToast({ message, type });
@@ -359,6 +362,24 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
     showToast(`Exported complete SEO Audit file with ${validProjects.length} projects for the SEO team!`, 'success', 4000);
   };
 
+  // Requirement: 'Generate SEO Audit Report' Handler
+  // Compiles a summary of missing alt text for all images in the project and provides a downloadable CSV report for the admin
+  const handleGenerateAltTextAuditReport = () => {
+    const audit = compilePortfolioImageAltAudit(validProjects);
+    const dateStr = new Date().toISOString().split('T')[0];
+    downloadSeoAuditCsv(
+      audit.items,
+      `seo_alt_text_audit_portfolio_${dateStr}.csv`,
+      'BS Homez Full Portfolio Image Accessibility & SEO Alt Text Audit'
+    );
+    setIsAltAuditModalOpen(true);
+    showToast(
+      `Audited ${audit.totalImages} images across ${audit.totalProjects} projects (${audit.missingCount} missing alt text). Downloaded CSV report!`,
+      'success',
+      4500
+    );
+  };
+
   // Copy canonical URL helper
   const handleCopyCanonical = (url: string) => {
     navigator.clipboard.writeText(url);
@@ -476,6 +497,18 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
 
           {/* Primary Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {/* Requirement: 'Generate SEO Audit Report' Button */}
+            <button
+              type="button"
+              data-testid="generate-seo-audit-report-admin-btn"
+              onClick={handleGenerateAltTextAuditReport}
+              className="generate-seo-audit-report-btn px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] sm:text-[11px] font-black uppercase tracking-wider rounded-sm transition-all flex items-center gap-2 shadow-lg cursor-pointer"
+              title="Compiles a summary of missing alt text for all images in the portfolio and provides a downloadable CSV report for the admin"
+            >
+              <FileSpreadsheet size={15} />
+              <span>Generate SEO Audit Report</span>
+            </button>
+
             <button
               type="button"
               onClick={handleExportSeoTeamCsv}
@@ -969,6 +1002,13 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
           );
         })()}
       </AnimatePresence>
+
+      {/* SEO Alt Text Audit & Downloadable CSV Report Modal */}
+      <SeoAuditReportModal
+        isOpen={isAltAuditModalOpen}
+        onClose={() => setIsAltAuditModalOpen(false)}
+        allProjects={validProjects}
+      />
     </div>
   );
 };

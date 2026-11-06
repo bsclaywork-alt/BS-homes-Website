@@ -11,6 +11,7 @@ import {
   SITEMAP_PROJECTS 
 } from "./src/data/projectsSitemapData";
 import { updateSitemap } from "./scripts/update-sitemap";
+import nodemailer from "nodemailer";
 
 dotenv.config();
 
@@ -426,6 +427,201 @@ Return ONLY a valid JSON object (no markdown fences, no commentary) with the fol
       console.error("SMS Dispatch Error:", error);
       res.status(500).json({ success: false, error: "Failed to dispatch welcome message" });
     }
+  });
+
+  // Direct Enquiry Email Notification Dispatcher to contact@bshomez.in
+  app.post("/api/enquiry/alert", async (req, res) => {
+    try {
+      const {
+        customerName,
+        name,
+        customerPhone,
+        phone,
+        mobile,
+        customerEmail,
+        email,
+        projectName,
+        interestedProjects,
+        enquiryCategory,
+        category,
+        propertyCategory,
+        preferredLocation,
+        location,
+        message,
+        type,
+        source
+      } = req.body;
+
+      const leadName = String(customerName || name || "Prospective Buyer").trim();
+      const leadPhone = String(customerPhone || phone || mobile || "").trim();
+      const leadEmail = String(customerEmail || email || "").trim();
+      const leadProject = String(projectName || interestedProjects || "General Portfolio Inquiry").trim();
+      const leadCategory = String(enquiryCategory || category || propertyCategory || type || "Primary").trim();
+      const leadLocation = String(preferredLocation || location || "Bangalore").trim();
+      const leadMessage = String(message || "Customer requested priority advisory callback and verified portfolio details.").trim();
+      const leadSource = String(source || type || "Direct Website Submission").trim();
+
+      const recipientEmail = process.env.ALERT_RECIPIENT_EMAIL || "contact@bshomez.in";
+      const cleanPhoneDigits = leadPhone.replace(/\D/g, "");
+      const waLink = cleanPhoneDigits ? `https://wa.me/91${cleanPhoneDigits.slice(-10)}?text=${encodeURIComponent(`Hello ${leadName}, thank you for contacting BS Homez regarding ${leadProject}. How can we assist you today?`)}` : "#";
+
+      const emailSubject = `🚨 New Enquiry: ${leadName} — ${leadProject} (${leadCategory})`;
+
+      const htmlBody = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0c0c0c; color: #ffffff; margin: 0; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background: #141414; border: 1px solid #C5A059; border-radius: 8px; overflow: hidden; }
+            .header { background: #080808; padding: 24px; border-bottom: 2px solid #C5A059; text-align: center; }
+            .logo-text { color: #C5A059; font-size: 22px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0; }
+            .badge { display: inline-block; background: rgba(197, 160, 89, 0.2); color: #C5A059; font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(197, 160, 89, 0.4); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+            .content { padding: 24px; }
+            .alert-banner { background: #1f1a10; border-left: 4px solid #C5A059; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #f0e6d2; }
+            .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #C5A059; font-weight: 800; margin: 18px 0 8px 0; border-bottom: 1px solid #282828; padding-bottom: 4px; }
+            .detail-row { padding: 8px 0; border-bottom: 1px solid #1f1f1f; font-size: 13px; }
+            .label { color: #888888; font-weight: 600; display: inline-block; width: 140px; }
+            .value { color: #ffffff; font-weight: bold; }
+            .message-box { background: #0c0c0c; border: 1px solid #282828; border-radius: 4px; padding: 12px; margin-top: 8px; font-size: 13px; color: #e0e0e0; line-height: 1.5; white-space: pre-wrap; }
+            .btn-group { margin: 24px 0 10px 0; text-align: center; }
+            .btn { display: inline-block; padding: 10px 18px; margin: 4px; border-radius: 4px; font-size: 12px; font-weight: bold; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
+            .btn-primary { background: #C5A059; color: #000000; }
+            .btn-secondary { background: #25D366; color: #ffffff; }
+            .btn-dark { background: #222222; color: #ffffff; border: 1px solid #444444; }
+            .footer { background: #080808; padding: 16px; text-align: center; font-size: 11px; color: #666666; border-top: 1px solid #1f1f1f; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1 class="logo-text">BS HOMEZ</h1>
+              <div class="badge">Direct Buyer Lead Alert</div>
+            </div>
+            <div class="content">
+              <div class="alert-banner">
+                ⚡ <strong>New enquiry received</strong> from bshomez.in on ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST).
+              </div>
+
+              <div class="section-title">Buyer Contact Information</div>
+              <div class="detail-row">
+                <span class="label">Customer Name:</span>
+                <span class="value">${leadName}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Phone Number:</span>
+                <span class="value"><a href="tel:${leadPhone}" style="color: #C5A059; text-decoration: none;">${leadPhone}</a></span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Email Address:</span>
+                <span class="value"><a href="mailto:${leadEmail}" style="color: #C5A059; text-decoration: none;">${leadEmail || 'Not specified'}</a></span>
+              </div>
+
+              <div class="section-title">Property &amp; Requirement Details</div>
+              <div class="detail-row">
+                <span class="label">Interested Project:</span>
+                <span class="value">${leadProject}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Portfolio Category:</span>
+                <span class="value">${leadCategory}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Preferred Location:</span>
+                <span class="value">${leadLocation}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Source / Channel:</span>
+                <span class="value">${leadSource}</span>
+              </div>
+
+              <div class="section-title">Client Query / Notes</div>
+              <div class="message-box">${leadMessage}</div>
+
+              <div class="btn-group">
+                ${leadPhone ? `<a href="tel:${leadPhone}" class="btn btn-primary">📞 Call Customer</a>` : ''}
+                ${cleanPhoneDigits ? `<a href="${waLink}" class="btn btn-secondary">💬 WhatsApp Lead</a>` : ''}
+                ${leadEmail ? `<a href="mailto:${leadEmail}?subject=Re: BS Homez inquiry on ${encodeURIComponent(leadProject)}" class="btn btn-dark">✉️ Reply Email</a>` : ''}
+              </div>
+            </div>
+            <div class="footer">
+              This automated alert was dispatched by the BS Homez Platform to <strong>${recipientEmail}</strong>.<br/>
+              Access full pipeline in Admin Vault: <a href="https://www.bshomez.in" style="color: #C5A059;">bshomez.in</a>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Check if SMTP credentials are configured
+      const smtpHost = process.env.SMTP_HOST;
+      const smtpUser = process.env.SMTP_USER;
+      const smtpPass = process.env.SMTP_PASS;
+      const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
+      const smtpFrom = process.env.SMTP_FROM || `BS Homez Alerts <${smtpUser || "contact@bshomez.in"}>`;
+
+      let delivered = false;
+      let dispatchLog = "";
+
+      if (smtpHost && smtpUser && smtpPass) {
+        try {
+          const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465,
+            auth: {
+              user: smtpUser,
+              pass: smtpPass
+            }
+          });
+
+          await transporter.sendMail({
+            from: smtpFrom,
+            to: recipientEmail,
+            replyTo: leadEmail || recipientEmail,
+            subject: emailSubject,
+            html: htmlBody,
+            text: `BS Homez Enquiry Alert\n\nBuyer: ${leadName}\nPhone: ${leadPhone}\nEmail: ${leadEmail}\nProject: ${leadProject} (${leadCategory})\nLocation: ${leadLocation}\nSource: ${leadSource}\n\nMessage:\n${leadMessage}\n\nDispatched to ${recipientEmail}`
+          });
+
+          delivered = true;
+          dispatchLog = `Live email alert delivered to ${recipientEmail} via ${smtpHost}`;
+          console.log(`[BS Homez Email Alert] ${dispatchLog}`);
+        } catch (emailErr: any) {
+          console.error("[BS Homez Email Alert Error]", emailErr);
+          dispatchLog = `SMTP transport error: ${emailErr?.message || emailErr}`;
+        }
+      } else {
+        dispatchLog = `Enquiry recorded. Alert prepared for ${recipientEmail}. Configure SMTP_HOST/SMTP_USER/SMTP_PASS in environment for instant inbox delivery.`;
+        console.log(`[BS Homez Email Alert Dispatch Ready] ${emailSubject} -> ${recipientEmail}`);
+      }
+
+      return res.json({
+        success: true,
+        delivered,
+        recipient: recipientEmail,
+        subject: emailSubject,
+        log: dispatchLog,
+        mailtoLink: `mailto:${recipientEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(`Buyer: ${leadName}\nPhone: ${leadPhone}\nEmail: ${leadEmail}\nProject: ${leadProject}\nLocation: ${leadLocation}\nMessage: ${leadMessage}`)}`,
+        timestamp: new Date().toISOString()
+      });
+    } catch (err: any) {
+      console.error("[BS Homez Email Alert Route Error]:", err);
+      return res.status(500).json({ success: false, error: err?.message || "Failed to dispatch email alert" });
+    }
+  });
+
+  // Query Alert System Status
+  app.get("/api/enquiry/status", (req, res) => {
+    const isConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+    res.json({
+      status: "active",
+      recipientEmail: process.env.ALERT_RECIPIENT_EMAIL || "contact@bshomez.in",
+      smtpConfigured: isConfigured,
+      smtpHost: process.env.SMTP_HOST || "smtp.gmail.com (Default)",
+      timestamp: new Date().toISOString()
+    });
   });
 
   // Location Auto-Fetch Endpoint for Rental / Resale Forms
@@ -973,17 +1169,16 @@ Rules:
             model: "gemini-3.8-flash",
             contents: prompt,
             config: {
-              temperature: 0.3,
-              maxOutputTokens: 150
+              systemInstruction: "You are an expert web accessibility (WCAG 2.2) and luxury architecture specialist. Produce concise, clear, and descriptive alternative text for screen readers without filler phrases like 'image of'.",
             }
           });
 
-          const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+          const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000));
           const aiResult: any = await Promise.race([geminiPromise, timeoutPromise]);
 
           if (aiResult?.text) {
             const rawAlt = aiResult.text.replace(/["`\n]/g, ' ').replace(/\s+/g, ' ').trim();
-            if (rawAlt && rawAlt.length > 15) {
+            if (rawAlt && rawAlt.length > 10) {
               return res.json({
                 success: true,
                 altText: rawAlt,

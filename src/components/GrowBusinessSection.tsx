@@ -30,6 +30,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { CrmPlanComparison } from './CrmPlanComparison';
+import { dispatchEnquiryEmailAlert } from '../lib/enquiryAlert';
 
 interface GrowBusinessSectionProps {
   onSuccessSubmitted?: () => void;
@@ -291,6 +292,19 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
       });
 
       setSubmitSuccess(true);
+
+      // Dispatch direct real-time alert to contact@bshomez.in
+      dispatchEnquiryEmailAlert({
+        customerName: formData.name.trim(),
+        customerPhone: formData.number.trim(),
+        customerEmail: formData.email.trim(),
+        projectName: `Grow Business: ${selectedInterested.join(', ') || 'Business Solutions'}`,
+        enquiryCategory: 'Opportunity',
+        message: formData.comment.trim() || `Selected services: ${selectedInterested.join(', ')}`,
+        type: 'Business Opportunity',
+        source: 'Grow Business Suite'
+      });
+
       if (onSuccessSubmitted) {
         onSuccessSubmitted();
       }

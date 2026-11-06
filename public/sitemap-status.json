@@ -1,10 +1,10 @@
 {
   "success": true,
-  "timestamp": "2026-11-02T16:07:30.358Z",
+  "timestamp": "2026-11-06T09:41:24.403Z",
   "baseUrl": "https://bshomez.in",
-  "totalUrls": 70,
-  "totalProjects": 46,
-  "dbProjectsCount": 0,
+  "totalUrls": 92,
+  "totalProjects": 68,
+  "dbProjectsCount": 22,
   "curatedProjectsCount": 46,
   "outputPath": "/app/applet/public/sitemap.xml"
 }

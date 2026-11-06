@@ -124,6 +124,7 @@ import { ProjectComparisonModal } from './components/ProjectComparisonModal';
 import { SocialShareButtons } from './components/SocialShareButtons';
 import { SEOPreviewModal } from './components/SEOPreviewModal';
 import { PropertyMetaDataModal } from './components/PropertyMetaDataModal';
+import { AdminSeoAuditPanel } from './components/AdminSeoAuditPanel';
 import { MediaUploadCompressor } from './components/MediaUploadCompressor';
 import { MediaViewerModal } from './components/MediaViewerModal';
 import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
@@ -131,6 +132,8 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { PhoneInputWithCountry, validateMobileNumber } from './components/PhoneInputWithCountry';
 import { GrowBusinessSection } from './components/GrowBusinessSection';
+import { dispatchEnquiryEmailAlert } from './lib/enquiryAlert';
+import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from './lib/seoAuditReport';
 
 import imgEastEoi from './assets/images/east_bangalore_eoi_towers_1791731720202.jpg';
 import imgSouthEastConst from './assets/images/southeast_bangalore_construction_1791731732392.jpg';
@@ -2795,6 +2798,17 @@ const DownloadBrochureModal = ({
         console.warn('SMS Gateway fallback used:', smsErr);
       }
 
+      // Dispatch direct real-time alert to contact@bshomez.in
+      dispatchEnquiryEmailAlert({
+        customerName: formData.name.trim(),
+        customerPhone: digitsOnly,
+        projectName: formData.interestedProjects.trim(),
+        preferredLocation: formData.preferredLocation.trim(),
+        message: `Brochure Download Request for ${formData.interestedProjects}`,
+        type: 'Download Brochure',
+        source: 'Brochure Download Form'
+      });
+
       generateBrochureSummaryFile(project, formData.name.trim());
 
       setSubmittedData({
@@ -3246,6 +3260,16 @@ const ProjectGrid = ({
                   <Sparkles size={11} />
                   <span>Add Meta Data</span>
                 </button>
+                <button
+                  type="button"
+                  data-testid="generate-seo-audit-report-grid-btn"
+                  onClick={() => onOpenMetaData?.(displayedProjects[0])}
+                  className="generate-seo-audit-report-btn bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/40 px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all flex items-center gap-1 cursor-pointer w-max shadow-sm"
+                  title="Compile summary of missing alt text for all images in the project and provide a downloadable CSV report for the admin"
+                >
+                  <FileSpreadsheet size={11} />
+                  <span>Generate SEO Audit Report</span>
+                </button>
                 {isAdmin && (
                   <div className="flex flex-wrap items-center gap-1.5">
                     {onToggleShowHidden && (
@@ -3622,6 +3646,20 @@ const EnquiryModal = ({
         timestamp: serverTimestamp()
       };
       await addDoc(collection(db, 'enquiries'), enquiry);
+
+      // Dispatch direct real-time alert to contact@bshomez.in
+      dispatchEnquiryEmailAlert({
+        customerName: formData.name,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        projectName: targetProject.name,
+        enquiryCategory: selectedCategory,
+        preferredLocation: ('location' in targetProject ? targetProject.location : undefined) || ('zone' in targetProject ? targetProject.zone : undefined) || 'Bangalore',
+        message: formData.message || `Requirement: ${enquiryType} (${selectedCategory})`,
+        type: enquiryType,
+        source: 'Property Enquire Modal'
+      });
+
       setSuccess(true);
       setTimeout(() => {
         onClose();
@@ -6595,6 +6633,17 @@ const AIChatAssistant: React.FC = () => {
           type: 'AI Chat',
           timestamp: serverTimestamp()
         });
+
+        // Dispatch direct real-time alert to contact@bshomez.in
+        dispatchEnquiryEmailAlert({
+          customerName: name.trim(),
+          customerPhone: phone.trim(),
+          customerEmail: email.trim(),
+          projectName: 'AI Assistant Consultation',
+          message: `${leadMsg}${extraNote}`,
+          type: 'AI Chat Lead',
+          source: 'AI Chat Assistant'
+        });
         
         setChatHistory(prev => [
           ...prev, 
@@ -8121,6 +8170,18 @@ const AdminView = ({
                </span>
              </div>
            </button>
+           <button 
+             onClick={() => setActiveTab('seo_audit')}
+             className={cn(
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               activeTab === 'seo_audit' 
+                 ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform" 
+                 : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
+             )}
+           >
+             <FileSpreadsheet size={15} className={cn("transition-transform duration-300", activeTab === 'seo_audit' ? "scale-110 stroke-[2.5]" : "opacity-60")} />
+             <span>SEO Audit Hub</span>
+           </button>
         </div>
       </div>
 
@@ -9339,6 +9400,26 @@ const AdminView = ({
                       <span>Batch Sync SEO &amp; Sitemap</span>
                     </>
                   )}
+                </button>
+                <button
+                  type="button"
+                  data-testid="generate-seo-audit-report-hub-btn"
+                  onClick={() => {
+                    const audit = compilePortfolioImageAltAudit(projects);
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    downloadSeoAuditCsv(
+                      audit.items,
+                      `seo_alt_text_audit_portfolio_${dateStr}.csv`,
+                      'BS Homez Full Portfolio Image Accessibility & SEO Alt Text Audit'
+                    );
+                    setBatchSyncToast(`Generated SEO Alt Text Audit for ${audit.totalImages} images across ${audit.totalProjects} projects! Downloaded CSV report.`);
+                    setTimeout(() => setBatchSyncToast(null), 4000);
+                  }}
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                  title="Compile summary of missing alt text for all images in the project and provide a downloadable CSV report for the admin"
+                >
+                  <FileSpreadsheet size={13} />
+                  <span>Generate SEO Audit Report</span>
                 </button>
                 {onOpenSeoPreview && (
                   <button

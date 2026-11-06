@@ -29,6 +29,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Enquiry } from '../types';
 import { PhoneInputWithCountry, validateMobileNumber } from './PhoneInputWithCountry';
+import { dispatchEnquiryEmailAlert } from '../lib/enquiryAlert';
 
 interface BankRate {
   bankName: string;
@@ -472,6 +473,19 @@ export const HomeLoanHub: React.FC = () => {
 
     try {
       await addDoc(collection(db, 'enquiries'), enquiryPayload);
+
+      // Dispatch real-time email alert to contact@bshomez.in
+      dispatchEnquiryEmailAlert({
+        customerName: enquiryPayload.customerName,
+        customerPhone: enquiryPayload.customerPhone,
+        customerEmail: enquiryPayload.customerEmail,
+        projectName: enquiryPayload.projectName,
+        enquiryCategory: enquiryPayload.enquiryCategory,
+        message: enquiryPayload.message,
+        type: 'Home Loan Advisory',
+        source: 'Home Loan Hub'
+      });
+
       setInquirySuccess(true);
       setTimeout(() => {
         setIsInquiryModalOpen(false);
