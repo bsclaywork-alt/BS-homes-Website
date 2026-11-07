@@ -29,12 +29,34 @@ export const SUPPORTED_COUNTRIES: CountryInfo[] = [
 ];
 
 export const validateMobileNumber = (
-  countryCode: string,
+  countryCode: string = '+91',
   rawPhone: string
 ): { isValid: boolean; message?: string; cleanDigits: string; expectedDigits: number } => {
-  const country = SUPPORTED_COUNTRIES.find(c => c.code === countryCode) || SUPPORTED_COUNTRIES[0];
-  const cleanDigits = (rawPhone || '').replace(/\D/g, '');
+  const normalizedCountryCode = (countryCode || '+91').trim();
+  const country = SUPPORTED_COUNTRIES.find(c => c.code === normalizedCountryCode) || SUPPORTED_COUNTRIES[0];
   const expectedDigits = country.digits;
+
+  let inputStr = (rawPhone || '').trim();
+
+  // Strip country code if present at the beginning (e.g. "+91 9876543210" or "+919876543210")
+  if (inputStr.startsWith('+')) {
+    const matched = SUPPORTED_COUNTRIES.find(c => inputStr.startsWith(c.code));
+    if (matched) {
+      inputStr = inputStr.slice(matched.code.length);
+    } else {
+      inputStr = inputStr.replace(/^\+\d{1,4}\s*/, '');
+    }
+  } else {
+    // If input was passed with numeric country code prefix like "919876543210" (length 12)
+    const codeDigits = country.code.replace(/\D/g, '');
+    const cleanAll = inputStr.replace(/\D/g, '');
+    if (cleanAll.length === expectedDigits + codeDigits.length && cleanAll.startsWith(codeDigits)) {
+      inputStr = cleanAll.slice(codeDigits.length);
+    }
+  }
+
+  // cleanDigits is strictly the manual phone number digits entered by the user
+  const cleanDigits = inputStr.replace(/\D/g, '');
 
   if (!cleanDigits) {
     return {
@@ -48,7 +70,7 @@ export const validateMobileNumber = (
   if (cleanDigits.length < expectedDigits) {
     return {
       isValid: false,
-      message: `Please enter a valid ${expectedDigits}-digit mobile number for ${country.name}. Currently entered ${cleanDigits.length} digits.`,
+      message: `Please enter a valid ${expectedDigits}-digit mobile number. Currently entered ${cleanDigits.length} digits.`,
       cleanDigits,
       expectedDigits
     };
@@ -57,7 +79,7 @@ export const validateMobileNumber = (
   if (cleanDigits.length > expectedDigits) {
     return {
       isValid: false,
-      message: `Mobile number must be exactly ${expectedDigits} digits for ${country.name}. Currently entered ${cleanDigits.length} digits.`,
+      message: `Mobile number must be exactly ${expectedDigits} digits. Currently entered ${cleanDigits.length} digits.`,
       cleanDigits,
       expectedDigits
     };
@@ -171,14 +193,15 @@ export const PhoneInputWithCountry: React.FC<PhoneInputWithCountryProps> = ({
       )}
 
       <div className="flex rounded-sm overflow-hidden border border-white/15 focus-within:border-art-gold transition-all bg-white/[0.04]">
-        {/* Country Code Dropdown */}
-        <div className="relative shrink-0 flex items-center bg-white/10 border-r border-white/15 hover:bg-white/15 transition-colors">
+        {/* Country Code Dropdown: Compact and fitted to country code */}
+        <div className="relative w-[78px] sm:w-[88px] shrink-0 flex items-center bg-white/10 border-r border-white/15 hover:bg-white/15 transition-colors">
           <select
             value={selectedCode}
             onChange={handleCountryChange}
             disabled={disabled}
             aria-label="Select Country Code"
-            className="appearance-none bg-transparent pl-3 pr-7 py-3 text-xs font-mono font-bold text-art-gold outline-none cursor-pointer"
+            className="w-full appearance-none bg-transparent pl-2.5 pr-6 py-3 text-xs font-mono font-bold text-art-gold outline-none cursor-pointer text-center"
+            title={`${activeCountry.name} (${activeCountry.code})`}
           >
             {SUPPORTED_COUNTRIES.map(country => (
               <option 
@@ -186,14 +209,14 @@ export const PhoneInputWithCountry: React.FC<PhoneInputWithCountryProps> = ({
                 value={country.code} 
                 className="bg-[#1a1a1a] text-white font-sans text-xs py-1"
               >
-                {country.flag} {country.name} ({country.code})
+                {country.flag} {country.code} ({country.name})
               </option>
             ))}
           </select>
-          <ChevronDown size={12} className="absolute right-2 text-art-gold pointer-events-none opacity-80" />
+          <ChevronDown size={11} className="absolute right-1.5 text-art-gold pointer-events-none opacity-80" />
         </div>
 
-        {/* Mobile Number Input */}
+        {/* Mobile Number Input: Expanded and prominent for clear visibility of all digits */}
         <div className="relative flex-1 flex items-center">
           <input
             type="tel"
@@ -205,14 +228,14 @@ export const PhoneInputWithCountry: React.FC<PhoneInputWithCountryProps> = ({
             onBlur={() => {
               if (autoValidateOnBlur) setIsTouched(true);
             }}
-            placeholder={`e.g. ${activeCountry.placeholder}`}
+            placeholder={`Enter ${activeCountry.digits} digit mobile (e.g. ${activeCountry.placeholder})`}
             disabled={disabled}
             required={required}
-            className={`w-full bg-transparent px-3.5 py-3 text-xs sm:text-sm font-mono text-white placeholder-white/25 outline-none transition-all ${inputClassName}`}
+            className={`w-full bg-transparent px-4 py-3 text-sm sm:text-base font-mono tracking-wider text-white placeholder-white/25 outline-none transition-all ${inputClassName}`}
           />
           {isComplete && (
             <span className="pr-3 text-emerald-400" title="Valid mobile number">
-              <CheckCircle2 size={15} />
+              <CheckCircle2 size={16} />
             </span>
           )}
         </div>

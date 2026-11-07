@@ -9,8 +9,8 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
   --color-art-gold: #C5A059;
-  --color-art-dark: #0A0A0A;
-  --color-art-accent: #1A1A1A;
+  --color-art-dark: #000000;
+  --color-art-accent: #0D0D0D;
   --color-art-light: #F5F2ED;
   --color-art-border: rgba(197, 160, 89, 0.2);
   --color-art-card: rgba(26, 26, 26, 0.8);

@@ -91,9 +91,23 @@ export interface Project {
   seoKeywords?: string[];
   seoLastSyncedAt?: string;
   seoSyncSource?: string;
+  seoLastEdited?: string;
+  seoRevisions?: SeoRevisionRecord[];
 
   createdAt: any;
   updatedAt?: any;
+}
+
+export interface SeoRevisionRecord {
+  id: string;
+  version: number;
+  timestamp: string;
+  author?: string;
+  changeSummary: string;
+  metaTitle: string;
+  metaDescription: string;
+  seoKeywords: string[];
+  imageAltText?: string;
 }
 
 export interface Enquiry {

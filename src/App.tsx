@@ -96,6 +96,7 @@ import {
   CheckSquare,
   Square,
   Sliders,
+  SlidersHorizontal,
   BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -160,80 +161,34 @@ function cn(...inputs: ClassValue[]) {
 
 // --- Components ---
 
-const Logo = ({ className = "" }: { className?: string }) => (
-  <div className={cn("flex flex-col group select-none", className)}>
-    <svg viewBox="0 0 450 180" className="w-32 sm:w-36 md:w-40 h-auto text-white fill-current" xmlns="http://www.w3.org/2000/svg">
-      {/* Red Roof */}
-      <path 
-        d="M 100,72 L 164,15 L 188,39 L 188,25 L 202,25 L 202,53 L 221,72 L 395,72 L 395,82 L 225,82 L 164,25 L 108,72 Z" 
-        fill="#E32526" 
+const Logo = ({ className = "", animate = true }: { className?: string; animate?: boolean }) => {
+  const content = (
+    <div className={cn("inline-flex items-center group select-none bg-transparent relative", className)}>
+      <img 
+        src="/assets/aistudio/bs_homez_logo_glow.png" 
+        alt="BS HOMEZ - Turning Key Moments" 
+        className="h-10 sm:h-12 md:h-14 w-auto object-contain block transition-all duration-300 group-hover:scale-[1.03] filter drop-shadow-[0_0_10px_rgba(30,136,229,0.65)] group-hover:drop-shadow-[0_0_18px_rgba(30,136,229,0.95)]" 
       />
+    </div>
+  );
 
-      {/* BS letters */}
-      <text 
-        x="55" 
-        y="132" 
-        fill="currentColor" 
-        fontSize="58" 
-        fontWeight="900" 
-        fontFamily="ui-sans-serif, system-ui, -apple-system, sans-serif" 
-        letterSpacing="0.05em"
-      >
-        BS
-      </text>
+  if (!animate) return content;
 
-      {/* Graphic House-H letter */}
-      <g>
-        {/* Left red pillar */}
-        <rect x="150" y="76" width="12" height="56" fill="#E32526" />
-        {/* Right red pillar */}
-        <rect x="178" y="76" width="12" height="56" fill="#E32526" />
-        {/* Crossbar */}
-        <rect x="162" y="98" width="16" height="12" fill="#E32526" />
-        {/* Up arrow inside */}
-        <path d="M 162,98 L 170,80 L 178,98 Z" fill="currentColor" />
-      </g>
-
-      {/* Graphic O letter with concentric dot */}
-      <g>
-        {/* Outer Circle */}
-        <circle cx="215" cy="104" r="21" fill="none" stroke="currentColor" strokeWidth="10" />
-        {/* Inner Dot */}
-        <circle cx="215" cy="104" r="5" fill="currentColor" />
-      </g>
-
-      {/* MEZ letters */}
-      <text 
-        x="248" 
-        y="132" 
-        fill="currentColor" 
-        fontSize="58" 
-        fontWeight="900" 
-        fontFamily="ui-sans-serif, system-ui, -apple-system, sans-serif" 
-        letterSpacing="0.01em"
-      >
-        MEZ
-      </text>
-
-      {/* The thick underline bar */}
-      <line x1="50" y1="140" x2="395" y2="140" stroke="currentColor" strokeWidth="5" />
-
-      {/* The green spaced tagline under the underline */}
-      <text 
-        x="50" 
-        y="162" 
-        fill="#00A859" 
-        fontSize="11" 
-        fontWeight="900" 
-        fontFamily="ui-sans-serif, system-ui, -apple-system, sans-serif" 
-        textLength="345"
-        lengthAdjust="spacing"
-      >
-        TRUNING KEY MOMENTS
-      </text>
-    </svg>
-  </div>
-);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ 
+        duration: 0.85, 
+        ease: [0.16, 1, 0.3, 1],
+        delay: 0.08
+      }}
+      className="inline-flex"
+    >
+      {content}
+    </motion.div>
+  );
+};
 
 const MarketInsights = () => {
   const istTime = new Date().toLocaleString("en-IN", {
@@ -3067,6 +3022,50 @@ const ProjectGrid = ({
   const [selectedPropType, setSelectedPropType] = useState<'All' | 'Apartment' | 'Villa' | 'Plot'>('All');
   const [selectedHeaderStatus, setSelectedHeaderStatus] = useState<'All' | 'EOI' | 'Under Construction' | 'Ready to Move' | 'Handed Over'>('All');
   const [selectedTag, setSelectedTag] = useState<string>('All');
+  const [maxPriceBudget, setMaxPriceBudget] = useState<number>(100000000); // Default ₹10 Cr+ / Any Budget
+
+  const parseProjectNumericPrice = (priceStr?: string): { min: number; max: number } => {
+    if (!priceStr) return { min: 0, max: Infinity };
+    const cleaned = priceStr.toLowerCase().replace(/,/g, '');
+    const matches = [...cleaned.matchAll(/([\d.]+)\s*(cr|crore|crores|lakh|lakhs|lac|lacs|l\/month|k|thousand)?/gi)];
+    if (!matches || matches.length === 0) return { min: 0, max: Infinity };
+
+    const values: number[] = [];
+    for (const match of matches) {
+      const num = parseFloat(match[1]);
+      if (isNaN(num)) continue;
+      const unit = match[2]?.toLowerCase() || '';
+
+      if (unit.startsWith('cr')) {
+        values.push(num * 10000000);
+      } else if (unit.startsWith('l')) {
+        values.push(num * 100000);
+      } else if (unit.startsWith('k') || unit.startsWith('thous')) {
+        values.push(num * 1000);
+      } else {
+        if (cleaned.includes('cr')) {
+          values.push(num * 10000000);
+        } else if (cleaned.includes('lakh') || cleaned.includes('lac') || cleaned.includes('l /') || cleaned.includes('l/')) {
+          values.push(num * 100000);
+        } else {
+          values.push(num);
+        }
+      }
+    }
+
+    if (values.length === 0) return { min: 0, max: Infinity };
+    return { min: Math.min(...values), max: Math.max(...values) };
+  };
+
+  const formatBudgetLabel = (val: number): string => {
+    if (val >= 100000000) return 'Any Budget';
+    if (val >= 10000000) {
+      const cr = val / 10000000;
+      return `Up to ₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2)} Cr`;
+    }
+    const lk = val / 100000;
+    return `Up to ₹${lk.toFixed(0)} Lakhs`;
+  };
 
   const portfolioTypes: Array<'All' | 'Primary' | 'Resale' | 'Rental'> = ['All', 'Primary', 'Resale', 'Rental'];
   const corridors: Array<string> = [
@@ -3175,14 +3174,18 @@ const ProjectGrid = ({
         if (!hasTag) return false;
       }
 
+      if (maxPriceBudget < 100000000) {
+        const { min } = parseProjectNumericPrice(p.price);
+        if (min > maxPriceBudget) return false;
+      }
+
       return true;
     });
-  }, [projects, isAdmin, showHidden, searchQuery, selectedType, selectedCorridor, selectedPropType, selectedHeaderStatus, selectedTag]);
+  }, [projects, isAdmin, showHidden, searchQuery, selectedType, selectedCorridor, selectedPropType, selectedHeaderStatus, selectedTag, maxPriceBudget]);
 
   const uniqueDisplayedProjects = React.useMemo(() => {
     return deduplicateProjects(displayedProjects);
   }, [displayedProjects]);
-
 
   // Per-page display options: default 10, options 10, 20, 30, 40, 50
   const [pageSize, setPageSize] = useState<number>(10);
@@ -3200,6 +3203,7 @@ const ProjectGrid = ({
     selectedHeaderStatus,
     selectedTag,
     selectedBuilderCat,
+    maxPriceBudget,
     pageSize
   ]);
 
@@ -3241,13 +3245,38 @@ const ProjectGrid = ({
     return pages;
   };
 
+  // Simultaneously resets selectedType, selectedCorridor, selectedPropType, and searchQuery states
+  const handleClearAllFilters = () => {
+    setSelectedType('All');
+    setSelectedCorridor('All');
+    setSelectedPropType('All');
+    setSearchQuery('');
+    setMaxPriceBudget(100000000);
+    setSelectedBuilderCat('All');
+    setSelectedHeaderStatus('All');
+    setSelectedTag('All');
+    setCurrentPage(1);
+  };
+
+  const isAnyFilterActive = Boolean(
+    searchQuery.trim() ||
+    selectedType !== 'All' ||
+    selectedCorridor !== 'All' ||
+    selectedPropType !== 'All' ||
+    selectedBuilderCat !== 'All' ||
+    selectedHeaderStatus !== 'All' ||
+    selectedTag !== 'All' ||
+    maxPriceBudget < 100000000
+  );
+
   const activeFiltersCount = [
     Boolean(searchQuery.trim()),
     selectedType !== 'All',
     selectedCorridor !== 'All',
     selectedPropType !== 'All',
     selectedHeaderStatus !== 'All',
-    selectedTag !== 'All'
+    selectedTag !== 'All',
+    maxPriceBudget < 100000000
   ].filter(Boolean).length;
 
   return (
@@ -3501,23 +3530,106 @@ const ProjectGrid = ({
                   </select>
                 </div>
 
-                {(selectedType !== 'All' || selectedCorridor !== 'All' || selectedPropType !== 'All' || searchQuery) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedType('All');
-                      setSelectedCorridor('All');
-                      setSelectedPropType('All');
-                      setSearchQuery('');
-                    }}
-                    className="text-[9px] uppercase tracking-wider text-art-gold hover:text-white font-mono cursor-pointer px-2 py-1 bg-art-gold/10 hover:bg-art-gold/20 rounded border border-art-gold/30 transition-colors whitespace-nowrap flex items-center gap-1"
-                    title="Reset all active filters back to All Types"
-                  >
-                    <X size={10} />
-                    <span>Reset</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  data-testid="clear-all-filters-btn"
+                  onClick={handleClearAllFilters}
+                  className={cn(
+                    "text-[10px] uppercase font-mono tracking-wider cursor-pointer px-2.5 py-1.5 rounded transition-all whitespace-nowrap flex items-center gap-1.5 font-bold border",
+                    isAnyFilterActive
+                      ? "bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40 shadow-sm"
+                      : "bg-white/5 text-white/50 border-white/10 hover:text-white hover:bg-white/10"
+                  )}
+                  title="Reset selectedType, selectedCorridor, selectedPropType, and searchQuery simultaneously"
+                >
+                  <RotateCcw size={11} className={isAnyFilterActive ? "text-rose-300" : "text-white/40"} />
+                  <span>Clear All Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full font-mono bg-white/15 text-white font-bold">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
               </div>
+            </div>
+          </div>
+
+          {/* Price Range Slider Toolbar */}
+          <div className="mb-2 p-2 sm:p-2.5 bg-[#121212]/95 border border-white/20 rounded-md shadow-md backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div className="flex items-center justify-between sm:justify-start gap-2 shrink-0">
+                <label htmlFor="price-range-slider" className="text-[10px] sm:text-[11px] font-mono uppercase font-black text-art-gold flex items-center gap-1.5 tracking-wider">
+                  <SlidersHorizontal size={13} className="text-art-gold" />
+                  <span>Price Range</span>
+                </label>
+                <span className={cn(
+                  "px-2 py-0.5 rounded text-[10px] font-mono font-bold border",
+                  maxPriceBudget < 100000000 
+                    ? "bg-art-gold/15 text-art-gold border-art-gold/40 shadow-[0_0_10px_rgba(197,160,89,0.25)]" 
+                    : "bg-white/5 text-white/60 border-white/10"
+                )}>
+                  {formatBudgetLabel(maxPriceBudget)}
+                </span>
+              </div>
+
+              <div className="flex-1 flex items-center gap-2">
+                <span className="text-[9px] font-mono text-white/40 shrink-0">₹25L</span>
+                <input
+                  id="price-range-slider"
+                  type="range"
+                  min="2500000"
+                  max="100000000"
+                  step="2500000"
+                  value={maxPriceBudget}
+                  onChange={(e) => setMaxPriceBudget(Number(e.target.value))}
+                  className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#c5a059]"
+                  aria-label="Price Range slider"
+                />
+                <span className="text-[9px] font-mono text-white/40 shrink-0">₹10Cr+</span>
+              </div>
+
+              {/* Quick Budget Presets */}
+              <div className="flex items-center gap-1 shrink-0 overflow-x-auto no-scrollbar">
+                {[
+                  { label: 'All', value: 100000000 },
+                  { label: '< ₹1 Cr', value: 10000000 },
+                  { label: '< ₹2.5 Cr', value: 25000000 },
+                  { label: '< ₹5 Cr', value: 50000000 },
+                ].map(preset => (
+                  <button
+                    key={`preset-${preset.label}`}
+                    type="button"
+                    onClick={() => setMaxPriceBudget(preset.value)}
+                    className={cn(
+                      "px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider rounded border transition-all cursor-pointer whitespace-nowrap",
+                      maxPriceBudget === preset.value
+                        ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
+                        : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:bg-white/10"
+                    )}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clear All Filters button in slider toolbar */}
+            <div className="flex items-center justify-end gap-2 shrink-0 border-t md:border-t-0 md:border-l border-white/10 pt-2 md:pt-0 md:pl-3">
+              <button
+                type="button"
+                data-testid="clear-all-filters-slider-btn"
+                onClick={handleClearAllFilters}
+                className={cn(
+                  "px-3 py-1.5 rounded-sm text-[10px] uppercase font-mono tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border whitespace-nowrap font-bold",
+                  isAnyFilterActive
+                    ? "bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40 shadow-sm"
+                    : "bg-white/5 text-white/40 border-white/10 hover:text-white hover:bg-white/10"
+                )}
+                title="Clear All Filters"
+              >
+                <RotateCcw size={11} className={isAnyFilterActive ? "text-rose-300" : "text-white/40"} />
+                <span>Clear All Filters</span>
+              </button>
             </div>
           </div>
           <div className="px-3 py-1.5 bg-[#111111]/90 border border-white/15 rounded-md flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm">
@@ -3571,18 +3683,12 @@ const ProjectGrid = ({
               <p className="text-white/60 font-serif italic text-xl">No matching portraits in this specific filter combination.</p>
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedType('All');
-                  setSelectedCorridor('All');
-                  setSelectedBuilderCat('All');
-                  setSelectedPropType('All');
-                  setSelectedHeaderStatus('All');
-                  setSelectedTag('All');
-                  setSearchQuery('');
-                }}
-                className="px-6 py-2.5 bg-art-gold text-black text-[10px] uppercase tracking-widest font-black rounded-sm cursor-pointer hover:bg-white transition-all shadow-md"
+                data-testid="empty-clear-all-filters-btn"
+                onClick={handleClearAllFilters}
+                className="px-6 py-2.5 bg-art-gold text-black text-[10px] uppercase tracking-widest font-black rounded-sm cursor-pointer hover:bg-white transition-all shadow-md flex items-center gap-2 mx-auto"
               >
-                Reset Portrait Filters
+                <RotateCcw size={12} />
+                <span>Clear All Filters</span>
               </button>
             </div>
           ) : (
@@ -10223,7 +10329,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Whitefield ITPL Main Road (Pattandur Agrahara)',
     locationTarget: 'GR Tech Park Bus Stop (0.3 km) • Pattandur Metro (0.9 km) • ITPL (1.2 km)',
     zone: 'Whitefield',
-    type: 'Resale',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Ready Luxury Resale',
@@ -10260,7 +10366,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Whitefield EPIP Zone (Beside Vydehi & SAP Labs)',
     locationTarget: 'EPIP Bus Stop (0.3 km) • Vydehi Hospital (0.8 km) • Metro (1.1 km)',
     zone: 'Whitefield',
-    type: 'Rental',
+    type: 'Primary',
     propertyType: 'Villa',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Executive Rental',
@@ -10335,7 +10441,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Hoskote Town - NH-75 Old Madras Road',
     locationTarget: 'Hoskote Toll Bus Stop (0.4 km) • MVJ Hospital (1.5 km) • Orion Uptown Mall (5.4 km)',
     zone: 'Hoskote',
-    type: 'Resale',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['2 BHK', '3 BHK'],
     segment: 'Value Luxury Resale',
@@ -10374,7 +10480,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Hoskote - Budigere Cross OMR (Kattamnallur)',
     locationTarget: 'Orion Uptown Mall (0.1 km) • Budigere Cross Bus Stop (0.2 km) • Kadugodi Metro (5.6 km)',
     zone: 'Hoskote',
-    type: 'Rental',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['3 BHK'],
     segment: 'Township Rental',
@@ -10448,7 +10554,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Varthur - Whitefield Main Road (Varthur Town)',
     locationTarget: 'Varthur Bus Stop (0.2 km) • Greenwood High (1.8 km) • Manipal Hospital (3.1 km)',
     zone: 'Varthur',
-    type: 'Resale',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['2 BHK', '3 BHK'],
     segment: 'Integrated Township Resale',
@@ -10484,7 +10590,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Varthur - Gunjur Main Road (Varthur Lakefront)',
     locationTarget: 'Gunjur-Varthur Bus Stop (0.3 km) • Oakridge School (1.6 km) • Wipro SEZ (5.2 km)',
     zone: 'Varthur',
-    type: 'Rental',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Lakefront Township Rental',
@@ -10558,7 +10664,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Gunjur Palya - Varthur-Sarjapur Road',
     locationTarget: 'Gunjur Palya Bus Stop (0.2 km) • Chrysalis High (0.9 km) • Wipro SEZ (3.6 km)',
     zone: 'Gunjur',
-    type: 'Resale',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['2 BHK', '3 BHK'],
     segment: 'Ready Gated Resale',
@@ -10594,7 +10700,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Gunjur - Varthur Main Road Junction',
     locationTarget: 'Gunjur Bus Stop (0.2 km) • Chrysalis High (1.1 km) • Wipro Campus (4.6 km)',
     zone: 'Gunjur',
-    type: 'Rental',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['2 BHK', '3 BHK'],
     segment: 'Executive High-Rise Rental',
@@ -10668,7 +10774,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Hosa Road - Haralur Link Road (Silver County)',
     locationTarget: 'Haralur Bus Stop (0.4 km) • Vibgyor High (1.4 km) • Hosa Road Metro (2.9 km)',
     zone: 'Hosa Road',
-    type: 'Resale',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Signature Resale',
@@ -10704,7 +10810,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Hosa Road - Haralur Main Road (Lakedew Corridor)',
     locationTarget: 'Haralur Bus Stop (0.3 km) • Vibgyor School (0.8 km) • Hosa Road Metro (2.8 km)',
     zone: 'Hosa Road',
-    type: 'Rental',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Executive Garden Rental',
@@ -10778,7 +10884,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Kasavanahalli Main Road (Beside Kasavanahalli Lake)',
     locationTarget: 'Kasavanahalli Bus Stop (0.2 km) • Market Square Mall (1.7 km) • Wipro HQ (1.8 km)',
     zone: 'Kasavanahalli',
-    type: 'Resale',
+    type: 'Primary',
     propertyType: 'Villa',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Boutique Villa Resale',
@@ -10814,7 +10920,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Kasavanahalli - Haralur Main Road',
     locationTarget: 'Kasavanahalli Bus Stop (0.3 km) • Wipro HQ (1.6 km) • Manipal Hospital (2.0 km)',
     zone: 'Kasavanahalli',
-    type: 'Rental',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['3 BHK'],
     segment: 'Executive Tech-Belt Rental',
@@ -11510,7 +11616,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Whitefield - Hoskote Main Road (Kannamangala)',
     locationTarget: 'Kannamangala Bus Stop (0.2 km) • Orion Uptown Mall (2.9 km) • Kadugodi Metro (3.8 km)',
     zone: 'Sarjapur',
-    type: 'Resale',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Verified Resale',
@@ -11546,7 +11652,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Bellandur - Outer Ring Road (Behind RMZ Ecoworld)',
     locationTarget: 'RMZ Ecoworld (0.3 km) • Ecoworld Bus Stop (0.5 km) • Sakra Hospital (1.2 km)',
     zone: 'Bellandur',
-    type: 'Rental',
+    type: 'Primary',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Corporate Rental',
@@ -12520,21 +12626,27 @@ export default function App() {
       if (cached) {
         const parsed: Project[] = JSON.parse(cached);
         if (parsed && parsed.length > 0) {
+          const cleaned = parsed.filter(p => {
+            if (!p.createdAt && (p.type === 'Rental' || p.type === 'Resale' || (p.id && (p.id.includes('_resale_') || p.id.includes('_rental_') || p.id === 'curated_se_handed_4' || p.id === 'curated_se_rental_6')))) {
+              return false;
+            }
+            return true;
+          });
           combined = deduplicateProjects([
             ...localCustomEnriched,
-            ...parsed.map(autoEnrichProjectData)
+            ...cleaned.map(autoEnrichProjectData)
           ]);
         }
       }
       if (combined.length === 0) {
         combined = deduplicateProjects([
           ...localCustomEnriched,
-          ...CURATED_ARTISANAL_PROJECTS.map(autoEnrichProjectData)
+          ...CURATED_ARTISANAL_PROJECTS.filter(cp => cp.type !== 'Rental' && cp.type !== 'Resale' && !cp.id?.includes('_resale_') && !cp.id?.includes('_rental_') && cp.id !== 'curated_se_handed_4' && cp.id !== 'curated_se_rental_6').map(autoEnrichProjectData)
         ]);
       }
       return combined;
     } catch {
-      return deduplicateProjects(CURATED_ARTISANAL_PROJECTS.map(autoEnrichProjectData));
+      return deduplicateProjects(CURATED_ARTISANAL_PROJECTS.filter(cp => cp.type !== 'Rental' && cp.type !== 'Resale' && !cp.id?.includes('_resale_') && !cp.id?.includes('_rental_') && cp.id !== 'curated_se_handed_4' && cp.id !== 'curated_se_rental_6').map(autoEnrichProjectData));
     }
   });
   const [isLoading, setIsLoading] = useState(() => {
@@ -12686,6 +12798,8 @@ export default function App() {
       metaDescription: string; 
       seoKeywords: string[];
       imageAltText?: string;
+      seoLastEdited?: string;
+      seoRevisions?: any[];
     }
   ) => {
     // 1. Update in local state immediately for instant responsive UI
@@ -12698,7 +12812,9 @@ export default function App() {
           metaDescription: meta.metaDescription,
           seoDescription: meta.metaDescription,
           seoKeywords: meta.seoKeywords,
-          ...(meta.imageAltText ? { imageAltText: meta.imageAltText } : {})
+          ...(meta.imageAltText ? { imageAltText: meta.imageAltText } : {}),
+          ...(meta.seoLastEdited ? { seoLastEdited: meta.seoLastEdited } : {}),
+          ...(meta.seoRevisions ? { seoRevisions: meta.seoRevisions } : {})
         };
       }
       return p;
@@ -12715,6 +12831,8 @@ export default function App() {
           seoDescription: meta.metaDescription,
           seoKeywords: meta.seoKeywords,
           ...(meta.imageAltText ? { imageAltText: meta.imageAltText } : {}),
+          ...(meta.seoLastEdited ? { seoLastEdited: meta.seoLastEdited } : {}),
+          ...(meta.seoRevisions ? { seoRevisions: meta.seoRevisions } : {}),
           updatedAt: new Date().toISOString()
         });
       }
@@ -13443,6 +13561,9 @@ export default function App() {
       ]);
 
       const uneditedCurated = CURATED_ARTISANAL_PROJECTS.filter(cp => {
+        // Resale & Rental inventories must come exclusively from Admin Vault (verified user inventory)
+        if (cp.type === 'Rental' || cp.type === 'Resale') return false;
+        if (cp.id && (cp.id.includes('_resale_') || cp.id.includes('_rental_') || cp.id === 'curated_se_handed_4' || cp.id === 'curated_se_rental_6')) return false;
         if (cp.id && customKeys.has(cp.id.toLowerCase())) return false;
         if (cp.name && customKeys.has(cp.name.trim().toLowerCase())) return false;
         return true;
