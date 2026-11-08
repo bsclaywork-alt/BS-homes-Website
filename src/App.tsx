@@ -12,7 +12,8 @@ import {
   deleteDoc,
   updateDoc,
   where,
-  increment
+  increment,
+  writeBatch
 } from 'firebase/firestore';
 import { 
   onAuthStateChanged, 
@@ -135,6 +136,7 @@ import { PhoneInputWithCountry, validateMobileNumber } from './components/PhoneI
 import { GrowBusinessSection } from './components/GrowBusinessSection';
 import { dispatchEnquiryEmailAlert } from './lib/enquiryAlert';
 import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from './lib/seoAuditReport';
+import { autoEnhanceAllProjects, generateOptimizedSeoMetadata } from './lib/autoSeoEnhancer';
 
 import imgEastEoi from './assets/images/east_bangalore_eoi_towers_1791731720202.jpg';
 import imgSouthEastConst from './assets/images/southeast_bangalore_construction_1791731732392.jpg';
@@ -1160,29 +1162,11 @@ const ProjectCard: React.FC<{
     }
   }, [project.organicViews]);
 
-  // Fetch and update organicViews from Firestore with live sync & session-debounced increment
+  // High-performance session-guarded view increment (organic views are live-synced by parent portfolio listener)
   useEffect(() => {
     if (!project.id) return;
-    let unsubscribe: (() => void) | undefined;
     const projectDocRef = doc(db, 'projects', project.id);
 
-    // 1. Real-time Firestore listener for live organic view updates
-    try {
-      unsubscribe = onSnapshot(projectDocRef, (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          if (typeof data?.organicViews === 'number') {
-            setViews(data.organicViews);
-          }
-        }
-      }, (err) => {
-        console.debug('Project views subscription notice:', err.message);
-      });
-    } catch (e) {
-      console.debug('Failed to initialize view listener:', e);
-    }
-
-    // 2. High-performance, session-guarded increment to optimize speed and eliminate redundant writes
     const sessionKey = `viewed_proj_${project.id}`;
     let timer: NodeJS.Timeout | undefined;
     const alreadyViewed = typeof sessionStorage !== 'undefined' && sessionStorage.getItem(sessionKey);
@@ -1206,12 +1190,11 @@ const ProjectCard: React.FC<{
             }, { merge: true });
           } catch {}
         }
-      }, 700);
+      }, 1000);
     }
 
     return () => {
       if (timer) clearTimeout(timer);
-      if (unsubscribe) unsubscribe();
     };
   }, [project.id, baselineViews]);
 
@@ -7094,6 +7077,9 @@ const AIChatAssistant: React.FC = () => {
                 Send
               </button>
             </form>
+            <div className="px-3 py-1.5 bg-black/40 text-[9px] text-white/50 font-mono text-center border-t border-white/5 leading-relaxed">
+              AI-generated information may not always reflect the latest project updates. For verified project details, pricing, availability, and other information, kindly contact our team directly.
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -7245,7 +7231,8 @@ const AdminView = ({
   onOpenEnquiry,
   onDeleteProject,
   onInspectProjectSeo,
-  onSaveProject
+  onSaveProject,
+  onBatchUpdateProjects
 }: { 
   enquiries: Enquiry[], 
   projects: Project[], 
@@ -7263,7 +7250,8 @@ const AdminView = ({
   onOpenEnquiry?: (p: Project) => void,
   onDeleteProject?: (p: Project) => Promise<void> | void,
   onInspectProjectSeo?: (p: Project) => void,
-  onSaveProject?: (p: Project) => Promise<void> | void
+  onSaveProject?: (p: Project) => Promise<void> | void,
+  onBatchUpdateProjects?: (updated: Project[]) => void
 }) => {
   const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility' | 'seo_audit'>('leads');
   const [tabVisibilityToast, setTabVisibilityToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
@@ -7395,6 +7383,7 @@ const AdminView = ({
   // SEO Audit Table State
   const [seoDrafts, setSeoDrafts] = useState<Record<string, {
     metaTitle?: string;
+    metaDescription?: string;
     seoKeywords?: string;
     ogImage?: string;
     isDirty?: boolean;
@@ -7478,6 +7467,9 @@ const AdminView = ({
     }
   };
 
+  const [salesTeamWhatsApp, setSalesTeamWhatsApp] = useState('919902991599');
+  const [isBatchProcessingSeo, setIsBatchProcessingSeo] = useState(false);
+
   const formatWhatsAppLeadMessage = (enq: Enquiry) => {
     const { time, date } = getEnquiryTimeAndDate(enq.timestamp);
     const projectName = enq.projectName || enq.interestedProjects || 'General Inquiry';
@@ -7486,11 +7478,14 @@ const AdminView = ({
     return `Name : ${enq.customerName || 'N/A'}\nNumber: ${enq.customerPhone || 'N/A'}\nEmail: ${enq.customerEmail || 'N/A'}\nProject: ${projectName}\nNotes: ${notes}\nTime: ${time}\nDate: ${date}`;
   };
 
-  const handleShareWhatsApp = (enq: Enquiry) => {
+  const handleShareWhatsApp = (enq: Enquiry, targetPhone: string = salesTeamWhatsApp) => {
     const text = formatWhatsAppLeadMessage(enq);
+    const cleanPhone = (targetPhone || '919902991599').replace(/[^0-9]/g, '');
     const encoded = encodeURIComponent(text);
-    const url = `https://api.whatsapp.com/send?text=${encoded}`;
+    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`;
     window.open(url, '_blank', 'noopener,noreferrer');
+    setLeadActionToast(`Dispatched WhatsApp lead brief for ${enq.customerName || 'Lead'} to Sales Team (+${cleanPhone})`);
+    setTimeout(() => setLeadActionToast(null), 4000);
   };
 
   useEffect(() => {
@@ -7829,6 +7824,8 @@ const AdminView = ({
     const draft = seoDrafts[p.id || p.name] || {};
     const defaultTitle = `${p.name} | Luxury ${p.propertyType || 'Apartment'} ${p.type === 'Rental' ? 'for Rent' : 'for Sale'} in ${p.zone} | BS Homez`;
     const metaTitle = draft.metaTitle !== undefined ? draft.metaTitle : (p.metaTitle || defaultTitle);
+    const defaultDesc = `Explore ${p.name} in ${p.zone || 'Bangalore'}. Verified luxury ${p.propertyType || 'residences'} with 0% brokerage. Enquire with BS Homez.`;
+    const metaDescription = draft.metaDescription !== undefined ? draft.metaDescription : (p.metaDescription || defaultDesc);
     const seoKeywords = draft.seoKeywords !== undefined 
       ? draft.seoKeywords 
       : ((p.seoKeywords && p.seoKeywords.length > 0) ? p.seoKeywords.join(', ') : '');
@@ -7846,6 +7843,7 @@ const AdminView = ({
 
     return {
       metaTitle,
+      metaDescription,
       seoKeywords,
       ogImage,
       isDirty,
@@ -8174,6 +8172,139 @@ const AdminView = ({
       setBatchSyncToast(`Successfully synchronized all ${validProjects.length} portfolios with Google SEO schema, OpenGraph 1200x630 cards, and XML sitemaps!`);
     } finally {
       setIsSyncingSitemap(false);
+      setTimeout(() => setBatchSyncToast(null), 6000);
+    }
+  };
+
+  // Requirement: Batch processing function for SEO Audit Hub iterating through all 'needs_attention' projects with Gemini & bulk Firestore update
+  const handleBatchProcessNeedsAttentionSeo = async () => {
+    const needsAttentionProjects = validProjects.filter(p => {
+      const row = getProjectSeoRowData(p);
+      return row.health === 'needs_attention';
+    });
+
+    if (needsAttentionProjects.length === 0) {
+      setBatchSyncToast('All projects are already SEO-optimized! No projects with "needs_attention" status.');
+      setTimeout(() => setBatchSyncToast(null), 4000);
+      return;
+    }
+
+    setIsBatchProcessingSeo(true);
+    setBatchSyncToast(`Gemini 3.8 Flash analyzing and generating missing SEO metadata for ${needsAttentionProjects.length} properties...`);
+
+    try {
+      const payload = needsAttentionProjects.map(p => {
+        const row = getProjectSeoRowData(p);
+        return {
+          id: p.id || p.name,
+          name: p.name,
+          location: p.location,
+          zone: p.zone,
+          propertyType: p.propertyType,
+          type: p.type,
+          price: p.price,
+          reraNumber: p.reraNumber,
+          currentTitle: row.metaTitle,
+          currentKeywords: p.seoKeywords || [],
+          currentDescription: row.metaDescription
+        };
+      });
+
+      const res = await fetch('/api/gemini/batch-seo-enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projects: payload })
+      });
+
+      const data = await res.json();
+      if (!data || !data.success || !Array.isArray(data.results)) {
+        throw new Error(data?.error || 'Failed to generate SEO metadata from Gemini');
+      }
+
+      const resultsMap: Record<string, { metaTitle: string; seoKeywords: string[]; metaDescription: string }> = {};
+      data.results.forEach((r: any) => {
+        resultsMap[r.projectId] = {
+          metaTitle: r.metaTitle,
+          seoKeywords: r.seoKeywords,
+          metaDescription: r.metaDescription
+        };
+      });
+
+      const nowIso = new Date().toISOString();
+
+      // Bulk update Firestore using writeBatch
+      const batch = writeBatch(db);
+      let writeCount = 0;
+
+      needsAttentionProjects.forEach(p => {
+        const enhanced = resultsMap[p.id || p.name];
+        if (enhanced && p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
+          const docRef = doc(db, 'projects', p.id);
+          batch.update(docRef, {
+            metaTitle: enhanced.metaTitle,
+            seoTitle: enhanced.metaTitle,
+            seoKeywords: enhanced.seoKeywords,
+            metaDescription: enhanced.metaDescription,
+            seoDescription: enhanced.metaDescription,
+            seoLastEdited: nowIso,
+            updatedAt: nowIso
+          });
+          writeCount++;
+        }
+      });
+
+      if (writeCount > 0) {
+        try {
+          await batch.commit();
+        } catch (fErr) {
+          handleFirestoreError(fErr, OperationType.UPDATE, 'projects');
+        }
+      }
+
+      // Update React state so all badges & table instantly turn to 'optimized'
+      const enhancedProjectsList: Project[] = [];
+      needsAttentionProjects.forEach(p => {
+        const enhanced = resultsMap[p.id || p.name];
+        if (enhanced) {
+          const updatedProj: Project = {
+            ...p,
+            metaTitle: enhanced.metaTitle,
+            seoTitle: enhanced.metaTitle,
+            seoKeywords: enhanced.seoKeywords,
+            metaDescription: enhanced.metaDescription,
+            seoDescription: enhanced.metaDescription,
+            seoLastEdited: nowIso,
+            updatedAt: nowIso
+          };
+          enhancedProjectsList.push(updatedProj);
+          if (onSaveProject) {
+            onSaveProject(updatedProj);
+          }
+        }
+      });
+
+      if (onBatchUpdateProjects) {
+        onBatchUpdateProjects(enhancedProjectsList);
+      }
+
+      // Clear any dirty drafts for these projects
+      setSeoDrafts(prev => {
+        const next = { ...prev };
+        needsAttentionProjects.forEach(p => {
+          delete next[p.id || p.name];
+        });
+        return next;
+      });
+
+      // Trigger automatic sitemap refresh
+      fetch('/api/sitemap/refresh', { method: 'POST' }).catch(() => {});
+
+      setBatchSyncToast(`Successfully enhanced ${needsAttentionProjects.length} projects via Gemini 3.8 Flash & bulk updated Firestore!`);
+    } catch (err: any) {
+      console.error('Batch SEO error:', err);
+      setBatchSyncToast(`Batch SEO optimization encountered an issue: ${err.message || 'Operation failed'}`);
+    } finally {
+      setIsBatchProcessingSeo(false);
       setTimeout(() => setBatchSyncToast(null), 6000);
     }
   };
@@ -8528,6 +8659,20 @@ const AdminView = ({
                 </button>
               </div>
 
+              {/* Primary Sales Line Indicator for Lead Sharing */}
+              <div className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono text-emerald-300">
+                <MessageCircle size={13} className="text-emerald-400 shrink-0" />
+                <span className="text-white/60 uppercase tracking-wider text-[9px]">Sales Desk Line:</span>
+                <input 
+                  type="text" 
+                  value={salesTeamWhatsApp}
+                  onChange={(e) => setSalesTeamWhatsApp(e.target.value)}
+                  placeholder="919902991599"
+                  className="bg-black/70 text-emerald-300 font-bold px-2 py-0.5 rounded text-[10px] w-28 border border-emerald-500/40 focus:outline-none focus:border-emerald-400"
+                  title="Sales team primary WhatsApp number for instant lead dispatch"
+                />
+              </div>
+
               <button 
                 onClick={exportEnquiriesExcel}
                 className="flex items-center gap-2 bg-art-gold/10 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/30 px-5 py-3 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all cursor-pointer"
@@ -8825,15 +8970,16 @@ const AdminView = ({
                        </td>
                        <td className="px-6 py-5 text-right whitespace-nowrap">
                          <div className="flex items-center justify-end gap-1.5">
-                           {/* Share via WhatsApp button in exact requested format */}
+                           {/* Requirement: Share Lead via WhatsApp to Sales Team line using formatWhatsAppLeadMessage */}
                            <button
                              type="button"
+                             data-testid="share-lead-whatsapp-btn"
                              onClick={() => handleShareWhatsApp(enq)}
-                             className="px-2.5 py-1.5 rounded-sm bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-black border border-emerald-500/30 transition-all flex items-center gap-1.5 text-[9.5px] font-mono font-bold cursor-pointer"
-                             title="Share Lead via WhatsApp (Name, Number, Email, Project, Notes, Time, Date)"
+                             className="px-2.5 py-1.5 rounded-sm bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/40 transition-all flex items-center gap-1.5 text-[9.5px] font-mono font-bold cursor-pointer shadow-sm"
+                             title={`Share Lead formatted brief to Sales Team Line (+${salesTeamWhatsApp})`}
                            >
                              <MessageCircle size={12} className="text-emerald-400 shrink-0" />
-                             <span>WhatsApp</span>
+                             <span>Share Lead (WA)</span>
                            </button>
 
                            {/* Active Leads: Soft Delete & Complete Delete */}
@@ -9665,6 +9811,27 @@ const AdminView = ({
                 </h3>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                {/* Requirement: Batch processing function for SEO Audit Hub iterating through 'needs_attention' projects with Gemini & bulk updating Firestore */}
+                <button
+                  type="button"
+                  disabled={isBatchProcessingSeo}
+                  onClick={handleBatchProcessNeedsAttentionSeo}
+                  data-testid="batch-process-needs-attention-seo-btn"
+                  className="px-4 py-2.5 bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600 hover:from-purple-600 hover:to-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-lg disabled:opacity-60"
+                  title="Batch process all projects with 'needs_attention' status via Gemini API to automatically generate missing meta titles and keywords, then bulk update Firestore"
+                >
+                  {isBatchProcessingSeo ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin text-white" />
+                      <span>Gemini Generating &amp; Bulk Updating Firestore...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={12} className="text-amber-300" />
+                      <span>Batch Fix 'Needs Attention' via Gemini ({needsAttentionCount})</span>
+                    </>
+                  )}
+                </button>
                 <button
                   type="button"
                   disabled={isSyncingSitemap}
@@ -12900,7 +13067,9 @@ export default function App() {
         isDeleted: p.isDeleted || isLocallyDeleted
       };
     });
-    return deduplicateProjects(list);
+    // Automatically keep enhancing all properties with complete SEO titles, descriptions & keywords
+    const enhanced = autoEnhanceAllProjects(list);
+    return deduplicateProjects(enhanced);
   }, [projects, hiddenProjectIds, deletedProjectIds]);
 
   const comparedProjects = useMemo(() => {
@@ -12948,47 +13117,54 @@ export default function App() {
       : null);
 
     if (activeProjectTarget) {
-      const propertyParam = encodeURIComponent(activeProjectTarget.id || activeProjectTarget.name);
-      const canonicalUrl = `${baseUrl}/?project=${propertyParam}`;
-      const pageTitle = `${activeProjectTarget.name} in ${activeProjectTarget.zone}, Bangalore | Price, Floor Plans – BS Homez`;
-      const pageDesc = `${activeProjectTarget.name} in ${activeProjectTarget.location}, Bangalore. Price: ${activeProjectTarget.price}. Handover: ${activeProjectTarget.handoverDate || 'Immediate'}. RERA: ${activeProjectTarget.reraNumber || 'Verified'}. 0% buyer brokerage with BS Homez.`;
-      const propertyImage = activeProjectTarget.imageUrls?.[0] || defaultImage;
+      const seoData = generateOptimizedSeoMetadata(activeProjectTarget, baseUrl);
 
       // 1. Update Document Title
-      document.title = pageTitle;
+      document.title = seoData.metaTitle;
 
       // 2. Standard Meta Tags
-      setMetaTag('name', 'description', pageDesc);
-      setMetaTag('name', 'keywords', `${activeProjectTarget.name}, ${activeProjectTarget.location}, ${activeProjectTarget.zone} properties, Buy ${activeProjectTarget.propertyType} Bangalore, BS Homez`);
-      setCanonical(canonicalUrl);
+      setMetaTag('name', 'description', seoData.metaDescription);
+      setMetaTag('name', 'keywords', seoData.seoKeywords.join(', '));
+      setCanonical(seoData.canonicalUrl);
 
-      // 3. OpenGraph / Meta Social Tags
-      setMetaTag('property', 'og:title', pageTitle);
-      setMetaTag('property', 'og:description', pageDesc);
-      setMetaTag('property', 'og:url', canonicalUrl);
-      setMetaTag('property', 'og:type', 'website');
-      setMetaTag('property', 'og:image', propertyImage);
-      setMetaTag('property', 'og:image:secure_url', propertyImage);
+      // 3. OpenGraph / Meta Social Tags (WhatsApp, Facebook, LinkedIn)
+      setMetaTag('property', 'og:title', seoData.openGraph.title);
+      setMetaTag('property', 'og:description', seoData.openGraph.description);
+      setMetaTag('property', 'og:url', seoData.openGraph.url);
+      setMetaTag('property', 'og:type', seoData.openGraph.type);
+      setMetaTag('property', 'og:site_name', seoData.openGraph.siteName);
+      setMetaTag('property', 'og:locale', seoData.openGraph.locale);
+      setMetaTag('property', 'og:image', seoData.openGraph.image);
+      setMetaTag('property', 'og:image:secure_url', seoData.openGraph.image);
       setMetaTag('property', 'og:image:width', '1200');
       setMetaTag('property', 'og:image:height', '630');
-      setMetaTag('property', 'og:image:alt', `${activeProjectTarget.name} Bangalore`);
+      setMetaTag('property', 'og:image:type', 'image/jpeg');
+      setMetaTag('property', 'og:image:alt', seoData.imageAltText);
 
-      // 4. Twitter Card Tags
-      setMetaTag('name', 'twitter:card', 'summary_large_image');
-      setMetaTag('name', 'twitter:title', pageTitle);
-      setMetaTag('name', 'twitter:description', pageDesc);
-      setMetaTag('name', 'twitter:image', propertyImage);
-      setMetaTag('name', 'twitter:image:alt', `${activeProjectTarget.name} Bangalore`);
+      // 4. Twitter / X Card Tags
+      setMetaTag('name', 'twitter:card', seoData.twitter.card);
+      setMetaTag('name', 'twitter:site', '@BSHomez');
+      setMetaTag('name', 'twitter:creator', '@BSHomez');
+      setMetaTag('name', 'twitter:title', seoData.twitter.title);
+      setMetaTag('name', 'twitter:description', seoData.twitter.description);
+      setMetaTag('name', 'twitter:image', seoData.twitter.image);
+      setMetaTag('name', 'twitter:image:alt', seoData.imageAltText);
 
-      // 5. Update Snapshot for Live SERP & Meta preview
+      // 5. Geographic & Search Directives
+      setMetaTag('name', 'geo.region', 'IN-KA');
+      setMetaTag('name', 'geo.placename', 'Bengaluru');
+      setMetaTag('name', 'geo.position', '12.9716;77.5946');
+      setMetaTag('name', 'ICBM', '12.9716, 77.5946');
+
+      // 6. Update Snapshot for Live SERP & Multi-Platform preview
       setCurrentSeoSnapshot({
-        title: pageTitle,
-        description: pageDesc,
-        canonicalUrl: canonicalUrl,
-        imageUrl: propertyImage
+        title: seoData.metaTitle,
+        description: seoData.metaDescription,
+        canonicalUrl: seoData.canonicalUrl,
+        imageUrl: seoData.ogImage
       });
 
-      // 6. Property Schema.org JSON-LD Structured Data
+      // 7. Property Schema.org JSON-LD Structured Data
       let jsonLdScript = document.getElementById('property-seo-jsonld') as HTMLScriptElement | null;
       if (!jsonLdScript) {
         jsonLdScript = document.createElement('script');
@@ -12996,73 +13172,7 @@ export default function App() {
         jsonLdScript.type = 'application/ld+json';
         document.head.appendChild(jsonLdScript);
       }
-
-      const schemaData = {
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "Product",
-            "name": activeProjectTarget.name,
-            "description": activeProjectTarget.description,
-            "url": canonicalUrl,
-            "image": propertyImage,
-            "category": `Real Estate > ${activeProjectTarget.propertyType} Properties`,
-            "brand": {
-              "@type": "Brand",
-              "name": activeProjectTarget.builderName || "BS Homez Verified"
-            },
-            "offers": {
-              "@type": "Offer",
-              "price": activeProjectTarget.price,
-              "priceCurrency": "INR",
-              "availability": "https://schema.org/InStock",
-              "url": canonicalUrl,
-              "seller": {
-                "@type": "Organization",
-                "name": "BS Homez",
-                "email": "contact@bshomez.in",
-                "url": baseUrl
-              }
-            }
-          },
-          {
-            "@type": activeProjectTarget.propertyType === 'Villa' ? "SingleFamilyResidence" : activeProjectTarget.propertyType === 'Plot' ? "LandParcel" : "ApartmentComplex",
-            "name": activeProjectTarget.name,
-            "description": activeProjectTarget.description,
-            "url": canonicalUrl,
-            "image": propertyImage,
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": activeProjectTarget.location,
-              "addressLocality": "Bengaluru",
-              "addressRegion": "Karnataka",
-              "postalCode": "560066",
-              "addressCountry": "IN"
-            },
-            "geo": {
-              "@type": "GeoCoordinates",
-              "latitude": 12.9698,
-              "longitude": 77.7500
-            },
-            "offers": {
-              "@type": "Offer",
-              "price": activeProjectTarget.price,
-              "priceCurrency": "INR",
-              "availability": "https://schema.org/InStock",
-              "url": canonicalUrl,
-              "category": activeProjectTarget.type,
-              "seller": {
-                "@type": "Organization",
-                "name": "BS Homez",
-                "email": "contact@bshomez.in",
-                "url": baseUrl
-              }
-            }
-          }
-        ]
-      };
-
-      jsonLdScript.textContent = JSON.stringify(schemaData, null, 2);
+      jsonLdScript.textContent = JSON.stringify(seoData.schemaJsonLd, null, 2);
       return;
     }
 
@@ -14106,6 +14216,12 @@ export default function App() {
               setIsSeoModalOpen(true);
             }}
             onSaveProject={handleSaveProject}
+            onBatchUpdateProjects={(updatedList) => {
+              setProjects(prev => prev.map(p => {
+                const match = updatedList.find(u => (u.id && u.id === p.id) || u.name.toLowerCase() === p.name.toLowerCase());
+                return match ? { ...p, ...match } : p;
+              }));
+            }}
             tabVisibility={tabVisibility}
             onUpdateTabVisibility={handleUpdateTabVisibility}
             onNavigateTab={(tab) => {
@@ -14170,16 +14286,18 @@ export default function App() {
               <span className="text-white mb-1 underline decoration-art-gold/50 underline-offset-8">Digital Presence</span>
               <span className="text-art-gold font-black">www.bshomez.in</span>
               <a href="mailto:contact@bshomez.in" className="hover:text-art-gold transition-colors">contact@bshomez.in</a>
-              {isAdmin && (
-                <button 
-                  type="button" 
-                  onClick={() => setIsSeoModalOpen(true)}
-                  className="flex items-center gap-1.5 text-art-gold hover:text-white transition-colors cursor-pointer text-left font-bold"
-                >
-                  <Globe size={11} className="text-art-gold shrink-0 animate-pulse" />
-                  <span>Google · Meta · X SEO Visualizer</span>
-                </button>
-              )}
+              <button 
+                type="button" 
+                onClick={() => setIsSeoModalOpen(true)}
+                className="flex items-center gap-1.5 text-art-gold hover:text-white transition-colors cursor-pointer text-left font-bold flex-wrap"
+                title="View live search engine snippets, social cards & Schema.org data across platforms"
+              >
+                <Globe size={11} className="text-art-gold shrink-0 animate-pulse" />
+                <span>Google · WhatsApp · Meta · X SEO</span>
+                <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-mono font-bold border border-emerald-500/30">
+                  Auto-Enhanced
+                </span>
+              </button>
             </div>
           </div>
           <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/20">
@@ -14188,12 +14306,10 @@ export default function App() {
         </div>
 
         {/* Official Disclaimers in small font */}
-        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-white/5 space-y-1.5 text-left">
-          <p className="text-[9px] text-white/40 font-mono tracking-wide leading-relaxed">
-            *For the official project completion date as per RERA, please contact us. We’ll be happy to provide the correct information.
-          </p>
-          <p className="text-[9px] text-white/40 font-mono tracking-wide leading-relaxed">
-            *For accurate project information, please feel free to contact us. We’ll be happy to assist you!
+        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-white/5 text-left">
+          <p className="text-[10px] sm:text-[11px] text-art-gold/90 font-mono tracking-wide leading-relaxed font-medium bg-white/[0.03] p-3 rounded border border-art-gold/25 flex items-start gap-2">
+            <span className="text-art-gold font-bold shrink-0">*</span>
+            <span>AI-generated information may not always reflect the latest project updates. For verified project details, pricing, availability, and other information, kindly contact our team directly.</span>
           </p>
         </div>
       </footer>

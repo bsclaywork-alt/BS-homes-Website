@@ -114,6 +114,156 @@ Your responsibility:
     }
   });
 
+  // Batch SEO Enhancement Endpoint powered by Gemini 3.8 Flash for SEO Audit Hub
+  app.post("/api/gemini/batch-seo-enhance", async (req, res) => {
+    try {
+      const { projects } = req.body;
+      if (!Array.isArray(projects) || projects.length === 0) {
+        return res.status(400).json({ error: "No projects provided for SEO enhancement" });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY;
+
+      // Algorithmic high-precision SEO tag generator as guaranteed fallback
+      const generateLocalSeo = (p: any) => {
+        const name = p.name || "Curated Bangalore Property";
+        const zone = p.zone || p.location || "East Bangalore";
+        const propType = p.propertyType || "Apartment";
+        const typeAction = p.type === 'Rental' ? 'for Rent' : p.type === 'Resale' ? 'Resale' : 'for Sale';
+        const reraTag = p.reraNumber ? 'RERA Approved' : 'Verified';
+        
+        // High CTR Title (under 65 chars)
+        let metaTitle = `${name} | ${propType} ${typeAction} in ${zone} | BS Homez`;
+        if (metaTitle.length > 65) {
+          metaTitle = `${name} | ${propType} in ${zone} | BS Homez`;
+        }
+        if (metaTitle.length > 65) {
+          metaTitle = `${name} | ${propType} in Bangalore`;
+        }
+
+        // High Intent SEO Keywords (6-10 keywords)
+        const seoKeywords = [
+          name,
+          `${name} ${zone}`,
+          `Buy ${propType} in ${zone}`,
+          `${zone} Real Estate Bangalore`,
+          `${reraTag} ${propType}s`,
+          `0% Brokerage Properties`,
+          `BS Homez Bangalore`,
+          `${propType}s Near IT Hubs`,
+          `Luxury Homes ${zone}`
+        ];
+
+        // Meta Description (120-155 chars)
+        const baseDesc = `Explore ${name} in ${zone}, Bangalore. ${reraTag} ${propType.toLowerCase()} ${typeAction.toLowerCase()} with premium amenities and 0% buyer brokerage. Enquire with BS Homez.`;
+        const metaDescription = baseDesc.length > 155 ? baseDesc.slice(0, 152) + '...' : baseDesc;
+
+        return {
+          projectId: p.id || p.name,
+          metaTitle,
+          seoKeywords,
+          metaDescription
+        };
+      };
+
+      if (!apiKey) {
+        const results = projects.map(generateLocalSeo);
+        return res.json({ success: true, count: results.length, results, source: 'algorithmic' });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build'
+          }
+        }
+      });
+
+      // Prepare project summaries for Gemini prompt
+      const projectSummaries = projects.map((p: any, idx: number) => ({
+        index: idx,
+        id: p.id || p.name,
+        name: p.name,
+        zone: p.zone || 'Bangalore',
+        location: p.location || '',
+        propertyType: p.propertyType || 'Apartment',
+        type: p.type || 'Primary',
+        price: p.price || '',
+        reraNumber: p.reraNumber || '',
+        currentTitle: p.currentTitle || '',
+        currentKeywords: p.currentKeywords || []
+      }));
+
+      const systemInstruction = `You are a Google Search Optimization (SEO) Master for BS Homez, a Bangalore luxury real estate firm.
+For each given real estate property, generate:
+1. metaTitle: Exact length between 35 and 65 characters. Must include project name, Bangalore corridor/zone, property type, and optionally "| BS Homez". High CTR.
+2. seoKeywords: Array of 6 to 10 high-intent keywords that actual home buyers and renters search for on Google (e.g. "[Project Name] Whitefield", "Buy 3 BHK in Whitefield", "RERA verified apartments Bangalore", "BS Homez").
+3. metaDescription: Exact length between 120 and 155 characters. Compelling, action-oriented, with 0% brokerage highlight and RERA verification.
+
+Return a valid JSON array of objects strictly matching this shape:
+[
+  {
+    "projectId": "id string",
+    "metaTitle": "string (35-65 chars)",
+    "seoKeywords": ["keyword1", "keyword2", ...],
+    "metaDescription": "string (120-155 chars)"
+  }
+]`;
+
+      const prompt = `Generate SEO meta titles, keywords, and descriptions for these ${projectSummaries.length} real estate projects:\n${JSON.stringify(projectSummaries, null, 2)}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.8-flash",
+        contents: prompt,
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json"
+        }
+      });
+
+      let parsedResults: any[] = [];
+      try {
+        const rawText = response.text || "[]";
+        parsedResults = JSON.parse(rawText);
+      } catch (parseErr) {
+        console.warn("JSON parse error from Gemini batch SEO response, falling back to algorithmic generator:", parseErr);
+        parsedResults = projects.map(generateLocalSeo);
+      }
+
+      // Merge and ensure each project has valid data
+      const results = projects.map((p: any) => {
+        const key = p.id || p.name;
+        const matched = Array.isArray(parsedResults) ? parsedResults.find((r: any) => r.projectId === key || r.projectId === p.id || r.projectId === p.name) : null;
+        if (matched && matched.metaTitle && Array.isArray(matched.seoKeywords) && matched.seoKeywords.length > 0) {
+          return {
+            projectId: key,
+            metaTitle: String(matched.metaTitle).trim(),
+            seoKeywords: matched.seoKeywords.map((k: any) => String(k).trim()).filter(Boolean),
+            metaDescription: String(matched.metaDescription || generateLocalSeo(p).metaDescription).trim()
+          };
+        }
+        return generateLocalSeo(p);
+      });
+
+      return res.json({ success: true, count: results.length, results, source: 'gemini-3.8-flash' });
+    } catch (error: any) {
+      console.error("Batch SEO Gemini API error:", error);
+      const results = (req.body.projects || []).map((p: any) => {
+        const name = p.name || "Curated Property";
+        const zone = p.zone || "Bangalore";
+        const propType = p.propertyType || "Apartment";
+        return {
+          projectId: p.id || p.name,
+          metaTitle: `${name} | ${propType} in ${zone} | BS Homez`.slice(0, 65),
+          seoKeywords: [name, `${name} ${zone}`, `Buy ${propType} ${zone}`, 'BS Homez Bangalore', 'RERA Approved Apartments', '0% Brokerage'],
+          metaDescription: `Discover ${name} in ${zone}, Bangalore. Verified luxury residences with direct developer pricing and 0% brokerage. Enquire with BS Homez.`.slice(0, 155)
+        };
+      });
+      return res.json({ success: true, count: results.length, results, source: 'fallback' });
+    }
+  });
+
   // Online Project Intelligence Lookup Endpoint (Auto-fetch Writeup, Floor Plan, Amenities, RERA, Approval Body, Location, Property Type)
   app.post("/api/projects/lookup", async (req, res) => {
     try {

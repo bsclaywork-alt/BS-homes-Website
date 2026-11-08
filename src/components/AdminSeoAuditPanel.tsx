@@ -24,6 +24,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Project } from '../types';
 import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from '../lib/seoAuditReport';
 import { SeoAuditReportModal } from './SeoAuditReportModal';
+import { doc, writeBatch } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 
 interface AdminSeoAuditPanelProps {
   projects: Project[];
@@ -255,6 +257,133 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
       showToast(`Bulk save error: ${err.message || 'Check network connection'}`, 'error');
     } finally {
       setIsBulkSaving(false);
+    }
+  };
+
+  const [isGeminiBatchProcessing, setIsGeminiBatchProcessing] = useState(false);
+
+  // Requirement: Batch processing function for SEO Audit Hub iterating through all projects with 'needs_attention' status and uses Gemini API to automatically generate missing meta titles and keywords, then bulk updates Firestore
+  const handleBatchProcessNeedsAttentionGemini = async () => {
+    const targetProjects = validProjects.filter(p => {
+      const row = getRowSeoData(p);
+      return row.health === 'needs_attention';
+    });
+
+    if (targetProjects.length === 0) {
+      showToast('All portfolio projects are already SEO-optimized!', 'info');
+      return;
+    }
+
+    setIsGeminiBatchProcessing(true);
+    showToast(`Gemini 3.8 Flash analyzing and generating SEO metadata for ${targetProjects.length} properties...`, 'info', 5000);
+
+    try {
+      const payload = targetProjects.map(p => {
+        const row = getRowSeoData(p);
+        return {
+          id: p.id || p.name,
+          name: p.name,
+          location: p.location,
+          zone: p.zone,
+          propertyType: p.propertyType,
+          type: p.type,
+          price: p.price,
+          reraNumber: p.reraNumber,
+          currentTitle: row.metaTitle,
+          currentKeywords: p.seoKeywords || [],
+          currentDescription: row.metaDescription
+        };
+      });
+
+      const res = await fetch('/api/gemini/batch-seo-enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projects: payload })
+      });
+
+      const data = await res.json();
+      if (!data || !data.success || !Array.isArray(data.results)) {
+        throw new Error(data?.error || 'Failed to generate metadata via Gemini API');
+      }
+
+      const resultsMap: Record<string, { metaTitle: string; seoKeywords: string[]; metaDescription: string }> = {};
+      data.results.forEach((r: any) => {
+        resultsMap[r.projectId] = {
+          metaTitle: r.metaTitle,
+          seoKeywords: r.seoKeywords,
+          metaDescription: r.metaDescription
+        };
+      });
+
+      const nowIso = new Date().toISOString();
+
+      // Bulk update Firestore using writeBatch
+      const batch = writeBatch(db);
+      let writeCount = 0;
+
+      targetProjects.forEach(p => {
+        const enhanced = resultsMap[p.id || p.name];
+        if (enhanced && p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
+          const docRef = doc(db, 'projects', p.id);
+          batch.update(docRef, {
+            metaTitle: enhanced.metaTitle,
+            seoTitle: enhanced.metaTitle,
+            seoKeywords: enhanced.seoKeywords,
+            metaDescription: enhanced.metaDescription,
+            seoDescription: enhanced.metaDescription,
+            seoLastEdited: nowIso,
+            updatedAt: nowIso
+          });
+          writeCount++;
+        }
+      });
+
+      if (writeCount > 0) {
+        try {
+          await batch.commit();
+        } catch (fErr) {
+          handleFirestoreError(fErr, OperationType.UPDATE, 'projects');
+        }
+      }
+
+      // Update local drafts
+      const nextDrafts = { ...drafts };
+      targetProjects.forEach(p => {
+        const enhanced = resultsMap[p.id || p.name];
+        if (enhanced) {
+          const key = p.id || p.name;
+          nextDrafts[key] = {
+            metaTitle: enhanced.metaTitle,
+            metaDescription: enhanced.metaDescription,
+            seoKeywords: enhanced.seoKeywords.join(', '),
+            ogImage: p.ogImage || p.imageUrls?.[0] || '',
+            isDirty: false
+          };
+          if (onSaveProject) {
+            onSaveProject({
+              ...p,
+              metaTitle: enhanced.metaTitle,
+              seoTitle: enhanced.metaTitle,
+              seoKeywords: enhanced.seoKeywords,
+              metaDescription: enhanced.metaDescription,
+              seoDescription: enhanced.metaDescription,
+              seoLastEdited: nowIso,
+              updatedAt: nowIso
+            });
+          }
+        }
+      });
+      setDrafts(nextDrafts);
+
+      // Trigger background sitemap update
+      fetch('/api/sitemap/refresh', { method: 'POST' }).catch(() => {});
+
+      showToast(`Successfully enhanced ${targetProjects.length} projects via Gemini 3.8 Flash and bulk updated Firestore!`, 'success', 5000);
+    } catch (err: any) {
+      console.error('Batch SEO Gemini error:', err);
+      showToast(`Batch SEO error: ${err.message || 'Operation failed'}`, 'error');
+    } finally {
+      setIsGeminiBatchProcessing(false);
     }
   };
 
@@ -634,7 +763,24 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
         </div>
 
         {/* Bulk Action Controls */}
-        <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
+        <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10 flex-wrap">
+          {/* Requirement: Batch processing function for SEO Audit Hub iterating through 'needs_attention' projects with Gemini & bulk updating Firestore */}
+          <button
+            type="button"
+            disabled={isGeminiBatchProcessing}
+            onClick={handleBatchProcessNeedsAttentionGemini}
+            data-testid="batch-process-needs-attention-admin-btn"
+            className="px-3.5 py-2 bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600 hover:from-purple-600 hover:to-indigo-500 text-white font-bold text-[10px] uppercase font-mono tracking-wider rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-60"
+            title="Batch process all projects with 'needs_attention' status via Gemini API and bulk update Firestore"
+          >
+            {isGeminiBatchProcessing ? (
+              <RefreshCw size={13} className="animate-spin text-white" />
+            ) : (
+              <Sparkles size={13} className="text-amber-300" />
+            )}
+            <span>AI Batch Fix (Gemini &amp; Firestore)</span>
+          </button>
+
           <button
             type="button"
             onClick={handleAutoGenerateAllMissing}

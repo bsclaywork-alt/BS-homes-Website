@@ -2,34 +2,34 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { 
   getFirestore, 
-  initializeFirestore, 
-  persistentLocalCache, 
-  persistentMultipleTabManager,
-  setLogLevel
+  setLogLevel,
+  doc,
+  getDocFromServer
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Set Firestore log level to error to avoid noisy internal idle stream disconnect notices
+// Set Firestore log level to silent to suppress internal gRPC stream lifecycle notices
 try {
-  setLogLevel('error');
+  setLogLevel('silent');
 } catch {}
 
-// Initialize Firestore with robust multi-tab persistent cache to seamlessly handle offline/intermittent network
-let firestoreInstance;
-try {
-  firestoreInstance = initializeFirestore(app, {
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager()
-    })
-  }, firebaseConfig.firestoreDatabaseId);
-} catch {
-  firestoreInstance = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-}
-
-export const db = firestoreInstance;
+// Initialize Firestore targeting the provisioned database ID
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
+
+// Connection test per Firebase skill guidelines
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.warn("Firestore client is operating offline.");
+    }
+  }
+}
+testConnection().catch(() => {});
 
 export enum OperationType {
   CREATE = 'create',

@@ -116,6 +116,9 @@ service cloud.firestore {
              (!('registrationStatus' in data) || (data.registrationStatus is string && data.registrationStatus.size() <= 100)) &&
              (!('approvedAuthority' in data) || (data.approvedAuthority is string && data.approvedAuthority.size() <= 100)) &&
              (!('seoKeywords' in data) || (data.seoKeywords is list && data.seoKeywords.size() <= 30)) &&
+             (!('metaTitle' in data) || (data.metaTitle is string && data.metaTitle.size() <= 300)) &&
+             (!('metaDescription' in data) || (data.metaDescription is string && data.metaDescription.size() <= 1000)) &&
+             (!('canonicalUrl' in data) || (data.canonicalUrl is string && data.canonicalUrl.size() <= 500)) &&
              (!('ogImage' in data) || (data.ogImage is string && data.ogImage.size() <= 900000)) &&
              (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
              (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 1000)) &&
