@@ -24,7 +24,7 @@ import {
 import { Project, SeoRevisionRecord } from '../types';
 import { compileProjectImageAltAudit, downloadSeoAuditCsv, generateRecommendedAltText } from '../lib/seoAuditReport';
 import { SeoAuditReportModal } from './SeoAuditReportModal';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 
 interface PropertyMetaDataModalProps {
@@ -590,13 +590,13 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
       const primaryAlt = (primaryImg && imageAltTags[primaryImg.url]) || imageAltText;
 
       // 1. Direct update to Firestore
-      if (targetId && !targetId.startsWith('curated_') && !targetId.startsWith('local_')) {
+      if (targetId && !targetId.startsWith('local_')) {
         try {
-          await updateDoc(doc(db, 'projects', targetId), {
+          await setDoc(doc(db, 'projects', targetId), {
             imageAltText: primaryAlt,
             imageAltTexts: imageAltTags,
             updatedAt: nowIso
-          });
+          }, { merge: true });
         } catch (fErr) {
           handleFirestoreError(fErr, OperationType.UPDATE, `projects/${targetId}`);
         }

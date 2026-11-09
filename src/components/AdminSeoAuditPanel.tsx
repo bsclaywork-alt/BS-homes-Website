@@ -36,6 +36,7 @@ import {
 
 import { Project } from '../types';
 import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from '../lib/seoAuditReport';
+import { generateOptimizedSeoMetadata } from '../lib/autoSeoEnhancer';
 import { SeoAuditReportModal } from './SeoAuditReportModal';
 import { doc, writeBatch } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
@@ -71,6 +72,7 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
   
   const [savingId, setSavingId] = useState<string | null>(null);
   const [isBulkSaving, setIsBulkSaving] = useState(false);
+  const [isBatchSyncingAll, setIsBatchSyncingAll] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
   const [previewSnippetProject, setPreviewSnippetProject] = useState<Project | null>(null);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
@@ -260,9 +262,9 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
         const metaDescription = row.metaDescription.trim();
         const ogImage = row.ogImage.trim() || p.imageUrls?.[0] || '';
 
-        if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
+        if (p.id && !p.id.startsWith('local_')) {
           const docRef = doc(db, 'projects', p.id);
-          batch.update(docRef, {
+          batch.set(docRef, {
             metaTitle,
             seoTitle: metaTitle,
             metaDescription,
@@ -272,7 +274,7 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
             seoLastSyncedAt: nowIso,
             seoLastEdited: nowIso,
             updatedAt: nowIso
-          });
+          }, { merge: true });
           writeCount++;
         }
 
@@ -400,9 +402,9 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
 
       targetProjects.forEach(p => {
         const enhanced = resultsMap[p.id || p.name];
-        if (enhanced && p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
+        if (enhanced && p.id && !p.id.startsWith('local_')) {
           const docRef = doc(db, 'projects', p.id);
-          batch.update(docRef, {
+          batch.set(docRef, {
             metaTitle: enhanced.metaTitle,
             seoTitle: enhanced.metaTitle,
             seoKeywords: enhanced.seoKeywords,
@@ -413,7 +415,7 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
             seoLastEdited: nowIso,
             seoLastSyncedAt: nowIso,
             updatedAt: nowIso
-          });
+          }, { merge: true });
           writeCount++;
         }
       });
@@ -470,6 +472,130 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
       showToast(`Bulk Fix All error: ${err.message || 'Operation failed'}`, 'error');
     } finally {
       setIsGeminiBatchProcessing(false);
+    }
+  };
+
+
+  // Requirement: Identify all projects with missing meta titles or keywords
+  const missingTitleOrKeywordsProjects = useMemo(() => {
+    return validProjects.filter(p => {
+      const missingTitle = !p.metaTitle || !p.metaTitle.trim();
+      const missingKeywords = !p.seoKeywords || 
+        (Array.isArray(p.seoKeywords) 
+          ? p.seoKeywords.filter(k => k && k.trim()).length === 0 
+          : !String(p.seoKeywords).trim());
+      return missingTitle || missingKeywords;
+    });
+  }, [validProjects]);
+
+  // Requirement: 'Batch Sync All' button that iterates through all projects with missing meta titles or keywords,
+  // uses generateOptimizedSeoMetadata to enrich them, and commits the updates to Firestore in a single bulk operation,
+  // showing a progress toast upon completion.
+  const handleBatchSyncAll = async () => {
+    const targetProjects = validProjects.filter(p => {
+      const missingTitle = !p.metaTitle || !p.metaTitle.trim();
+      const missingKeywords = !p.seoKeywords || 
+        (Array.isArray(p.seoKeywords) 
+          ? p.seoKeywords.filter(k => k && k.trim()).length === 0 
+          : !String(p.seoKeywords).trim());
+      return missingTitle || missingKeywords;
+    });
+
+    if (targetProjects.length === 0) {
+      showToast('All portfolio projects already have meta titles and keywords populated.', 'info', 4000);
+      return;
+    }
+
+    setIsBatchSyncingAll(true);
+    showToast(`Batch Syncing: Enriching ${targetProjects.length} projects with optimized meta titles and keywords...`, 'info', 3000);
+
+    try {
+      const nowIso = new Date().toISOString();
+      const batch = writeBatch(db);
+      let writeCount = 0;
+      const nextDrafts = { ...drafts };
+
+      for (const project of targetProjects) {
+        // Uses generateOptimizedSeoMetadata to enrich them
+        const enhancedSeo = generateOptimizedSeoMetadata(project);
+
+        const targetId = project.id || project.name;
+        const metaTitle = enhancedSeo.metaTitle;
+        const metaDescription = project.metaDescription?.trim() || enhancedSeo.metaDescription;
+        const seoKeywords = enhancedSeo.seoKeywords;
+        const imageAltText = (project as any).imageAltText || enhancedSeo.imageAltText;
+        const canonicalUrl = enhancedSeo.canonicalUrl;
+
+        // Update in-memory local drafts
+        nextDrafts[targetId] = {
+          metaTitle,
+          metaDescription,
+          seoKeywords: seoKeywords.join(', '),
+          ogImage: project.ogImage || (project.imageUrls && project.imageUrls[0]) || '',
+          isDirty: false
+        };
+
+        // Commit update to Firestore in a single bulk operation
+        if (project.id) {
+          const docRef = doc(db, 'projects', project.id);
+          const updatePayload = {
+            ...project,
+            metaTitle,
+            seoTitle: metaTitle,
+            seoKeywords,
+            metaDescription,
+            seoDescription: metaDescription,
+            imageAltText,
+            canonicalUrl,
+            seoLastSyncedAt: nowIso,
+            seoLastEdited: nowIso,
+            updatedAt: nowIso
+          };
+          batch.set(docRef, updatePayload, { merge: true });
+          writeCount++;
+        }
+
+        // Keep local parent state in sync
+        if (onSaveProject) {
+          onSaveProject({
+            ...project,
+            metaTitle,
+            seoTitle: metaTitle,
+            seoKeywords,
+            metaDescription,
+            seoDescription: metaDescription,
+            imageAltText,
+            canonicalUrl,
+            seoLastSyncedAt: nowIso,
+            seoLastEdited: nowIso,
+            updatedAt: nowIso
+          });
+        }
+      }
+
+      if (writeCount > 0) {
+        await batch.commit();
+      }
+
+      setDrafts(nextDrafts);
+
+      // Trigger sitemap sync if available
+      if (onBatchSyncSitemap) {
+        onBatchSyncSitemap().catch(err => console.warn('Sitemap refresh warning:', err));
+      }
+
+      // Showing a progress toast upon completion
+      showToast(
+        `✓ Batch Sync Complete: Successfully enriched and committed ${targetProjects.length} projects with optimized meta titles and keywords to Firestore!`,
+        'success',
+        5000
+      );
+    } catch (error: any) {
+      console.error('Error in Batch Sync All:', error);
+      handleFirestoreError(error, OperationType.WRITE, 'projects');
+      showToast(`Batch Sync failed: ${error?.message || 'Firestore batch write failed'}`, 'error', 6000);
+    } finally {
+      setIsBatchSyncingAll(false);
     }
   };
 
@@ -1157,6 +1283,28 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
 
         {/* Bulk Action Controls */}
         <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10 flex-wrap">
+          {/* Requirement: 'Batch Sync All' button that iterates through all projects with missing meta titles or keywords, uses generateOptimizedSeoMetadata to enrich them, and commits the updates to Firestore in a single bulk operation, showing a progress toast upon completion */}
+          <button
+            type="button"
+            disabled={isBatchSyncingAll}
+            onClick={handleBatchSyncAll}
+            data-testid="batch-sync-all-btn"
+            className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[10px] uppercase font-mono tracking-wider rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-60"
+            title="Batch Sync All: iterates through all projects with missing meta titles or keywords, uses generateOptimizedSeoMetadata to enrich them, and commits the updates to Firestore in a single bulk operation"
+          >
+            {isBatchSyncingAll ? (
+              <RefreshCw size={13} className="animate-spin text-white" />
+            ) : (
+              <Sparkles size={13} className="text-emerald-200" />
+            )}
+            <span>Batch Sync All</span>
+            {missingTitleOrKeywordsProjects.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-black/40 text-emerald-200 text-[9px]">
+                {missingTitleOrKeywordsProjects.length}
+              </span>
+            )}
+          </button>
+
           {/* Requirement: 'Bulk Fix All' button that identifies all projects with 'needs_attention' health, uses Gemini API to generate missing meta titles, descriptions, and alt tags for all images, and performs a single bulk write batch to Firestore */}
           <button
             type="button"

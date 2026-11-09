@@ -4948,9 +4948,10 @@ const ProjectForm = ({
       let savedProjectResult: Project;
 
       try {
-        if (project?.id && !project.id.startsWith('curated_') && !project.id.startsWith('local_')) {
-          await setDoc(doc(db, 'projects', project.id), firestoreData, { merge: true });
-          savedProjectResult = { ...data, id: project.id, createdAt: project.createdAt || nowMs, updatedAt: nowMs };
+        const targetId = project?.id && !project.id.startsWith('local_') ? project.id : null;
+        if (targetId) {
+          await setDoc(doc(db, 'projects', targetId), firestoreData, { merge: true });
+          savedProjectResult = { ...data, id: targetId, createdAt: project?.createdAt || nowMs, updatedAt: nowMs };
         } else {
           // Check if an existing project with same name and inventory mode exists to prevent duplicates
           const q = query(
@@ -10799,7 +10800,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Whitefield ITPL Main Road (Pattandur Agrahara)',
     locationTarget: 'GR Tech Park Bus Stop (0.3 km) • Pattandur Metro (0.9 km) • ITPL (1.2 km)',
     zone: 'Whitefield',
-    type: 'Primary',
+    type: 'Resale',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Ready Luxury Resale',
@@ -10836,7 +10837,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Whitefield EPIP Zone (Beside Vydehi & SAP Labs)',
     locationTarget: 'EPIP Bus Stop (0.3 km) • Vydehi Hospital (0.8 km) • Metro (1.1 km)',
     zone: 'Whitefield',
-    type: 'Primary',
+    type: 'Rental',
     propertyType: 'Villa',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Executive Rental',
@@ -10911,7 +10912,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Hoskote Town - NH-75 Old Madras Road',
     locationTarget: 'Hoskote Toll Bus Stop (0.4 km) • MVJ Hospital (1.5 km) • Orion Uptown Mall (5.4 km)',
     zone: 'Hoskote',
-    type: 'Primary',
+    type: 'Resale',
     propertyType: 'Apartment',
     configuration: ['2 BHK', '3 BHK'],
     segment: 'Value Luxury Resale',
@@ -10950,7 +10951,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Hoskote - Budigere Cross OMR (Kattamnallur)',
     locationTarget: 'Orion Uptown Mall (0.1 km) • Budigere Cross Bus Stop (0.2 km) • Kadugodi Metro (5.6 km)',
     zone: 'Hoskote',
-    type: 'Primary',
+    type: 'Rental',
     propertyType: 'Apartment',
     configuration: ['3 BHK'],
     segment: 'Township Rental',
@@ -11024,7 +11025,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Varthur - Whitefield Main Road (Varthur Town)',
     locationTarget: 'Varthur Bus Stop (0.2 km) • Greenwood High (1.8 km) • Manipal Hospital (3.1 km)',
     zone: 'Varthur',
-    type: 'Primary',
+    type: 'Resale',
     propertyType: 'Apartment',
     configuration: ['2 BHK', '3 BHK'],
     segment: 'Integrated Township Resale',
@@ -11060,7 +11061,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Varthur - Gunjur Main Road (Varthur Lakefront)',
     locationTarget: 'Gunjur-Varthur Bus Stop (0.3 km) • Oakridge School (1.6 km) • Wipro SEZ (5.2 km)',
     zone: 'Varthur',
-    type: 'Primary',
+    type: 'Rental',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Lakefront Township Rental',
@@ -11134,7 +11135,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Gunjur Palya - Varthur-Sarjapur Road',
     locationTarget: 'Gunjur Palya Bus Stop (0.2 km) • Chrysalis High (0.9 km) • Wipro SEZ (3.6 km)',
     zone: 'Gunjur',
-    type: 'Primary',
+    type: 'Resale',
     propertyType: 'Apartment',
     configuration: ['2 BHK', '3 BHK'],
     segment: 'Ready Gated Resale',
@@ -11170,7 +11171,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Gunjur - Varthur Main Road Junction',
     locationTarget: 'Gunjur Bus Stop (0.2 km) • Chrysalis High (1.1 km) • Wipro Campus (4.6 km)',
     zone: 'Gunjur',
-    type: 'Primary',
+    type: 'Rental',
     propertyType: 'Apartment',
     configuration: ['2 BHK', '3 BHK'],
     segment: 'Executive High-Rise Rental',
@@ -11244,7 +11245,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Hosa Road - Haralur Link Road (Silver County)',
     locationTarget: 'Haralur Bus Stop (0.4 km) • Vibgyor High (1.4 km) • Hosa Road Metro (2.9 km)',
     zone: 'Hosa Road',
-    type: 'Primary',
+    type: 'Resale',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Signature Resale',
@@ -11280,7 +11281,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Hosa Road - Haralur Main Road (Lakedew Corridor)',
     locationTarget: 'Haralur Bus Stop (0.3 km) • Vibgyor School (0.8 km) • Hosa Road Metro (2.8 km)',
     zone: 'Hosa Road',
-    type: 'Primary',
+    type: 'Rental',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Executive Garden Rental',
@@ -11354,7 +11355,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Kasavanahalli Main Road (Beside Kasavanahalli Lake)',
     locationTarget: 'Kasavanahalli Bus Stop (0.2 km) • Market Square Mall (1.7 km) • Wipro HQ (1.8 km)',
     zone: 'Kasavanahalli',
-    type: 'Primary',
+    type: 'Resale',
     propertyType: 'Villa',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Boutique Villa Resale',
@@ -11390,7 +11391,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Kasavanahalli - Haralur Main Road',
     locationTarget: 'Kasavanahalli Bus Stop (0.3 km) • Wipro HQ (1.6 km) • Manipal Hospital (2.0 km)',
     zone: 'Kasavanahalli',
-    type: 'Primary',
+    type: 'Rental',
     propertyType: 'Apartment',
     configuration: ['3 BHK'],
     segment: 'Executive Tech-Belt Rental',
@@ -12086,7 +12087,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Whitefield - Hoskote Main Road (Kannamangala)',
     locationTarget: 'Kannamangala Bus Stop (0.2 km) • Orion Uptown Mall (2.9 km) • Kadugodi Metro (3.8 km)',
     zone: 'Sarjapur',
-    type: 'Primary',
+    type: 'Resale',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Verified Resale',
@@ -12122,7 +12123,7 @@ const CURATED_ARTISANAL_PROJECTS: Project[] = [
     location: 'Bellandur - Outer Ring Road (Behind RMZ Ecoworld)',
     locationTarget: 'RMZ Ecoworld (0.3 km) • Ecoworld Bus Stop (0.5 km) • Sakra Hospital (1.2 km)',
     zone: 'Bellandur',
-    type: 'Primary',
+    type: 'Rental',
     propertyType: 'Apartment',
     configuration: ['3 BHK', '4 BHK'],
     segment: 'Corporate Rental',
@@ -12996,13 +12997,13 @@ const autoEnrichProjectData = (p: Project): Project => {
 
   const isRentalOrResale = resolvedType === 'Rental' || resolvedType === 'Resale';
 
-  // For Rental and Resale, ALWAYS prioritize user's actual uploaded/edited images (including empty array if cleared)
-  // For any project with custom imageUrls, preserve user's custom images and cover photo
-  const resolvedImages = isRentalOrResale
-    ? (Array.isArray(p.imageUrls) ? p.imageUrls.filter(Boolean) : [])
-    : (Array.isArray(p.imageUrls) && p.imageUrls.filter(Boolean).length > 0)
+  // Prioritize user's actual uploaded/edited images; fallback to curated images or smart corridor images
+  const hasCustomImages = Array.isArray(p.imageUrls) && p.imageUrls.filter(Boolean).length > 0;
+  const resolvedImages = hasCustomImages
     ? p.imageUrls.filter(Boolean)
-    : (curatedMatch?.imageUrls || getSmartProjectImages(resolvedZone, resolvedType, resolvedCategory, resolvedPropertyType));
+    : (curatedMatch?.imageUrls && curatedMatch.imageUrls.length > 0)
+    ? curatedMatch.imageUrls
+    : (p.mobileImageUrl ? [p.mobileImageUrl] : getSmartProjectImages(resolvedZone, resolvedType, resolvedCategory, resolvedPropertyType));
 
   const resolvedCoverImage = (resolvedImages && resolvedImages.length > 0)
     ? resolvedImages[0]
@@ -13096,27 +13097,21 @@ export default function App() {
       if (cached) {
         const parsed: Project[] = JSON.parse(cached);
         if (parsed && parsed.length > 0) {
-          const cleaned = parsed.filter(p => {
-            if (!p.createdAt && (p.type === 'Rental' || p.type === 'Resale' || (p.id && (p.id.includes('_resale_') || p.id.includes('_rental_') || p.id === 'curated_se_handed_4' || p.id === 'curated_se_rental_6')))) {
-              return false;
-            }
-            return true;
-          });
           combined = deduplicateProjects([
             ...localCustomEnriched,
-            ...cleaned.map(autoEnrichProjectData)
+            ...parsed.map(autoEnrichProjectData)
           ]);
         }
       }
       if (combined.length === 0) {
         combined = deduplicateProjects([
           ...localCustomEnriched,
-          ...CURATED_ARTISANAL_PROJECTS.filter(cp => cp.type !== 'Rental' && cp.type !== 'Resale' && !cp.id?.includes('_resale_') && !cp.id?.includes('_rental_') && cp.id !== 'curated_se_handed_4' && cp.id !== 'curated_se_rental_6').map(autoEnrichProjectData)
+          ...CURATED_ARTISANAL_PROJECTS.map(autoEnrichProjectData)
         ]);
       }
       return combined;
     } catch {
-      return deduplicateProjects(CURATED_ARTISANAL_PROJECTS.filter(cp => cp.type !== 'Rental' && cp.type !== 'Resale' && !cp.id?.includes('_resale_') && !cp.id?.includes('_rental_') && cp.id !== 'curated_se_handed_4' && cp.id !== 'curated_se_rental_6').map(autoEnrichProjectData));
+      return deduplicateProjects(CURATED_ARTISANAL_PROJECTS.map(autoEnrichProjectData));
     }
   });
   const [isLoading, setIsLoading] = useState(() => {
@@ -13293,7 +13288,7 @@ export default function App() {
     // 2. Persist to Firestore if target has valid ID
     try {
       const target = projects.find(p => p.id === projectId || p.name === projectId);
-      if (target && target.id && !target.id.startsWith('curated_') && !target.id.startsWith('local_')) {
+      if (target && target.id && !target.id.startsWith('local_')) {
         const updatePayload: Record<string, any> = {
           updatedAt: new Date().toISOString()
         };
@@ -13320,7 +13315,7 @@ export default function App() {
         if (meta.seoRevisions !== undefined) {
           updatePayload.seoRevisions = meta.seoRevisions;
         }
-        await updateDoc(doc(db, 'projects', target.id), updatePayload);
+        await setDoc(doc(db, 'projects', target.id), updatePayload, { merge: true });
       }
     } catch (e) {
       console.warn('Could not persist SEO metadata to Firestore:', e);
@@ -13854,14 +13849,14 @@ export default function App() {
       )
     );
 
-    if (project.id && !project.id.startsWith('curated_') && !project.id.startsWith('local_')) {
+    if (project.id && !project.id.startsWith('local_')) {
       try {
-        await updateDoc(doc(db, 'projects', project.id), {
+        await setDoc(doc(db, 'projects', project.id), {
           isPaused: nextPaused,
           updatedAt: serverTimestamp()
-        });
+        }, { merge: true });
       } catch (err) {
-        console.warn('Updated project visibility in local state:', err);
+        console.warn('Updated project visibility in Firestore notice:', err);
       }
     }
   };
@@ -13893,11 +13888,14 @@ export default function App() {
       return next;
     });
 
-    if (project.id && !project.id.startsWith('curated_') && !project.id.startsWith('local_')) {
+    if (project.id && !project.id.startsWith('local_')) {
       try {
-        await deleteDoc(doc(db, 'projects', project.id));
+        await setDoc(doc(db, 'projects', project.id), {
+          isDeleted: true,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
       } catch (err) {
-        console.warn('Deleted project from local view:', err);
+        console.warn('Deleted project from Firestore notice:', err);
       }
     }
   };
@@ -13933,47 +13931,35 @@ export default function App() {
       return isNaN(parsed) ? 0 : parsed;
     };
 
-    const getMergedWithLocal = (dbDocs: Project[] = []) => {
+    const getMergedWithLocal = (dbDocs: Project[] = [], deletedFromDb: Set<string> = new Set()) => {
       let localCustom: Project[] = [];
       try {
         localCustom = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
       } catch {}
 
-      // Map localCustom by id and name for fast lookup
-      const localCustomMap: Record<string, Project> = {};
-      for (const item of localCustom) {
-        if (item.id) localCustomMap[item.id.toLowerCase()] = item;
-        if (item.name) localCustomMap[item.name.trim().toLowerCase()] = item;
-      }
-
-      // Preserve user's latest edited price and fields even if Firestore snapshot is delayed
-      const mergedDbDocs = dbDocs.map(doc => {
-        const localMatch = (doc.id && localCustomMap[doc.id.toLowerCase()]) ||
-                           (doc.name && localCustomMap[doc.name.trim().toLowerCase()]);
-        if (localMatch && localMatch.price) {
-          return {
-            ...doc,
-            ...localMatch,
-            price: localMatch.price,
-            lastPrice: localMatch.lastPrice || localMatch.price
-          };
-        }
-        return doc;
-      });
-
       const dbDocIds = new Set(dbDocs.map(d => d.id?.toLowerCase()).filter(Boolean));
       const dbDocNames = new Set(dbDocs.map(d => `${d.name?.trim().toLowerCase()}_${(d.type || 'Primary').toLowerCase()}`));
 
-      const nonDuplicateLocal = localCustom.filter(item => {
-        if (item.id && dbDocIds.has(item.id.toLowerCase())) return false;
-        if (item.name && dbDocNames.has(`${item.name.trim().toLowerCase()}_${(item.type || 'Primary').toLowerCase()}`)) return false;
+      // Only retain local custom projects that have not yet synced to Firestore and are not deleted
+      const unsyncedLocal = localCustom.filter(item => {
+        const idLower = item.id ? item.id.toLowerCase() : '';
+        const nameLower = item.name ? item.name.trim().toLowerCase() : '';
+        if (idLower && (dbDocIds.has(idLower) || deletedFromDb.has(idLower))) return false;
+        if (nameLower && (dbDocNames.has(`${nameLower}_${(item.type || 'Primary').toLowerCase()}`) || deletedFromDb.has(nameLower))) return false;
         return true;
       });
 
-      // Combine mergedDbDocs with filtered local custom projects
+      // Update localStorage to prune items that are already confirmed in Firestore or deleted
+      if (unsyncedLocal.length !== localCustom.length) {
+        try {
+          localStorage.setItem('bs_homez_custom_projects', JSON.stringify(unsyncedLocal));
+        } catch {}
+      }
+
+      // Combine live Firestore documents (authoritative) with unsynced local drafts
       const combinedCustom = deduplicateProjects([
-        ...mergedDbDocs.map(autoEnrichProjectData),
-        ...nonDuplicateLocal.map(autoEnrichProjectData)
+        ...dbDocs.map(autoEnrichProjectData),
+        ...unsyncedLocal.map(autoEnrichProjectData)
       ]);
 
       // Sort all custom & new inventory projects newest first
@@ -13983,18 +13969,17 @@ export default function App() {
         return tB - tA;
       });
 
-      // If an existing curated project was edited (matches by id or name), exclude its static unedited entry
+      // If an existing curated project was edited or stored in Firestore (matches by id or name), exclude its static unedited entry
       const customKeys = new Set([
         ...combinedCustom.map(p => p.id?.toLowerCase()).filter(Boolean),
         ...combinedCustom.map(p => p.name?.trim().toLowerCase()).filter(Boolean)
       ]);
 
       const uneditedCurated = CURATED_ARTISANAL_PROJECTS.filter(cp => {
-        // Resale & Rental inventories must come exclusively from Admin Vault (verified user inventory)
-        if (cp.type === 'Rental' || cp.type === 'Resale') return false;
-        if (cp.id && (cp.id.includes('_resale_') || cp.id.includes('_rental_') || cp.id === 'curated_se_handed_4' || cp.id === 'curated_se_rental_6')) return false;
-        if (cp.id && customKeys.has(cp.id.toLowerCase())) return false;
-        if (cp.name && customKeys.has(cp.name.trim().toLowerCase())) return false;
+        const idLower = cp.id ? cp.id.toLowerCase() : '';
+        const nameLower = cp.name ? cp.name.trim().toLowerCase() : '';
+        if (idLower && (customKeys.has(idLower) || deletedFromDb.has(idLower))) return false;
+        if (nameLower && (customKeys.has(nameLower) || deletedFromDb.has(nameLower))) return false;
         return true;
       });
 
@@ -14009,9 +13994,19 @@ export default function App() {
     // never disconnect on pending server timestamps, and reliably fire onSnapshot in real-time
     // across all clients and tabs.
     const unsubProjects = onSnapshot(collection(db, 'projects'), (snapshot) => {
-      const dbDocs = snapshot.docs
-        .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Project))
-        .filter(p => !LEGACY_PROJECT_NAMES.includes(p.name));
+      const deletedFromDb = new Set<string>();
+      const dbDocs: Project[] = [];
+
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data() as Project;
+        const id = docSnap.id;
+        if (data.isDeleted) {
+          if (id) deletedFromDb.add(id.toLowerCase());
+          if (data.name) deletedFromDb.add(data.name.trim().toLowerCase());
+        } else if (!LEGACY_PROJECT_NAMES.includes(data.name)) {
+          dbDocs.push({ id, ...data });
+        }
+      }
 
       dbDocs.sort((a, b) => {
         const tB = getTimestampMs(b.createdAt) || getTimestampMs(b.updatedAt);
@@ -14019,7 +14014,7 @@ export default function App() {
         return tB - tA;
       });
 
-      const merged = getMergedWithLocal(dbDocs);
+      const merged = getMergedWithLocal(dbDocs, deletedFromDb);
       setProjects(merged);
       setIsLoading(false);
       try {
