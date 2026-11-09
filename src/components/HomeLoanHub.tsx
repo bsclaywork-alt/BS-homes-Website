@@ -433,7 +433,6 @@ export const HomeLoanHub: React.FC = () => {
     name: '',
     phone: '',
     email: '',
-    preferredContactTime: 'Morning (9:00 AM - 12:00 PM)',
     message: ''
   });
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
@@ -463,7 +462,6 @@ export const HomeLoanHub: React.FC = () => {
       customerName: inquiryForm.name.trim(),
       customerPhone: inquiryForm.phone.trim(),
       customerEmail: inquiryForm.email.trim() || 'advisory-lead@bshomez.com',
-      preferredContactTime: inquiryForm.preferredContactTime,
       enquiryCategory: mappedCategory as any,
       propertyCategory: inquiryCategory,
       message: `${inquiryForm.message ? inquiryForm.message + '\n\n' : ''}[Advisory Parameters: ${computedMetricsSummary}]`,
@@ -494,7 +492,6 @@ export const HomeLoanHub: React.FC = () => {
           name: '',
           phone: '',
           email: '',
-          preferredContactTime: 'Morning (9:00 AM - 12:00 PM)',
           message: ''
         });
       }, 2200);
@@ -1519,7 +1516,7 @@ export const HomeLoanHub: React.FC = () => {
                   </div>
                   <h3 className="text-2xl font-serif text-white italic">Inquiry Successfully Transmitted</h3>
                   <p className="text-xs text-white/60 tracking-wider">
-                    Our verified Relationship Manager for <strong className="text-art-gold">{inquiryCategory}</strong> will connect with you during your chosen contact time.
+                    Our verified Relationship Manager for <strong className="text-art-gold">{inquiryCategory}</strong> will connect with you directly.
                   </p>
                 </div>
               ) : (
@@ -1577,30 +1574,15 @@ export const HomeLoanHub: React.FC = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">Email Address (Optional)</label>
-                      <input
-                        type="email"
-                        value={inquiryForm.email}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
-                        placeholder="you@example.com"
-                        className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase font-bold tracking-widest text-art-gold block">Preferred Contact Time</label>
-                      <select
-                        value={inquiryForm.preferredContactTime}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, preferredContactTime: e.target.value })}
-                        className="w-full bg-[#181818] border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all font-mono"
-                      >
-                        <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM – 12:00 PM)</option>
-                        <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM – 4:00 PM)</option>
-                        <option value="Evening (4:00 PM - 8:00 PM)">Evening (4:00 PM – 8:00 PM)</option>
-                        <option value="Weekend Anytime">Weekend Anytime</option>
-                      </select>
-                    </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">Email Address (Optional)</label>
+                    <input
+                      type="email"
+                      value={inquiryForm.email}
+                      onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+                      placeholder="you@example.com"
+                      className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all"
+                    />
                   </div>
 
                   <div className="space-y-1">

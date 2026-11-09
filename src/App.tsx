@@ -1091,6 +1091,7 @@ const ProjectCard: React.FC<{
   comparedCount?: number;
   onToggleCompare?: (p: Project) => void;
   onEnquire: (p: Project) => void;
+  onScheduleSiteVisit?: (p: Project) => void;
   onDownload: (p: Project) => void;
   onSaveProject: (updated: Project) => Promise<void>;
   onDeleteProject: (p: Project) => Promise<void>;
@@ -1104,6 +1105,7 @@ const ProjectCard: React.FC<{
   comparedCount = 0,
   onToggleCompare,
   onEnquire, 
+  onScheduleSiteVisit,
   onDownload, 
   onSaveProject, 
   onDeleteProject, 
@@ -2508,6 +2510,18 @@ const ProjectCard: React.FC<{
                   </span>
                 </button>
 
+                {/* Schedule Site Visit Button with pre-filled site visit intent */}
+                <button
+                  type="button"
+                  data-testid={"schedule-site-visit-btn-" + (project.id || project.name)}
+                  onClick={() => onScheduleSiteVisit ? onScheduleSiteVisit(project) : onEnquire(project)}
+                  className="px-3 sm:px-3.5 py-2 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-black border bg-emerald-500/15 hover:bg-emerald-500 hover:text-black text-emerald-400 border-emerald-500/35 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm group/visit"
+                  title={`Schedule a site visit for ${project.name}`}
+                >
+                  <Calendar size={12} className="text-emerald-400 group-hover/visit:text-black transition-colors shrink-0" />
+                  <span>Schedule Site Visit</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => onDownload(project)}
@@ -2973,6 +2987,7 @@ const ProjectGrid = ({
   onToggleCompare,
   onOpenCompareModal,
   onEnquire, 
+  onScheduleSiteVisit,
   onDownload,
   onSaveProject,
   onDeleteProject,
@@ -2990,6 +3005,7 @@ const ProjectGrid = ({
   onToggleCompare?: (p: Project) => void;
   onOpenCompareModal?: () => void;
   onEnquire: (p: Project) => void; 
+  onScheduleSiteVisit?: (p: Project) => void;
   onDownload: (p: Project) => void;
   onSaveProject: (updated: Project) => Promise<void>;
   onDeleteProject: (p: Project) => Promise<void>;
@@ -3685,6 +3701,7 @@ const ProjectGrid = ({
                 comparedCount={comparedProjectIds.length}
                 onToggleCompare={onToggleCompare}
                 onEnquire={onEnquire} 
+                onScheduleSiteVisit={onScheduleSiteVisit}
                 onDownload={onDownload}
                 onSaveProject={onSaveProject}
                 onDeleteProject={onDeleteProject}
@@ -3835,7 +3852,7 @@ const EnquiryModal = ({
 }: { 
   project: Project | null; 
   onClose: () => void;
-  enquiryType?: 'Acquire' | 'Consult' | 'Inquire' | 'Loan';
+  enquiryType?: 'Acquire' | 'Consult' | 'Inquire' | 'Loan' | 'Site Visit';
   initialCategory?: 'Primary' | 'Rental' | 'Resale' | 'Home Loan';
 }) => {
   const defaultCategory: 'Primary' | 'Rental' | 'Resale' | 'Home Loan' = 
@@ -3849,19 +3866,31 @@ const EnquiryModal = ({
       : 'Primary');
 
   const [selectedCategory, setSelectedCategory] = useState<'Primary' | 'Rental' | 'Resale' | 'Home Loan'>(defaultCategory);
+  const defaultSiteVisitMessage = project?.name 
+    ? `I would like to schedule a private site visit for ${project.name} to view the property and inspect project master layout.`
+    : 'I would like to schedule a private site visit to view the property and inspect project master layout.';
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    preferredContactTime: 'Morning (9:00 AM - 12:00 PM)',
-    message: ''
+    message: enquiryType === 'Site Visit' ? defaultSiteVisitMessage : ''
   });
+  
+  const [preferredVisitDate, setPreferredVisitDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  });
+  const [preferredVisitTime, setPreferredVisitTime] = useState('Morning (10:00 AM - 1:00 PM)');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const getTitle = () => {
     switch (enquiryType) {
+      case 'Site Visit':
+        return project ? `Site Visit – ${project.name}` : 'Site Visit';
       case 'Consult':
         return 'Private Advisory Session';
       case 'Inquire':
@@ -3874,6 +3903,8 @@ const EnquiryModal = ({
 
   const getSubTitle = () => {
     switch (enquiryType) {
+      case 'Site Visit':
+        return 'Physical Property Tour & Masterplan Inspection';
       case 'Consult':
         return 'Bespoke Portfolio Advisory Desk';
       case 'Inquire':
@@ -3897,17 +3928,22 @@ const EnquiryModal = ({
     const targetProject = project || { id: 'general_inquiry', name: 'BS Homez General Portfolio' };
     setSubmitting(true);
     try {
+      const siteVisitDetails = enquiryType === 'Site Visit' 
+        ? `\n[Scheduled Site Visit: Date ${preferredVisitDate}, Timings: ${preferredVisitTime}]` 
+        : '';
+      const finalMsg = (formData.message || (enquiryType === 'Site Visit' ? defaultSiteVisitMessage : `No custom requirements filed for type: ${enquiryType} (${selectedCategory})`)) + siteVisitDetails;
+
       const enquiry: Enquiry = {
         projectId: targetProject.id || 'general_inquiry',
         projectName: targetProject.name,
         customerName: formData.name,
         customerEmail: formData.email,
         customerPhone: formData.phone,
-        preferredContactTime: formData.preferredContactTime,
-        message: formData.message || `No custom requirements filed for type: ${enquiryType} (${selectedCategory})`,
-        type: 'Form',
+        message: finalMsg,
+        type: enquiryType === 'Site Visit' ? 'Site Visit' : 'Form',
         enquiryCategory: selectedCategory,
         propertyCategory: selectedCategory === 'Rental' ? 'Rent' : selectedCategory,
+        intentSentiment: enquiryType === 'Site Visit' ? 'High' : undefined,
         timestamp: serverTimestamp()
       };
       await addDoc(collection(db, 'enquiries'), enquiry);
@@ -3920,9 +3956,9 @@ const EnquiryModal = ({
         projectName: targetProject.name,
         enquiryCategory: selectedCategory,
         preferredLocation: ('location' in targetProject ? targetProject.location : undefined) || ('zone' in targetProject ? targetProject.zone : undefined) || 'Bangalore',
-        message: formData.message || `Requirement: ${enquiryType} (${selectedCategory})`,
-        type: enquiryType,
-        source: 'Property Enquire Modal'
+        message: finalMsg,
+        type: enquiryType === 'Site Visit' ? 'Site Visit' : enquiryType,
+        source: enquiryType === 'Site Visit' ? 'Property Card - Schedule Site Visit' : 'Property Enquire Modal'
       });
 
       setSuccess(true);
@@ -3956,11 +3992,29 @@ const EnquiryModal = ({
       >
         {success ? (
           <div className="py-12 text-center">
-            <div className="w-24 h-24 bg-art-gold/10 rounded-full flex items-center justify-center mx-auto mb-8">
-              <CheckCircle2 className="text-art-gold" size={48} />
+            <div className={cn(
+              "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8",
+              enquiryType === 'Site Visit' ? "bg-emerald-500/15 border border-emerald-500/30" : "bg-art-gold/10"
+            )}>
+              {enquiryType === 'Site Visit' ? (
+                <Calendar className="text-emerald-400" size={48} />
+              ) : (
+                <CheckCircle2 className="text-art-gold" size={48} />
+              )}
             </div>
-            <h3 className="text-4xl font-serif mb-4 italic text-white">Transmission Recorded</h3>
-            <p className="text-white/50 tracking-widest uppercase text-[10px]">A dedicated Relationship Advisor will contact you during your preferred time window.</p>
+            <h3 className="text-3xl sm:text-4xl font-serif mb-4 italic text-white">
+              {enquiryType === 'Site Visit' ? 'Site Visit Scheduled!' : 'Transmission Recorded'}
+            </h3>
+            {enquiryType === 'Site Visit' && project && (
+              <p className="text-emerald-300 font-mono text-xs mb-3 font-bold">
+                Target Property: <span className="text-white">{project.name}</span> &bull; {preferredVisitDate} ({preferredVisitTime})
+              </p>
+            )}
+            <p className="text-white/60 tracking-widest uppercase text-[10px] max-w-md mx-auto">
+              {enquiryType === 'Site Visit'
+                ? `Our property specialist will connect with you to confirm your site visit appointment for ${preferredVisitDate} (${preferredVisitTime}).`
+                : 'A dedicated Relationship Advisor will contact you directly.'}
+            </p>
           </div>
         ) : (
           <>
@@ -4006,7 +4060,74 @@ const EnquiryModal = ({
                 </div>
               </div>
 
+              {/* Site Visit Intent Banner */}
+              {enquiryType === 'Site Visit' && (
+                <div className="mb-6 p-4 rounded-sm bg-gradient-to-r from-emerald-950/40 via-emerald-900/20 to-black border border-emerald-500/40 flex items-start gap-3.5">
+                  <div className="p-2.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shrink-0 mt-0.5">
+                    <Calendar size={18} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                      <h4 className="text-xs uppercase font-mono font-black text-emerald-300 tracking-wider">
+                        Site Visit
+                      </h4>
+                      <span className="text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
+                        Direct Developer Tour &bull; Verified Inventory
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] text-white/80 leading-relaxed font-sans">
+                      Step into your future address — immerse yourself in actual layouts, natural light, panoramic balcony views, and premium architectural finishes at <strong className="text-white">{project?.name}</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Preferred Site Visit Date & Timings */}
+                {enquiryType === 'Site Visit' && (
+                  <div className="p-4 bg-emerald-500/5 border border-emerald-500/30 rounded-sm space-y-3">
+                    <div className="flex items-center gap-1.5 text-emerald-300 font-mono text-xs font-bold uppercase tracking-wider">
+                      <Calendar size={13} className="text-emerald-400" />
+                      <span>Preferred Site Visit Schedule</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-emerald-300 font-bold">
+                          Preferred Site Visit Date *
+                        </label>
+                        <input 
+                          required
+                          type="date" 
+                          min={new Date().toISOString().split('T')[0]}
+                          value={preferredVisitDate}
+                          onChange={e => setPreferredVisitDate(e.target.value)}
+                          className="w-full bg-black/80 border border-emerald-500/40 focus:border-emerald-400 rounded-sm p-3 text-white outline-none transition-all text-xs font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-emerald-300 font-bold">
+                          Preferred Site Visit Timings *
+                        </label>
+                        <select
+                          value={preferredVisitTime}
+                          onChange={e => setPreferredVisitTime(e.target.value)}
+                          className="w-full bg-black/80 border border-emerald-500/40 focus:border-emerald-400 rounded-sm p-3 text-white outline-none transition-all text-xs font-mono"
+                        >
+                          <option value="Morning (10:00 AM - 1:00 PM)">Morning (10:00 AM – 1:00 PM)</option>
+                          <option value="Afternoon (1:00 PM - 4:00 PM)">Afternoon (1:00 PM – 4:00 PM)</option>
+                          <option value="Evening (4:00 PM - 6:30 PM)">Evening (4:00 PM – 6:30 PM)</option>
+                          <option value="Weekend Special (11:00 AM - 3:00 PM)">Weekend Special (11:00 AM – 3:00 PM)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] text-white/50 font-mono">
+                      Selected appointment: <span className="text-emerald-300 font-bold">{preferredVisitDate}</span> during <span className="text-emerald-300 font-bold">{preferredVisitTime}</span>
+                    </p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-white/40 font-bold">Individual Identity *</label>
@@ -4032,32 +4153,16 @@ const EnquiryModal = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-white/40 font-bold">Email Communication *</label>
-                    <input 
-                      required
-                      type="email" 
-                      value={formData.email}
-                      onChange={e => setFormData({...formData, email: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white focus:border-art-gold outline-none transition-all placeholder:text-white/20 text-sm"
-                      placeholder="name@domain.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-art-gold font-bold">Preferred Contact Time *</label>
-                    <select 
-                      value={formData.preferredContactTime}
-                      onChange={e => setFormData({...formData, preferredContactTime: e.target.value})}
-                      className="w-full bg-[#151515] border border-white/15 focus:border-art-gold rounded-sm p-4 text-white outline-none transition-all text-xs font-mono"
-                    >
-                      <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM – 12:00 PM)</option>
-                      <option value="Afternoon (12:00 PM - 4:00 PM)">Afternoon (12:00 PM – 4:00 PM)</option>
-                      <option value="Evening (4:00 PM - 8:00 PM)">Evening (4:00 PM – 8:00 PM)</option>
-                      <option value="Weekend Anytime">Weekend Anytime</option>
-                      <option value="Immediate / Urgent (Next 30 mins)">Immediate / Urgent (Next 30 mins)</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-white/40 font-bold">Email Communication *</label>
+                  <input 
+                    required
+                    type="email" 
+                    value={formData.email}
+                    onChange={e => setFormData({...formData, email: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white focus:border-art-gold outline-none transition-all placeholder:text-white/20 text-sm"
+                    placeholder="name@domain.com"
+                  />
                 </div>
 
                 <div>
@@ -4081,9 +4186,16 @@ const EnquiryModal = ({
                   <button 
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 bg-art-gold text-black py-4 rounded-sm uppercase tracking-[0.25em] text-[11px] font-black hover:bg-white transition-all disabled:opacity-50 shadow-xl cursor-pointer"
+                    className={cn(
+                      "flex-1 py-4 rounded-sm uppercase tracking-[0.25em] text-[11px] font-black transition-all disabled:opacity-50 shadow-xl cursor-pointer",
+                      enquiryType === 'Site Visit'
+                        ? "bg-emerald-500 text-black hover:bg-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                        : "bg-art-gold text-black hover:bg-white"
+                    )}
                   >
-                    {submitting ? 'RECORDING INQUIRY...' : 'SUBMIT SECURED INQUIRY'}
+                    {submitting 
+                      ? (enquiryType === 'Site Visit' ? 'CONFIRMING SITE VISIT...' : 'RECORDING INQUIRY...') 
+                      : (enquiryType === 'Site Visit' ? 'CONFIRM SITE VISIT REQUEST' : 'SUBMIT SECURED INQUIRY')}
                   </button>
                 </div>
               </form>
@@ -7470,24 +7582,6 @@ const AdminView = ({
   const [salesTeamWhatsApp, setSalesTeamWhatsApp] = useState('919902991599');
   const [isBatchProcessingSeo, setIsBatchProcessingSeo] = useState(false);
 
-  const formatWhatsAppLeadMessage = (enq: Enquiry) => {
-    const { time, date } = getEnquiryTimeAndDate(enq.timestamp);
-    const projectName = enq.projectName || enq.interestedProjects || 'General Inquiry';
-    const notes = enq.message ? enq.message.trim() : 'None';
-    
-    return `Name : ${enq.customerName || 'N/A'}\nNumber: ${enq.customerPhone || 'N/A'}\nEmail: ${enq.customerEmail || 'N/A'}\nProject: ${projectName}\nNotes: ${notes}\nTime: ${time}\nDate: ${date}`;
-  };
-
-  const handleShareWhatsApp = (enq: Enquiry, targetPhone: string = salesTeamWhatsApp) => {
-    const text = formatWhatsAppLeadMessage(enq);
-    const cleanPhone = (targetPhone || '919902991599').replace(/[^0-9]/g, '');
-    const encoded = encodeURIComponent(text);
-    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-    setLeadActionToast(`Dispatched WhatsApp lead brief for ${enq.customerName || 'Lead'} to Sales Team (+${cleanPhone})`);
-    setTimeout(() => setLeadActionToast(null), 4000);
-  };
-
   useEffect(() => {
     fetch('/api/sitemap/status')
       .then(res => res.json())
@@ -7740,6 +7834,138 @@ const AdminView = ({
     });
     return list;
   }, [displayedEnquiries, leadSortField, leadSortDirection]);
+
+  const [copiedLeadId, setCopiedLeadId] = useState<string | null>(null);
+  const [copiedAllLeads, setCopiedAllLeads] = useState(false);
+
+  const cleanPhoneForClipboard = (rawPhone?: string): string => {
+    if (!rawPhone) return 'N/A';
+    let phone = String(rawPhone).trim();
+    phone = phone.replace(/^\+91[\s\-_]*/, '');
+    if (/^91\d{10}$/.test(phone)) {
+      phone = phone.slice(2);
+    }
+    phone = phone.replace(/^\+/, '');
+    return phone.trim() || 'N/A';
+  };
+
+  const formatEnquiryDateAndSeconds = (timestamp: any): { dateStr: string; timeStr: string } => {
+    if (!timestamp) return { dateStr: 'N/A', timeStr: 'N/A' };
+    try {
+      let dateObj: Date;
+      if (typeof timestamp.toDate === 'function') {
+        dateObj = timestamp.toDate();
+      } else if (timestamp instanceof Date) {
+        dateObj = timestamp;
+      } else if (typeof timestamp === 'number') {
+        dateObj = new Date(timestamp);
+      } else if (timestamp.seconds !== undefined) {
+        dateObj = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+      } else {
+        dateObj = new Date(timestamp);
+      }
+      if (isNaN(dateObj.getTime())) return { dateStr: 'N/A', timeStr: 'N/A' };
+
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const yy = String(dateObj.getFullYear()).slice(-2);
+      const dateStr = `${dd}/${mm}/${yy}`;
+
+      const hh = String(dateObj.getHours()).padStart(2, '0');
+      const min = String(dateObj.getMinutes()).padStart(2, '0');
+      const ss = String(dateObj.getSeconds()).padStart(2, '0');
+      const timeStr = `${hh}:${min}:${ss}`;
+
+      return { dateStr, timeStr };
+    } catch {
+      return { dateStr: 'N/A', timeStr: 'N/A' };
+    }
+  };
+
+  const formatLeadClipboardText = (enq: Enquiry) => {
+    const name = enq.customerName || 'N/A';
+    const number = cleanPhoneForClipboard(enq.customerPhone);
+    const email = enq.customerEmail || 'N/A';
+    const category = resolveEnquiryCategory(enq);
+    const project = enq.projectName || enq.interestedProjects || 'General Inquiry';
+    const { dateStr, timeStr } = formatEnquiryDateAndSeconds(enq.timestamp);
+
+    return `Name : ${name}\nNumber: ${number}\nEmail: ${email}\nCategory: ${category}\nProject: ${project}\nenquire date : ${dateStr}\ntime : ${timeStr}`;
+  };
+
+  // Requirement: Format WhatsApp lead message using clean phone without +91 and full lead brief
+  const formatWhatsAppLeadMessage = (enq: Enquiry) => {
+    const name = enq.customerName || 'N/A';
+    const number = cleanPhoneForClipboard(enq.customerPhone);
+    const email = enq.customerEmail || 'N/A';
+    const category = resolveEnquiryCategory(enq);
+    const project = enq.projectName || enq.interestedProjects || 'General Inquiry';
+    const notes = enq.message ? enq.message.trim() : 'None';
+    const { dateStr, timeStr } = formatEnquiryDateAndSeconds(enq.timestamp);
+
+    return `Name : ${name}\nNumber: ${number}\nEmail: ${email}\nCategory: ${category}\nProject: ${project}\nNotes: ${notes}\nenquire date : ${dateStr}\ntime : ${timeStr}`;
+  };
+
+  const handleShareWhatsApp = (enq: Enquiry, targetPhone: string = salesTeamWhatsApp) => {
+    const text = formatWhatsAppLeadMessage(enq);
+    const cleanPhone = (targetPhone || '919902991599').replace(/[^0-9]/g, '');
+    const encoded = encodeURIComponent(text);
+    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setLeadActionToast(`Dispatched WhatsApp lead brief for ${enq.customerName || 'Lead'} to Sales Team (+${cleanPhone})`);
+    setTimeout(() => setLeadActionToast(null), 4000);
+  };
+
+  const copyTextToClipboard = async (text: string): Promise<boolean> => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      // Fallback below
+    }
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return successful;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleCopyLead = async (enq: Enquiry) => {
+    const formatted = formatLeadClipboardText(enq);
+    await copyTextToClipboard(formatted);
+    setCopiedLeadId(enq.id);
+    setLeadActionToast(`Copied lead brief for ${enq.customerName || 'Lead'} in requested format!`);
+    setTimeout(() => {
+      setCopiedLeadId(prev => (prev === enq.id ? null : prev));
+    }, 2500);
+    setTimeout(() => setLeadActionToast(null), 4000);
+  };
+
+  const handleCopyAllVisibleLeads = async () => {
+    if (sortedEnquiries.length === 0) {
+      setLeadActionToast('No leads available to copy.');
+      setTimeout(() => setLeadActionToast(null), 3000);
+      return;
+    }
+    const formattedAll = sortedEnquiries.map(enq => formatLeadClipboardText(enq)).join('\n\n------------------------------\n\n');
+    await copyTextToClipboard(formattedAll);
+    setCopiedAllLeads(true);
+    setLeadActionToast(`Copied ${sortedEnquiries.length} leads in requested format!`);
+    setTimeout(() => setCopiedAllLeads(false), 2500);
+    setTimeout(() => setLeadActionToast(null), 4000);
+  };
 
   // Intent statistics across all current category enquiries
   const highIntentCount = categoryFilteredEnquiries.filter(e => analyzeCustomerIntent(e).level === 'High').length;
@@ -8204,9 +8430,15 @@ const AdminView = ({
           type: p.type,
           price: p.price,
           reraNumber: p.reraNumber,
+          features: p.features || [],
+          imageUrls: p.imageUrls || [],
+          mobileImageUrl: p.mobileImageUrl || '',
+          floorPlanImageUrl: p.floorPlanImageUrl || '',
           currentTitle: row.metaTitle,
           currentKeywords: p.seoKeywords || [],
-          currentDescription: row.metaDescription
+          currentDescription: row.metaDescription,
+          currentAltText: (p as any).imageAltText || '',
+          currentAltTexts: (p as any).imageAltTexts || {}
         };
       });
 
@@ -8221,18 +8453,26 @@ const AdminView = ({
         throw new Error(data?.error || 'Failed to generate SEO metadata from Gemini');
       }
 
-      const resultsMap: Record<string, { metaTitle: string; seoKeywords: string[]; metaDescription: string }> = {};
+      const resultsMap: Record<string, { 
+        metaTitle: string; 
+        seoKeywords: string[]; 
+        metaDescription: string;
+        imageAltText: string;
+        imageAltTexts: Record<string, string>;
+      }> = {};
       data.results.forEach((r: any) => {
         resultsMap[r.projectId] = {
           metaTitle: r.metaTitle,
-          seoKeywords: r.seoKeywords,
-          metaDescription: r.metaDescription
+          seoKeywords: r.seoKeywords || [],
+          metaDescription: r.metaDescription,
+          imageAltText: r.imageAltText || '',
+          imageAltTexts: r.imageAltTexts || {}
         };
       });
 
       const nowIso = new Date().toISOString();
 
-      // Bulk update Firestore using writeBatch
+      // Bulk update Firestore using writeBatch in a single write batch operation
       const batch = writeBatch(db);
       let writeCount = 0;
 
@@ -8246,7 +8486,10 @@ const AdminView = ({
             seoKeywords: enhanced.seoKeywords,
             metaDescription: enhanced.metaDescription,
             seoDescription: enhanced.metaDescription,
+            imageAltText: enhanced.imageAltText,
+            imageAltTexts: enhanced.imageAltTexts,
             seoLastEdited: nowIso,
+            seoLastSyncedAt: nowIso,
             updatedAt: nowIso
           });
           writeCount++;
@@ -8674,6 +8917,17 @@ const AdminView = ({
               </div>
 
               <button 
+                type="button"
+                data-testid="copy-all-leads-btn"
+                onClick={handleCopyAllVisibleLeads}
+                className="flex items-center gap-1.5 bg-white/10 hover:bg-white hover:text-black text-white/90 border border-white/20 px-4 py-3 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all cursor-pointer shadow-sm"
+                title="Copy all currently filtered leads to clipboard in standard format (Name, Number, Email, Category, Project)"
+              >
+                {copiedAllLeads ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                <span>{copiedAllLeads ? 'Leads Copied!' : `Copy (${sortedEnquiries.length}) Leads`}</span>
+              </button>
+
+              <button 
                 onClick={exportEnquiriesExcel}
                 className="flex items-center gap-2 bg-art-gold/10 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/30 px-5 py-3 rounded-sm text-[10px] uppercase font-black tracking-widest transition-all cursor-pointer"
               >
@@ -8970,6 +9224,22 @@ const AdminView = ({
                        </td>
                        <td className="px-6 py-5 text-right whitespace-nowrap">
                          <div className="flex items-center justify-end gap-1.5">
+                           {/* Option to copy lead in requested format: Name, Number, Email, Category, Project */}
+                           <button
+                             type="button"
+                             data-testid={"copy-lead-btn-" + enq.id}
+                             onClick={() => handleCopyLead(enq)}
+                             className="px-2.5 py-1.5 rounded-sm bg-white/10 hover:bg-white hover:text-black text-white/90 border border-white/20 transition-all flex items-center gap-1.5 text-[9.5px] font-mono font-bold cursor-pointer shadow-sm"
+                             title="Copy lead brief (Name, Number, Email, Category, Project)"
+                           >
+                             {copiedLeadId === enq.id ? (
+                               <Check size={12} className="text-emerald-400 shrink-0" />
+                             ) : (
+                               <Copy size={12} className="shrink-0" />
+                             )}
+                             <span>{copiedLeadId === enq.id ? 'Copied' : 'Copy'}</span>
+                           </button>
+
                            {/* Requirement: Share Lead via WhatsApp to Sales Team line using formatWhatsAppLeadMessage */}
                            <button
                              type="button"
@@ -8979,7 +9249,7 @@ const AdminView = ({
                              title={`Share Lead formatted brief to Sales Team Line (+${salesTeamWhatsApp})`}
                            >
                              <MessageCircle size={12} className="text-emerald-400 shrink-0" />
-                             <span>Share Lead (WA)</span>
+                             <span>Share Lead via WhatsApp</span>
                            </button>
 
                            {/* Active Leads: Soft Delete & Complete Delete */}
@@ -9797,7 +10067,14 @@ const AdminView = ({
           </div>
         </div>
       </div>
-    ) : (
+    ) : activeTab === 'seo_audit' ? (
+        <AdminSeoAuditPanel 
+          projects={validProjects}
+          onSaveProject={onSaveProject}
+          onBatchSyncSitemap={handleBatchSyncSeo}
+          isSyncingSitemap={isSyncingSitemap}
+        />
+      ) : (
         <div className="space-y-8">
           {/* Online Publishing & Google SEO Lead Hub for Admin */}
           <div className="p-6 bg-art-gold/[0.06] border border-art-gold/30 rounded-sm space-y-4">
@@ -9811,14 +10088,14 @@ const AdminView = ({
                 </h3>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {/* Requirement: Batch processing function for SEO Audit Hub iterating through 'needs_attention' projects with Gemini & bulk updating Firestore */}
+                {/* Requirement: 'Bulk Fix All' button that identifies all projects with 'needs_attention' health, uses Gemini API to generate missing meta titles, descriptions, and alt tags for all images, and performs a single bulk write batch to Firestore */}
                 <button
                   type="button"
                   disabled={isBatchProcessingSeo}
                   onClick={handleBatchProcessNeedsAttentionSeo}
-                  data-testid="batch-process-needs-attention-seo-btn"
+                  data-testid="bulk-fix-all-btn"
                   className="px-4 py-2.5 bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600 hover:from-purple-600 hover:to-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-lg disabled:opacity-60"
-                  title="Batch process all projects with 'needs_attention' status via Gemini API to automatically generate missing meta titles and keywords, then bulk update Firestore"
+                  title="Bulk Fix All: identifies all projects with 'needs_attention' health, uses Gemini API to generate missing meta titles, descriptions, and alt tags for all images, and performs a single bulk write batch to Firestore"
                 >
                   {isBatchProcessingSeo ? (
                     <>
@@ -9828,7 +10105,7 @@ const AdminView = ({
                   ) : (
                     <>
                       <Sparkles size={12} className="text-amber-300" />
-                      <span>Batch Fix 'Needs Attention' via Gemini ({needsAttentionCount})</span>
+                      <span>Bulk Fix All ({needsAttentionCount})</span>
                     </>
                   )}
                 </button>
@@ -12825,7 +13102,7 @@ export default function App() {
   });
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [downloadProject, setDownloadProject] = useState<Project | null>(null);
-  const [enquiryType, setEnquiryType] = useState<'Acquire' | 'Consult' | 'Inquire'>('Acquire');
+  const [enquiryType, setEnquiryType] = useState<'Acquire' | 'Consult' | 'Inquire' | 'Site Visit'>('Acquire');
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -12961,10 +13238,11 @@ export default function App() {
   const handleSavePropertyMetaData = async (
     projectId: string, 
     meta: { 
-      metaTitle: string; 
-      metaDescription: string; 
-      seoKeywords: string[];
+      metaTitle?: string; 
+      metaDescription?: string; 
+      seoKeywords?: string[];
       imageAltText?: string;
+      imageAltTexts?: Record<string, string>;
       seoLastEdited?: string;
       seoRevisions?: any[];
     }
@@ -12974,14 +13252,13 @@ export default function App() {
       if (p.id === projectId || p.name === projectId) {
         return {
           ...p,
-          metaTitle: meta.metaTitle,
-          seoTitle: meta.metaTitle,
-          metaDescription: meta.metaDescription,
-          seoDescription: meta.metaDescription,
-          seoKeywords: meta.seoKeywords,
-          ...(meta.imageAltText ? { imageAltText: meta.imageAltText } : {}),
-          ...(meta.seoLastEdited ? { seoLastEdited: meta.seoLastEdited } : {}),
-          ...(meta.seoRevisions ? { seoRevisions: meta.seoRevisions } : {})
+          ...(meta.metaTitle !== undefined ? { metaTitle: meta.metaTitle, seoTitle: meta.metaTitle } : {}),
+          ...(meta.metaDescription !== undefined ? { metaDescription: meta.metaDescription, seoDescription: meta.metaDescription } : {}),
+          ...(meta.seoKeywords !== undefined ? { seoKeywords: meta.seoKeywords } : {}),
+          ...(meta.imageAltText !== undefined ? { imageAltText: meta.imageAltText } : {}),
+          ...(meta.imageAltTexts !== undefined ? { imageAltTexts: meta.imageAltTexts } : {}),
+          ...(meta.seoLastEdited !== undefined ? { seoLastEdited: meta.seoLastEdited } : {}),
+          ...(meta.seoRevisions !== undefined ? { seoRevisions: meta.seoRevisions } : {})
         };
       }
       return p;
@@ -12990,18 +13267,34 @@ export default function App() {
     // 2. Persist to Firestore if target has valid ID
     try {
       const target = projects.find(p => p.id === projectId || p.name === projectId);
-      if (target && target.id) {
-        await updateDoc(doc(db, 'projects', target.id), {
-          metaTitle: meta.metaTitle,
-          seoTitle: meta.metaTitle,
-          metaDescription: meta.metaDescription,
-          seoDescription: meta.metaDescription,
-          seoKeywords: meta.seoKeywords,
-          ...(meta.imageAltText ? { imageAltText: meta.imageAltText } : {}),
-          ...(meta.seoLastEdited ? { seoLastEdited: meta.seoLastEdited } : {}),
-          ...(meta.seoRevisions ? { seoRevisions: meta.seoRevisions } : {}),
+      if (target && target.id && !target.id.startsWith('curated_') && !target.id.startsWith('local_')) {
+        const updatePayload: Record<string, any> = {
           updatedAt: new Date().toISOString()
-        });
+        };
+        if (meta.metaTitle !== undefined) {
+          updatePayload.metaTitle = meta.metaTitle;
+          updatePayload.seoTitle = meta.metaTitle;
+        }
+        if (meta.metaDescription !== undefined) {
+          updatePayload.metaDescription = meta.metaDescription;
+          updatePayload.seoDescription = meta.metaDescription;
+        }
+        if (meta.seoKeywords !== undefined) {
+          updatePayload.seoKeywords = meta.seoKeywords;
+        }
+        if (meta.imageAltText !== undefined) {
+          updatePayload.imageAltText = meta.imageAltText;
+        }
+        if (meta.imageAltTexts !== undefined) {
+          updatePayload.imageAltTexts = meta.imageAltTexts;
+        }
+        if (meta.seoLastEdited !== undefined) {
+          updatePayload.seoLastEdited = meta.seoLastEdited;
+        }
+        if (meta.seoRevisions !== undefined) {
+          updatePayload.seoRevisions = meta.seoRevisions;
+        }
+        await updateDoc(doc(db, 'projects', target.id), updatePayload);
       }
     } catch (e) {
       console.warn('Could not persist SEO metadata to Firestore:', e);
@@ -13791,6 +14084,15 @@ export default function App() {
     } catch {}
   };
 
+  const handleScheduleSiteVisit = (project: Project) => {
+    setEnquiryType('Site Visit');
+    setSelectedProject(project);
+    setActivePropertyUrlId(project.id || project.name);
+    try {
+      window.history.replaceState({}, '', `/?project=${encodeURIComponent(project.id || project.name)}&intent=site_visit`);
+    } catch {}
+  };
+
   const handleDownloadBrochure = (project: Project) => {
     setDownloadProject(project);
     setActivePropertyUrlId(project.id || project.name);
@@ -13949,6 +14251,7 @@ export default function App() {
             onToggleCompare={handleToggleCompare}
             onOpenCompareModal={() => setIsCompareModalOpen(true)}
             onEnquire={handleEnquireProject} 
+            onScheduleSiteVisit={handleScheduleSiteVisit}
             onDownload={handleDownloadBrochure}
             onSaveProject={handleSaveProject}
             onDeleteProject={handleDeleteProject}
@@ -14286,18 +14589,20 @@ export default function App() {
               <span className="text-white mb-1 underline decoration-art-gold/50 underline-offset-8">Digital Presence</span>
               <span className="text-art-gold font-black">www.bshomez.in</span>
               <a href="mailto:contact@bshomez.in" className="hover:text-art-gold transition-colors">contact@bshomez.in</a>
-              <button 
-                type="button" 
-                onClick={() => setIsSeoModalOpen(true)}
-                className="flex items-center gap-1.5 text-art-gold hover:text-white transition-colors cursor-pointer text-left font-bold flex-wrap"
-                title="View live search engine snippets, social cards & Schema.org data across platforms"
-              >
-                <Globe size={11} className="text-art-gold shrink-0 animate-pulse" />
-                <span>Google · WhatsApp · Meta · X SEO</span>
-                <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-mono font-bold border border-emerald-500/30">
-                  Auto-Enhanced
-                </span>
-              </button>
+              {Boolean(user || isAdmin) && (
+                <button 
+                  type="button" 
+                  onClick={() => setIsSeoModalOpen(true)}
+                  className="flex items-center gap-1.5 text-art-gold hover:text-white transition-colors cursor-pointer text-left font-bold flex-wrap"
+                  title="View live search engine snippets, social cards & Schema.org data across platforms (Admin Only)"
+                >
+                  <Globe size={11} className="text-art-gold shrink-0 animate-pulse" />
+                  <span>Google · WhatsApp · Meta · X SEO</span>
+                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-mono font-bold border border-emerald-500/30">
+                    Auto-Enhanced
+                  </span>
+                </button>
+              )}
             </div>
           </div>
           <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/20">
@@ -14487,9 +14792,9 @@ export default function App() {
         }}
       />
 
-      {/* Real-Time Google SERP, Meta & Twitter Card Visualizer */}
+      {/* Real-Time Google SERP, Meta & Twitter Card Visualizer - Visible to Admin Only */}
       <SEOPreviewModal
-        isOpen={isSeoModalOpen}
+        isOpen={isSeoModalOpen && Boolean(user || isAdmin)}
         onClose={() => setIsSeoModalOpen(false)}
         currentTitle={currentSeoSnapshot.title}
         currentDescription={currentSeoSnapshot.description}

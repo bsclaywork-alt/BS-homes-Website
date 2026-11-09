@@ -218,43 +218,91 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
     }
   };
 
-  // Bulk save all edited rows
+  // Requirement: Bulk synchronization button that pushes all pending changes in the SEO draft state to Firestore in one operation, while notifying the sitemap refresh service
   const handleBulkSaveAll = async () => {
     const dirtyProjects = validProjects.filter(p => getRowSeoData(p).isDirty);
 
     if (dirtyProjects.length === 0) {
-      showToast('No unsaved SEO changes to commit.', 'info');
+      showToast('No pending changes in the SEO draft state to synchronize.', 'info');
       return;
     }
 
     setIsBulkSaving(true);
+    const nowIso = new Date().toISOString();
+
     try {
-      for (const p of dirtyProjects) {
+      // 1. Push all pending changes in the SEO draft state to Firestore in ONE operation
+      const batch = writeBatch(db);
+      let writeCount = 0;
+
+      dirtyProjects.forEach(p => {
         const row = getRowSeoData(p);
         const parsedKeywords = row.seoKeywords
           .split(',')
           .map(k => k.trim())
           .filter(Boolean);
 
-        const updatedProject: Project = {
-          ...p,
-          metaTitle: row.metaTitle.trim(),
-          metaDescription: row.metaDescription.trim(),
-          seoKeywords: parsedKeywords,
-          ogImage: row.ogImage.trim() || p.imageUrls?.[0] || '',
-          seoLastSyncedAt: new Date().toISOString()
-        };
+        const metaTitle = row.metaTitle.trim();
+        const metaDescription = row.metaDescription.trim();
+        const ogImage = row.ogImage.trim() || p.imageUrls?.[0] || '';
 
+        if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
+          const docRef = doc(db, 'projects', p.id);
+          batch.update(docRef, {
+            metaTitle,
+            seoTitle: metaTitle,
+            metaDescription,
+            seoDescription: metaDescription,
+            seoKeywords: parsedKeywords,
+            ogImage,
+            seoLastSyncedAt: nowIso,
+            seoLastEdited: nowIso,
+            updatedAt: nowIso
+          });
+          writeCount++;
+        }
+
+        // Also update local in-memory project state
         if (onSaveProject) {
-          await onSaveProject(updatedProject);
+          onSaveProject({
+            ...p,
+            metaTitle,
+            seoTitle: metaTitle,
+            metaDescription,
+            seoDescription: metaDescription,
+            seoKeywords: parsedKeywords,
+            ogImage,
+            seoLastSyncedAt: nowIso,
+            seoLastEdited: nowIso,
+            updatedAt: nowIso
+          });
+        }
+      });
+
+      if (writeCount > 0) {
+        try {
+          await batch.commit();
+        } catch (fErr) {
+          handleFirestoreError(fErr, OperationType.UPDATE, 'projects');
         }
       }
 
+      // 2. Notify the sitemap refresh service
+      try {
+        await fetch('/api/sitemap/refresh', { method: 'POST' });
+      } catch (sitemapErr) {
+        console.warn('Sitemap refresh service warning:', sitemapErr);
+      }
+      if (onBatchSyncSitemap) {
+        await onBatchSyncSitemap();
+      }
+
+      // 3. Clear draft state
       setDrafts({});
-      showToast(`Successfully bulk saved and published SEO metadata for ${dirtyProjects.length} projects!`, 'success', 4500);
+      showToast(`Bulk synchronization complete! Pushed all ${dirtyProjects.length} pending draft changes to Firestore in 1 atomic operation & notified sitemap refresh service.`, 'success', 5000);
     } catch (err: any) {
-      console.error('Bulk save error:', err);
-      showToast(`Bulk save error: ${err.message || 'Check network connection'}`, 'error');
+      console.error('Bulk synchronization error:', err);
+      showToast(`Bulk synchronization error: ${err.message || 'Check network connection'}`, 'error');
     } finally {
       setIsBulkSaving(false);
     }
@@ -262,20 +310,20 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
 
   const [isGeminiBatchProcessing, setIsGeminiBatchProcessing] = useState(false);
 
-  // Requirement: Batch processing function for SEO Audit Hub iterating through all projects with 'needs_attention' status and uses Gemini API to automatically generate missing meta titles and keywords, then bulk updates Firestore
-  const handleBatchProcessNeedsAttentionGemini = async () => {
+  // Requirement: 'Bulk Fix All' function that identifies all projects with 'needs_attention' health, uses Gemini API to generate missing meta titles, descriptions, and alt tags for all images, and performs a single bulk write batch to Firestore
+  const handleBulkFixAll = async () => {
     const targetProjects = validProjects.filter(p => {
       const row = getRowSeoData(p);
       return row.health === 'needs_attention';
     });
 
     if (targetProjects.length === 0) {
-      showToast('All portfolio projects are already SEO-optimized!', 'info');
+      showToast('All portfolio projects are already SEO-optimized! No projects with "needs_attention" status.', 'info');
       return;
     }
 
     setIsGeminiBatchProcessing(true);
-    showToast(`Gemini 3.8 Flash analyzing and generating SEO metadata for ${targetProjects.length} properties...`, 'info', 5000);
+    showToast(`Gemini 3.8 Flash analyzing and generating SEO metadata & accessible alt tags for all images across ${targetProjects.length} properties...`, 'info', 6000);
 
     try {
       const payload = targetProjects.map(p => {
@@ -289,9 +337,15 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
           type: p.type,
           price: p.price,
           reraNumber: p.reraNumber,
+          features: p.features || [],
+          imageUrls: p.imageUrls || [],
+          mobileImageUrl: p.mobileImageUrl || '',
+          floorPlanImageUrl: p.floorPlanImageUrl || '',
           currentTitle: row.metaTitle,
           currentKeywords: p.seoKeywords || [],
-          currentDescription: row.metaDescription
+          currentDescription: row.metaDescription,
+          currentAltText: (p as any).imageAltText || '',
+          currentAltTexts: (p as any).imageAltTexts || {}
         };
       });
 
@@ -303,21 +357,30 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
 
       const data = await res.json();
       if (!data || !data.success || !Array.isArray(data.results)) {
-        throw new Error(data?.error || 'Failed to generate metadata via Gemini API');
+        throw new Error(data?.error || 'Failed to generate metadata and alt tags via Gemini API');
       }
 
-      const resultsMap: Record<string, { metaTitle: string; seoKeywords: string[]; metaDescription: string }> = {};
+      const resultsMap: Record<string, { 
+        metaTitle: string; 
+        seoKeywords: string[]; 
+        metaDescription: string;
+        imageAltText: string;
+        imageAltTexts: Record<string, string>;
+      }> = {};
+
       data.results.forEach((r: any) => {
         resultsMap[r.projectId] = {
           metaTitle: r.metaTitle,
-          seoKeywords: r.seoKeywords,
-          metaDescription: r.metaDescription
+          seoKeywords: r.seoKeywords || [],
+          metaDescription: r.metaDescription,
+          imageAltText: r.imageAltText || '',
+          imageAltTexts: r.imageAltTexts || {}
         };
       });
 
       const nowIso = new Date().toISOString();
 
-      // Bulk update Firestore using writeBatch
+      // Single bulk write batch to Firestore for all needs_attention projects
       const batch = writeBatch(db);
       let writeCount = 0;
 
@@ -331,7 +394,10 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
             seoKeywords: enhanced.seoKeywords,
             metaDescription: enhanced.metaDescription,
             seoDescription: enhanced.metaDescription,
+            imageAltText: enhanced.imageAltText,
+            imageAltTexts: enhanced.imageAltTexts,
             seoLastEdited: nowIso,
+            seoLastSyncedAt: nowIso,
             updatedAt: nowIso
           });
           writeCount++;
@@ -346,7 +412,7 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
         }
       }
 
-      // Update local drafts
+      // Update local drafts and sync with parent state
       const nextDrafts = { ...drafts };
       targetProjects.forEach(p => {
         const enhanced = resultsMap[p.id || p.name];
@@ -367,7 +433,10 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
               seoKeywords: enhanced.seoKeywords,
               metaDescription: enhanced.metaDescription,
               seoDescription: enhanced.metaDescription,
+              imageAltText: enhanced.imageAltText,
+              imageAltTexts: enhanced.imageAltTexts,
               seoLastEdited: nowIso,
+              seoLastSyncedAt: nowIso,
               updatedAt: nowIso
             });
           }
@@ -377,15 +446,20 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
 
       // Trigger background sitemap update
       fetch('/api/sitemap/refresh', { method: 'POST' }).catch(() => {});
+      if (onBatchSyncSitemap) {
+        onBatchSyncSitemap().catch(() => {});
+      }
 
-      showToast(`Successfully enhanced ${targetProjects.length} projects via Gemini 3.8 Flash and bulk updated Firestore!`, 'success', 5000);
+      showToast(`Bulk Fix All complete! Enhanced ${targetProjects.length} projects with meta titles, descriptions, keywords, and alt tags for all images via Gemini in 1 bulk Firestore write batch!`, 'success', 5000);
     } catch (err: any) {
-      console.error('Batch SEO Gemini error:', err);
-      showToast(`Batch SEO error: ${err.message || 'Operation failed'}`, 'error');
+      console.error('Bulk Fix All Gemini error:', err);
+      showToast(`Bulk Fix All error: ${err.message || 'Operation failed'}`, 'error');
     } finally {
       setIsGeminiBatchProcessing(false);
     }
   };
+
+  const handleBatchProcessNeedsAttentionGemini = handleBulkFixAll;
 
   // Bulk auto-generate optimal titles & descriptions for all projects that need attention
   const handleAutoGenerateAllMissing = () => {
@@ -764,21 +838,21 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
 
         {/* Bulk Action Controls */}
         <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10 flex-wrap">
-          {/* Requirement: Batch processing function for SEO Audit Hub iterating through 'needs_attention' projects with Gemini & bulk updating Firestore */}
+          {/* Requirement: 'Bulk Fix All' button that identifies all projects with 'needs_attention' health, uses Gemini API to generate missing meta titles, descriptions, and alt tags for all images, and performs a single bulk write batch to Firestore */}
           <button
             type="button"
             disabled={isGeminiBatchProcessing}
-            onClick={handleBatchProcessNeedsAttentionGemini}
-            data-testid="batch-process-needs-attention-admin-btn"
+            onClick={handleBulkFixAll}
+            data-testid="bulk-fix-all-btn"
             className="px-3.5 py-2 bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600 hover:from-purple-600 hover:to-indigo-500 text-white font-bold text-[10px] uppercase font-mono tracking-wider rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-60"
-            title="Batch process all projects with 'needs_attention' status via Gemini API and bulk update Firestore"
+            title="Bulk Fix All: identifies all projects with 'needs_attention' health, uses Gemini API to generate missing meta titles, descriptions, and alt tags for all images, and performs a single bulk write batch to Firestore"
           >
             {isGeminiBatchProcessing ? (
               <RefreshCw size={13} className="animate-spin text-white" />
             ) : (
               <Sparkles size={13} className="text-amber-300" />
             )}
-            <span>AI Batch Fix (Gemini &amp; Firestore)</span>
+            <span>Bulk Fix All ({stats.needsAttentionCount})</span>
           </button>
 
           <button
@@ -791,28 +865,42 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
             <span className="hidden sm:inline">Auto-Fill</span> Needs Attention
           </button>
 
-          {stats.dirtyCount > 0 && (
-            <>
-              <button
-                type="button"
-                onClick={handleDiscardAll}
-                className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] uppercase font-mono font-bold tracking-wider rounded-sm transition-all flex items-center gap-1 cursor-pointer"
-                title="Discard all pending changes"
-              >
-                <Undo2 size={13} />
-                <span>Discard</span>
-              </button>
+          {/* Requirement: Bulk synchronization button pushing all pending SEO draft changes to Firestore in 1 operation while notifying sitemap service */}
+          <button
+            type="button"
+            disabled={isBulkSaving || stats.dirtyCount === 0}
+            onClick={handleBulkSaveAll}
+            data-testid="bulk-sync-seo-drafts-btn"
+            className={`px-4 py-2 font-black uppercase text-[10px] tracking-widest rounded-sm transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+              stats.dirtyCount > 0
+                ? 'bg-art-gold hover:bg-white text-black shadow-[0_0_15px_rgba(197,160,89,0.35)]'
+                : 'bg-white/5 text-white/40 border border-white/10'
+            }`}
+            title="Bulk synchronize all pending changes in the SEO draft state to Firestore in one operation and refresh sitemap service"
+          >
+            {isBulkSaving ? (
+              <>
+                <RefreshCw size={13} className="animate-spin" />
+                <span>Syncing to Firestore &amp; Sitemap...</span>
+              </>
+            ) : (
+              <>
+                <Save size={13} />
+                <span>Bulk Synchronize SEO ({stats.dirtyCount})</span>
+              </>
+            )}
+          </button>
 
-              <button
-                type="button"
-                disabled={isBulkSaving}
-                onClick={handleBulkSaveAll}
-                className="px-4 py-2 bg-art-gold hover:bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-sm transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                {isBulkSaving ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
-                <span>Save All Changes ({stats.dirtyCount})</span>
-              </button>
-            </>
+          {stats.dirtyCount > 0 && (
+            <button
+              type="button"
+              onClick={handleDiscardAll}
+              className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] uppercase font-mono font-bold tracking-wider rounded-sm transition-all flex items-center gap-1 cursor-pointer"
+              title="Discard all pending changes"
+            >
+              <Undo2 size={13} />
+              <span>Discard ({stats.dirtyCount})</span>
+            </button>
           )}
         </div>
       </div>

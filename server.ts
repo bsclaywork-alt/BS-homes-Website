@@ -114,8 +114,9 @@ Your responsibility:
     }
   });
 
-  // Batch SEO Enhancement Endpoint powered by Gemini 3.8 Flash for SEO Audit Hub
-  app.post("/api/gemini/batch-seo-enhance", async (req, res) => {
+  // Bulk Fix All & Batch SEO Enhancement Endpoint powered by Gemini 3.8 Flash for SEO Audit Hub
+  // Generates missing meta titles, descriptions, focus keywords, AND accessible alt tags for ALL project images
+  const handleBatchSeoEnhanceRoute = async (req: any, res: any) => {
     try {
       const { projects } = req.body;
       if (!Array.isArray(projects) || projects.length === 0) {
@@ -124,14 +125,16 @@ Your responsibility:
 
       const apiKey = process.env.GEMINI_API_KEY;
 
-      // Algorithmic high-precision SEO tag generator as guaranteed fallback
-      const generateLocalSeo = (p: any) => {
+      // Algorithmic high-precision SEO tag and WCAG 2.2 Alt Tag generator as guaranteed fallback
+      const generateLocalSeoAndAltTags = (p: any) => {
         const name = p.name || "Curated Bangalore Property";
         const zone = p.zone || p.location || "East Bangalore";
         const propType = p.propertyType || "Apartment";
         const typeAction = p.type === 'Rental' ? 'for Rent' : p.type === 'Resale' ? 'Resale' : 'for Sale';
         const reraTag = p.reraNumber ? 'RERA Approved' : 'Verified';
-        
+        const features = Array.isArray(p.features) ? p.features : [];
+        const featuresSnippet = features.slice(0, 3).join(', ') || 'landscaped gardens and lifestyle amenities';
+
         // High CTR Title (under 65 chars)
         let metaTitle = `${name} | ${propType} ${typeAction} in ${zone} | BS Homez`;
         if (metaTitle.length > 65) {
@@ -158,16 +161,53 @@ Your responsibility:
         const baseDesc = `Explore ${name} in ${zone}, Bangalore. ${reraTag} ${propType.toLowerCase()} ${typeAction.toLowerCase()} with premium amenities and 0% buyer brokerage. Enquire with BS Homez.`;
         const metaDescription = baseDesc.length > 155 ? baseDesc.slice(0, 152) + '...' : baseDesc;
 
+        // Generate WCAG 2.2 Compliant Alt Tags for ALL images
+        const imageAltTexts: Record<string, string> = {};
+        const rawUrls: string[] = Array.isArray(p.imageUrls) ? p.imageUrls : [];
+        const primaryAlt = `${name} - Contemporary architectural exterior elevation of luxury ${propType.toLowerCase()} in ${zone}, Bangalore highlighting ${featuresSnippet}.`;
+
+        rawUrls.forEach((url: string, idx: number) => {
+          if (!url || typeof url !== 'string') return;
+          const cleanUrl = url.trim();
+          if (idx === 0) {
+            imageAltTexts[cleanUrl] = primaryAlt;
+          } else if (idx === 1) {
+            imageAltTexts[cleanUrl] = `${name} - Clubhouse and lifestyle recreational amenities view in ${zone}, Bangalore.`;
+          } else if (idx === 2) {
+            imageAltTexts[cleanUrl] = `${name} - Interior living space aesthetic and balcony architectural design in ${zone}, Bangalore.`;
+          } else if (idx === 3) {
+            imageAltTexts[cleanUrl] = `${name} - Master bedroom and spatial interior finishing in ${zone}, Bangalore.`;
+          } else {
+            imageAltTexts[cleanUrl] = `${name} - Architectural gallery photo #${idx + 1} showcasing ${propType.toLowerCase()} details in ${zone}, Bangalore.`;
+          }
+        });
+
+        if (p.mobileImageUrl && typeof p.mobileImageUrl === 'string') {
+          const mob = p.mobileImageUrl.trim();
+          if (!imageAltTexts[mob]) {
+            imageAltTexts[mob] = `${name} - Responsive mobile architectural view of luxury ${propType.toLowerCase()} residences in ${zone}, Bangalore.`;
+          }
+        }
+
+        if (p.floorPlanImageUrl && typeof p.floorPlanImageUrl === 'string') {
+          const fp = p.floorPlanImageUrl.trim();
+          if (!imageAltTexts[fp]) {
+            imageAltTexts[fp] = `${name} - Master unit architectural floor plan and dimensional layout in ${zone}, Bangalore.`;
+          }
+        }
+
         return {
           projectId: p.id || p.name,
           metaTitle,
           seoKeywords,
-          metaDescription
+          metaDescription,
+          imageAltText: primaryAlt,
+          imageAltTexts
         };
       };
 
       if (!apiKey) {
-        const results = projects.map(generateLocalSeo);
+        const results = projects.map(generateLocalSeoAndAltTags);
         return res.json({ success: true, count: results.length, results, source: 'algorithmic' });
       }
 
@@ -180,7 +220,7 @@ Your responsibility:
         }
       });
 
-      // Prepare project summaries for Gemini prompt
+      // Prepare rich project summaries including images for Gemini prompt
       const projectSummaries = projects.map((p: any, idx: number) => ({
         index: idx,
         id: p.id || p.name,
@@ -191,15 +231,21 @@ Your responsibility:
         type: p.type || 'Primary',
         price: p.price || '',
         reraNumber: p.reraNumber || '',
-        currentTitle: p.currentTitle || '',
-        currentKeywords: p.currentKeywords || []
+        features: Array.isArray(p.features) ? p.features.slice(0, 6) : [],
+        images: [
+          ...(Array.isArray(p.imageUrls) ? p.imageUrls : []).map((u: string, uIdx: number) => ({ url: u, role: uIdx === 0 ? 'Primary Elevation' : 'Gallery Asset' })),
+          ...(p.mobileImageUrl ? [{ url: p.mobileImageUrl, role: 'Mobile Banner' }] : []),
+          ...(p.floorPlanImageUrl ? [{ url: p.floorPlanImageUrl, role: 'Floor Plan' }] : [])
+        ]
       }));
 
-      const systemInstruction = `You are a Google Search Optimization (SEO) Master for BS Homez, a Bangalore luxury real estate firm.
-For each given real estate property, generate:
+      const systemInstruction = `You are a Google Search Optimization (SEO) & Web Accessibility (WCAG 2.2 Level A) Master for BS Homez, a Bangalore luxury real estate firm.
+For each real estate property provided, generate:
 1. metaTitle: Exact length between 35 and 65 characters. Must include project name, Bangalore corridor/zone, property type, and optionally "| BS Homez". High CTR.
-2. seoKeywords: Array of 6 to 10 high-intent keywords that actual home buyers and renters search for on Google (e.g. "[Project Name] Whitefield", "Buy 3 BHK in Whitefield", "RERA verified apartments Bangalore", "BS Homez").
+2. seoKeywords: Array of 6 to 10 high-intent keywords that actual home buyers and renters search for on Google.
 3. metaDescription: Exact length between 120 and 155 characters. Compelling, action-oriented, with 0% brokerage highlight and RERA verification.
+4. imageAltText: Descriptive, accessible alt text (50-120 chars) for the primary exterior elevation image.
+5. imageAltTexts: A JSON object mapping EACH provided image URL to an accessible, descriptive alt text tailored to its role (elevation, clubhouse, interiors, floor plan, mobile banner).
 
 Return a valid JSON array of objects strictly matching this shape:
 [
@@ -207,11 +253,15 @@ Return a valid JSON array of objects strictly matching this shape:
     "projectId": "id string",
     "metaTitle": "string (35-65 chars)",
     "seoKeywords": ["keyword1", "keyword2", ...],
-    "metaDescription": "string (120-155 chars)"
+    "metaDescription": "string (120-155 chars)",
+    "imageAltText": "string (50-120 chars)",
+    "imageAltTexts": {
+      "image_url": "descriptive alt text"
+    }
   }
 ]`;
 
-      const prompt = `Generate SEO meta titles, keywords, and descriptions for these ${projectSummaries.length} real estate projects:\n${JSON.stringify(projectSummaries, null, 2)}`;
+      const prompt = `Generate comprehensive SEO meta titles, descriptions, focus keywords, and accessible alt tags for ALL images for these ${projectSummaries.length} real estate projects:\n${JSON.stringify(projectSummaries, null, 2)}`;
 
       const response = await ai.models.generateContent({
         model: "gemini-3.8-flash",
@@ -228,22 +278,27 @@ Return a valid JSON array of objects strictly matching this shape:
         parsedResults = JSON.parse(rawText);
       } catch (parseErr) {
         console.warn("JSON parse error from Gemini batch SEO response, falling back to algorithmic generator:", parseErr);
-        parsedResults = projects.map(generateLocalSeo);
+        parsedResults = projects.map(generateLocalSeoAndAltTags);
       }
 
-      // Merge and ensure each project has valid data
+      // Merge and ensure each project and all its images have valid data
       const results = projects.map((p: any) => {
         const key = p.id || p.name;
         const matched = Array.isArray(parsedResults) ? parsedResults.find((r: any) => r.projectId === key || r.projectId === p.id || r.projectId === p.name) : null;
+        const fallback = generateLocalSeoAndAltTags(p);
+
         if (matched && matched.metaTitle && Array.isArray(matched.seoKeywords) && matched.seoKeywords.length > 0) {
+          const mergedAltTexts = { ...fallback.imageAltTexts, ...(matched.imageAltTexts || {}) };
           return {
             projectId: key,
             metaTitle: String(matched.metaTitle).trim(),
             seoKeywords: matched.seoKeywords.map((k: any) => String(k).trim()).filter(Boolean),
-            metaDescription: String(matched.metaDescription || generateLocalSeo(p).metaDescription).trim()
+            metaDescription: String(matched.metaDescription || fallback.metaDescription).trim(),
+            imageAltText: String(matched.imageAltText || fallback.imageAltText).trim(),
+            imageAltTexts: mergedAltTexts
           };
         }
-        return generateLocalSeo(p);
+        return fallback;
       });
 
       return res.json({ success: true, count: results.length, results, source: 'gemini-3.8-flash' });
@@ -253,16 +308,33 @@ Return a valid JSON array of objects strictly matching this shape:
         const name = p.name || "Curated Property";
         const zone = p.zone || "Bangalore";
         const propType = p.propertyType || "Apartment";
+        const features = Array.isArray(p.features) ? p.features.slice(0, 3).join(', ') : 'modern amenities';
+        const primaryAlt = `${name} - Luxury ${propType.toLowerCase()} architectural view in ${zone}, Bangalore featuring ${features}.`;
+        
+        const imageAltTexts: Record<string, string> = {};
+        (Array.isArray(p.imageUrls) ? p.imageUrls : []).forEach((u: string, idx: number) => {
+          if (u && typeof u === 'string') {
+            imageAltTexts[u.trim()] = idx === 0 ? primaryAlt : `${name} - Architectural gallery photo #${idx + 1} in ${zone}, Bangalore.`;
+          }
+        });
+        if (p.mobileImageUrl) imageAltTexts[p.mobileImageUrl.trim()] = `${name} - Mobile banner view in ${zone}.`;
+        if (p.floorPlanImageUrl) imageAltTexts[p.floorPlanImageUrl.trim()] = `${name} - Architectural layout floor plan.`;
+
         return {
           projectId: p.id || p.name,
           metaTitle: `${name} | ${propType} in ${zone} | BS Homez`.slice(0, 65),
           seoKeywords: [name, `${name} ${zone}`, `Buy ${propType} ${zone}`, 'BS Homez Bangalore', 'RERA Approved Apartments', '0% Brokerage'],
-          metaDescription: `Discover ${name} in ${zone}, Bangalore. Verified luxury residences with direct developer pricing and 0% brokerage. Enquire with BS Homez.`.slice(0, 155)
+          metaDescription: `Discover ${name} in ${zone}, Bangalore. Verified luxury residences with direct developer pricing and 0% brokerage. Enquire with BS Homez.`.slice(0, 155),
+          imageAltText: primaryAlt,
+          imageAltTexts
         };
       });
       return res.json({ success: true, count: results.length, results, source: 'fallback' });
     }
-  });
+  };
+
+  app.post("/api/gemini/batch-seo-enhance", handleBatchSeoEnhanceRoute);
+  app.post("/api/gemini/bulk-fix-all-seo", handleBatchSeoEnhanceRoute);
 
   // Online Project Intelligence Lookup Endpoint (Auto-fetch Writeup, Floor Plan, Amenities, RERA, Approval Body, Location, Property Type)
   app.post("/api/projects/lookup", async (req, res) => {

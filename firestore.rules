@@ -50,6 +50,7 @@ service cloud.firestore {
           'carCloseParking', 'balcony', 'comments', 'handedOverDate',
           'registrationStatus', 'approvedAuthority', 'seoKeywords', 'ogImage',
           'metaTitle', 'metaDescription', 'canonicalUrl',
+          'imageAltText', 'imageAltTexts', 'seoTitle', 'seoDescription', 'seoLastSyncedAt', 'seoLastEdited', 'seoRevisions',
           'mobileImageUrl', 'mobileVideoUrl', 'unitsRemaining', 'isInventorySoldOut',
           'organicViews', 'createdAt', 'updatedAt'
         ])
@@ -120,6 +121,13 @@ service cloud.firestore {
              (!('metaDescription' in data) || (data.metaDescription is string && data.metaDescription.size() <= 1000)) &&
              (!('canonicalUrl' in data) || (data.canonicalUrl is string && data.canonicalUrl.size() <= 500)) &&
              (!('ogImage' in data) || (data.ogImage is string && data.ogImage.size() <= 900000)) &&
+              (!('imageAltText' in data) || (data.imageAltText is string && data.imageAltText.size() <= 1000)) &&
+              (!('imageAltTexts' in data) || data.imageAltTexts is map) &&
+              (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 300)) &&
+              (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 1000)) &&
+              (!('seoLastSyncedAt' in data) || (data.seoLastSyncedAt is string && data.seoLastSyncedAt.size() <= 100)) &&
+              (!('seoLastEdited' in data) || (data.seoLastEdited is string && data.seoLastEdited.size() <= 100)) &&
+              (!('seoRevisions' in data) || (data.seoRevisions is list && data.seoRevisions.size() <= 50)) &&
              (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
              (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 1000)) &&
              (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
@@ -147,7 +155,7 @@ service cloud.firestore {
              data.projectId.size() <= 128 &&
              (!('interestedProjects' in data) || (data.interestedProjects is string && data.interestedProjects.size() <= 300)) &&
              (!('preferredLocation' in data) || (data.preferredLocation is string && data.preferredLocation.size() <= 200)) &&
-             data.type in ['WhatsApp', 'Email', 'Form', 'AI Chat', 'Download Brochure'];
+             data.type in ['WhatsApp', 'Email', 'Form', 'AI Chat', 'Download Brochure', 'Site Visit'];
      }
 
     // Opportunities: Publicly writable (create only), admin readable

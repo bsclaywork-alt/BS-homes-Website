@@ -87,6 +87,8 @@ export interface Project {
   seoTitle?: string;
   seoDescription?: string;
   ogImage?: string;
+  imageAltText?: string;
+  imageAltTexts?: Record<string, string>;
   canonicalUrl?: string;
   seoKeywords?: string[];
   seoLastSyncedAt?: string;
@@ -121,7 +123,7 @@ export interface Enquiry {
   preferredLocation?: string;
   preferredContactTime?: string;
   message: string;
-  type: 'WhatsApp' | 'Email' | 'Form' | 'AI Chat' | 'Download Brochure';
+  type: 'WhatsApp' | 'Email' | 'Form' | 'AI Chat' | 'Download Brochure' | 'Site Visit';
   enquiryCategory?: 'Primary' | 'Rental' | 'Resale' | 'Home Loan';
   propertyCategory?: 'Primary' | 'Resale' | 'Rent' | 'Home Loan';
   intentSentiment?: 'High' | 'Medium' | 'Low';

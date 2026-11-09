@@ -22,8 +22,10 @@ import {
   Calendar
 } from 'lucide-react';
 import { Project, SeoRevisionRecord } from '../types';
-import { compileProjectImageAltAudit, downloadSeoAuditCsv } from '../lib/seoAuditReport';
+import { compileProjectImageAltAudit, downloadSeoAuditCsv, generateRecommendedAltText } from '../lib/seoAuditReport';
 import { SeoAuditReportModal } from './SeoAuditReportModal';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 
 interface PropertyMetaDataModalProps {
   isOpen: boolean;
@@ -33,10 +35,11 @@ interface PropertyMetaDataModalProps {
   onSaveMetaData: (
     projectId: string, 
     meta: { 
-      metaTitle: string; 
-      metaDescription: string; 
-      seoKeywords: string[];
+      metaTitle?: string; 
+      metaDescription?: string; 
+      seoKeywords?: string[];
       imageAltText?: string;
+      imageAltTexts?: Record<string, string>;
       seoLastEdited?: string;
       seoRevisions?: SeoRevisionRecord[];
     }
@@ -68,7 +71,9 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
+  const [activeTab, setActiveTab] = useState<'editor' | 'accessibility' | 'preview'>('editor');
+  const [imageAltTags, setImageAltTags] = useState<Record<string, string>>({});
+  const [isSavingAltTags, setIsSavingAltTags] = useState(false);
 
   // Revision History & Last Edited States
   const [revisions, setRevisions] = useState<SeoRevisionRecord[]>([]);
@@ -81,6 +86,56 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
       p => p.id === selectedProjectId || p.name === selectedProjectId
     ) || initialProject || projects[0] || null;
   }, [projects, selectedProjectId, initialProject]);
+
+  // List of all images for the selected project
+  interface ProjectImageItem {
+    id: string;
+    url: string;
+    role: 'Primary Elevation' | 'Gallery Asset' | 'Mobile Banner' | 'Floor Plan';
+    index: number;
+  }
+
+  const allProjectImages = React.useMemo<ProjectImageItem[]>(() => {
+    if (!currentProject) return [];
+    const list: ProjectImageItem[] = [];
+    const seenUrls = new Set<string>();
+
+    if (Array.isArray(currentProject.imageUrls)) {
+      currentProject.imageUrls.forEach((url, idx) => {
+        if (url && typeof url === 'string' && url.trim() && !seenUrls.has(url.trim())) {
+          seenUrls.add(url.trim());
+          list.push({
+            id: `img-${idx}`,
+            url: url.trim(),
+            role: idx === 0 ? 'Primary Elevation' : 'Gallery Asset',
+            index: idx
+          });
+        }
+      });
+    }
+
+    if (currentProject.mobileImageUrl && typeof currentProject.mobileImageUrl === 'string' && currentProject.mobileImageUrl.trim() && !seenUrls.has(currentProject.mobileImageUrl.trim())) {
+      seenUrls.add(currentProject.mobileImageUrl.trim());
+      list.push({
+        id: `img-mob`,
+        url: currentProject.mobileImageUrl.trim(),
+        role: 'Mobile Banner',
+        index: list.length
+      });
+    }
+
+    if (currentProject.floorPlanImageUrl && typeof currentProject.floorPlanImageUrl === 'string' && currentProject.floorPlanImageUrl.trim() && !seenUrls.has(currentProject.floorPlanImageUrl.trim())) {
+      seenUrls.add(currentProject.floorPlanImageUrl.trim());
+      list.push({
+        id: `img-fp`,
+        url: currentProject.floorPlanImageUrl.trim(),
+        role: 'Floor Plan',
+        index: list.length
+      });
+    }
+
+    return list;
+  }, [currentProject]);
 
   // Sync state whenever modal opens or currentProject changes
   useEffect(() => {
@@ -114,10 +169,23 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
         ]);
       }
 
-      setImageAltText(
-        (currentProject as any).imageAltText || 
-        `${currentProject.name} architectural exterior view - luxury ${currentProject.propertyType.toLowerCase()} in ${currentProject.location}, Bangalore`
-      );
+      const defaultAlt = (currentProject as any).imageAltText || 
+        `${currentProject.name} architectural exterior view - luxury ${currentProject.propertyType.toLowerCase()} in ${currentProject.location}, Bangalore`;
+      setImageAltText(defaultAlt);
+
+      // Populate imageAltTags map for Image Accessibility tab
+      const initialTagsMap: Record<string, string> = {};
+      const existingAltTexts = (currentProject as any).imageAltTexts || {};
+      allProjectImages.forEach((img, idx) => {
+        if (existingAltTexts[img.url]) {
+          initialTagsMap[img.url] = existingAltTexts[img.url];
+        } else if (idx === 0) {
+          initialTagsMap[img.url] = (currentProject as any).imageAltText || defaultAlt;
+        } else {
+          initialTagsMap[img.url] = '';
+        }
+      });
+      setImageAltTags(initialTagsMap);
 
       // Load Revision History & Last Edited Timestamp
       let loadedRevisions: SeoRevisionRecord[] = [];
@@ -506,6 +574,71 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
     }
   };
 
+  // Requirement: Save Alt Tags button that updates Firestore
+  const handleSaveAltTags = async () => {
+    if (!currentProject) return;
+    setIsSavingAltTags(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const targetId = currentProject.id || currentProject.name;
+      const nowIso = new Date().toISOString();
+
+      // Primary image alt text
+      const primaryImg = allProjectImages[0];
+      const primaryAlt = (primaryImg && imageAltTags[primaryImg.url]) || imageAltText;
+
+      // 1. Direct update to Firestore
+      if (targetId && !targetId.startsWith('curated_') && !targetId.startsWith('local_')) {
+        try {
+          await updateDoc(doc(db, 'projects', targetId), {
+            imageAltText: primaryAlt,
+            imageAltTexts: imageAltTags,
+            updatedAt: nowIso
+          });
+        } catch (fErr) {
+          handleFirestoreError(fErr, OperationType.UPDATE, `projects/${targetId}`);
+        }
+      }
+
+      // 2. Update parent state
+      await onSaveMetaData(targetId, {
+        ...currentProject,
+        imageAltText: primaryAlt,
+        imageAltTexts: imageAltTags,
+        seoLastEdited: nowIso
+      });
+
+      setImageAltText(primaryAlt);
+      setSuccessMessage(`Successfully updated and saved alt tags for ${allProjectImages.length} images to Firestore!`);
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (err: any) {
+      console.error('Error saving alt tags:', err);
+      setErrorMessage(err?.message || 'Failed to save alt tags to Firestore. Please try again.');
+    } finally {
+      setIsSavingAltTags(false);
+    }
+  };
+
+  const handleAutoFillAllAltTags = () => {
+    if (!currentProject) return;
+    const nextTags = { ...imageAltTags };
+    let count = 0;
+    allProjectImages.forEach(img => {
+      if (!nextTags[img.url] || nextTags[img.url].trim().length < 5) {
+        nextTags[img.url] = generateRecommendedAltText(currentProject, img.role, img.index);
+        count++;
+      }
+    });
+    setImageAltTags(nextTags);
+    if (allProjectImages[0] && nextTags[allProjectImages[0].url]) {
+      setImageAltText(nextTags[allProjectImages[0].url]);
+    }
+    setSuccessMessage(`Auto-filled recommended WCAG alt tags for ${count} images! Click 'Save Alt Tags' to commit to Firestore.`);
+    setTimeout(() => setSuccessMessage(null), 3500);
+  };
+
   // Manual Save Handler
   const handleSave = async () => {
     if (!currentProject) return;
@@ -731,6 +864,19 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
             </button>
             <button
               type="button"
+              data-testid="image-accessibility-tab-btn"
+              onClick={() => setActiveTab('accessibility')}
+              className={`px-2.5 py-1 rounded-sm text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                activeTab === 'accessibility'
+                  ? 'bg-art-gold text-black font-black shadow-sm'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <ImageIcon size={11} />
+              <span>Image Accessibility ({allProjectImages.length})</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('preview')}
               className={`px-2.5 py-1 rounded-sm text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer ${
                 activeTab === 'preview'
@@ -839,7 +985,156 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
 
         {/* Main Body */}
         <div className="p-3 sm:p-4 overflow-y-auto space-y-3 flex-1">
-          {activeTab === 'editor' ? (
+          {activeTab === 'accessibility' ? (
+            /* Requirement: Image Accessibility Tab with list of images, inline input fields, and Save Alt Tags button */
+            <div className="space-y-4">
+              <div className="p-3 bg-gradient-to-r from-purple-950/40 via-black to-black border border-purple-500/30 rounded-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-purple-300 font-bold">
+                      WCAG 2.2 Level A Compliance
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-200 text-[8px] font-mono font-bold">
+                      Rule 1.1.1 Non-Text Content
+                    </span>
+                  </div>
+                  <h4 className="text-xs sm:text-sm font-serif italic text-white">
+                    Image Accessibility &amp; Screen Reader Manager ({allProjectImages.length} Images)
+                  </h4>
+                  <p className="text-[10px] text-white/60">
+                    Edit the descriptive alt text for each property image below. Accessible alt tags improve Google Image SEO rankings and screen reader clarity.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleAutoFillAllAltTags}
+                    className="px-2.5 py-1.5 rounded-sm bg-white/10 hover:bg-white/20 text-white font-mono font-bold text-[9px] uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all border border-white/15"
+                    title="Auto-fill recommended descriptive alt text for all images missing tags"
+                  >
+                    <Wand2 size={11} className="text-art-gold" />
+                    <span>Auto-Fill Missing</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isSavingAltTags}
+                    onClick={handleSaveAltTags}
+                    data-testid="save-alt-tags-btn"
+                    className="px-3.5 py-1.5 rounded-sm bg-gradient-to-r from-art-gold to-yellow-500 hover:from-white hover:to-white text-black font-black text-[9.5px] uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                    title="Save all image alt tags to Firestore"
+                  >
+                    {isSavingAltTags ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin text-black" />
+                        <span>Saving to Firestore...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save size={12} />
+                        <span>Save Alt Tags</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {allProjectImages.length === 0 ? (
+                <div className="p-8 text-center bg-black/40 border border-dashed border-white/15 rounded-md">
+                  <ImageIcon size={24} className="mx-auto text-white/30 mb-2" />
+                  <p className="text-xs text-white/60 font-serif italic">No images currently linked to {currentProject.name}.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {allProjectImages.map((img, idx) => {
+                    const currentVal = imageAltTags[img.url] ?? '';
+                    const isFilled = currentVal.trim().length > 0;
+                    return (
+                      <div
+                        key={img.id}
+                        data-testid={`image-accessibility-item-${idx}`}
+                        className={`p-3 rounded-md border transition-all flex flex-col md:flex-row items-start md:items-center gap-3.5 ${
+                          isFilled 
+                            ? 'bg-[#151515] border-white/15 hover:border-white/25' 
+                            : 'bg-amber-500/[0.04] border-amber-500/30'
+                        }`}
+                      >
+                        {/* Image Thumbnail Preview */}
+                        <div className="relative w-24 h-20 sm:w-28 sm:h-20 bg-black rounded overflow-hidden shrink-0 border border-white/10 group">
+                          <img
+                            src={img.url}
+                            alt={currentVal || `Image ${idx + 1}`}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                          <span className="absolute bottom-1 left-1 text-[8px] font-mono px-1.5 py-0.2 rounded bg-black/85 text-art-gold font-bold">
+                            #{idx + 1}
+                          </span>
+                        </div>
+
+                        {/* Inline Input Field & Metadata */}
+                        <div className="flex-1 w-full space-y-1.5">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-art-gold">
+                                {img.role}
+                              </span>
+                              {isFilled ? (
+                                <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-mono font-bold">
+                                  ✓ Configured
+                                </span>
+                              ) : (
+                                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8px] font-mono font-bold">
+                                  ⚠️ Missing Alt Tag
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[8.5px] font-mono text-white/50">
+                              {currentVal.length} chars (Optimal 40-125)
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={currentVal}
+                              data-testid={`image-alt-input-${idx}`}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setImageAltTags(prev => ({ ...prev, [img.url]: val }));
+                                if (idx === 0) {
+                                  setImageAltText(val);
+                                }
+                              }}
+                              placeholder={`Enter descriptive alt text for this ${img.role.toLowerCase()}...`}
+                              className="flex-1 bg-black/60 border border-white/20 focus:border-art-gold text-white text-xs px-3 py-1.5 rounded-sm outline-none font-sans"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const recommended = generateRecommendedAltText(currentProject, img.role, img.index);
+                                setImageAltTags(prev => ({ ...prev, [img.url]: recommended }));
+                                if (idx === 0) {
+                                  setImageAltText(recommended);
+                                }
+                              }}
+                              className="px-2.5 py-1.5 bg-white/10 hover:bg-art-gold hover:text-black text-white text-[9px] font-mono font-bold rounded-sm border border-white/20 transition-all shrink-0 cursor-pointer"
+                              title="Auto-fill recommended WCAG alt text"
+                            >
+                              Recommend
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : activeTab === 'editor' ? (
             <>
               {/* Field 1: Meta Title */}
               <div className="space-y-1">
@@ -1108,24 +1403,46 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
               Cancel
             </button>
 
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving || isAutoGeneratingAll}
-              className="px-5 py-2 rounded-sm bg-art-gold hover:bg-white text-black font-extrabold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-lg disabled:opacity-50"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 size={13} className="animate-spin" />
-                  <span>Saving to Listing...</span>
-                </>
-              ) : (
-                <>
-                  <Save size={13} />
-                  <span>Save Meta Data</span>
-                </>
-              )}
-            </button>
+            {activeTab === 'accessibility' ? (
+              <button
+                type="button"
+                data-testid="save-alt-tags-footer-btn"
+                onClick={handleSaveAltTags}
+                disabled={isSavingAltTags}
+                className="px-5 py-2 rounded-sm bg-gradient-to-r from-art-gold to-yellow-500 hover:from-white hover:to-white text-black font-extrabold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-lg disabled:opacity-50"
+              >
+                {isSavingAltTags ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin text-black" />
+                    <span>Saving Alt Tags to Firestore...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={13} />
+                    <span>Save Alt Tags</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving || isAutoGeneratingAll}
+                className="px-5 py-2 rounded-sm bg-art-gold hover:bg-white text-black font-extrabold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-lg disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Saving to Listing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={13} />
+                    <span>Save Meta Data</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 

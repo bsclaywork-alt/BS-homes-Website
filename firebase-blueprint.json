@@ -61,6 +61,10 @@
         "approvedAuthority": { "type": "string", "description": "Planning authority approval" },
         "seoKeywords": { "type": "array", "items": { "type": "string" }, "description": "SEO keywords" },
         "ogImage": { "type": "string", "description": "Social share preview card image" },
+        "imageAltText": { "type": "string", "description": "Accessible primary image alt text" },
+        "imageAltTexts": { "type": "object", "description": "Dictionary of image URLs to custom alt text" },
+        "metaTitle": { "type": "string", "description": "SEO Meta Title" },
+        "metaDescription": { "type": "string", "description": "SEO Meta Description" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
@@ -79,7 +83,7 @@
         "interestedProjects": { "type": "string" },
         "preferredLocation": { "type": "string" },
         "message": { "type": "string" },
-        "type": { "type": "string", "enum": ["WhatsApp", "Email", "Form", "AI Chat", "Download Brochure"] },
+        "type": { "type": "string", "enum": ["WhatsApp", "Email", "Form", "AI Chat", "Download Brochure", "Site Visit"] },
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["customerName", "customerPhone", "projectName"]
