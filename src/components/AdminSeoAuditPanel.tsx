@@ -18,9 +18,22 @@ import {
   MapPin,
   Building2,
   Wand2,
-  Info
+  Info,
+  BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  Cell 
+} from 'recharts';
+
 import { Project } from '../types';
 import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from '../lib/seoAuditReport';
 import { SeoAuditReportModal } from './SeoAuditReportModal';
@@ -54,6 +67,7 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'Primary' | 'Rental' | 'Resale'>('all');
   const [healthFilter, setHealthFilter] = useState<'all' | 'needs_attention' | 'optimized' | 'dirty_only'>('all');
   const [zoneFilter, setZoneFilter] = useState<string>('all');
+  const [chartMode, setChartMode] = useState<'overall' | 'by_category'>('overall');
   
   const [savingId, setSavingId] = useState<string | null>(null);
   const [isBulkSaving, setIsBulkSaving] = useState(false);
@@ -614,6 +628,72 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
       dirtyCount
     };
   }, [validProjects, drafts]);
+  // Data for Recharts Bar Chart: Needs Attention vs Optimized
+  const overallChartData = useMemo(() => {
+    return [
+      {
+        name: 'Needs Attention',
+        statusKey: 'needs_attention' as const,
+        count: stats.needsAttentionCount,
+        fill: '#f59e0b',
+        percentage: stats.total > 0 ? Math.round((stats.needsAttentionCount / stats.total) * 100) : 0,
+        tip: 'Missing optimal SERP title length, description, or images'
+      },
+      {
+        name: 'Optimized',
+        statusKey: 'optimized' as const,
+        count: stats.optimizedCount,
+        fill: '#10b981',
+        percentage: stats.total > 0 ? Math.round((stats.optimizedCount / stats.total) * 100) : 0,
+        tip: 'Optimal title (30-70 chars), description (110-165 chars), and visual assets'
+      }
+    ];
+  }, [stats]);
+
+  const categoryChartData = useMemo(() => {
+    const counts = {
+      Primary: { needs_attention: 0, optimized: 0, total: 0 },
+      Rental: { needs_attention: 0, optimized: 0, total: 0 },
+      Resale: { needs_attention: 0, optimized: 0, total: 0 }
+    };
+
+    validProjects.forEach(p => {
+      const row = getRowSeoData(p);
+      const catKey: 'Primary' | 'Rental' | 'Resale' = 
+        p.type === 'Rental' ? 'Rental' : p.type === 'Resale' ? 'Resale' : 'Primary';
+      
+      counts[catKey].total++;
+      if (row.health === 'optimized') {
+        counts[catKey].optimized++;
+      } else {
+        counts[catKey].needs_attention++;
+      }
+    });
+
+    return [
+      {
+        category: 'Primary (0% Fee)',
+        categoryKey: 'Primary',
+        needs_attention: counts.Primary.needs_attention,
+        optimized: counts.Primary.optimized,
+        total: counts.Primary.total
+      },
+      {
+        category: 'Rental Portfolios',
+        categoryKey: 'Rental',
+        needs_attention: counts.Rental.needs_attention,
+        optimized: counts.Rental.optimized,
+        total: counts.Rental.total
+      },
+      {
+        category: 'Verified Resale',
+        categoryKey: 'Resale',
+        needs_attention: counts.Resale.needs_attention,
+        optimized: counts.Resale.optimized,
+        total: counts.Resale.total
+      }
+    ];
+  }, [validProjects, drafts]);
 
   // Filtered project list for displayed rows
   const displayedProjects = useMemo(() => {
@@ -637,14 +717,18 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
       if (healthFilter === 'needs_attention' && row.health !== 'needs_attention') return false;
       if (healthFilter === 'dirty_only' && !row.isDirty) return false;
 
-      // Search Query
+      // Search Query: Filter by project name, corridor, or builder name
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const match = 
           (p.name || '').toLowerCase().includes(q) ||
           (p.zone || '').toLowerCase().includes(q) ||
+          ((p as any).corridor || '').toLowerCase().includes(q) ||
           (p.location || '').toLowerCase().includes(q) ||
+          (p.locationTarget || '').toLowerCase().includes(q) ||
           (p.builderName || '').toLowerCase().includes(q) ||
+          ((p as any).builder || '').toLowerCase().includes(q) ||
+          (p.propertyType || '').toLowerCase().includes(q) ||
           row.metaTitle.toLowerCase().includes(q) ||
           row.metaDescription.toLowerCase().includes(q) ||
           row.seoKeywords.toLowerCase().includes(q);
@@ -775,22 +859,257 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
         </div>
       </div>
 
+      {/* Visual Analytics: Needs Attention vs Optimized Bar Chart (Recharts) */}
+      <div 
+        data-testid="seo-audit-barchart-container"
+        className="bg-[#111111] border border-white/10 rounded-sm p-5 shadow-xl relative overflow-hidden"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-white/10">
+          <div>
+            <div className="flex items-center gap-2">
+              <BarChart3 size={16} className="text-art-gold" />
+              <h3 className="text-base font-serif italic text-white font-bold">
+                SEO Audit Health Distribution: <span className="not-italic text-amber-400">Needs Attention</span> vs. <span className="not-italic text-emerald-400">Optimized</span>
+              </h3>
+            </div>
+            <p className="text-xs text-white/60 font-sans mt-0.5">
+              Live portfolio compliance analysis against Google SERP length &amp; visual metadata standards. Click any bar to filter the audit table below.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {healthFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setHealthFilter('all')}
+                className="px-2.5 py-1 text-[9px] font-mono uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white rounded transition-colors flex items-center gap-1 cursor-pointer"
+                title="Clear health filter"
+              >
+                <X size={11} />
+                <span>Filter: {healthFilter === 'needs_attention' ? 'Needs Attention' : healthFilter === 'optimized' ? 'Optimized' : healthFilter} (Clear)</span>
+              </button>
+            )}
+
+            <div className="flex items-center bg-black/60 border border-white/15 p-0.5 rounded-sm">
+              <button
+                type="button"
+                data-testid="chart-mode-overall-btn"
+                onClick={() => setChartMode('overall')}
+                className={`px-2.5 py-1 text-[9px] font-mono font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer ${
+                  chartMode === 'overall' 
+                    ? 'bg-art-gold text-black shadow-sm' 
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                Overall View
+              </button>
+              <button
+                type="button"
+                data-testid="chart-mode-category-btn"
+                onClick={() => setChartMode('by_category')}
+                className={`px-2.5 py-1 text-[9px] font-mono font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer ${
+                  chartMode === 'by_category' 
+                    ? 'bg-art-gold text-black shadow-sm' 
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                By Category
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Recharts Bar Chart Container */}
+        <div className="w-full h-[240px]" data-testid="seo-health-chart">
+          <ResponsiveContainer width="100%" height="100%">
+            {chartMode === 'overall' ? (
+              <BarChart data={overallChartData} margin={{ top: 15, right: 25, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#737373" 
+                  tick={{ fill: '#d4d4d4', fontSize: 11, fontFamily: 'monospace' }} 
+                />
+                <YAxis 
+                  allowDecimals={false} 
+                  stroke="#737373" 
+                  tick={{ fill: '#888888', fontSize: 10, fontFamily: 'monospace' }} 
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-[#141414] border border-white/20 p-3 rounded-sm shadow-2xl text-xs font-mono">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.fill }} />
+                            <span className="font-bold text-white uppercase">{data.name}</span>
+                          </div>
+                          <p className="text-white text-sm font-bold">{data.count} Projects ({data.percentage}%)</p>
+                          <p className="text-[10px] text-white/50 mt-1">{data.tip}</p>
+                          <p className="text-[9px] text-art-gold/90 mt-1.5 italic">👉 Click bar to filter table below</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }} 
+                />
+                <Bar 
+                  dataKey="count" 
+                  radius={[4, 4, 0, 0]} 
+                  cursor="pointer"
+                  onClick={(entry: any) => {
+                    const key = entry?.statusKey || entry?.payload?.statusKey;
+                    if (key) {
+                      setHealthFilter(key);
+                    }
+                  }}
+                >
+                  {overallChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            ) : (
+              <BarChart data={categoryChartData} margin={{ top: 15, right: 25, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
+                <XAxis 
+                  dataKey="category" 
+                  stroke="#737373" 
+                  tick={{ fill: '#d4d4d4', fontSize: 11, fontFamily: 'monospace' }} 
+                />
+                <YAxis 
+                  allowDecimals={false} 
+                  stroke="#737373" 
+                  tick={{ fill: '#888888', fontSize: 10, fontFamily: 'monospace' }} 
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-[#141414] border border-white/20 p-3 rounded-sm shadow-2xl text-xs font-mono">
+                          <p className="font-bold text-white mb-2">{label}</p>
+                          {payload.map((entry: any, index: number) => (
+                            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-[11px] mb-1">
+                              <span className="flex items-center gap-1.5" style={{ color: entry.color }}>
+                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                {entry.name}:
+                              </span>
+                              <span className="font-bold text-white">{entry.value}</span>
+                            </div>
+                          ))}
+                          <p className="text-[9px] text-white/40 border-t border-white/10 pt-1 mt-1">
+                            Total: {payload[0]?.payload?.total} listings
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '10px', fontSize: '11px', fontFamily: 'monospace' }} 
+                />
+                <Bar 
+                  dataKey="needs_attention" 
+                  name="Needs Attention" 
+                  fill="#f59e0b" 
+                  radius={[4, 4, 0, 0]} 
+                  cursor="pointer"
+                  onClick={() => setHealthFilter('needs_attention')}
+                />
+                <Bar 
+                  dataKey="optimized" 
+                  name="Optimized" 
+                  fill="#10b981" 
+                  radius={[4, 4, 0, 0]} 
+                  cursor="pointer"
+                  onClick={() => setHealthFilter('optimized')}
+                />
+              </BarChart>
+            )}
+          </ResponsiveContainer>
+        </div>
+
+        {/* Bottom Quick-Action Filter Bar */}
+        <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono">
+          <div className="flex items-center gap-3 text-white/60">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span>Needs Attention: <strong className="text-amber-400">{stats.needsAttentionCount}</strong> ({stats.total > 0 ? Math.round((stats.needsAttentionCount / stats.total) * 100) : 0}%)</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>Optimized: <strong className="text-emerald-400">{stats.optimizedCount}</strong> ({stats.total > 0 ? Math.round((stats.optimizedCount / stats.total) * 100) : 0}%)</span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-white/40">Quick Filter:</span>
+            <button
+              type="button"
+              onClick={() => setHealthFilter('needs_attention')}
+              className={`px-2 py-0.5 rounded text-[9px] border transition-all cursor-pointer ${
+                healthFilter === 'needs_attention' 
+                  ? 'bg-amber-500 text-black border-amber-400 font-bold' 
+                  : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+              }`}
+            >
+              Filter Needs Attention ({stats.needsAttentionCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setHealthFilter('optimized')}
+              className={`px-2 py-0.5 rounded text-[9px] border transition-all cursor-pointer ${
+                healthFilter === 'optimized' 
+                  ? 'bg-emerald-500 text-black border-emerald-400 font-bold' 
+                  : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+              }`}
+            >
+              Filter Optimized ({stats.optimizedCount})
+            </button>
+            {healthFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setHealthFilter('all')}
+                className="px-2 py-0.5 rounded text-[9px] bg-white/10 text-white hover:bg-white/20 border border-white/20 transition-all cursor-pointer"
+              >
+                Show All
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Bulk Management Toolbar: Search, Filters & Batch Triggers */}
       <div className="p-4 sm:p-5 bg-[#141414] border border-white/10 rounded-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Search Input */}
-        <div className="relative flex-1 min-w-[240px]">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+        {/* Search Input Field */}
+        <div className="relative flex-1 min-w-[280px]">
+          <label htmlFor="seo-audit-search-input" className="sr-only">
+            Filter project list by project name, corridor, or builder name
+          </label>
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-art-gold/80 pointer-events-none" />
           <input
+            id="seo-audit-search-input"
+            name="seo-audit-search-input"
             type="text"
+            data-testid="seo-audit-search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by project name, developer, zone, or keyword..."
-            className="w-full pl-9 pr-4 py-2 bg-black/60 border border-white/15 rounded-sm text-xs text-white placeholder-white/35 focus:outline-none focus:border-art-gold font-mono"
+            placeholder="Search by project name, corridor, or builder name..."
+            aria-label="Search by project name, corridor, or builder name"
+            className="w-full pl-9 pr-9 py-2 bg-black/60 border border-white/15 focus:border-art-gold rounded-sm text-xs text-white placeholder-white/40 focus:outline-none font-mono transition-colors shadow-inner"
           />
           {searchQuery && (
             <button
+              type="button"
+              data-testid="clear-seo-search-btn"
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-1 rounded transition-colors cursor-pointer"
+              aria-label="Clear search query"
+              title="Clear search query"
             >
               <X size={13} />
             </button>
@@ -905,9 +1224,24 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
         </div>
       </div>
 
-      {/* Showing count indicator */}
-      <div className="flex items-center justify-between text-xs font-mono text-white/50 px-1">
-        <span>Showing {displayedProjects.length} of {validProjects.length} portfolio properties</span>
+      {/* Showing count indicator and active search status */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs font-mono text-white/50 px-1 gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span>Showing {displayedProjects.length} of {validProjects.length} portfolio properties</span>
+          {searchQuery.trim() && (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-art-gold/15 text-art-gold border border-art-gold/30 text-[11px]">
+              <span>Filter: "{searchQuery.trim()}"</span>
+              <button 
+                type="button" 
+                onClick={() => setSearchQuery('')}
+                className="hover:text-white cursor-pointer ml-1"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            </span>
+          )}
+        </div>
         {stats.dirtyCount > 0 && (
           <span className="text-art-gold font-bold">● {stats.dirtyCount} unsaved projects in memory</span>
         )}
@@ -918,7 +1252,11 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
         {displayedProjects.length === 0 ? (
           <div className="p-16 text-center bg-[#111111] border border-dashed border-white/15 rounded-sm space-y-2">
             <Search size={28} className="mx-auto text-white/30" />
-            <p className="text-sm text-white/60 font-serif italic">No portfolio projects match your active search or filters.</p>
+            <p className="text-sm text-white/60 font-serif italic">
+              {searchQuery.trim()
+                ? `No portfolio projects found matching "${searchQuery.trim()}". Try searching by another project name, corridor, or builder name.`
+                : 'No portfolio projects match your active search or filters.'}
+            </p>
             <button
               onClick={() => {
                 setSearchQuery('');
@@ -928,7 +1266,7 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
               }}
               className="text-xs font-mono text-art-gold underline cursor-pointer hover:text-white"
             >
-              Reset all filters
+              Reset all filters & search
             </button>
           </div>
         ) : (

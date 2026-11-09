@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
@@ -10,7 +10,12 @@ import {
   CheckCircle2, 
   Calendar, 
   MapPin, 
-  Lock 
+  Lock,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Maximize2,
+  Move
 } from 'lucide-react';
 import { Project } from '../types';
 
@@ -20,6 +25,7 @@ interface MediaViewerModalProps {
   project?: Project | null;
   isAdmin?: boolean;
   onEnquire?: (project: Project) => void;
+  initialImageIndex?: number;
 }
 
 export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
@@ -27,17 +33,30 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
   onClose,
   project,
   isAdmin = false,
-  onEnquire
+  onEnquire,
+  initialImageIndex = 0
 }) => {
-  // Unconditionally call all React hooks at the top of the component (Rules of Hooks)
   type MediaTab = 'photos' | 'video';
   const [activeTab, setActiveTab] = useState<MediaTab>('photos');
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(initialImageIndex);
+  const [slideDirection, setSlideDirection] = useState<'next' | 'prev' | null>(null);
 
-  // Derive media info safely with optional chaining
+  // Zoom & Pan state for inspecting resale & rental property photos
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef<{ x: number; y: number; panX: number; panY: number }>({ x: 0, y: 0, panX: 0, panY: 0 });
+
+  // Native touch gesture tracking for mobile swipe navigation
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const touchDeltaRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [swipeOffset, setSwipeOffset] = useState<number>(0);
+
+  // Derive media info safely
   const isPrimary = project
     ? project.type === 'Primary' || project.type === 'Primary Sale' || (!project.type && project.type !== 'Rental' && project.type !== 'Resale')
     : false;
+  const isRentalOrResale = project?.type === 'Rental' || project?.type === 'Resale';
   const canViewImages = !isPrimary || isAdmin;
   const rawImages = (project?.imageUrls || []).filter(Boolean);
   const images = canViewImages ? rawImages : [];
@@ -49,34 +68,175 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
     const hasPhotos = canViewImages && rawImages.length > 0;
     const hasVideo = Boolean(videoUrl);
     setActiveTab(hasPhotos ? 'photos' : hasVideo ? 'video' : 'photos');
-    setCurrentImageIndex(0);
-  }, [isOpen, project?.id, project?.name, isAdmin]);
+    setCurrentImageIndex(initialImageIndex || 0);
+    setZoomLevel(1);
+    setPan({ x: 0, y: 0 });
+    setSwipeOffset(0);
+  }, [isOpen, project?.id, project?.name, isAdmin, initialImageIndex]);
 
-  // Listen for Escape key to easily close popup
+  // Listen for Escape key to close popup, and arrow keys for keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
+      } else if (e.key === 'ArrowLeft' && activeTab === 'photos' && images.length > 1) {
+        handlePrev();
+      } else if (e.key === 'ArrowRight' && activeTab === 'photos' && images.length > 1) {
+        handleNext();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, activeTab, images.length, currentImageIndex]);
 
-  // Early return ONLY after all hooks have been unconditionally invoked
   if (!isOpen || !project) return null;
+
+  // Reset zoom & pan when switching images
+  const resetZoomAndPan = () => {
+    setZoomLevel(1);
+    setPan({ x: 0, y: 0 });
+  };
 
   const handlePrev = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (images.length === 0) return;
+    resetZoomAndPan();
+    setSlideDirection('prev');
     setCurrentImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleNext = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (images.length === 0) return;
+    resetZoomAndPan();
+    setSlideDirection('next');
     setCurrentImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  // Zoom controls
+  const handleToggleZoom = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (zoomLevel > 1) {
+      resetZoomAndPan();
+    } else {
+      setZoomLevel(2);
+      setPan({ x: 0, y: 0 });
+    }
+  };
+
+  const handleZoomIn = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setZoomLevel(prev => Math.min(3, Math.round((prev + 0.5) * 10) / 10));
+  };
+
+  const handleZoomOut = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setZoomLevel(prev => {
+      const next = Math.max(1, Math.round((prev - 0.5) * 10) / 10);
+      if (next === 1) setPan({ x: 0, y: 0 });
+      return next;
+    });
+  };
+
+  // Double tap / double click to toggle zoom
+  const handleDoubleTap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleToggleZoom();
+  };
+
+  // Native Mobile Touch Handlers for swipe navigation & pinch/pan
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+      touchDeltaRef.current = { x: 0, y: 0 };
+
+      if (zoomLevel > 1) {
+        setIsPanning(true);
+        panStartRef.current = {
+          x: touch.clientX,
+          y: touch.clientY,
+          panX: pan.x,
+          panY: pan.y
+        };
+      }
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    touchDeltaRef.current = { x: deltaX, y: deltaY };
+
+    if (zoomLevel > 1) {
+      // Pan zoomed image
+      const moveX = touch.clientX - panStartRef.current.x;
+      const moveY = touch.clientY - panStartRef.current.y;
+      setPan({
+        x: panStartRef.current.panX + moveX,
+        y: panStartRef.current.panY + moveY
+      });
+    } else if (images.length > 1) {
+      // Horizontal swipe preview resistance
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setSwipeOffset(deltaX * 0.4);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (zoomLevel > 1) {
+      setIsPanning(false);
+    } else if (touchStartRef.current && images.length > 1) {
+      const { x: deltaX, y: deltaY } = touchDeltaRef.current;
+      const swipeThreshold = 45; // Minimum horizontal distance for native swipe
+      const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
+
+      if (isHorizontal && Math.abs(deltaX) > swipeThreshold) {
+        if (deltaX < 0) {
+          // Swiped left -> Next photo
+          handleNext();
+        } else {
+          // Swiped right -> Previous photo
+          handlePrev();
+        }
+      }
+    }
+    touchStartRef.current = null;
+    touchDeltaRef.current = { x: 0, y: 0 };
+    setSwipeOffset(0);
+  };
+
+  // Mouse pan handlers when zoomed in
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomLevel > 1) {
+      e.preventDefault();
+      setIsPanning(true);
+      panStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        panX: pan.x,
+        panY: pan.y
+      };
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isPanning && zoomLevel > 1) {
+      const moveX = e.clientX - panStartRef.current.x;
+      const moveY = e.clientY - panStartRef.current.y;
+      setPan({
+        x: panStartRef.current.panX + moveX,
+        y: panStartRef.current.panY + moveY
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isPanning) setIsPanning(false);
   };
 
   return (
@@ -119,6 +279,11 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
                 {isPrimary && !isAdmin && (
                   <span className="text-[9px] font-mono text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1">
                     <Lock size={10} /> Direct Builder Verified Mandate
+                  </span>
+                )}
+                {isRentalOrResale && (
+                  <span className="text-[9px] font-mono text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1 font-bold">
+                    <span>✓</span> Verified Physical Property Photos
                   </span>
                 )}
               </div>
@@ -166,39 +331,170 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
             </div>
           </div>
 
-          {/* Main Media Stage */}
-          <div className="relative flex-grow flex items-center justify-center bg-black min-h-[300px] sm:min-h-[460px] p-2 sm:p-6 overflow-hidden">
+          {/* Main Media Stage with Native Swipe Gestures & Normal / Zoom View */}
+          <div 
+            className="relative flex-grow flex items-center justify-center bg-black min-h-[320px] sm:min-h-[480px] p-2 sm:p-6 overflow-hidden select-none touch-pan-y"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            data-testid="swipeable-media-stage"
+          >
             {canViewImages && activeTab === 'photos' && images.length > 0 ? (
               <div className="relative w-full h-full flex flex-col items-center justify-center">
-                <div className="relative w-full max-h-[58vh] flex items-center justify-center">
-                  <div className="relative inline-block max-w-full">
-                    <img
-                      src={images[currentImageIndex]}
-                      alt={`${project.name} - Photo ${currentImageIndex + 1}`}
-                      className="max-h-[56vh] max-w-full object-contain rounded border border-white/10 shadow-2xl select-none"
-                    />
-                    {/* BS Homez Image Watermark */}
-                    <div className="pointer-events-none absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 bg-black/80 backdrop-blur-md rounded-sm border border-art-gold/40 text-white text-[9.5px] font-black tracking-widest font-mono shadow-2xl select-none">
-                      <span className="w-1.5 h-1.5 rounded-full bg-art-gold animate-pulse" />
-                      <span>BS Homez</span>
-                    </div>
+                
+                {/* Top Control Bar inside stage: Normal View Status & Zoom Controls */}
+                <div className="absolute top-2 left-2 right-2 z-40 flex items-center justify-between gap-2 pointer-events-none">
+                  {/* Left: View Mode Tag & Mobile swipe guidance */}
+                  <div className="pointer-events-auto flex items-center gap-1.5 flex-wrap">
+                    <span 
+                      className={`text-[9px] font-mono px-2 py-1 rounded border shadow-md font-bold flex items-center gap-1 backdrop-blur-md ${
+                        zoomLevel > 1 
+                          ? 'bg-art-gold text-black border-art-gold' 
+                          : 'bg-black/80 text-white/90 border-white/20'
+                      }`}
+                    >
+                      {zoomLevel > 1 ? (
+                        <>
+                          <Move size={10} />
+                          <span>Zoomed {Math.round(zoomLevel * 100)}% • Drag to Pan</span>
+                        </>
+                      ) : (
+                        <>
+                          <Maximize2 size={10} className="text-art-gold" />
+                          <span>Normal View (100%)</span>
+                        </>
+                      )}
+                    </span>
+                    {isRentalOrResale && zoomLevel === 1 && (
+                      <span className="hidden sm:inline-flex text-[8.5px] font-mono text-art-gold/90 bg-black/75 px-2 py-1 rounded border border-art-gold/30">
+                        Double-click or tap Zoom to inspect details
+                      </span>
+                    )}
                   </div>
-                  {/* Prev / Next Controls */}
+
+                  {/* Right: Interactive Zoom Buttons */}
+                  <div className="pointer-events-auto flex items-center bg-black/85 backdrop-blur-md border border-white/25 rounded-md p-0.5 shadow-2xl gap-1">
+                    <button
+                      type="button"
+                      onClick={handleToggleZoom}
+                      data-testid="zoom-toggle-btn"
+                      className={`px-2.5 py-1 text-[9px] font-mono font-bold uppercase rounded transition-all flex items-center gap-1 cursor-pointer ${
+                        zoomLevel > 1 
+                          ? 'bg-art-gold text-black shadow' 
+                          : 'bg-white/10 hover:bg-white/20 text-white'
+                      }`}
+                      title={zoomLevel > 1 ? "Reset to Normal Uncropped View" : "Zoom In (2x)"}
+                    >
+                      {zoomLevel > 1 ? <ZoomOut size={12} /> : <ZoomIn size={12} />}
+                      <span>{zoomLevel > 1 ? "Normal View" : "Zoom"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleZoomIn}
+                      disabled={zoomLevel >= 3}
+                      data-testid="zoom-in-btn"
+                      className="p-1 hover:bg-white/20 text-white rounded transition-colors disabled:opacity-30 cursor-pointer"
+                      title="Zoom In (+)"
+                    >
+                      <ZoomIn size={14} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleZoomOut}
+                      disabled={zoomLevel <= 1}
+                      data-testid="zoom-out-btn"
+                      className="p-1 hover:bg-white/20 text-white rounded transition-colors disabled:opacity-30 cursor-pointer"
+                      title="Zoom Out (-)"
+                    >
+                      <ZoomOut size={14} />
+                    </button>
+
+                    {zoomLevel > 1 && (
+                      <button
+                        type="button"
+                        onClick={resetZoomAndPan}
+                        data-testid="reset-zoom-btn"
+                        className="p-1 hover:bg-white/20 text-art-gold rounded transition-colors cursor-pointer"
+                        title="Reset to 100% Normal View"
+                      >
+                        <RotateCcw size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Primary Image Stage with Native Swipe & Zoom Transforms */}
+                <div className="relative w-full max-h-[58vh] flex items-center justify-center my-auto overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`img-stage-${currentImageIndex}`}
+                      initial={{ 
+                        opacity: 0, 
+                        x: slideDirection === 'next' ? 60 : slideDirection === 'prev' ? -60 : 0 
+                      }}
+                      animate={{ 
+                        opacity: 1, 
+                        x: swipeOffset 
+                      }}
+                      exit={{ 
+                        opacity: 0, 
+                        x: slideDirection === 'next' ? -60 : slideDirection === 'prev' ? 60 : 0 
+                      }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                      className="relative inline-block max-w-full max-h-[56vh]"
+                    >
+                      <div
+                        className={`relative overflow-hidden flex items-center justify-center rounded border border-white/10 shadow-2xl ${
+                          zoomLevel > 1 
+                            ? isPanning ? 'cursor-grabbing' : 'cursor-grab' 
+                            : 'cursor-zoom-in'
+                        }`}
+                        onDoubleClick={handleDoubleTap}
+                        style={{
+                          transform: `scale(${zoomLevel}) translate(${pan.x / zoomLevel}px, ${pan.y / zoomLevel}px)`,
+                          transformOrigin: 'center center',
+                          transition: isPanning ? 'none' : 'transform 0.2s ease-out'
+                        }}
+                      >
+                        <img
+                          src={images[currentImageIndex]}
+                          alt={`${project.name} - Photo ${currentImageIndex + 1}`}
+                          className="max-h-[56vh] max-w-full object-contain rounded select-none pointer-events-none"
+                          draggable={false}
+                        />
+
+                        {/* BS Homez Image Watermark */}
+                        <div className="pointer-events-none absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 bg-black/80 backdrop-blur-md rounded-sm border border-art-gold/40 text-white text-[9.5px] font-black tracking-widest font-mono shadow-2xl select-none">
+                          <span className="w-1.5 h-1.5 rounded-full bg-art-gold animate-pulse" />
+                          <span>BS Homez</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Desktop Prev / Next Arrow Controls (Discreet on desktop, mobile uses swipe gestures) */}
                   {images.length > 1 && (
                     <>
                       <button
                         type="button"
                         onClick={handlePrev}
-                        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2.5 sm:p-3 bg-black/80 hover:bg-white text-white hover:text-black rounded-full border border-white/30 transition-all cursor-pointer shadow-2xl hover:scale-110"
-                        title="Previous Photo"
+                        className="hidden md:flex absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2.5 sm:p-3 bg-black/80 hover:bg-white text-white hover:text-black rounded-full border border-white/30 transition-all cursor-pointer shadow-2xl hover:scale-110 z-40"
+                        title="Previous Photo (← key or swipe right)"
+                        aria-label="Previous Photo"
                       >
                         <ChevronLeft size={22} />
                       </button>
                       <button
                         type="button"
                         onClick={handleNext}
-                        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2.5 sm:p-3 bg-black/80 hover:bg-white text-white hover:text-black rounded-full border border-white/30 transition-all cursor-pointer shadow-2xl hover:scale-110"
-                        title="Next Photo"
+                        className="hidden md:flex absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2.5 sm:p-3 bg-black/80 hover:bg-white text-white hover:text-black rounded-full border border-white/30 transition-all cursor-pointer shadow-2xl hover:scale-110 z-40"
+                        title="Next Photo (→ key or swipe left)"
+                        aria-label="Next Photo"
                       >
                         <ChevronRight size={22} />
                       </button>
@@ -206,21 +502,55 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
                   )}
                 </div>
 
+                {/* Mobile Native Touch Gesture Hint & Pagination Dots */}
+                {images.length > 1 && (
+                  <div className="flex flex-col items-center justify-center gap-1.5 mt-2 sm:hidden z-30">
+                    <div className="flex items-center gap-1.5">
+                      {images.map((_, idx) => (
+                        <button
+                          key={`dot-${idx}`}
+                          type="button"
+                          onClick={() => {
+                            resetZoomAndPan();
+                            setSlideDirection(idx > currentImageIndex ? 'next' : 'prev');
+                            setCurrentImageIndex(idx);
+                          }}
+                          className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                            idx === currentImageIndex ? 'w-6 bg-art-gold' : 'w-1.5 bg-white/40'
+                          }`}
+                          aria-label={`Go to photo ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[9px] font-mono text-art-gold/90 font-bold tracking-wider">
+                      👈 Swipe left / right to browse photos ({currentImageIndex + 1}/{images.length}) 👉
+                    </span>
+                  </div>
+                )}
+
                 {/* Thumbnails Strip */}
                 {images.length > 1 && (
-                  <div className="mt-3 flex items-center gap-2 max-w-full overflow-x-auto py-1 px-2">
+                  <div className="mt-2.5 flex items-center gap-2 max-w-full overflow-x-auto py-1 px-2 z-30">
                     {images.map((img, idx) => (
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => setCurrentImageIndex(idx)}
+                        onClick={() => {
+                          resetZoomAndPan();
+                          setSlideDirection(idx > currentImageIndex ? 'next' : 'prev');
+                          setCurrentImageIndex(idx);
+                        }}
                         className={`relative w-14 h-10 sm:w-16 sm:h-11 rounded overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
                           idx === currentImageIndex
-                            ? 'border-art-gold scale-105 shadow-md'
+                            ? 'border-art-gold scale-105 shadow-md ring-2 ring-art-gold/50'
                             : 'border-white/20 opacity-60 hover:opacity-100'
                         }`}
+                        title={`View photo ${idx + 1}`}
                       >
                         <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+                        <span className="absolute bottom-0.5 right-1 text-[7.5px] font-mono bg-black/80 px-1 rounded text-white/90">
+                          {idx + 1}
+                        </span>
                       </button>
                     ))}
                   </div>

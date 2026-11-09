@@ -98,7 +98,9 @@ import {
   Square,
   Sliders,
   SlidersHorizontal,
-  BarChart3
+  BarChart3,
+  ZoomIn,
+  ZoomOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -1123,6 +1125,7 @@ const ProjectCard: React.FC<{
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isMediaViewerOpen, setIsMediaViewerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isCardImageZoomed, setIsCardImageZoomed] = useState(false);
 
   // Inline Editing State (Primary: Entire Project Edit + Save/Discard; Resale & Rental: Edit & Upload Images + Save/Discard)
   const [isEditingCard, setIsEditingCard] = useState(false);
@@ -2021,7 +2024,12 @@ const ProjectCard: React.FC<{
                 <img
                   src={coverImage}
                   alt={project.name}
-                  className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700 absolute inset-0 cursor-pointer"
+                  className={cn(
+                    "w-full h-full transition-transform duration-500 absolute inset-0 cursor-pointer",
+                    (project.type === 'Rental' || project.type === 'Resale')
+                      ? (isCardImageZoomed ? "object-cover scale-110" : "object-contain bg-black/95 p-1")
+                      : "object-cover group-hover/img:scale-105 duration-700"
+                  )}
                   onClick={() => setIsMediaViewerOpen(true)}
                   loading="lazy"
                 />
@@ -2066,13 +2074,31 @@ const ProjectCard: React.FC<{
                 )}
               </div>
 
-              {/* Small Organic Visits Counter */}
-              <div 
-                className="flex items-center gap-1 px-1.5 py-0.5 bg-black/80 border border-white/20 rounded text-[8.5px] font-mono text-white/90 backdrop-blur-sm select-none shadow"
+              <div className="flex items-center gap-1">
+                {/* Resale and Rental: Normal View & Option to Zoom */}
+                {(project.type === 'Rental' || project.type === 'Resale') && canViewProjectImages && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsCardImageZoomed(prev => !prev);
+                    }}
+                    data-testid="resale-rental-zoom-toggle"
+                    className="flex items-center gap-1 px-1.5 py-0.5 bg-black/85 hover:bg-white text-art-gold hover:text-black border border-art-gold/40 hover:border-white rounded text-[8px] font-mono font-bold transition-all shadow-md cursor-pointer select-none"
+                    title={isCardImageZoomed ? "Switch to Normal Uncropped View" : "Zoom Resale / Rental Photo"}
+                  >
+                    {isCardImageZoomed ? <ZoomOut size={10} /> : <ZoomIn size={10} />}
+                    <span>{isCardImageZoomed ? "Normal View" : "Zoom"}</span>
+                  </button>
+                )}
+                {/* Small Organic Visits Counter */}
+                <div 
+                  className="flex items-center gap-1 px-1.5 py-0.5 bg-black/80 border border-white/20 rounded text-[8.5px] font-mono text-white/90 backdrop-blur-sm select-none shadow"
                 title={`${views.toLocaleString()} organic property views recorded`}
               >
                 <Eye size={10} className="text-art-gold shrink-0" />
                 <span className="font-bold text-white tracking-tight">{formatVisitsCount(views)}</span>
+                </div>
               </div>
             </div>
 
