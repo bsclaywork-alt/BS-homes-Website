@@ -4529,6 +4529,10 @@ const ProjectForm = ({
   const [formData, setFormData] = useState<Partial<Project>>({
     name: project?.name || '',
     description: project?.description || '',
+    metaTitle: project?.metaTitle || project?.seoTitle || '',
+    metaDescription: project?.metaDescription || project?.seoDescription || '',
+    seoTitle: project?.seoTitle || project?.metaTitle || '',
+    seoDescription: project?.seoDescription || project?.metaDescription || '',
     price: project?.price || '',
     lastPrice: project?.lastPrice || project?.price || '',
     location: project?.location || '',
@@ -4582,6 +4586,25 @@ const ProjectForm = ({
     handedOverDate: project?.handedOverDate || '',
     registrationStatus: project?.registrationStatus || 'Ready for Registration',
     approvedAuthority: project?.approvedAuthority || 'BDA',
+    // Portfolio Curator Fields
+    projectTypeCategory: project?.projectTypeCategory || 'Gated',
+    presentStatus: project?.presentStatus || (resolvedInitialType === 'Rental' ? 'Ready to Move-IN' : 'Under Construction'),
+    vaastuCompliant: project?.vaastuCompliant || 'Yes',
+    facingAvailable: project?.facingAvailable || ['East', 'North'],
+    floorRise: project?.floorRise || 'Standard Floor Rise',
+    totalUnits: project?.totalUnits || project?.projectSize || '',
+    floorPlanSize: project?.floorPlanSize || project?.floorPlan || '',
+    bookingAmount: project?.bookingAmount || '',
+    interiorStatus: project?.interiorStatus || 'Semi Furnished',
+    availability: project?.availability || 'Yes',
+    floorAvailability: project?.floorAvailability || '',
+    saleFrom: project?.saleFrom || 'Investor',
+    aop: project?.aop || '0-1 Year',
+    expectedRentalIncome: project?.expectedRentalIncome || '',
+    terrace: project?.terrace || 'No',
+    garden: project?.garden || 'No',
+    projectWriteUps: project?.projectWriteUps || project?.description || '',
+
     sticker: project?.sticker || 'None',
     unitsRemaining: project?.unitsRemaining !== undefined ? project.unitsRemaining : undefined,
     isInventorySoldOut: Boolean(project?.isInventorySoldOut || project?.sticker === 'Sold Out')
@@ -4592,6 +4615,19 @@ const ProjectForm = ({
       ? project.seoKeywords.join(', ') 
       : 'Bangalore Luxury Real Estate, RERA Approved, 0% Commission'
   );
+
+  const [amenitiesInput, setAmenitiesInput] = useState<string>(() => {
+    return (project?.features && project.features.length > 0)
+      ? project.features.join(', ')
+      : 'Grand Clubhouse, Swimming Pool, 24/7 Security';
+  });
+
+  const handleAmenitiesChange = (val: string) => {
+    setAmenitiesInput(val);
+    const parsed = val.split(',').map(s => s.trim()).filter(Boolean);
+    setFormData(prev => ({ ...prev, features: parsed }));
+  };
+
   const [isFetchingLocationDetails, setIsFetchingLocationDetails] = useState(false);
   const [locationDetailsSuccess, setLocationDetailsSuccess] = useState<string | null>(null);
 
@@ -4805,41 +4841,16 @@ const ProjectForm = ({
     try {
       let currentData = { ...formData, type: inventoryMode };
 
+      // Ensure amenities from manual input are preserved
+      const parsedAmenities = amenitiesInput.split(',').map(s => s.trim()).filter(Boolean);
+      if (parsedAmenities.length > 0) {
+        currentData.features = parsedAmenities;
+      }
+
       // Ensure SEO keywords are populated
       let resolvedKeywords = keywordsInput.trim();
       if (!resolvedKeywords) {
         resolvedKeywords = `${currentData.name || 'Bangalore Property'}, Buy ${currentData.propertyType || 'Apartment'} in ${currentData.zone || 'Whitefield'}, ${inventoryMode} Property Bangalore, 0% Brokerage, RERA Approved, BS Homez`;
-      }
-
-      // Automatically check online for Primary projects if basic details missing
-      if (
-        inventoryMode === 'Primary' &&
-        currentData.name?.trim() &&
-        (!currentData.description?.trim() ||
-          !currentData.price?.trim() ||
-          !currentData.lastPrice?.trim() ||
-          !currentData.handoverDate?.trim() ||
-          !currentData.reraNumber?.trim() ||
-          !currentData.floorPlan?.trim())
-      ) {
-        const enriched = await handleAutoCheckOnline(currentData.name);
-        if (enriched) {
-          currentData = {
-            ...enriched,
-            ...Object.fromEntries(
-              Object.entries(currentData).filter(([_, v]) => v !== '' && v !== undefined && v !== null)
-            ),
-            type: inventoryMode,
-            price: currentData.price?.trim() ? currentData.price : enriched.price,
-            lastPrice: currentData.lastPrice?.trim() ? currentData.lastPrice : (enriched.lastPrice || enriched.price),
-            handoverDate: currentData.handoverDate?.trim() ? currentData.handoverDate : enriched.handoverDate,
-            description: currentData.description?.trim() ? currentData.description : enriched.description,
-            reraNumber: currentData.reraNumber?.trim() ? currentData.reraNumber : enriched.reraNumber,
-            approvalBody: currentData.approvalBody?.trim() ? currentData.approvalBody : enriched.approvalBody,
-            floorPlan: currentData.floorPlan?.trim() ? currentData.floorPlan : enriched.floorPlan,
-            location: currentData.location?.trim() ? currentData.location : enriched.location
-          };
-        }
       }
 
       // Configure pricing and descriptions tailored to inventory mode
@@ -4900,6 +4911,8 @@ const ProjectForm = ({
           : (validImages.length > 0 ? validImages : getSmartProjectImages(currentData.zone, inventoryMode, currentData.builderCategory, currentData.propertyType)),
         mobileImageUrl: validImages[0] || currentData.mobileImageUrl || '',
         ogImage: validImages[0] || currentData.ogImage || '',
+        videoUrl: (currentData.videoUrl || '').trim(),
+        mobileVideoUrl: (currentData.mobileVideoUrl || currentData.videoUrl || '').trim(),
         features: (currentData.features || []).map(f => f.trim()).filter(Boolean),
         configuration: (currentData.configuration && currentData.configuration.length > 0 ? currentData.configuration : [currentData.residenceType || '2 BHK']),
         
@@ -4924,13 +4937,34 @@ const ProjectForm = ({
         handedOverDate: currentData.handedOverDate || '',
         registrationStatus: currentData.registrationStatus || 'Ready for Registration',
         approvedAuthority: currentData.approvedAuthority || 'BDA',
+        // Portfolio Curator Explicit Fields
+        projectTypeCategory: currentData.projectTypeCategory || 'Gated',
+        presentStatus: currentData.presentStatus || currentData.handoverStatus || 'Under Construction',
+        vaastuCompliant: currentData.vaastuCompliant || 'Yes',
+        facingAvailable: currentData.facingAvailable || (currentData.mainDoorFacing ? [currentData.mainDoorFacing] : ['East', 'North']),
+        floorRise: currentData.floorRise || 'Standard Floor Rise',
+        totalUnits: currentData.totalUnits || currentData.projectSize || '',
+        floorPlanSize: currentData.floorPlanSize || currentData.floorPlan || '',
+        bookingAmount: currentData.bookingAmount || '',
+        interiorStatus: currentData.interiorStatus || currentData.furnishType || 'Semi Furnished',
+        availability: currentData.availability || 'Yes',
+        floorAvailability: currentData.floorAvailability || currentData.floor || '',
+        saleFrom: currentData.saleFrom || 'Investor',
+        aop: currentData.aop || '0-1 Year',
+        expectedRentalIncome: currentData.expectedRentalIncome || '',
+        terrace: currentData.terrace || 'No',
+        garden: currentData.garden || 'No',
+        projectWriteUps: currentData.projectWriteUps || currentData.description || '',
         sticker: Boolean(currentData.isInventorySoldOut) ? 'Sold Out' : ((currentData.sticker as any) || 'None'),
         unitsRemaining: currentData.unitsRemaining !== undefined && currentData.unitsRemaining !== null && String(currentData.unitsRemaining).trim() !== ''
           ? Number(currentData.unitsRemaining)
           : undefined,
         isInventorySoldOut: Boolean(currentData.isInventorySoldOut),
+        metaTitle: (currentData.metaTitle || currentData.seoTitle || '').trim() || undefined,
+        metaDescription: (currentData.metaDescription || currentData.seoDescription || '').trim() || undefined,
+        seoTitle: (currentData.seoTitle || currentData.metaTitle || '').trim() || undefined,
+        seoDescription: (currentData.seoDescription || currentData.metaDescription || '').trim() || undefined,
         seoKeywords: resolvedKeywords.split(',').map(s => s.trim()).filter(Boolean),
-
         isPaused: Boolean(currentData.isPaused),
         isDeleted: false,
         createdAt: project?.createdAt || serverTimestamp(),
@@ -4938,43 +4972,37 @@ const ProjectForm = ({
       };
       
       const nowMs = Date.now();
-      const firestoreData = {
-        ...data,
-        createdAt: project?.createdAt || serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
+      const targetId = project?.id && !project.id.startsWith('local_')
+        ? project.id
+        : (data.name ? `${data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 45)}-${inventoryMode.toLowerCase()}-${nowMs.toString().slice(-4)}` : `proj_${nowMs}`);
+
+      // Strip all undefined values so Firestore setDoc never throws an invalid data error
+      const firestoreData: Record<string, any> = {};
+      for (const [k, v] of Object.entries(data)) {
+        if (v !== undefined) {
+          firestoreData[k] = v;
+        }
+      }
+      firestoreData.id = targetId;
+      firestoreData.createdAt = project?.createdAt || serverTimestamp();
+      firestoreData.updatedAt = serverTimestamp();
       
-      const localFallbackId = project?.id || `local_${nowMs}`;
-      let savedProjectResult: Project;
+      let savedProjectResult: Project = { 
+        ...data, 
+        id: targetId, 
+        createdAt: project?.createdAt || nowMs, 
+        updatedAt: nowMs 
+      };
 
       try {
-        const targetId = project?.id && !project.id.startsWith('local_') ? project.id : null;
-        if (targetId) {
-          await setDoc(doc(db, 'projects', targetId), firestoreData, { merge: true });
-          savedProjectResult = { ...data, id: targetId, createdAt: project?.createdAt || nowMs, updatedAt: nowMs };
-        } else {
-          // Check if an existing project with same name and inventory mode exists to prevent duplicates
-          const q = query(
-            collection(db, 'projects'),
-            where('name', '==', data.name),
-            where('type', '==', inventoryMode)
-          );
-          const existingSnap = await getDocs(q);
-          if (!existingSnap.empty) {
-            const existingId = existingSnap.docs[0].id;
-            await setDoc(doc(db, 'projects', existingId), firestoreData, { merge: true });
-            savedProjectResult = { ...data, id: existingId, createdAt: nowMs, updatedAt: nowMs };
-          } else {
-            const docRef = await addDoc(collection(db, 'projects'), firestoreData);
-            savedProjectResult = { ...data, id: docRef.id, createdAt: nowMs, updatedAt: nowMs };
-          }
-        }
+        await setDoc(doc(db, 'projects', targetId), firestoreData, { merge: true });
+        // Automatically trigger server-side sitemap.xml refresh so Google & Bing crawlers have latest listings immediately
+        fetch('/api/sitemap/refresh', { method: 'POST' }).catch(() => {});
       } catch (dbErr) {
         console.warn('Firestore write fallback: saving project locally', dbErr);
-        savedProjectResult = { ...data, id: localFallbackId, createdAt: nowMs, updatedAt: nowMs };
       }
 
-      // Always persist to custom projects local storage so real-time sync is guaranteed across reloads
+      // Always persist to custom projects local storage with quota protection
       try {
         const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
         const filteredLocal = existingLocal.filter(
@@ -4982,7 +5010,16 @@ const ProjectForm = ({
         );
         const nextLocal = deduplicateProjects([savedProjectResult, ...filteredLocal]);
         localStorage.setItem('bs_homez_custom_projects', JSON.stringify(nextLocal));
-      } catch {}
+      } catch (storageErr) {
+        console.warn('Local storage quota warning, applying compact storage:', storageErr);
+        try {
+          const compactProject = {
+            ...savedProjectResult,
+            imageUrls: (savedProjectResult.imageUrls || []).slice(0, 4)
+          };
+          localStorage.setItem('bs_homez_custom_projects', JSON.stringify([compactProject]));
+        } catch {}
+      }
 
       if (onProjectSaved) {
         onProjectSaved(savedProjectResult);
@@ -5100,269 +5137,446 @@ const ProjectForm = ({
           {/* RENTAL INVENTORY SPECIFIC FIELDS                        */}
           {/* ======================================================== */}
           {inventoryMode === 'Rental' && (
-            <div className="space-y-5">
+            <div className="space-y-6 text-left">
               <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-sm text-xs text-cyan-300 font-mono flex items-center justify-between">
                 <span>Rental Inventory Entry • Direct Lease &amp; Tenant Verification Desk</span>
                 <span className="font-bold uppercase tracking-wider text-[10px]">Rental Vault Active</span>
               </div>
 
-              {/* Row 1: Project Name & Location */}
-              <div className="grid md:grid-cols-2 gap-4">
+              {/* Row 1: Project Name, Rent/Month, Maintenance */}
+              <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Project Name *</label>
                   <input 
                     required
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm"
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-semibold"
                     value={formData.name || ''}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, name: val }));
+                    }}
                     placeholder="e.g., Sobha Dream Acres, Brigade Cosmopolis..."
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Rent/Month *</label>
+                  <input 
+                    required
+                    className="w-full bg-black/50 border border-cyan-500/40 p-3.5 text-cyan-300 text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono font-bold"
+                    value={formData.monthlyRental || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, monthlyRental: val, price: val }));
+                    }}
+                    placeholder="e.g., ₹42,000/mo"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Maintenance</label>
+                  <input 
+                    className="w-full bg-black/50 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
+                    value={formData.maintenance || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, maintenance: val }));
+                    }}
+                    placeholder="e.g., ₹4,000/mo"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Advance, Location, Pet Friendly */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Advance *</label>
+                  <input 
+                    required
+                    className="w-full bg-black/50 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
+                    value={formData.advance || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, advance: val }));
+                    }}
+                    placeholder="e.g., ₹2,50,000"
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Project Location *</label>
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Location *</label>
                     <button
                       type="button"
                       onClick={handleAutoFetchLocationDetails}
                       disabled={isFetchingLocationDetails}
-                      className="text-[9px] uppercase tracking-wider text-cyan-400 hover:text-white flex items-center gap-1 font-mono font-bold bg-cyan-950/40 border border-cyan-500/40 px-2.5 py-0.5 rounded cursor-pointer"
-                      title="Fetch nearby IT Hubs, School, Malls, Hospital, Bus Stop, Railway Station, Metro Station with distance in Kms"
+                      className="text-[9px] uppercase tracking-wider text-cyan-400 hover:text-white flex items-center gap-1 font-mono font-bold bg-cyan-950/40 border border-cyan-500/40 px-2 py-0.5 rounded cursor-pointer"
                     >
-                      {isFetchingLocationDetails ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-                      Auto-Fetch Online Details (km)
+                      {isFetchingLocationDetails ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                      Auto-Fetch (km)
                     </button>
                   </div>
                   <input 
                     required
                     className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm"
                     value={formData.location || ''}
-                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, location: val }));
+                    }}
                     placeholder="e.g., Panathur, Whitefield, Sarjapur Road..."
                   />
-                  {locationDetailsSuccess && (
-                    <p className="text-[10px] text-cyan-300 font-mono mt-1 font-bold">{locationDetailsSuccess}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Row 2: Available From (Calendar) & Property Type */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400 flex items-center gap-1.5">
-                    <Calendar size={12} /> Available From * (Select via Calendar)
-                  </label>
-                  <input 
-                    required
-                    type="date"
-                    className="w-full bg-black/60 border border-cyan-500/40 p-3.5 text-cyan-300 text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono cursor-pointer"
-                    value={formData.availableFrom || ''}
-                    onChange={e => setFormData({ ...formData, availableFrom: e.target.value })}
-                  />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Property Type *</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer"
-                    value={formData.propertyType || 'Apartment'}
-                    onChange={e => setFormData({ ...formData, propertyType: e.target.value as any })}
-                  >
-                    <option value="Villa">Villa</option>
-                    <option value="Apartment">Apartments</option>
-                    <option value="Commercial">Commercial</option>
-                    <option value="Stand Alone Building">Stand Alone Building</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Row 3: Main Door Facing, Tower, Floor */}
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Main Door Facing</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
-                    value={formData.mainDoorFacing || 'East'}
-                    onChange={e => setFormData({ ...formData, mainDoorFacing: e.target.value })}
-                  >
-                    <option value="East">East</option>
-                    <option value="North">North</option>
-                    <option value="West">West</option>
-                    <option value="South">South</option>
-                    <option value="North-East">North-East</option>
-                    <option value="North-West">North-West</option>
-                    <option value="South-East">South-East</option>
-                    <option value="South-West">South-West</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Tower</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm"
-                    value={formData.tower || ''}
-                    onChange={e => setFormData({ ...formData, tower: e.target.value })}
-                    placeholder="e.g., Tower 3 / Block B"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Floor</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm"
-                    value={formData.floor || ''}
-                    onChange={e => setFormData({ ...formData, floor: e.target.value })}
-                    placeholder="e.g., 7th Floor of 24"
-                  />
-                </div>
-              </div>
-
-              {/* Row 4: Residence Type & Tenant Type */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Residence Type *</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono font-bold"
-                    value={formData.residenceType || '2BHK'}
-                    onChange={e => setFormData({ ...formData, residenceType: e.target.value })}
-                  >
-                    <option value="Studio">Studio</option>
-                    <option value="1BHK">1BHK</option>
-                    <option value="2BHK">2BHK</option>
-                    <option value="3BHK">3BHK</option>
-                    <option value="4BHK">4BHK</option>
-                    <option value="5BHK">5BHK</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Tenant Type *</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
-                    value={formData.tenantType || 'Family'}
-                    onChange={e => setFormData({ ...formData, tenantType: e.target.value })}
-                  >
-                    <option value="Family">Family</option>
-                    <option value="Bachelors">Bachelors</option>
-                    <option value="Spinsters">Spinsters</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Row 5: Amenities Availability, Pet Friendly, Furnish Type */}
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Amenities Availability</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
-                    value={formData.amenitiesAvailability || 'Yes'}
-                    onChange={e => setFormData({ ...formData, amenitiesAvailability: e.target.value })}
-                  >
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Pet Friendly</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Pet Friendly *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
                     value={formData.petFriendly || 'Yes'}
-                    onChange={e => setFormData({ ...formData, petFriendly: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, petFriendly: val }));
+                    }}
                   >
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Row 3: Interior Status, Project Type, Availability */}
+              <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Furnish Type</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
-                    value={formData.furnishType || 'Semi Furnished'}
-                    onChange={e => setFormData({ ...formData, furnishType: e.target.value })}
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Interior Status *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-bold"
+                    value={formData.interiorStatus || formData.furnishType || 'Semi Furnished'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, interiorStatus: val, furnishType: val }));
+                    }}
                   >
-                    <option value="Unfurnished">Unfurnished</option>
                     <option value="Semi Furnished">Semi Furnished</option>
-                    <option value="Full Furnished">Full Furnished</option>
+                    <option value="Un Furnished">Un Furnished</option>
+                    <option value="Fully Furnished">Fully Furnished</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Project Type *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer rounded-sm font-bold"
+                    value={formData.projectTypeCategory || 'Gated'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, projectTypeCategory: val }));
+                    }}
+                  >
+                    <option value="Gated">Gated</option>
+                    <option value="Stand Alone">Stand Alone</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Availability *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.availability || 'Yes'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, availability: val }));
+                    }}
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
                   </select>
                 </div>
               </div>
 
-              {/* Row 6: Advance, Monthly Rental, Maintenance */}
-              <div className="grid md:grid-cols-3 gap-4 p-4 bg-white/[0.02] border border-white/10 rounded-sm">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Advance (Deposit) *</label>
-                  <input 
-                    required
-                    className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
-                    value={formData.advance || ''}
-                    onChange={e => setFormData({ ...formData, advance: e.target.value })}
-                    placeholder="e.g., ₹2,50,000"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Monthly Rental *</label>
-                  <input 
-                    required
-                    className="w-full bg-black/50 border border-cyan-500/40 p-3 text-cyan-300 text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono font-bold"
-                    value={formData.monthlyRental || ''}
-                    onChange={e => setFormData({ ...formData, monthlyRental: e.target.value, price: e.target.value })}
-                    placeholder="e.g., ₹42,000/mo"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Maintenance</label>
-                  <input 
-                    className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
-                    value={formData.maintenance || ''}
-                    onChange={e => setFormData({ ...formData, maintenance: e.target.value })}
-                    placeholder="e.g., ₹4,000/mo"
-                  />
-                </div>
-              </div>
-
-              {/* Row 7: SUBA, Car Close Parking, Balcony */}
+              {/* Row 4: Floor Availability, AOP, Type of Property */}
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">SUBA (Super Built-up Area)</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Floor Availability</label>
                   <input 
                     className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
+                    value={formData.floorAvailability || formData.floor || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, floorAvailability: val, floor: val }));
+                    }}
+                    placeholder="e.g., 4th Floor of 18"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">AOP (Age of Property) *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.aop || '0-1 Year'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, aop: val }));
+                    }}
+                  >
+                    <option value="0-1 Year">0-1 Year</option>
+                    <option value="2-5 Years">2-5 Years</option>
+                    <option value="6-10 Years">6-10 Years</option>
+                    <option value="11-15 Years">11-15 Years</option>
+                    <option value="15+ Years">15+ Years</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Type of Property *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer rounded-sm font-bold"
+                    value={formData.propertyType || 'Apartment'}
+                    onChange={e => {
+                      const nextProp = e.target.value as any;
+                      setFormData(prev => ({
+                        ...prev,
+                        propertyType: nextProp,
+                        imageUrls: getSmartProjectImages(prev.zone, prev.type, prev.builderCategory, nextProp)
+                      }));
+                    }}
+                  >
+                    <option value="Apartment">Apartment</option>
+                    <option value="Villa">Villa</option>
+                    <option value="Plot">Plot</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 5: SUBA, Balcony, Terrace, Garden, Car Parking */}
+              <div className="grid md:grid-cols-5 gap-3 p-4 bg-white/[0.02] border border-white/10 rounded-sm">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">SUBA *</label>
+                  <input 
+                    required
+                    className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
                     value={formData.suba || ''}
-                    onChange={e => setFormData({ ...formData, suba: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, suba: val }));
+                    }}
                     placeholder="e.g., 1,420 Sq.Ft."
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Car Close Parking</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm cursor-pointer font-mono"
-                    value={formData.carCloseParking || '1'}
-                    onChange={e => setFormData({ ...formData, carCloseParking: e.target.value })}
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Balcony *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.balcony || '2'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, balcony: val }));
+                    }}
                   >
-                    <option value="1">1 Car Covered Parking</option>
-                    <option value="2">2 Car Covered Parking</option>
-                    <option value="3">3 Car Covered Parking</option>
-                    <option value="4">4 Car Covered Parking</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Balcony</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Terrace *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.terrace || 'No'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, terrace: val }));
+                    }}
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Garden *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.garden || 'No'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, garden: val }));
+                    }}
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Car Parking *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.carCloseParking || '1'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, carCloseParking: val }));
+                    }}
+                  >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 6: No. Of Towers, Flats Per Floor, Floor Rise, Total Units */}
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">No. Of Towers</label>
                   <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-cyan-400 transition-all rounded-sm font-mono"
-                    value={formData.balcony || '1'}
-                    onChange={e => setFormData({ ...formData, balcony: e.target.value })}
-                    placeholder="e.g., 2 Balconies"
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-cyan-400 transition-all text-xs rounded-sm font-mono"
+                    value={formData.noOfTowers || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, noOfTowers: val }));
+                    }}
+                    placeholder="e.g., Tower 2"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Flats Per Floor</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-cyan-400 transition-all text-xs rounded-sm font-mono"
+                    value={formData.flatsPerFloor || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, flatsPerFloor: val }));
+                    }}
+                    placeholder="e.g., 4 Flats / Floor"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Floor Rise</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-cyan-400 transition-all text-xs rounded-sm font-mono"
+                    value={formData.floorRise || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, floorRise: val }));
+                    }}
+                    placeholder="e.g., Standard"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Total Units</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-cyan-400 transition-all text-xs rounded-sm font-mono"
+                    value={formData.totalUnits || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, totalUnits: val }));
+                    }}
+                    placeholder="e.g., 540 Units"
                   />
                 </div>
               </div>
 
-              {/* Row 8: Comments */}
+              {/* Row 7: Vaastu Compliant & Facing Available */}
+              <div className="space-y-2 p-3.5 bg-white/[0.02] border border-white/10 rounded-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">
+                    Facing Available: East, North, West, South, South West, North East
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-white/70">Vaastu Compliant:</span>
+                    <select 
+                      className="bg-art-dark border border-white/15 px-2 py-0.5 text-white text-xs outline-none focus:border-cyan-400 rounded-sm font-mono font-bold"
+                      value={formData.vaastuCompliant || 'Yes'}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setFormData(prev => ({ ...prev, vaastuCompliant: val }));
+                      }}
+                    >
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {['East', 'North', 'West', 'South', 'South West', 'North East'].map(f => {
+                    const isSelected = (formData.facingAvailable || []).includes(f) || formData.mainDoorFacing === f;
+                    return (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => {
+                            const current = prev.facingAvailable || [];
+                            const updated = current.includes(f) ? current.filter(x => x !== f) : [...current, f];
+                            return { ...prev, facingAvailable: updated, mainDoorFacing: updated[0] || 'East' };
+                          });
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-mono font-bold rounded-sm border transition-all cursor-pointer",
+                          isSelected
+                            ? "bg-cyan-500 text-black border-cyan-400 shadow-sm"
+                            : "bg-white/5 text-white/60 border-white/15 hover:text-white hover:bg-white/10"
+                        )}
+                      >
+                        {isSelected ? '✓ ' : ''}{f}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Row 8: Unit Configuration (Studio, 1BHK, 2BHK, 3BHK, 4BHK, 5BHK) */}
+              <div className="space-y-2 p-3.5 bg-white/[0.02] border border-white/10 rounded-sm">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400 block">
+                  Unit Configuration: Studio, 1BHK, 2BHK, 3BHK, 4BHK, 5BHK
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['Studio', '1BHK', '2BHK', '3BHK', '4BHK', '5BHK'].map(config => {
+                    const isSelected = (formData.configuration || []).some(c => c.replace(/\s+/g, '') === config) || formData.residenceType === config;
+                    return (
+                      <button
+                        key={config}
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => {
+                            const current = (prev.configuration || []).map(c => c.replace(/\s+/g, ''));
+                            const updated = current.includes(config) ? current.filter(c => c !== config) : [...current, config];
+                            return { ...prev, configuration: updated, residenceType: updated[0] || '2BHK' };
+                          });
+                        }}
+                        className={cn(
+                          "px-4 py-2 text-xs font-mono font-bold rounded-sm border transition-all cursor-pointer",
+                          isSelected
+                            ? "bg-cyan-500 text-black border-cyan-400 shadow-sm font-black"
+                            : "bg-white/5 text-white/60 border-white/15 hover:text-white hover:bg-white/10"
+                        )}
+                      >
+                        {isSelected ? '✓ ' : ''}{config}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Row 9: Amenities */}
               <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Comments &amp; Lease Specifications</label>
-                <textarea 
-                  rows={3}
-                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-cyan-400 transition-all text-xs leading-relaxed rounded-sm"
-                  value={formData.comments || ''}
-                  onChange={e => setFormData({ ...formData, comments: e.target.value, description: e.target.value })}
-                  placeholder="Details on lock-in period, society restrictions, view from balcony, power backup..."
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Amenities (Comma-separated)</label>
+                <input 
+                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-cyan-400 transition-all text-xs rounded-sm font-mono"
+                  value={amenitiesInput}
+                  onChange={e => handleAmenitiesChange(e.target.value)}
+                  placeholder="Swimming pool, 24/7 Security, Gymnasium, Power backup, Club house, Children play area..."
                 />
               </div>
 
-              {/* Media Compression & Uploads (Photos & Walkthrough Video) */}
+              {/* Row 10: Project Write Ups */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">Project Write Ups *</label>
+                <textarea 
+                  required
+                  rows={4}
+                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-cyan-400 transition-all text-xs leading-relaxed rounded-sm font-sans"
+                  value={formData.projectWriteUps || formData.description || formData.comments || ''}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setFormData(prev => ({ ...prev, projectWriteUps: val, description: val, comments: val }));
+                  }}
+                  placeholder="Detailed architectural write-up, lease terms, proximity to tech parks, society restrictions, view from balcony..."
+                />
+              </div>
+
+              {/* Row 11: Photos / Videos (Media Upload & Compression) */}
               <MediaUploadCompressor
                 accentColor="cyan"
                 title="Rental Photos & Video Walkthrough (Auto-Compressed HD)"
@@ -5382,33 +5596,6 @@ const ProjectForm = ({
                   ogImage: poster || prev.ogImage || (prev.imageUrls && prev.imageUrls[0]) || ''
                 }))}
               />
-
-              {/* Inquiry Action Card */}
-              <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <span className="text-[10px] uppercase tracking-widest font-black text-cyan-300 block mb-0.5">
-                    Rental Client Inquiry Integration
-                  </span>
-                  <p className="text-xs text-white/70">
-                    Open the inquiry submission form directly for this rental listing.
-                  </p>
-                </div>
-                {onOpenEnquiry && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onOpenEnquiry({
-                        ...(formData as Project),
-                        type: 'Rental',
-                        price: formData.monthlyRental ? `${formData.monthlyRental}/mo` : formData.price || '₹35,000/mo*'
-                      });
-                    }}
-                    className="px-4 py-2.5 bg-cyan-500 hover:bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-sm transition-all whitespace-nowrap cursor-pointer shadow-md"
-                  >
-                    Fill Rental Inquiry Form
-                  </button>
-                )}
-              </div>
             </div>
           )}
 
@@ -5416,158 +5603,319 @@ const ProjectForm = ({
           {/* RESALE INVENTORY SPECIFIC FIELDS                         */}
           {/* ======================================================== */}
           {inventoryMode === 'Resale' && (
-            <div className="space-y-5">
+            <div className="space-y-6 text-left">
               <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-sm text-xs text-amber-300 font-mono flex items-center justify-between">
                 <span>Resale Inventory Entry • Title Verification &amp; Approved Authority Registry</span>
                 <span className="font-bold uppercase tracking-wider text-[10px]">Resale Vault Active</span>
               </div>
 
-              {/* Row 1: Project Name & Location */}
-              <div className="grid md:grid-cols-2 gap-4">
+              {/* Row 1: Project Name, Price, Booking Amount */}
+              <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Project Name *</label>
                   <input 
                     required
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm"
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-semibold"
                     value={formData.name || ''}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, name: val }));
+                    }}
                     placeholder="e.g., Prestige Lakeside Habitat, Godrej Air..."
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Price *</label>
+                  <input 
+                    required
+                    className="w-full bg-black/50 border border-amber-500/40 p-3.5 text-amber-300 text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono font-bold"
+                    value={formData.price || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, price: val, lastPrice: val }));
+                    }}
+                    placeholder="e.g., ₹1.85 Cr onwards*"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Booking Amount</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.bookingAmount || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, bookingAmount: val }));
+                    }}
+                    placeholder="e.g., ₹5,00,000"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Location, Project Status, Interior Status */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Project Location *</label>
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Location *</label>
                     <button
                       type="button"
                       onClick={handleAutoFetchLocationDetails}
                       disabled={isFetchingLocationDetails}
-                      className="text-[9px] uppercase tracking-wider text-amber-400 hover:text-white flex items-center gap-1 font-mono font-bold bg-amber-950/40 border border-amber-500/40 px-2.5 py-0.5 rounded cursor-pointer"
-                      title="Fetch nearby IT Hubs, School, Malls, Hospital, Bus Stop, Railway Station, Metro Station with distance in Kms"
+                      className="text-[9px] uppercase tracking-wider text-amber-400 hover:text-white flex items-center gap-1 font-mono font-bold bg-amber-950/40 border border-amber-500/40 px-2 py-0.5 rounded cursor-pointer"
                     >
-                      {isFetchingLocationDetails ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-                      Auto-Fetch Online Details (km)
+                      {isFetchingLocationDetails ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                      Auto-Fetch (km)
                     </button>
                   </div>
                   <input 
                     required
                     className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm"
                     value={formData.location || ''}
-                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, location: val }));
+                    }}
                     placeholder="e.g., Varthur, Whitefield, Sarjapur Road..."
                   />
-                  {locationDetailsSuccess && (
-                    <p className="text-[10px] text-amber-300 font-mono mt-1 font-bold">{locationDetailsSuccess}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Row 2: Property Type & Main Door Facing */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Property Type *</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer"
-                    value={formData.propertyType || 'Apartment'}
-                    onChange={e => setFormData({ ...formData, propertyType: e.target.value as any })}
-                  >
-                    <option value="Villa">Villa</option>
-                    <option value="Apartment">Apartments</option>
-                    <option value="Commercial">Commercial</option>
-                    <option value="Stand Alone Building">Stand Alone Building</option>
-                  </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Main Door Facing</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono"
-                    value={formData.mainDoorFacing || 'East'}
-                    onChange={e => setFormData({ ...formData, mainDoorFacing: e.target.value })}
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Project Status</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.segment || 'Prime Resale'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, segment: val }));
+                    }}
+                    placeholder="e.g., Prime Resale / Ready / Handed Over"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Interior Status *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-bold"
+                    value={formData.interiorStatus || formData.furnishType || 'Semi Furnished'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, interiorStatus: val, furnishType: val }));
+                    }}
                   >
-                    <option value="East">East</option>
-                    <option value="North">North</option>
-                    <option value="West">West</option>
-                    <option value="South">South</option>
-                    <option value="North-East">North-East</option>
-                    <option value="North-West">North-West</option>
-                    <option value="South-East">South-East</option>
-                    <option value="South-West">South-West</option>
+                    <option value="Semi Furnished">Semi Furnished</option>
+                    <option value="Un Furnished">Un Furnished</option>
+                    <option value="Fully Furnished">Fully Furnished</option>
                   </select>
                 </div>
               </div>
 
-              {/* Row 3: Tower, Floor, Residence Type */}
+              {/* Row 3: Project Type, Availability, Floor Availability */}
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Tower</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm"
-                    value={formData.tower || ''}
-                    onChange={e => setFormData({ ...formData, tower: e.target.value })}
-                    placeholder="e.g., Tower 4"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Floor</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm"
-                    value={formData.floor || ''}
-                    onChange={e => setFormData({ ...formData, floor: e.target.value })}
-                    placeholder="e.g., 14th Floor"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Residence Type *</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono font-bold"
-                    value={formData.residenceType || '3BHK'}
-                    onChange={e => setFormData({ ...formData, residenceType: e.target.value })}
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Project Type *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all cursor-pointer rounded-sm font-bold"
+                    value={formData.projectTypeCategory || 'Gated'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, projectTypeCategory: val }));
+                    }}
                   >
-                    <option value="Studio">Studio</option>
-                    <option value="1BHK">1BHK</option>
-                    <option value="2BHK">2BHK</option>
-                    <option value="3BHK">3BHK</option>
-                    <option value="4BHK">4BHK</option>
-                    <option value="5BHK">5BHK</option>
+                    <option value="Gated">Gated</option>
+                    <option value="Stand Alone">Stand Alone</option>
                   </select>
                 </div>
-              </div>
-
-              {/* Row 4: Amenities Availability & Furnish Type */}
-              <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Amenities Availability</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono"
-                    value={formData.amenitiesAvailability || 'Yes'}
-                    onChange={e => setFormData({ ...formData, amenitiesAvailability: e.target.value })}
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Availability *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.availability || 'Yes'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, availability: val }));
+                    }}
                   >
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Furnish Type</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono"
-                    value={formData.furnishType || 'Semi Furnished'}
-                    onChange={e => setFormData({ ...formData, furnishType: e.target.value })}
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Floor Availability</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.floorAvailability || formData.floor || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, floorAvailability: val, floor: val }));
+                    }}
+                    placeholder="e.g., 7th Floor of 24 / Higher Floor"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Sale From, AOP, Expected Rental Income */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Sale From *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all cursor-pointer rounded-sm font-bold"
+                    value={formData.saleFrom || 'Investor'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, saleFrom: val }));
+                    }}
                   >
-                    <option value="Unfurnished">Unfurnished</option>
-                    <option value="Semi Furnished">Semi Furnished</option>
-                    <option value="Full Furnished">Full Furnished</option>
+                    <option value="Investor">Investor</option>
+                    <option value="Builder">Builder</option>
+                    <option value="Land Lord">Land Lord</option>
+                    <option value="Individual">Individual</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">AOP (Age of Property) *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.aop || '0-1 Year'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, aop: val }));
+                    }}
+                  >
+                    <option value="0-1 Year">0-1 Year</option>
+                    <option value="2-5 Years">2-5 Years</option>
+                    <option value="6-10 Years">6-10 Years</option>
+                    <option value="11-15 Years">11-15 Years</option>
+                    <option value="15+ Years">15+ Years</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Expected Rental Income</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.expectedRentalIncome || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, expectedRentalIncome: val }));
+                    }}
+                    placeholder="e.g., ₹55,000/month"
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Type of Property, Hand Over Date, Present Status */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Type of Property *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all cursor-pointer rounded-sm font-bold"
+                    value={formData.propertyType || 'Apartment'}
+                    onChange={e => {
+                      const nextProp = e.target.value as any;
+                      setFormData(prev => ({
+                        ...prev,
+                        propertyType: nextProp,
+                        imageUrls: getSmartProjectImages(prev.zone, prev.type, prev.builderCategory, nextProp)
+                      }));
+                    }}
+                  >
+                    <option value="Apartment">Apartment</option>
+                    <option value="Villa">Villa</option>
+                    <option value="Plot">Plot</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70 flex items-center gap-1.5">
+                    <Calendar size={12} className="text-amber-400" /> Hand Over Date
+                  </label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.handedOverDate || formData.handoverDate || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, handedOverDate: val, handoverDate: val }));
+                    }}
+                    placeholder="e.g., March 2024 / Ready"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Present Status *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-amber-300 text-xs outline-none focus:border-amber-400 transition-all cursor-pointer rounded-sm font-bold"
+                    value={formData.presentStatus || formData.handoverStatus || 'Ready to Move-IN'}
+                    onChange={e => {
+                      const nextStatus = e.target.value as any;
+                      setFormData(prev => ({
+                        ...prev,
+                        presentStatus: nextStatus,
+                        handoverStatus: nextStatus === 'Ready to Move-IN' ? 'Ready to Move' : nextStatus
+                      }));
+                    }}
+                  >
+                    <option value="EOI">EOI</option>
+                    <option value="Under Construction">Under Construction</option>
+                    <option value="Nearing Completion">Nearing Completion</option>
+                    <option value="Ready to Move-IN">Ready to Move-IN</option>
                   </select>
                 </div>
               </div>
 
-              {/* Row 5: SUBA, Carpet Area & Indicative Price */}
-              <div className="grid md:grid-cols-3 gap-4 p-4 bg-white/[0.02] border border-white/10 rounded-sm">
+              {/* Row 6: Approval, RERA, RERA Number */}
+              <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">SUBA (Super Built-up Area) *</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Approval * (Authority Dropdown)</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-amber-300 text-xs outline-none focus:border-amber-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.approvedAuthority || formData.approvalBody || 'BBMP'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, approvedAuthority: val, approvalBody: val }));
+                    }}
+                  >
+                    <option value="BBMP">BBMP (Bruhat Bengaluru Mahanagara Palike)</option>
+                    <option value="BDA">BDA (Bangalore Development Authority)</option>
+                    <option value="BMRDA">BMRDA</option>
+                    <option value="STRR">STRR (Satellite Town Ring Road)</option>
+                    <option value="BIAPA">BIAPA (Bangalore International Airport Area)</option>
+                    <option value="BBMP/BDA & RERA Approved">BBMP/BDA &amp; RERA Approved</option>
+                    <option value="A-Khata">A-Khata Certified</option>
+                    <option value="Panchayat Approved">Panchayat Approved</option>
+                    <option value="DC Converted">DC Converted</option>
+                    <option value="DTCP">DTCP</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">RERA *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-emerald-400 text-xs outline-none focus:border-amber-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value="Approved"
+                    disabled
+                  >
+                    <option value="Approved">Approved</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">RERA Number *</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-amber-400 transition-all font-mono text-xs rounded-sm"
+                    value={formData.reraNumber || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, reraNumber: val }));
+                    }}
+                    placeholder="PRM/KA/RERA/..."
+                  />
+                </div>
+              </div>
+
+              {/* Row 7: SUBA, Carpet Area, Project Size, Total Units */}
+              <div className="grid md:grid-cols-4 gap-4 p-4 bg-white/[0.02] border border-white/10 rounded-sm">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">SUBA *</label>
                   <input 
                     required
                     className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
                     value={formData.suba || ''}
-                    onChange={e => setFormData({ ...formData, suba: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, suba: val }));
+                    }}
                     placeholder="e.g., 1,650 Sq.Ft."
                   />
                 </div>
@@ -5577,123 +5925,187 @@ const ProjectForm = ({
                     required
                     className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
                     value={formData.carpetArea || ''}
-                    onChange={e => setFormData({ ...formData, carpetArea: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, carpetArea: val }));
+                    }}
                     placeholder="e.g., 1,280 Sq.Ft."
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Indicative Resale Price *</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Project Size</label>
                   <input 
-                    required
-                    className="w-full bg-black/50 border border-amber-500/40 p-3 text-amber-300 text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono font-bold"
-                    value={formData.price || ''}
-                    onChange={e => setFormData({ ...formData, price: e.target.value, lastPrice: e.target.value })}
-                    placeholder="e.g., ₹1.85 Cr onwards*"
+                    className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.projectSize || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, projectSize: val }));
+                    }}
+                    placeholder="e.g., 12.0 Acres"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Total Units</label>
+                  <input 
+                    className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
+                    value={formData.totalUnits || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, totalUnits: val }));
+                    }}
+                    placeholder="e.g., 620 Units"
                   />
                 </div>
               </div>
 
-              {/* Row 6: Car Close Parking, Balcony, RERA */}
-              <div className="grid md:grid-cols-3 gap-4">
+              {/* Row 8: No. Of Towers, Flats Per Floor, Floor Rise, Vaastu Compliant */}
+              <div className="grid md:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Car Close Parking</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono"
-                    value={formData.carCloseParking || '1'}
-                    onChange={e => setFormData({ ...formData, carCloseParking: e.target.value })}
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">No. Of Towers</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-amber-400 transition-all text-xs rounded-sm font-mono"
+                    value={formData.noOfTowers || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, noOfTowers: val }));
+                    }}
+                    placeholder="e.g., Tower 3"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Flats Per Floor</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-amber-400 transition-all text-xs rounded-sm font-mono"
+                    value={formData.flatsPerFloor || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, flatsPerFloor: val }));
+                    }}
+                    placeholder="e.g., 4 Flats / Floor"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Floor Rise</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-amber-400 transition-all text-xs rounded-sm font-mono"
+                    value={formData.floorRise || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, floorRise: val }));
+                    }}
+                    placeholder="e.g., Standard"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Vaastu Compliant *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.vaastuCompliant || 'Yes'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, vaastuCompliant: val }));
+                    }}
                   >
-                    <option value="1">1 Car Covered Parking</option>
-                    <option value="2">2 Car Covered Parking</option>
-                    <option value="3">3 Car Covered Parking</option>
-                    <option value="4">4 Car Covered Parking</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Balcony</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
-                    value={formData.balcony || '1'}
-                    onChange={e => setFormData({ ...formData, balcony: e.target.value })}
-                    placeholder="e.g., 2 Balconies"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">RERA Number</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
-                    value={formData.reraNumber || ''}
-                    onChange={e => setFormData({ ...formData, reraNumber: e.target.value })}
-                    placeholder="PRM/KA/RERA/..."
-                  />
-                </div>
-              </div>
-
-              {/* Row 7: Handed Over Date, Registration Status, Approved Authority */}
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Handed Over Date</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
-                    value={formData.handedOverDate || ''}
-                    onChange={e => setFormData({ ...formData, handedOverDate: e.target.value })}
-                    placeholder="e.g., March 2024 / Ready"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Registration Status</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono"
-                    value={formData.registrationStatus || 'Ready for Registration'}
-                    onChange={e => setFormData({ ...formData, registrationStatus: e.target.value })}
-                    placeholder="Ready for Registration / OC Received"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Approved Authority *</label>
-                  <select
-                    className="w-full bg-art-dark border border-white/15 p-3.5 text-amber-300 text-xs outline-none focus:border-amber-400 transition-all rounded-sm cursor-pointer font-mono font-bold"
-                    value={formData.approvedAuthority || 'BDA'}
-                    onChange={e => setFormData({ ...formData, approvedAuthority: e.target.value })}
-                  >
-                    <option value="BDA">BDA (Bangalore Development Authority)</option>
-                    <option value="BBMP">BBMP (Bruhat Bengaluru Mahanagara Palike)</option>
-                    <option value="BMRDA">BMRDA</option>
-                    <option value="STRR">STRR (Satellite Town Ring Road)</option>
-                    <option value="DTCP">DTCP</option>
-                    <option value="MPA">MPA</option>
-                    <option value="SPA">SPA</option>
-                    <option value="BIAPPA">BIAPPA (Bangalore International Airport Area)</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
                   </select>
                 </div>
               </div>
 
-              {/* Row 8: Available From (Calendar) */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400 flex items-center gap-1.5">
-                  <Calendar size={12} /> Available From * (Select via Calendar)
+              {/* Row 9: Facing Available (Multi-Select Buttons) */}
+              <div className="space-y-2 p-3.5 bg-white/[0.02] border border-white/10 rounded-sm">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400 block">
+                  Facing Available: East, North, West, South, South West, North East
                 </label>
-                <input 
-                  required
-                  type="date"
-                  className="w-full bg-black/60 border border-amber-500/40 p-3.5 text-amber-300 text-xs outline-none focus:border-amber-400 transition-all rounded-sm font-mono cursor-pointer"
-                  value={formData.availableFrom || ''}
-                  onChange={e => setFormData({ ...formData, availableFrom: e.target.value })}
-                />
+                <div className="flex flex-wrap gap-2">
+                  {['East', 'North', 'West', 'South', 'South West', 'North East'].map(f => {
+                    const isSelected = (formData.facingAvailable || []).includes(f) || formData.mainDoorFacing === f;
+                    return (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => {
+                            const current = prev.facingAvailable || [];
+                            const updated = current.includes(f) ? current.filter(x => x !== f) : [...current, f];
+                            return { ...prev, facingAvailable: updated, mainDoorFacing: updated[0] || 'East' };
+                          });
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-mono font-bold rounded-sm border transition-all cursor-pointer",
+                          isSelected
+                            ? "bg-amber-500 text-black border-amber-400 shadow-sm"
+                            : "bg-white/5 text-white/60 border-white/15 hover:text-white hover:bg-white/10"
+                        )}
+                      >
+                        {isSelected ? '✓ ' : ''}{f}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Row 9: Comments */}
+              {/* Row 10: Unit Configuration (Studio, 1BHK, 2BHK, 3BHK, 4BHK, 5BHK) */}
+              <div className="space-y-2 p-3.5 bg-white/[0.02] border border-white/10 rounded-sm">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400 block">
+                  Unit Configuration: Studio, 1BHK, 2BHK, 3BHK, 4BHK, 5BHK
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['Studio', '1BHK', '2BHK', '3BHK', '4BHK', '5BHK'].map(config => {
+                    const isSelected = (formData.configuration || []).some(c => c.replace(/\s+/g, '') === config) || formData.residenceType === config;
+                    return (
+                      <button
+                        key={config}
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => {
+                            const current = (prev.configuration || []).map(c => c.replace(/\s+/g, ''));
+                            const updated = current.includes(config) ? current.filter(c => c !== config) : [...current, config];
+                            return { ...prev, configuration: updated, residenceType: updated[0] || '3BHK' };
+                          });
+                        }}
+                        className={cn(
+                          "px-4 py-2 text-xs font-mono font-bold rounded-sm border transition-all cursor-pointer",
+                          isSelected
+                            ? "bg-amber-500 text-black border-amber-400 shadow-sm font-black"
+                            : "bg-white/5 text-white/60 border-white/15 hover:text-white hover:bg-white/10"
+                        )}
+                      >
+                        {isSelected ? '✓ ' : ''}{config}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Row 11: Amenities */}
               <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/60">Comments &amp; Resale Disclosures</label>
-                <textarea 
-                  rows={3}
-                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-amber-400 transition-all text-xs leading-relaxed rounded-sm"
-                  value={formData.comments || ''}
-                  onChange={e => setFormData({ ...formData, comments: e.target.value, description: e.target.value })}
-                  placeholder="Khata status, loan clearance, occupancy certificate details, furnishing specifications..."
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Amenities (Comma-separated)</label>
+                <input 
+                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-amber-400 transition-all text-xs rounded-sm font-mono"
+                  value={amenitiesInput}
+                  onChange={e => handleAmenitiesChange(e.target.value)}
+                  placeholder="Clubhouse, Covered Parking, Power Backup, 24/7 Security, Children Play Area..."
                 />
               </div>
 
-              {/* Media Compression & Uploads (Photos & Walkthrough Video) */}
+              {/* Row 12: Project Write Ups */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-amber-400">Project Write Ups *</label>
+                <textarea 
+                  required
+                  rows={4}
+                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-amber-400 transition-all text-xs leading-relaxed rounded-sm font-sans"
+                  value={formData.projectWriteUps || formData.description || ''}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setFormData(prev => ({ ...prev, projectWriteUps: val, description: val }));
+                  }}
+                  placeholder="Detailed architectural write-up, occupancy certificate status, resale disclosures, and furnishing details..."
+                />
+              </div>
+
+              {/* Row 13: Photos / Videos (Media Upload & Compression) */}
               <MediaUploadCompressor
                 accentColor="amber"
                 title="Resale Photos & Video Walkthrough (Auto-Compressed HD)"
@@ -5713,33 +6125,6 @@ const ProjectForm = ({
                   ogImage: poster || prev.ogImage || (prev.imageUrls && prev.imageUrls[0]) || ''
                 }))}
               />
-
-              {/* Inquiry Action Card */}
-              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <span className="text-[10px] uppercase tracking-widest font-black text-amber-300 block mb-0.5">
-                    Resale Client Inquiry Integration
-                  </span>
-                  <p className="text-xs text-white/70">
-                    Open the inquiry submission form directly for this resale listing.
-                  </p>
-                </div>
-                {onOpenEnquiry && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onOpenEnquiry({
-                        ...(formData as Project),
-                        type: 'Resale',
-                        price: formData.price || '₹1.85 Cr*'
-                      });
-                    }}
-                    className="px-4 py-2.5 bg-amber-500 hover:bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-sm transition-all whitespace-nowrap cursor-pointer shadow-md"
-                  >
-                    Fill Resale Inquiry Form
-                  </button>
-                )}
-              </div>
             </div>
           )}
 
@@ -5747,350 +6132,408 @@ const ProjectForm = ({
           {/* PRIMARY PORTFOLIO SPECIFIC FIELDS                        */}
           {/* ======================================================== */}
           {inventoryMode === 'Primary' && (
-            <div className="grid lg:grid-cols-2 gap-10 text-left">
-              {/* Left Column: Basic Info */}
-              <div className="space-y-5">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">Project Name *</label>
-                    <input 
-                      required
-                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
-                      value={formData.name}
-                      onChange={e => setFormData({...formData, name: e.target.value})}
-                      onBlur={() => {
-                        if (formData.name?.trim() && !formData.description?.trim()) {
-                          handleAutoCheckOnline(formData.name);
-                        }
-                      }}
-                      placeholder="e.g., Prestige Somerville, Sobha Galera..."
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Indicative Price * (* Conditions Apply)</label>
-                    <input 
-                      required
-                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
-                      value={formData.price}
-                      onChange={e => setFormData({...formData, price: e.target.value, lastPrice: e.target.value})}
-                      placeholder="Rs. 2.45 Cr onwards*"
-                    />
-                  </div>
-                </div>
+            <div className="space-y-6 text-left">
+              <div className="p-3 bg-art-gold/10 border border-art-gold/30 rounded-sm text-xs text-art-gold font-mono flex items-center justify-between">
+                <span>Primary Portfolio Entry • Direct Developer &amp; 0% Brokerage Desk</span>
+                <span className="font-bold uppercase tracking-wider text-[10px]">Primary Vault Active</span>
+              </div>
 
-                {/* Highlighted Auto-Updated Last Price & Handover Date */}
-                <div className="grid md:grid-cols-2 gap-4 p-3.5 bg-art-gold/[0.06] border border-art-gold/30 rounded-sm">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-black tracking-widest text-art-gold flex items-center gap-1.5">
-                      <Sparkles size={11} /> Last Price * (Auto-Updated)
-                    </label>
-                    <input 
-                      className="w-full bg-black/50 border border-art-gold/30 p-3 text-art-gold font-mono text-xs outline-none focus:border-art-gold transition-all rounded-sm"
-                      value={formData.lastPrice || formData.price || ''}
-                      onChange={e => setFormData({...formData, lastPrice: e.target.value})}
-                      placeholder="Auto-updated Last Price*"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-black tracking-widest text-art-gold flex items-center gap-1.5">
-                      <Calendar size={11} /> Hand Over Date (Auto-Updated)
-                    </label>
-                    <input 
-                      className="w-full bg-black/50 border border-art-gold/30 p-3 text-white font-mono text-xs outline-none focus:border-art-gold transition-all rounded-sm"
-                      value={formData.handoverDate || ''}
-                      onChange={e => setFormData({...formData, handoverDate: e.target.value})}
-                      placeholder="December 2027 / Immediate"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Corridor / Zone</label>
-                    <select 
-                      className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm"
-                      value={formData.zone}
-                      onChange={e => {
-                        const nextZone = e.target.value as any;
-                        setFormData({
-                          ...formData,
-                          zone: nextZone,
-                          imageUrls: getSmartProjectImages(nextZone, formData.type, formData.builderCategory, formData.propertyType)
-                        });
-                      }}
-                    >
-                      <option value="Whitefield">Whitefield</option>
-                      <option value="Hoskote">Hoskote</option>
-                      <option value="Varthur">Varthur</option>
-                      <option value="Gunjur">Gunjur</option>
-                      <option value="Hosa Road">Hosa Road</option>
-                      <option value="Kasavanahalli">Kasavanahalli</option>
-                      <option value="East Bangalore">East Bangalore</option>
-                      <option value="Off Sarjapur Road">Off Sarjapur Road</option>
-                      <option value="Sarjapur">Sarjapur</option>
-                      <option value="Electronic City">Electronic City</option>
-                      <option value="Marathalli">Marathalli</option>
-                      <option value="Bellandur">Bellandur</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Micro-Location</label>
-                    <input 
-                      required
-                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
-                      value={formData.location}
-                      onChange={e => setFormData({...formData, location: e.target.value})}
-                      placeholder="Whitefield, Hoskote, Varthur, Gunjur, Hosa Road..."
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Property Type</label>
-                    <select 
-                      className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm"
-                      value={formData.propertyType || 'Apartment'}
-                      onChange={e => {
-                        const nextProp = e.target.value as any;
-                        setFormData({
-                          ...formData,
-                          propertyType: nextProp,
-                          imageUrls: getSmartProjectImages(formData.zone, formData.type, formData.builderCategory, nextProp)
-                        });
-                      }}
-                    >
-                      <option value="Apartment">Apartment</option>
-                      <option value="Villa">Villa</option>
-                      <option value="Plot">Plot</option>
-                      <option value="Commercial">Commercial</option>
-                      <option value="Stand Alone Building">Stand Alone Building</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Present Status</label>
-                    <select 
-                      className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm"
-                      value={formData.handoverStatus}
-                      onChange={e => {
-                        const nextStatus = e.target.value as any;
-                        const autoHandoverDate =
-                          nextStatus === 'Ready to Move' || nextStatus === 'Handed Over'
-                            ? 'Immediate Possession (OC Received)'
-                            : nextStatus === 'EOI'
-                            ? 'December 2028'
-                            : 'December 2027';
-                        setFormData({
-                          ...formData,
-                          handoverStatus: nextStatus,
-                          handoverDate: formData.handoverDate || autoHandoverDate
-                        });
-                      }}
-                    >
-                      <option value="EOI">EOI</option>
-                      <option value="Under Construction">Under Construction</option>
-                      <option value="Ready to Move">Ready To Move</option>
-                      <option value="Handed Over">Handed Over</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Builder Category &amp; Name</label>
-                    <div className="flex gap-2">
-                      <select
-                        value={formData.builderCategory || 'A'}
-                        onChange={e => {
-                          const nextCat = e.target.value as any;
-                          setFormData({
-                            ...formData,
-                            builderCategory: nextCat,
-                            segment: nextCat === 'A+' ? 'Ultra-Luxury' : nextCat === 'A' ? 'Premium Luxury' : nextCat === 'B' ? 'Value Luxury' : 'Smart Boutique',
-                            imageUrls: getSmartProjectImages(formData.zone, formData.type, nextCat, formData.propertyType)
-                          });
-                        }}
-                        className="bg-art-dark border border-white/15 p-3.5 text-xs text-art-gold font-bold outline-none focus:border-art-gold rounded-sm"
-                      >
-                        <option value="A+">Cat A+</option>
-                        <option value="A">Cat A</option>
-                        <option value="B">Cat B</option>
-                        <option value="C">Cat C</option>
-                      </select>
-                      <input
-                        className="flex-1 bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold rounded-sm"
-                        value={formData.builderName || ''}
-                        onChange={e => setFormData({ ...formData, builderName: e.target.value })}
-                        placeholder="Builder Name"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Approval Body</label>
-                    <input 
-                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
-                      value={formData.approvalBody || ''}
-                      onChange={e => setFormData({...formData, approvalBody: e.target.value})}
-                      placeholder="BBMP / BDA / BMRDA & RERA"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">RERA Number</label>
-                    <input 
-                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all font-mono text-xs rounded-sm"
-                      value={formData.reraNumber || ''}
-                      onChange={e => setFormData({...formData, reraNumber: e.target.value})}
-                      placeholder="PRM/KA/RERA/..."
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Project Size</label>
-                    <input 
-                      className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
-                      value={formData.projectSize || ''}
-                      onChange={e => setFormData({...formData, projectSize: e.target.value})}
-                      placeholder="21 Acres (1,368 Units)"
-                    />
-                  </div>
-                </div>
-
+              {/* Row 1: Project Name, Price, Location */}
+              <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Floor Plan &amp; SBA Specifications</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">Project Name *</label>
                   <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
-                    value={formData.floorPlan || ''}
-                    onChange={e => setFormData({...formData, floorPlan: e.target.value})}
-                    placeholder="2 BHK (1250 Sq.Ft.) | 3 BHK (1780 Sq.Ft.) | 4 BHK (2450 Sq.Ft.)"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Amenities (Comma Separated)</label>
-                  <input 
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm"
-                    value={(formData.features || []).join(', ')}
-                    onChange={e => setFormData({...formData, features: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
-                    placeholder="Sky Clubhouse, Heated Infinity Pool, Co-working Lounge, Tennis Court..."
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/50">Project Writeup (Max 2000 chars)</label>
-                  <textarea 
                     required
-                    rows={4}
-                    maxLength={2000}
-                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs leading-relaxed rounded-sm"
-                    value={formData.description}
-                    onChange={e => setFormData({...formData, description: e.target.value})}
-                    placeholder="Writeup detailing architectural excellence, connectivity, and lifestyle..."
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-semibold"
+                    value={formData.name || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, name: val }));
+                    }}
+                    placeholder="e.g., Prestige Somerville, Sobha Galera..."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">Price *</label>
+                  <input 
+                    required
+                    className="w-full bg-white/5 border border-art-gold/40 p-3.5 text-art-gold text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono font-bold"
+                    value={formData.price || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, price: val, lastPrice: val }));
+                    }}
+                    placeholder="Rs. 2.45 Cr onwards*"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Location *</label>
+                    <button
+                      type="button"
+                      onClick={handleAutoFetchLocationDetails}
+                      disabled={isFetchingLocationDetails}
+                      className="text-[9px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-1 font-mono font-bold bg-amber-950/40 border border-art-gold/40 px-2 py-0.5 rounded cursor-pointer"
+                    >
+                      {isFetchingLocationDetails ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                      Auto-Fetch (km)
+                    </button>
+                  </div>
+                  <input 
+                    required
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm"
+                    value={formData.location || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, location: val }));
+                    }}
+                    placeholder="e.g., Whitefield - Varthur Main Road..."
                   />
                 </div>
               </div>
 
-              {/* Right Column: Uploads & Specs */}
-              <div className="space-y-6">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/40">No. Of Towers</label>
-                    <input 
-                      className="w-full bg-white/5 border border-white/15 p-3 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm"
-                      value={formData.noOfTowers || ''}
-                      onChange={e => setFormData({...formData, noOfTowers: e.target.value})}
-                      placeholder="10 Towers"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/40">Flats Per Floor</label>
-                    <input 
-                      className="w-full bg-white/5 border border-white/15 p-3 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm"
-                      value={formData.flatsPerFloor || ''}
-                      onChange={e => setFormData({...formData, flatsPerFloor: e.target.value})}
-                      placeholder="4 Flats / Floor"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/40">Floors Height</label>
-                    <input 
-                      className="w-full bg-white/5 border border-white/15 p-3 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm"
-                      value={formData.floorsHeight || ''}
-                      onChange={e => setFormData({...formData, floorsHeight: e.target.value})}
-                      placeholder="2B + G + 29 Floors"
-                    />
-                  </div>
+              {/* Row 2: Project Status, Project Type, Type of Property */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Project Status</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono"
+                    value={formData.segment || 'Luxury'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, segment: val }));
+                    }}
+                    placeholder="e.g., Ultra-Luxury / Pre-Launch / Active"
+                  />
                 </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Project Type *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm font-bold"
+                    value={formData.projectTypeCategory || 'Gated'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, projectTypeCategory: val }));
+                    }}
+                  >
+                    <option value="Gated">Gated</option>
+                    <option value="Stand Alone">Stand Alone</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Type of Property *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm font-bold"
+                    value={formData.propertyType || 'Apartment'}
+                    onChange={e => {
+                      const nextProp = e.target.value as any;
+                      setFormData(prev => ({
+                        ...prev,
+                        propertyType: nextProp,
+                        imageUrls: getSmartProjectImages(prev.zone, prev.type, prev.builderCategory, nextProp)
+                      }));
+                    }}
+                  >
+                    <option value="Apartment">Apartment</option>
+                    <option value="Villa">Villa</option>
+                    <option value="Plot">Plot</option>
+                  </select>
+                </div>
+              </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/40">Units Configuration (Select Multiple)</label>
-                  <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5">
-                    {['Studio', '1 BHK', '2 BHK', '3 BHK', '4 BHK', '5 BHK', 'Plots'].map(config => (
+              {/* Row 3: Hand Over Date, Present Status, Approval */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70 flex items-center gap-1.5">
+                    <Calendar size={12} className="text-art-gold" /> Hand Over Date
+                  </label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono"
+                    value={formData.handoverDate || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, handoverDate: val }));
+                    }}
+                    placeholder="e.g., December 2027 / Immediate"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">Present Status *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-art-gold text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm font-bold"
+                    value={formData.presentStatus || formData.handoverStatus || 'Under Construction'}
+                    onChange={e => {
+                      const nextStatus = e.target.value as any;
+                      setFormData(prev => ({
+                        ...prev,
+                        presentStatus: nextStatus,
+                        handoverStatus: nextStatus === 'Ready to Move-IN' ? 'Ready to Move' : nextStatus
+                      }));
+                    }}
+                  >
+                    <option value="EOI">EOI</option>
+                    <option value="Under Construction">Under Construction</option>
+                    <option value="Nearing Completion">Nearing Completion</option>
+                    <option value="Ready to Move-IN">Ready to Move-IN</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Approval * (Authority Dropdown)</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.approvalBody || 'BBMP'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, approvalBody: val }));
+                    }}
+                  >
+                    <option value="BBMP">BBMP (Bruhat Bengaluru Mahanagara Palike)</option>
+                    <option value="BDA">BDA (Bangalore Development Authority)</option>
+                    <option value="BMRDA">BMRDA</option>
+                    <option value="STRR">STRR (Satellite Town Ring Road)</option>
+                    <option value="BIAPA">BIAPA (Bangalore International Airport Area)</option>
+                    <option value="BBMP/BDA & RERA Approved">BBMP/BDA &amp; RERA Approved</option>
+                    <option value="A-Khata">A-Khata Certified</option>
+                    <option value="Panchayat Approved">Panchayat Approved</option>
+                    <option value="DC Converted">DC Converted</option>
+                    <option value="DTCP">DTCP</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 4: RERA (Approved), RERA Number, Vaastu Compliant */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">RERA *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-emerald-400 text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value="Approved"
+                    disabled
+                  >
+                    <option value="Approved">Approved</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">RERA Number *</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all font-mono text-xs rounded-sm"
+                    value={formData.reraNumber || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, reraNumber: val }));
+                    }}
+                    placeholder="PRM/KA/RERA/..."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Vaastu Compliant *</label>
+                  <select 
+                    className="w-full bg-art-dark border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all cursor-pointer rounded-sm font-mono font-bold"
+                    value={formData.vaastuCompliant || 'Yes'}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, vaastuCompliant: val }));
+                    }}
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 5: Facing Available (Multi-Select Buttons) */}
+              <div className="space-y-2 p-3.5 bg-white/[0.02] border border-white/10 rounded-sm">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold block">
+                  Facing Available: East, North, West, South, South West, North East
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['East', 'North', 'West', 'South', 'South West', 'North East'].map(f => {
+                    const isSelected = (formData.facingAvailable || []).includes(f);
+                    return (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => {
+                            const current = prev.facingAvailable || [];
+                            const updated = current.includes(f) ? current.filter(x => x !== f) : [...current, f];
+                            return { ...prev, facingAvailable: updated, mainDoorFacing: updated[0] || 'East' };
+                          });
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-mono font-bold rounded-sm border transition-all cursor-pointer",
+                          isSelected
+                            ? "bg-art-gold text-black border-art-gold shadow-sm"
+                            : "bg-white/5 text-white/60 border-white/15 hover:text-white hover:bg-white/10"
+                        )}
+                      >
+                        {isSelected ? '✓ ' : ''}{f}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Row 6: Project Size, Floor Plan Size, Floor Rise, Total Units */}
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Project Size</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono"
+                    value={formData.projectSize || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, projectSize: val }));
+                    }}
+                    placeholder="e.g., 14.5 Acres"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Floor Plan Size</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono"
+                    value={formData.floorPlanSize || formData.floorPlan || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, floorPlanSize: val, floorPlan: val }));
+                    }}
+                    placeholder="e.g., 1,450 - 2,800 Sq.Ft."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Floor Rise</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono"
+                    value={formData.floorRise || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, floorRise: val }));
+                    }}
+                    placeholder="e.g., ₹25/sq.ft per floor"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Total Units</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-mono"
+                    value={formData.totalUnits || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, totalUnits: val }));
+                    }}
+                    placeholder="e.g., 480 Units"
+                  />
+                </div>
+              </div>
+
+              {/* Row 7: No. Of Towers, Flats Per Floor */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">No. Of Towers</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm font-mono"
+                    value={formData.noOfTowers || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, noOfTowers: val }));
+                    }}
+                    placeholder="e.g., 8 Towers (G + 28 Floors)"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Flats Per Floor</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm font-mono"
+                    value={formData.flatsPerFloor || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, flatsPerFloor: val }));
+                    }}
+                    placeholder="e.g., 4 Flats / Floor"
+                  />
+                </div>
+              </div>
+
+              {/* Row 8: Unit Configuration (Studio, 1BHK, 2BHK, 3BHK, 4BHK, 5BHK) */}
+              <div className="space-y-2 p-3.5 bg-white/[0.02] border border-white/10 rounded-sm">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold block">
+                  Unit Configuration: Studio, 1BHK, 2BHK, 3BHK, 4BHK, 5BHK
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['Studio', '1BHK', '2BHK', '3BHK', '4BHK', '5BHK'].map(config => {
+                    const isSelected = (formData.configuration || []).some(c => c.replace(/\s+/g, '') === config);
+                    return (
                       <button
                         key={config}
                         type="button"
                         onClick={() => {
-                          const current = formData.configuration || [];
-                          const updated = current.includes(config) 
-                            ? current.filter(c => c !== config)
-                            : [...current, config];
-                          setFormData({...formData, configuration: updated});
+                          setFormData(prev => {
+                            const current = (prev.configuration || []).map(c => c.replace(/\s+/g, ''));
+                            const updated = current.includes(config) ? current.filter(c => c !== config) : [...current, config];
+                            return { ...prev, configuration: updated };
+                          });
                         }}
                         className={cn(
-                          "p-2.5 text-[9px] border transition-all uppercase tracking-widest text-center cursor-pointer rounded-sm",
-                          formData.configuration?.includes(config) 
-                            ? "bg-art-gold border-art-gold text-black font-black" 
-                            : "bg-white/5 border-white/10 text-white/40"
+                          "px-4 py-2 text-xs font-mono font-bold rounded-sm border transition-all cursor-pointer",
+                          isSelected
+                            ? "bg-art-gold text-black border-art-gold shadow-sm font-black"
+                            : "bg-white/5 text-white/60 border-white/15 hover:text-white hover:bg-white/10"
                         )}
                       >
-                        {config}
+                        {isSelected ? '✓ ' : ''}{config}
                       </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-4 bg-art-gold/[0.05] border border-art-gold/25 rounded-sm space-y-2">
-                  <span className="text-[9px] uppercase tracking-[0.25em] text-art-gold font-black block">
-                    Verified Curation Active
-                  </span>
-                  <p className="text-xs text-white/75 leading-relaxed">
-                    Primary project configurations automatically integrate pricing brackets, RERA credentials, builder ratings, and corridor connectivity matrices.
-                  </p>
-                </div>
-
-                {/* Inquiry Action Card */}
-                {onOpenEnquiry && (
-                  <div className="p-4 bg-art-gold/10 border border-art-gold/30 rounded-sm flex items-center justify-between gap-3">
-                    <div>
-                      <span className="text-[10px] uppercase tracking-widest font-black text-art-gold block">
-                        Direct Inquiry Form Filling
-                      </span>
-                      <p className="text-xs text-white/60">Test or file a client inquiry for this project.</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => onOpenEnquiry(formData as Project)}
-                      className="px-4 py-2 bg-art-gold text-black text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-white transition-colors cursor-pointer whitespace-nowrap shadow-sm"
-                    >
-                      Fill Inquiry Form
-                    </button>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3.5 rounded-sm">
-                  <input 
-                    type="checkbox"
-                    id="formIsPaused"
-                    checked={formData.isPaused || false}
-                    onChange={e => setFormData({...formData, isPaused: e.target.checked})}
-                    className="w-4 h-4 accent-art-gold rounded bg-white/5 border-white/10 outline-none cursor-pointer"
-                  />
-                  <label htmlFor="formIsPaused" className="text-[10px] uppercase font-bold tracking-widest text-white/80 cursor-pointer select-none">
-                    Hide / Pause Project (Removes from main visitor portal)
-                  </label>
+                    );
+                  })}
                 </div>
               </div>
+
+              {/* Row 9: Amenities */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Amenities (Comma-separated)</label>
+                <input 
+                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs rounded-sm font-mono"
+                  value={amenitiesInput}
+                  onChange={e => handleAmenitiesChange(e.target.value)}
+                  placeholder="Grand Clubhouse, Swimming Pool, Co-working Hub, Gymnasium, Tennis Court..."
+                />
+              </div>
+
+              {/* Row 10: Project Write Ups */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">Project Write Ups *</label>
+                <textarea 
+                  required
+                  rows={4}
+                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-art-gold transition-all text-xs leading-relaxed rounded-sm font-sans"
+                  value={formData.projectWriteUps || formData.description || ''}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setFormData(prev => ({ ...prev, projectWriteUps: val, description: val }));
+                  }}
+                  placeholder="Detailed architectural write-up, connectivity advantages, distances to key IT Hubs, schools and transit stations..."
+                />
+              </div>
+
+              {/* Row 11: Photos / Videos (Media Upload & Compression) */}
+              <MediaUploadCompressor
+                accentColor="gold"
+                title="Primary Photos & Video Walkthrough (Auto-Compressed HD)"
+                images={formData.imageUrls || []}
+                onImagesChange={(imgs) => setFormData(prev => ({ 
+                  ...prev, 
+                  imageUrls: imgs,
+                  mobileImageUrl: imgs[0] || '',
+                  ogImage: imgs[0] || ''
+                }))}
+                videoUrl={formData.videoUrl || ''}
+                onVideoChange={(vUrl, poster) => setFormData(prev => ({ 
+                  ...prev, 
+                  videoUrl: vUrl, 
+                  mobileVideoUrl: vUrl,
+                  mobileImageUrl: poster || prev.mobileImageUrl || (prev.imageUrls && prev.imageUrls[0]) || '',
+                  ogImage: poster || prev.ogImage || (prev.imageUrls && prev.imageUrls[0]) || ''
+                }))}
+              />
             </div>
           )}
 
@@ -6266,6 +6709,83 @@ const ProjectForm = ({
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Meta Title & Meta Description (Google SERP & Social Sharing Snippets) */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-3.5 bg-black/40 border border-white/10 rounded-sm">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold flex items-center gap-1.5">
+                      <span>🏷️</span> Meta Title (SERP &amp; Browser Tab)
+                    </label>
+                    <span className={cn(
+                      "text-[9px] font-mono font-bold",
+                      (formData.metaTitle?.length || 0) >= 25 && (formData.metaTitle?.length || 0) <= 65
+                        ? "text-emerald-400"
+                        : "text-amber-400"
+                    )}>
+                      {formData.metaTitle?.length || 0} / 60 chars
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.metaTitle || ''}
+                    onChange={e => setFormData(prev => ({
+                      ...prev,
+                      metaTitle: e.target.value,
+                      seoTitle: e.target.value
+                    }))}
+                    placeholder="e.g. Prestige Somerville | Luxury 3 BHK in Whitefield | BS Homez"
+                    className="w-full bg-white/5 border border-white/15 px-3 py-2 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-sans placeholder:text-white/20"
+                  />
+                  <p className="text-[8.5px] font-mono text-white/40">
+                    Recommended: 50–60 characters. Appears as the headline in Google search results and browser tabs.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold flex items-center gap-1.5">
+                      <span>📄</span> Meta Description (Google Snippet &amp; Social Card)
+                    </label>
+                    <span className={cn(
+                      "text-[9px] font-mono font-bold",
+                      (formData.metaDescription?.length || 0) >= 120 && (formData.metaDescription?.length || 0) <= 165
+                        ? "text-emerald-400"
+                        : "text-amber-400"
+                    )}>
+                      {formData.metaDescription?.length || 0} / 160 chars
+                    </span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={formData.metaDescription || ''}
+                    onChange={e => setFormData(prev => ({
+                      ...prev,
+                      metaDescription: e.target.value,
+                      seoDescription: e.target.value
+                    }))}
+                    placeholder="e.g. Explore luxury residences in Whitefield, Bangalore. Verified RERA, 0% brokerage, prime connectivity. Enquire with BS Homez."
+                    className="w-full bg-white/5 border border-white/15 p-2.5 text-white text-xs outline-none focus:border-art-gold transition-all rounded-sm font-sans placeholder:text-white/20 resize-none leading-relaxed"
+                  />
+                  <div className="flex items-center justify-between text-[8.5px] font-mono text-white/40">
+                    <span>Recommended: 140–160 characters. Previewed in Google snippets and WhatsApp/Meta cards.</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const def = `Explore ${formData.name || 'luxury residences'} in ${formData.location || formData.zone || 'Bangalore'}. Verified RERA with 0% brokerage. Contact BS Homez.`;
+                        setFormData(prev => ({
+                          ...prev,
+                          metaDescription: def,
+                          seoDescription: def
+                        }));
+                      }}
+                      className="text-art-gold hover:underline cursor-pointer ml-2 shrink-0"
+                    >
+                      Use Default
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -7369,6 +7889,7 @@ const AdminView = ({
   onOpenNewProjectWithMode,
   onOpenEnquiry,
   onDeleteProject,
+  onDeleteAllProjects,
   onInspectProjectSeo,
   onSaveProject,
   onBatchUpdateProjects
@@ -7388,6 +7909,7 @@ const AdminView = ({
   onOpenNewProjectWithMode?: (mode: 'Primary' | 'Rental' | 'Resale') => void,
   onOpenEnquiry?: (p: Project) => void,
   onDeleteProject?: (p: Project) => Promise<void> | void,
+  onDeleteAllProjects?: (projects: Project[]) => Promise<void> | void,
   onInspectProjectSeo?: (p: Project) => void,
   onSaveProject?: (p: Project) => Promise<void> | void,
   onBatchUpdateProjects?: (updated: Project[]) => void
@@ -7398,12 +7920,15 @@ const AdminView = ({
   const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
   const [deleteConfirmEnquiry, setDeleteConfirmEnquiry] = useState<Enquiry | null>(null);
   const [deleteConfirmProject, setDeleteConfirmProject] = useState<Project | null>(null);
+  const [showDeleteAllConfirmModal, setShowDeleteAllConfirmModal] = useState<boolean>(false);
+  const [isDeletingAllProjects, setIsDeletingAllProjects] = useState<boolean>(false);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [leadActionToast, setLeadActionToast] = useState<string | null>(null);
   const [enquiryCategoryFilter, setEnquiryCategoryFilter] = useState<'all' | 'Primary' | 'Rental' | 'Resale' | 'Home Loan'>('all');
   const [intentFilter, setIntentFilter] = useState<'all' | 'High' | 'Medium' | 'Low'>('all');
   const [inventoryTab, setInventoryTab] = useState<'all' | 'Primary' | 'Rental' | 'Resale'>('all');
+  const [portfolioSearch, setPortfolioSearch] = useState<string>('');
   const [opportunityCategoryFilter, setOpportunityCategoryFilter] = useState<'all' | 'business' | 'property'>('all');
   
   // Column Sorting State for CRM Lead Management (Opportunities & Enquiries)
@@ -7606,7 +8131,7 @@ const AdminView = ({
     }
   };
 
-  const [salesTeamWhatsApp, setSalesTeamWhatsApp] = useState('919902991599');
+  const [salesTeamWhatsApp, setSalesTeamWhatsApp] = useState('');
   const [isBatchProcessingSeo, setIsBatchProcessingSeo] = useState(false);
 
   useEffect(() => {
@@ -7935,11 +8460,11 @@ const AdminView = ({
 
   const handleShareWhatsApp = (enq: Enquiry, targetPhone: string = salesTeamWhatsApp) => {
     const text = formatWhatsAppLeadMessage(enq);
-    const cleanPhone = (targetPhone || '919902991599').replace(/[^0-9]/g, '');
+    const cleanPhone = (targetPhone || '').replace(/[^0-9]/g, '');
     const encoded = encodeURIComponent(text);
-    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`;
+    const url = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}` : `https://api.whatsapp.com/send?text=${encoded}`;
     window.open(url, '_blank', 'noopener,noreferrer');
-    setLeadActionToast(`Dispatched WhatsApp lead brief for ${enq.customerName || 'Lead'} to Sales Team (+${cleanPhone})`);
+    setLeadActionToast(`Dispatched WhatsApp lead brief for ${enq.customerName || 'Lead'}${cleanPhone ? ` to Sales Team (+${cleanPhone})` : ''}`);
     setTimeout(() => setLeadActionToast(null), 4000);
   };
 
@@ -8004,13 +8529,34 @@ const AdminView = ({
   const rentalProjects = validProjects.filter(p => p.type === 'Rental');
   const resaleProjects = validProjects.filter(p => p.type === 'Resale');
 
-  const displayedProjects = inventoryTab === 'all'
+  const baseProjectsByTab = inventoryTab === 'all'
     ? validProjects
     : inventoryTab === 'Primary'
     ? primaryProjects
     : inventoryTab === 'Rental'
     ? rentalProjects
     : resaleProjects;
+
+  const displayedProjects = useMemo(() => {
+    if (!portfolioSearch.trim()) return baseProjectsByTab;
+    const q = portfolioSearch.toLowerCase().trim();
+    return baseProjectsByTab.filter(p => {
+      const matchName = p.name?.toLowerCase().includes(q);
+      const matchBuilder = p.builderName?.toLowerCase().includes(q);
+      const matchLocation = p.location?.toLowerCase().includes(q) || p.locationTarget?.toLowerCase().includes(q);
+      const matchZone = p.zone?.toLowerCase().includes(q);
+      const matchPropertyType = p.propertyType?.toLowerCase().includes(q);
+      const matchRera = p.reraNumber?.toLowerCase().includes(q);
+      const matchStatus = p.handoverStatus?.toLowerCase().includes(q) || p.presentStatus?.toLowerCase().includes(q);
+      const matchAuthority = p.approvalBody?.toLowerCase().includes(q) || p.approvedAuthority?.toLowerCase().includes(q);
+      const matchConfig = Array.isArray(p.configuration)
+        ? p.configuration.some(c => c.toLowerCase().includes(q))
+        : (p.residenceType?.toLowerCase().includes(q) || false);
+      const matchPrice = p.price?.toLowerCase().includes(q);
+      const matchWriteUp = p.projectWriteUps?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q);
+      return Boolean(matchName || matchBuilder || matchLocation || matchZone || matchPropertyType || matchRera || matchStatus || matchAuthority || matchConfig || matchPrice || matchWriteUp);
+    });
+  }, [baseProjectsByTab, portfolioSearch]);
 
   // --- Personalized WhatsApp Message Generator for Lead Intelligence ---
   const generatePersonalizedWhatsAppLeadTemplate = (
@@ -8107,11 +8653,12 @@ const AdminView = ({
     };
   };
 
-  const handleUpdateSeoDraft = (p: Project, field: 'metaTitle' | 'seoKeywords' | 'ogImage', value: string) => {
+  const handleUpdateSeoDraft = (p: Project, field: 'metaTitle' | 'metaDescription' | 'seoKeywords' | 'ogImage', value: string) => {
     const key = p.id || p.name;
     const current = getProjectSeoRowData(p);
     const updated = {
       metaTitle: field === 'metaTitle' ? value : current.metaTitle,
+      metaDescription: field === 'metaDescription' ? value : current.metaDescription,
       seoKeywords: field === 'seoKeywords' ? value : current.seoKeywords,
       ogImage: field === 'ogImage' ? value : current.ogImage,
       isDirty: true
@@ -8132,6 +8679,9 @@ const AdminView = ({
       const updatedProject: Project = {
         ...p,
         metaTitle: row.metaTitle.trim(),
+        seoTitle: row.metaTitle.trim(),
+        metaDescription: row.metaDescription.trim(),
+        seoDescription: row.metaDescription.trim(),
         seoKeywords: parsedKeywords,
         ogImage: row.ogImage.trim() || p.imageUrls?.[0] || '',
         seoLastSyncedAt: new Date().toISOString()
@@ -8142,6 +8692,9 @@ const AdminView = ({
       } else if (p.id) {
         await setDoc(doc(db, 'projects', p.id), {
           metaTitle: updatedProject.metaTitle,
+          seoTitle: updatedProject.seoTitle,
+          metaDescription: updatedProject.metaDescription,
+          seoDescription: updatedProject.seoDescription,
           seoKeywords: updatedProject.seoKeywords,
           ogImage: updatedProject.ogImage,
           seoLastSyncedAt: updatedProject.seoLastSyncedAt,
@@ -8196,6 +8749,9 @@ const AdminView = ({
         const updatedProject: Project = {
           ...p,
           metaTitle: row.metaTitle.trim(),
+          seoTitle: row.metaTitle.trim(),
+          metaDescription: row.metaDescription.trim(),
+          seoDescription: row.metaDescription.trim(),
           seoKeywords: parsedKeywords,
           ogImage: row.ogImage.trim() || p.imageUrls?.[0] || '',
           seoLastSyncedAt: new Date().toISOString()
@@ -8206,6 +8762,9 @@ const AdminView = ({
         } else if (p.id) {
           await setDoc(doc(db, 'projects', p.id), {
             metaTitle: updatedProject.metaTitle,
+            seoTitle: updatedProject.seoTitle,
+            metaDescription: updatedProject.metaDescription,
+            seoDescription: updatedProject.seoDescription,
             seoKeywords: updatedProject.seoKeywords,
             ogImage: updatedProject.ogImage,
             seoLastSyncedAt: updatedProject.seoLastSyncedAt,
@@ -8256,6 +8815,7 @@ const AdminView = ({
         const key = p.id || p.name;
         newDrafts[key] = {
           metaTitle: isMissingTitle ? generated.metaTitle : row.metaTitle,
+          metaDescription: row.metaDescription || generated.metaDescription,
           seoKeywords: isSparseKw ? generated.keywords : row.seoKeywords,
           ogImage: row.ogImage || p.imageUrls?.[0] || '',
           isDirty: true
@@ -8312,6 +8872,7 @@ const AdminView = ({
             ...prev,
             [key]: {
               metaTitle: data.metaTitle || current.metaTitle,
+              metaDescription: data.metaDescription || current.metaDescription,
               seoKeywords: data.keywords,
               ogImage: current.ogImage || p.imageUrls?.[0] || '',
               isDirty: true
@@ -8344,6 +8905,7 @@ const AdminView = ({
         ...prev,
         [key]: {
           metaTitle: current.metaTitle.length < 25 ? local.metaTitle : current.metaTitle,
+          metaDescription: current.metaDescription || local.metaDescription,
           seoKeywords: local.keywords,
           ogImage: current.ogImage || p.imageUrls?.[0] || '',
           isDirty: true
@@ -8927,20 +9489,6 @@ const AdminView = ({
                   <Trash2 size={12} />
                   <span>Trash / Deleted ({trashEnquiries.length})</span>
                 </button>
-              </div>
-
-              {/* Primary Sales Line Indicator for Lead Sharing */}
-              <div className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono text-emerald-300">
-                <MessageCircle size={13} className="text-emerald-400 shrink-0" />
-                <span className="text-white/60 uppercase tracking-wider text-[9px]">Sales Desk Line:</span>
-                <input 
-                  type="text" 
-                  value={salesTeamWhatsApp}
-                  onChange={(e) => setSalesTeamWhatsApp(e.target.value)}
-                  placeholder="919902991599"
-                  className="bg-black/70 text-emerald-300 font-bold px-2 py-0.5 rounded text-[10px] w-28 border border-emerald-500/40 focus:outline-none focus:border-emerald-400"
-                  title="Sales team primary WhatsApp number for instant lead dispatch"
-                />
               </div>
 
               <button 
@@ -10244,84 +10792,157 @@ const AdminView = ({
             </div>
           </div>
 
-          {/* Sub-Tabs for Projects Inventory: All, Primary, Rental, Resale */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-2 bg-[#141414] border border-white/10 rounded-sm">
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: 'all', label: 'All Projects', count: validProjects.length, color: 'text-white' },
-                { id: 'Primary', label: 'Primary Portfolios', count: primaryProjects.length, color: 'text-art-gold' },
-                { id: 'Rental', label: 'Rental Inventory', count: rentalProjects.length, color: 'text-cyan-400' },
-                { id: 'Resale', label: 'Resale Inventory', count: resaleProjects.length, color: 'text-amber-400' }
-              ].map(sub => (
-                <button
-                  key={sub.id}
-                  onClick={() => setInventoryTab(sub.id as any)}
-                  className={cn(
-                    "py-2 px-3.5 text-[10px] font-black uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex items-center gap-2",
-                    inventoryTab === sub.id
-                      ? "bg-white text-black border-white shadow-md"
-                      : "bg-white/5 text-white/55 border-transparent hover:text-white hover:bg-white/10"
-                  )}
+          {/* Portfolio Curator Controls: Real-Time Search Bar & Category Filters */}
+          <div className="space-y-3 p-3 bg-[#141414] border border-white/10 rounded-sm">
+            {/* Top Row: Search Bar & Project Creation Actions */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              {/* Instant Search Bar */}
+              <div className="relative flex-1 max-w-2xl">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-art-gold/80 shrink-0 pointer-events-none" />
+                <input
+                  type="text"
+                  value={portfolioSearch}
+                  onChange={e => setPortfolioSearch(e.target.value)}
+                  placeholder="Search portfolio by name, builder, corridor, RERA, unit type (e.g. 3BHK), or status..."
+                  className="w-full bg-black/60 border border-white/15 focus:border-art-gold pl-9 pr-24 py-2.5 text-xs text-white rounded-sm outline-none transition-all placeholder:text-white/35 font-sans"
+                />
+                {portfolioSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setPortfolioSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white/5 hover:bg-white/15 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Clear search query"
+                  >
+                    <X size={12} />
+                    <span>Clear</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Action Creation Buttons */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button 
+                  onClick={() => {
+                    setEditingProject(null);
+                    if (onOpenNewProjectWithMode) {
+                      onOpenNewProjectWithMode('Primary');
+                    } else {
+                      setShowProjectModal(true);
+                    }
+                  }}
+                  className="bg-art-gold hover:bg-white text-black px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  title="Create new Primary Sales Project"
                 >
-                  <span>{sub.label}</span>
-                  <span className={cn(
-                    "px-1.5 py-0.2 rounded text-[9px] font-mono",
-                    inventoryTab === sub.id ? "bg-black/15 text-black font-black" : "bg-white/10 text-white/70"
-                  )}>
-                    {sub.count}
-                  </span>
+                  <Plus size={13} /> + Primary
                 </button>
-              ))}
+                <button 
+                  onClick={() => {
+                    setEditingProject(null);
+                    if (onOpenNewProjectWithMode) {
+                      onOpenNewProjectWithMode('Rental');
+                    } else {
+                      setShowProjectModal(true);
+                    }
+                  }}
+                  className="bg-cyan-500 hover:bg-white text-black px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  title="Create new Rental Project"
+                >
+                  <Plus size={13} /> + Rental
+                </button>
+                <button 
+                  onClick={() => {
+                    setEditingProject(null);
+                    if (onOpenNewProjectWithMode) {
+                      onOpenNewProjectWithMode('Resale');
+                    } else {
+                      setShowProjectModal(true);
+                    }
+                  }}
+                  className="bg-amber-500 hover:bg-white text-black px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  title="Create new Resale Project"
+                >
+                  <Plus size={13} /> + Resale
+                </button>
+                {displayedProjects.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteAllConfirmModal(true)}
+                    className="bg-rose-950/80 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 hover:border-rose-500 px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ml-auto lg:ml-0"
+                    title="Delete all projects in current category (or all projects) from inventory"
+                  >
+                    <Trash2 size={13} />
+                    <span>Delete All ({displayedProjects.length})</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Quick Action Creation Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              <button 
-                onClick={() => {
-                  setEditingProject(null);
-                  if (onOpenNewProjectWithMode) {
-                    onOpenNewProjectWithMode('Primary');
-                  } else {
-                    setShowProjectModal(true);
-                  }
-                }}
-                className="bg-art-gold hover:bg-white text-black px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                <Plus size={13} /> + Primary
-              </button>
-              <button 
-                onClick={() => {
-                  setEditingProject(null);
-                  if (onOpenNewProjectWithMode) {
-                    onOpenNewProjectWithMode('Rental');
-                  } else {
-                    setShowProjectModal(true);
-                  }
-                }}
-                className="bg-cyan-500 hover:bg-white text-black px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                <Plus size={13} /> + Rental
-              </button>
-              <button 
-                onClick={() => {
-                  setEditingProject(null);
-                  if (onOpenNewProjectWithMode) {
-                    onOpenNewProjectWithMode('Resale');
-                  } else {
-                    setShowProjectModal(true);
-                  }
-                }}
-                className="bg-amber-500 hover:bg-white text-black px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                <Plus size={13} /> + Resale
-              </button>
+            {/* Bottom Row: Inventory Filters (All, Primary, Rental, Resale) & Live Status */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-white/5">
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-[9px] font-mono uppercase text-white/40 tracking-wider mr-1">
+                  Filter by Type:
+                </span>
+                {[
+                  { id: 'all', label: 'All Projects', count: validProjects.length, color: 'text-white' },
+                  { id: 'Primary', label: 'Primary Sales', count: primaryProjects.length, color: 'text-art-gold' },
+                  { id: 'Rental', label: 'Rental', count: rentalProjects.length, color: 'text-cyan-400' },
+                  { id: 'Resale', label: 'Resale', count: resaleProjects.length, color: 'text-amber-400' }
+                ].map(sub => (
+                  <button
+                    key={sub.id}
+                    onClick={() => setInventoryTab(sub.id as any)}
+                    className={cn(
+                      "py-1.5 px-3 text-[10px] font-black uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex items-center gap-2",
+                      inventoryTab === sub.id
+                        ? "bg-white text-black border-white shadow-md font-black"
+                        : "bg-white/5 text-white/55 border-transparent hover:text-white hover:bg-white/10"
+                    )}
+                  >
+                    <span>{sub.label}</span>
+                    <span className={cn(
+                      "px-1.5 py-0.2 rounded text-[9px] font-mono",
+                      inventoryTab === sub.id ? "bg-black/15 text-black font-black" : "bg-white/10 text-white/70"
+                    )}>
+                      {sub.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Real-Time Live Result Counter */}
+              <div className="text-[10px] font-mono text-white/50 flex items-center gap-2">
+                {portfolioSearch.trim() ? (
+                  <span className="text-art-gold bg-art-gold/10 px-2 py-0.5 rounded border border-art-gold/30 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-art-gold animate-pulse" />
+                    <span>Found <strong>{displayedProjects.length}</strong> matching "{portfolioSearch}"</span>
+                  </span>
+                ) : (
+                  <span>
+                    Showing <strong>{displayedProjects.length}</strong> {inventoryTab === 'all' ? 'total' : inventoryTab} properties
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-3.5">
             {displayedProjects.length === 0 && (
-              <div className="col-span-full py-20 text-center text-white/30 italic font-mono text-xs border border-dashed border-white/10 rounded-sm">
-                No inventory listed under "{inventoryTab}" inventory tab.
+              <div className="col-span-full py-20 text-center text-white/40 italic font-mono text-xs border border-dashed border-white/10 rounded-sm space-y-2">
+                <p>
+                  {portfolioSearch.trim() 
+                    ? `No properties found matching "${portfolioSearch}" in ${inventoryTab === 'all' ? 'any' : inventoryTab} inventory.` 
+                    : `No inventory listed under "${inventoryTab}" inventory tab.`}
+                </p>
+                {portfolioSearch.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => setPortfolioSearch('')}
+                    className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-[10px] font-mono uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Clear Search Filter
+                  </button>
+                )}
               </div>
             )}
             {displayedProjects.map((p, idx) => {
@@ -10737,6 +11358,70 @@ const AdminView = ({
               >
                 {isDeletingProject ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 <span>Confirm Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Batch Delete All Projects Confirmation Modal */}
+      {showDeleteAllConfirmModal && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-[#121212] border-2 border-rose-500 rounded-md p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 text-left">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="w-12 h-12 rounded-full bg-rose-500/15 flex items-center justify-center shrink-0 border border-rose-500/30">
+                <Trash2 size={24} className="text-rose-400" />
+              </div>
+              <div>
+                <h4 className="text-white font-serif text-xl font-bold">Delete All {inventoryTab === 'all' ? 'Inventory' : `${inventoryTab} Inventory`}</h4>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-rose-400 font-bold">Permanent Batch Removal</p>
+              </div>
+            </div>
+            
+            <p className="text-xs text-white/80 leading-relaxed font-sans">
+              Are you sure you want to permanently delete all <strong className="text-white font-serif">{displayedProjects.length} projects</strong> currently listed under <strong className="text-rose-300">"{inventoryTab}"</strong>? 
+              This will mark them as deleted across Firestore, clear local caches, and remove them from all live search portfolios so you can start fresh.
+            </p>
+
+            <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-sm text-[11px] text-rose-200 font-mono">
+              Action target: <strong>{displayedProjects.length} items</strong> (Primary, Rental, and Resale listings matching current filter).
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteAllConfirmModal(false)}
+                disabled={isDeletingAllProjects}
+                className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-sm text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsDeletingAllProjects(true);
+                  try {
+                    const toDelete = [...displayedProjects];
+                    setShowDeleteAllConfirmModal(false);
+                    if (onDeleteAllProjects) {
+                      await onDeleteAllProjects(toDelete);
+                    } else if (onDeleteProject) {
+                      for (const p of toDelete) {
+                        await onDeleteProject(p);
+                      }
+                    }
+                    setBatchSyncToast(`Successfully deleted ${toDelete.length} projects from inventory!`);
+                    setTimeout(() => setBatchSyncToast(null), 4000);
+                  } catch (err: any) {
+                    console.error("Batch delete failed:", err);
+                  } finally {
+                    setIsDeletingAllProjects(false);
+                  }
+                }}
+                disabled={isDeletingAllProjects}
+                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition-colors shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingAllProjects ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                <span>Confirm Delete All ({displayedProjects.length})</span>
               </button>
             </div>
           </div>
@@ -13009,7 +13694,7 @@ const autoEnrichProjectData = (p: Project): Project => {
     ? resolvedImages[0]
     : (p.mobileImageUrl || curatedMatch?.mobileImageUrl || '');
 
-  const rawDesc = curatedMatch?.description || p.description || `${p.name} by ${resolvedBuilderName} in ${p.location || resolvedZone}, Bangalore.`;
+  const rawDesc = p.description || curatedMatch?.description || `${p.name} by ${resolvedBuilderName} in ${p.location || resolvedZone}, Bangalore.`;
   const cleanedDescription = cleanProjectDescription(rawDesc);
 
   const resolvedPrice = formatPriceWithCondition(p.price || curatedMatch?.price || 'Rs. 1.65 Cr onwards*');
@@ -13042,9 +13727,32 @@ const autoEnrichProjectData = (p: Project): Project => {
     floorPlan: p.floorPlan || curatedMatch?.floorPlan || '2 BHK (1220 Sq.Ft.) · 3 BHK (1685 Sq.Ft.) · 4 BHK (2340 Sq.Ft.)',
     reraNumber: p.reraNumber || curatedMatch?.reraNumber || 'PRM/KA/RERA/1251/446/PR/Verified',
     description: cleanedDescription,
+    metaTitle: p.metaTitle || p.seoTitle || curatedMatch?.metaTitle || undefined,
+    metaDescription: p.metaDescription || p.seoDescription || curatedMatch?.metaDescription || undefined,
+    seoTitle: p.seoTitle || p.metaTitle || curatedMatch?.seoTitle || undefined,
+    seoDescription: p.seoDescription || p.metaDescription || curatedMatch?.seoDescription || undefined,
     imageUrls: resolvedImages,
     mobileImageUrl: resolvedCoverImage,
     ogImage: p.ogImage || resolvedCoverImage,
+    videoUrl: p.videoUrl || curatedMatch?.videoUrl || '',
+    mobileVideoUrl: p.mobileVideoUrl || p.videoUrl || curatedMatch?.mobileVideoUrl || '',
+    projectTypeCategory: p.projectTypeCategory || 'Gated',
+    presentStatus: p.presentStatus || resolvedStatus,
+    vaastuCompliant: p.vaastuCompliant || 'Yes',
+    facingAvailable: p.facingAvailable || ['East', 'North'],
+    floorRise: p.floorRise || 'Standard Floor Rise',
+    totalUnits: p.totalUnits || p.projectSize || '',
+    floorPlanSize: p.floorPlanSize || p.floorPlan || '',
+    bookingAmount: p.bookingAmount || '',
+    interiorStatus: p.interiorStatus || 'Semi Furnished',
+    availability: p.availability || 'Yes',
+    floorAvailability: p.floorAvailability || '',
+    saleFrom: p.saleFrom || 'Investor',
+    aop: p.aop || '0-1 Year',
+    expectedRentalIncome: p.expectedRentalIncome || '',
+    terrace: p.terrace || 'No',
+    garden: p.garden || 'No',
+    projectWriteUps: p.projectWriteUps || cleanedDescription,
     features:
       p.features && p.features.filter(Boolean).length > 0
         ? p.features
@@ -13583,6 +14291,68 @@ export default function App() {
       canonicalUrl: tabUrl,
       imageUrl: defaultImage
     });
+
+    // Dynamic RealEstateAgent schema that dynamically pulls from current Project list
+    let agentJsonLd = document.getElementById('realestateagent-dynamic-jsonld') as HTMLScriptElement | null;
+    if (!agentJsonLd) {
+      agentJsonLd = document.createElement('script');
+      agentJsonLd.id = 'realestateagent-dynamic-jsonld';
+      agentJsonLd.type = 'application/ld+json';
+      document.head.appendChild(agentJsonLd);
+    }
+
+    const activeProjectItems = effectiveProjects.slice(0, 20).map(p => ({
+      "@type": "Product",
+      "name": p.name,
+      "category": p.type,
+      "description": p.description || `${p.name} luxury residences in ${p.location}`,
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "INR",
+        "price": p.price ? p.price.replace(/[^0-9]/g, '') || "15000000" : "15000000",
+        "availability": p.sticker === 'Sold Out' ? "https://schema.org/Discontinued" : "https://schema.org/InStock",
+        "validFrom": "2024-01-01"
+      }
+    }));
+
+    const distinctZones = Array.from(new Set(effectiveProjects.map(p => p.zone).filter(Boolean)));
+    const dynamicAreaServed = distinctZones.length > 0
+      ? distinctZones.map(z => ({ "@type": "AdministrativeArea", "name": `${z}, Bengaluru` }))
+      : [
+          { "@type": "AdministrativeArea", "name": "Whitefield, Bengaluru" },
+          { "@type": "AdministrativeArea", "name": "Hoskote, Bengaluru" },
+          { "@type": "AdministrativeArea", "name": "Varthur, Bengaluru" },
+          { "@type": "AdministrativeArea", "name": "Gunjur, Bengaluru" },
+          { "@type": "AdministrativeArea", "name": "Hosa Road, Bengaluru" },
+          { "@type": "AdministrativeArea", "name": "Kasavanahalli, Bengaluru" },
+          { "@type": "AdministrativeArea", "name": "Sarjapur Road, Bengaluru" },
+          { "@type": "AdministrativeArea", "name": "Bellandur, Bengaluru" }
+        ];
+
+    const dynamicAgentSchema = {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      "@id": "https://bshomez.in/#realestateagent-live",
+      "name": "BS Homez - Bangalore Real Estate Advisory",
+      "url": "https://bshomez.in/",
+      "image": defaultImage,
+      "email": "contact@bshomez.in",
+      "description": "BS Homez is Bangalore's trusted real estate agency offering verified primary builder projects (0% brokerage), resale homes, and premium rentals across high-growth corridors.",
+      "priceRange": "₹35,000 - ₹15,00,00,000",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Bengaluru",
+        "addressRegion": "Karnataka",
+        "addressCountry": "IN"
+      },
+      "areaServed": dynamicAreaServed,
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "BS Homez Verified Bangalore Residential Inventory",
+        "itemListElement": activeProjectItems
+      }
+    };
+    agentJsonLd.textContent = JSON.stringify(dynamicAgentSchema, null, 2);
   }, [effectiveProjects, activePropertyUrlId, selectedProject, activeMainTab, filters.zone]);
 
   // Initial URL search parameters detection (tab, corridor, project)
@@ -13822,6 +14592,11 @@ export default function App() {
       }
 
       await setDoc(doc(db, 'projects', targetDocId), payload, { merge: true });
+
+      // Automatically trigger server-side sitemap.xml refresh so Google & Bing crawlers have latest listings immediately
+      fetch('/api/sitemap/refresh', { method: 'POST' }).catch((sitemapErr) => {
+        console.warn('Background sitemap automated refresh notice:', sitemapErr);
+      });
     } catch (err) {
       console.warn('Saved project locally & Firestore sync notice:', err);
     }
@@ -13897,6 +14672,53 @@ export default function App() {
       } catch (err) {
         console.warn('Deleted project from Firestore notice:', err);
       }
+    }
+  };
+
+  const handleDeleteAllProjects = async (projectsToDelete: Project[]) => {
+    if (!projectsToDelete || projectsToDelete.length === 0) return;
+
+    const idsToDelete = projectsToDelete.map(p => p.id || p.name);
+    const namesToDelete = projectsToDelete.map(p => p.name.toLowerCase());
+
+    setDeletedProjectIds(prev => {
+      const next = Array.from(new Set([...prev, ...idsToDelete, ...projectsToDelete.map(p => p.name)]));
+      try {
+        localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    try {
+      const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
+      const filteredLocal = existingLocal.filter(
+        item => !namesToDelete.includes(item.name.toLowerCase()) && !(item.id && idsToDelete.includes(item.id))
+      );
+      localStorage.setItem('bs_homez_custom_projects', JSON.stringify(filteredLocal));
+    } catch {}
+
+    setProjects(prev => {
+      const next = prev.filter(
+        p => !namesToDelete.includes(p.name.toLowerCase()) && !(p.id && idsToDelete.includes(p.id))
+      );
+      try {
+        localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    // Batch soft-delete in Firestore
+    try {
+      for (const p of projectsToDelete) {
+        if (p.id && !p.id.startsWith('local_')) {
+          await setDoc(doc(db, 'projects', p.id), {
+            isDeleted: true,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        }
+      }
+    } catch (err) {
+      console.warn('Batch delete projects notice:', err);
     }
   };
 
@@ -14535,6 +15357,7 @@ export default function App() {
               setEnquiryType('Acquire');
             }}
             onDeleteProject={handleDeleteProject}
+            onDeleteAllProjects={handleDeleteAllProjects}
             onInspectProjectSeo={(proj) => {
               setSelectedProject(proj);
               setIsSeoModalOpen(true);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export interface CountryInfo {
@@ -144,8 +144,14 @@ export const PhoneInputWithCountry: React.FC<PhoneInputWithCountryProps> = ({
   const showError = isTouched && !validation.isValid && digits.length > 0;
   const isComplete = validation.isValid;
 
+  const lastEmittedValueRef = useRef<string>('');
+
   // Sync internal state if parent changes value prop externally
   useEffect(() => {
+    // Avoid resetting internal input digits if the value was emitted by this component's own typing
+    if (value && value === lastEmittedValueRef.current) {
+      return;
+    }
     if (!value) {
       setDigits('');
       return;
@@ -163,7 +169,7 @@ export const PhoneInputWithCountry: React.FC<PhoneInputWithCountryProps> = ({
     if (clean.length <= activeCountry.digits) {
       setDigits(clean);
     }
-  }, [value]);
+  }, [value, activeCountry.digits]);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCode = e.target.value;
@@ -171,14 +177,18 @@ export const PhoneInputWithCountry: React.FC<PhoneInputWithCountryProps> = ({
     const newCountry = SUPPORTED_COUNTRIES.find(c => c.code === newCode) || SUPPORTED_COUNTRIES[0];
     const sliced = digits.slice(0, newCountry.digits);
     setDigits(sliced);
-    onChange(`${newCode} ${sliced}`.trim(), newCode, sliced);
+    const full = `${newCode} ${sliced}`.trim();
+    lastEmittedValueRef.current = full;
+    onChange(full, newCode, sliced);
   };
 
   const handleDigitsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, '').slice(0, activeCountry.digits);
     setDigits(raw);
     setIsTouched(true);
-    onChange(`${selectedCode} ${raw}`.trim(), selectedCode, raw);
+    const full = `${selectedCode} ${raw}`.trim();
+    lastEmittedValueRef.current = full;
+    onChange(full, selectedCode, raw);
   };
 
   return (

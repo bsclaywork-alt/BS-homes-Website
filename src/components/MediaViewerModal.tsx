@@ -18,6 +18,7 @@ import {
   Move
 } from 'lucide-react';
 import { Project } from '../types';
+import { parseVideoUrl } from './MediaUploadCompressor';
 
 interface MediaViewerModalProps {
   isOpen: boolean;
@@ -429,7 +430,7 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
                 </div>
 
                 {/* Primary Image Stage with Native Swipe & Zoom Transforms */}
-                <div className="relative w-full max-h-[58vh] flex items-center justify-center my-auto overflow-hidden">
+                <div className="relative w-full max-h-[50vh] flex items-center justify-center my-auto overflow-hidden">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={`img-stage-${currentImageIndex}`}
@@ -446,7 +447,7 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
                         x: slideDirection === 'next' ? -60 : slideDirection === 'prev' ? 60 : 0 
                       }}
                       transition={{ duration: 0.22, ease: "easeOut" }}
-                      className="relative inline-block max-w-full max-h-[56vh]"
+                      className="relative inline-block max-w-full max-h-[48vh]"
                     >
                       <div
                         className={`relative overflow-hidden flex items-center justify-center rounded border border-white/10 shadow-2xl ${
@@ -464,7 +465,7 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
                         <img
                           src={images[currentImageIndex]}
                           alt={`${project.name} - Photo ${currentImageIndex + 1}`}
-                          className="max-h-[56vh] max-w-full object-contain rounded select-none pointer-events-none"
+                          className="max-h-[48vh] max-w-full object-contain rounded select-none pointer-events-none"
                           draggable={false}
                         />
 
@@ -557,19 +558,37 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
                 )}
               </div>
             ) : activeTab === 'video' && videoUrl ? (
-              <div className="w-full max-w-3xl flex flex-col items-center justify-center">
-                <video
-                  src={videoUrl}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="max-h-[58vh] w-full rounded border border-white/15 shadow-2xl bg-black"
-                >
-                  Your browser does not support HTML5 video streaming.
-                </video>
+              <div className="w-full max-w-2xl flex flex-col items-center justify-center">
+                {(() => {
+                  const parsed = parseVideoUrl(videoUrl);
+                  if (parsed.isEmbeddable) {
+                    return (
+                      <div className="w-full aspect-video max-h-[50vh] rounded-lg overflow-hidden border border-white/15 shadow-2xl bg-black">
+                        <iframe
+                          src={parsed.embedUrl}
+                          title={`${project.name} Walkthrough Video`}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    );
+                  }
+                  return (
+                    <video
+                      src={videoUrl}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="max-h-[50vh] max-w-2xl w-full rounded-lg border border-white/15 shadow-2xl bg-black object-contain"
+                    >
+                      Your browser does not support HTML5 video streaming.
+                    </video>
+                  );
+                })()}
                 <div className="mt-3 flex items-center gap-2 text-xs text-white/60 font-mono">
                   <Play size={12} className="text-purple-400" />
-                  <span>Verified Compressed Walkthrough • High Definition 1080p Quality</span>
+                  <span>Verified Compressed Walkthrough • Stream-Optimized Playback</span>
                 </div>
               </div>
             ) : isPrimary && !isAdmin ? (

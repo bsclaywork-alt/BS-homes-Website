@@ -81,6 +81,25 @@ export interface Project {
   registrationStatus?: string;
   approvedAuthority?: 'BDA' | 'BBMP' | 'BMRDA' | 'STRR' | 'DTCP' | 'MPA' | 'SPA' | 'BIAPPA' | string;
 
+  // Portfolio Curator Exact Fields
+  projectTypeCategory?: 'Gated' | 'Stand Alone' | string;
+  presentStatus?: 'EOI' | 'Under Construction' | 'Nearing Completion' | 'Ready to Move-IN' | string;
+  vaastuCompliant?: 'Yes' | 'No' | string;
+  facingAvailable?: string[];
+  floorRise?: string;
+  totalUnits?: string;
+  floorPlanSize?: string;
+  bookingAmount?: string;
+  interiorStatus?: 'Semi Furnished' | 'Un Furnished' | 'Fully Furnished' | string;
+  availability?: 'Yes' | 'No' | string;
+  floorAvailability?: string;
+  saleFrom?: 'Investor' | 'Builder' | 'Land Lord' | 'Individual' | string;
+  aop?: '0-1 Year' | '2-5 Years' | '6-10 Years' | '11-15 Years' | '15+ Years' | string;
+  expectedRentalIncome?: string;
+  terrace?: 'Yes' | 'No' | string;
+  garden?: 'Yes' | 'No' | string;
+  projectWriteUps?: string;
+
   // SEO & Social Optimization
   metaTitle?: string;
   metaDescription?: string;

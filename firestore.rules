@@ -52,6 +52,9 @@ service cloud.firestore {
           'metaTitle', 'metaDescription', 'canonicalUrl',
           'imageAltText', 'imageAltTexts', 'seoTitle', 'seoDescription', 'seoLastSyncedAt', 'seoLastEdited', 'seoRevisions',
           'mobileImageUrl', 'mobileVideoUrl', 'unitsRemaining', 'isInventorySoldOut',
+          'projectTypeCategory', 'presentStatus', 'vaastuCompliant', 'facingAvailable', 'floorRise', 'totalUnits',
+          'floorPlanSize', 'bookingAmount', 'interiorStatus', 'availability', 'floorAvailability', 'saleFrom',
+          'aop', 'expectedRentalIncome', 'terrace', 'garden', 'projectWriteUps',
           'organicViews', 'createdAt', 'updatedAt'
         ])
       );
@@ -128,12 +131,30 @@ service cloud.firestore {
               (!('seoLastSyncedAt' in data) || (data.seoLastSyncedAt is string && data.seoLastSyncedAt.size() <= 100)) &&
               (!('seoLastEdited' in data) || (data.seoLastEdited is string && data.seoLastEdited.size() <= 100)) &&
               (!('seoRevisions' in data) || (data.seoRevisions is list && data.seoRevisions.size() <= 50)) &&
-             (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
-             (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 1000)) &&
-             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
-             (!('unitsRemaining' in data) || data.unitsRemaining is number) &&
-             (!('isInventorySoldOut' in data) || data.isInventorySoldOut is bool) &&
-             (!('organicViews' in data) || data.organicViews is number);
+              (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
+              (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 900000)) &&
+              (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 900000)) &&
+              (!('projectTypeCategory' in data) || (data.projectTypeCategory is string && data.projectTypeCategory.size() <= 100)) &&
+              (!('presentStatus' in data) || (data.presentStatus is string && data.presentStatus.size() <= 100)) &&
+              (!('vaastuCompliant' in data) || (data.vaastuCompliant is string && data.vaastuCompliant.size() <= 50)) &&
+              (!('facingAvailable' in data) || data.facingAvailable is list || (data.facingAvailable is string && data.facingAvailable.size() <= 200)) &&
+              (!('floorRise' in data) || (data.floorRise is string && data.floorRise.size() <= 150)) &&
+              (!('totalUnits' in data) || (data.totalUnits is string && data.totalUnits.size() <= 150)) &&
+              (!('floorPlanSize' in data) || (data.floorPlanSize is string && data.floorPlanSize.size() <= 500)) &&
+              (!('bookingAmount' in data) || (data.bookingAmount is string && data.bookingAmount.size() <= 150)) &&
+              (!('interiorStatus' in data) || (data.interiorStatus is string && data.interiorStatus.size() <= 100)) &&
+              (!('availability' in data) || (data.availability is string && data.availability.size() <= 50)) &&
+              (!('floorAvailability' in data) || (data.floorAvailability is string && data.floorAvailability.size() <= 100)) &&
+              (!('saleFrom' in data) || (data.saleFrom is string && data.saleFrom.size() <= 100)) &&
+              (!('aop' in data) || (data.aop is string && data.aop.size() <= 100)) &&
+              (!('expectedRentalIncome' in data) || (data.expectedRentalIncome is string && data.expectedRentalIncome.size() <= 150)) &&
+              (!('terrace' in data) || (data.terrace is string && data.terrace.size() <= 50)) &&
+              (!('garden' in data) || (data.garden is string && data.garden.size() <= 50)) &&
+              (!('projectWriteUps' in data) || (data.projectWriteUps is string && data.projectWriteUps.size() <= 5000)) &&
+              (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+              (!('unitsRemaining' in data) || data.unitsRemaining is number) &&
+              (!('isInventorySoldOut' in data) || data.isInventorySoldOut is bool) &&
+              (!('organicViews' in data) || data.organicViews is number);
     }
 
     // Enquiries: Publicly writable (create only), admin readable

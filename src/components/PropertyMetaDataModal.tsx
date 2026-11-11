@@ -1137,7 +1137,7 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
           ) : activeTab === 'editor' ? (
             <>
               {/* Field 1: Meta Title */}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[9.5px] uppercase tracking-wider text-art-gold font-bold font-mono flex items-center gap-1">
                     <span>1. SEO Meta Title</span>
@@ -1149,7 +1149,7 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
                       ? 'text-amber-400' 
                       : 'text-white/50'
                   }`}>
-                    {titleLen} / 60 chars {titleLen >= 50 && titleLen <= 60 ? '✓ Ideal' : ''}
+                    {titleLen >= 50 && titleLen <= 60 ? '✓ Ideal (50-60 chars)' : 'Recommended: 50-60 chars'}
                   </span>
                 </div>
                 <input
@@ -1159,10 +1159,39 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
                   placeholder="e.g. Prestige Raintree Park Whitefield | 3 & 4 BHK Luxury Apartments | BS Homez"
                   className="w-full bg-white/[0.05] border border-white/20 focus:border-art-gold text-white text-xs px-2.5 py-1.5 rounded-sm outline-none font-sans"
                 />
+                {/* Visual Character Counter directly below input */}
+                <div className="flex items-center justify-between text-[9px] font-mono px-0.5 pt-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-200 ${
+                          titleLen >= 50 && titleLen <= 60
+                            ? 'bg-emerald-400'
+                            : titleLen > 60
+                            ? 'bg-amber-400'
+                            : titleLen > 0
+                            ? 'bg-blue-400'
+                            : 'bg-transparent'
+                        }`}
+                        style={{ width: `${Math.min(100, (titleLen / 60) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-white/40 text-[8.5px]">SERP Headline</span>
+                  </div>
+                  <span className={`font-bold ${
+                    titleLen >= 50 && titleLen <= 60 
+                      ? 'text-emerald-400' 
+                      : titleLen > 60 
+                      ? 'text-amber-400' 
+                      : 'text-white/60'
+                  }`}>
+                    {titleLen}/60
+                  </span>
+                </div>
               </div>
 
               {/* Field 2: Meta Description */}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[9.5px] uppercase tracking-wider text-art-gold font-bold font-mono flex items-center gap-1">
                     <span>2. SEO Meta Description</span>
@@ -1174,7 +1203,7 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
                       ? 'text-amber-400' 
                       : 'text-white/50'
                   }`}>
-                    {descLen} / 160 chars {descLen >= 140 && descLen <= 160 ? '✓ Ideal' : ''}
+                    {descLen >= 140 && descLen <= 160 ? '✓ Ideal (140-160 chars)' : 'Recommended: 140-160 chars'}
                   </span>
                 </div>
                 <textarea
@@ -1184,6 +1213,35 @@ export const PropertyMetaDataModal: React.FC<PropertyMetaDataModalProps> = ({
                   placeholder="e.g. Explore Prestige Raintree Park in Whitefield. Premium 3 & 4 BHK apartments with verified RERA compliance, 0% buyer brokerage, and transparent pricing. Inquire now!"
                   className="w-full bg-white/[0.05] border border-white/20 focus:border-art-gold text-white text-xs p-2.5 rounded-sm outline-none font-sans resize-none leading-relaxed"
                 />
+                {/* Visual Character Counter directly below input */}
+                <div className="flex items-center justify-between text-[9px] font-mono px-0.5 pt-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-200 ${
+                          descLen >= 140 && descLen <= 160
+                            ? 'bg-emerald-400'
+                            : descLen > 160
+                            ? 'bg-amber-400'
+                            : descLen > 0
+                            ? 'bg-cyan-400'
+                            : 'bg-transparent'
+                        }`}
+                        style={{ width: `${Math.min(100, (descLen / 160) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-white/40 text-[8.5px]">Google Snippet</span>
+                  </div>
+                  <span className={`font-bold ${
+                    descLen >= 140 && descLen <= 160 
+                      ? 'text-emerald-400' 
+                      : descLen > 160 
+                      ? 'text-amber-400' 
+                      : 'text-white/60'
+                  }`}>
+                    {descLen}/160
+                  </span>
+                </div>
               </div>
 
               {/* Field 3: Image Alt Text for Accessibility */}

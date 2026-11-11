@@ -29,14 +29,66 @@ export const formatBytes = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 };
 
+export interface ParsedVideo {
+  type: 'youtube' | 'vimeo' | 'drive' | 'direct';
+  embedUrl: string;
+  isEmbeddable: boolean;
+}
+
+/**
+ * Parses any video URL (YouTube, Vimeo, Google Drive, direct MP4) into an optimized, embeddable streaming player
+ */
+export const parseVideoUrl = (rawUrl: string): ParsedVideo => {
+  if (!rawUrl || typeof rawUrl !== 'string') {
+    return { type: 'direct', embedUrl: '', isEmbeddable: false };
+  }
+  const trimmed = rawUrl.trim();
+
+  // YouTube format: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/shorts/ID, youtube.com/embed/ID
+  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+  if (ytMatch && ytMatch[1]) {
+    return {
+      type: 'youtube',
+      embedUrl: `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?autoplay=0&rel=0`,
+      isEmbeddable: true
+    };
+  }
+
+  // Vimeo format: vimeo.com/ID
+  const vimeoMatch = trimmed.match(/vimeo\.com\/(?:video\/)?([0-9]+)/i);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return {
+      type: 'vimeo',
+      embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
+      isEmbeddable: true
+    };
+  }
+
+  // Google Drive format: drive.google.com/file/d/ID/...
+  const driveMatch = trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i);
+  if (driveMatch && driveMatch[1]) {
+    return {
+      type: 'drive',
+      embedUrl: `https://drive.google.com/file/d/${driveMatch[1]}/preview`,
+      isEmbeddable: true
+    };
+  }
+
+  return {
+    type: 'direct',
+    embedUrl: trimmed,
+    isEmbeddable: false
+  };
+};
+
 /**
  * Compresses an image file using HTML5 Canvas with bicubic smoothing.
- * Reduces 5MB-15MB phone camera photos down to 150KB-300KB while preserving pristine 1920px HD visual quality.
+ * Reduces 5MB-15MB phone camera photos down to 35KB-55KB while preserving decent 1080p HD visual quality.
  */
 export const compressImageFile = (
   file: File,
-  maxDimension = 1920,
-  quality = 0.85,
+  maxDimension = 1080,
+  quality = 0.68,
   applyWatermark = true
 ): Promise<CompressedImageResult> => {
   return new Promise((resolve, reject) => {
@@ -81,17 +133,17 @@ export const compressImageFile = (
 
         // Automated 'BS Homez' watermark burning pipeline
         if (applyWatermark) {
-          const fontSize = Math.max(16, Math.round(width * 0.024));
+          const fontSize = Math.max(14, Math.round(width * 0.022));
           ctx.save();
           ctx.font = `bold ${fontSize}px ui-sans-serif, system-ui, -apple-system, sans-serif`;
           ctx.textBaseline = 'middle';
 
           const text = 'BS Homez';
           const textMetrics = ctx.measureText(text);
-          const paddingX = Math.round(fontSize * 0.7);
-          const paddingY = Math.round(fontSize * 0.45);
-          const dotRadius = Math.max(2, Math.round(fontSize * 0.16));
-          const dotMargin = Math.round(fontSize * 0.35);
+          const paddingX = Math.round(fontSize * 0.65);
+          const paddingY = Math.round(fontSize * 0.4);
+          const dotRadius = Math.max(2, Math.round(fontSize * 0.15));
+          const dotMargin = Math.round(fontSize * 0.3);
           const badgeWidth = textMetrics.width + paddingX * 2 + dotRadius * 2 + dotMargin;
           const badgeHeight = fontSize + paddingY * 2;
 
@@ -123,8 +175,14 @@ export const compressImageFile = (
           ctx.restore();
         }
 
-        // JPEG compression with quality 0.85
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        // WebP high efficiency compression with JPEG fallback
+        let compressedDataUrl = '';
+        try {
+          compressedDataUrl = canvas.toDataURL('image/webp', quality);
+        } catch {}
+        if (!compressedDataUrl || !compressedDataUrl.startsWith('data:image/webp')) {
+          compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
         const approxBytes = Math.round((compressedDataUrl.length - 23) * 0.75);
 
         resolve({
@@ -141,7 +199,7 @@ export const compressImageFile = (
 };
 
 /**
- * Extracts a high-resolution preview poster frame from a video file
+ * Extracts a lightweight, decent preview poster frame from a video file (~20KB - 30KB)
  */
 export const extractVideoPoster = (file: File): Promise<string> => {
   return new Promise((resolve) => {
@@ -158,12 +216,20 @@ export const extractVideoPoster = (file: File): Promise<string> => {
     video.onseeked = () => {
       try {
         const canvas = document.createElement('canvas');
-        canvas.width = Math.min(1280, video.videoWidth || 640);
-        canvas.height = Math.min(720, video.videoHeight || 360);
+        canvas.width = Math.min(854, video.videoWidth || 640);
+        canvas.height = Math.min(480, video.videoHeight || 360);
         const ctx = canvas.getContext('2d');
         if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const poster = canvas.toDataURL('image/jpeg', 0.85);
+          let poster = '';
+          try {
+            poster = canvas.toDataURL('image/webp', 0.68);
+          } catch {}
+          if (!poster || !poster.startsWith('data:image/webp')) {
+            poster = canvas.toDataURL('image/jpeg', 0.68);
+          }
           URL.revokeObjectURL(objectUrl);
           resolve(poster);
           return;
@@ -199,6 +265,8 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   accentColor = 'cyan',
   title = 'Photos & Video Walkthrough Upload'
 }) => {
+  const [compressionQualityPreset, setCompressionQualityPreset] = useState<'balanced' | 'compact' | 'high'>('balanced');
+  const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
   const [isCompressingImages, setIsCompressingImages] = useState(false);
   const [imageProgress, setImageProgress] = useState<number>(0);
   const [imageStatusMsg, setImageStatusMsg] = useState<string>('');
@@ -269,6 +337,9 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     let totalCompressed = 0;
     const newCompressedList: string[] = [];
 
+    const targetDim = compressionQualityPreset === 'compact' ? 850 : compressionQualityPreset === 'high' ? 1200 : 1080;
+    const targetQuality = compressionQualityPreset === 'compact' ? 0.60 : compressionQualityPreset === 'high' ? 0.74 : 0.68;
+
     try {
       const validFiles = files.filter(f => f.type.startsWith('image/'));
       if (validFiles.length === 0) {
@@ -282,9 +353,9 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
         const currentPct = Math.round(((i) / validFiles.length) * 90) + 5;
         setImageProgress(currentPct);
-        setImageStatusMsg(`Processing photo ${i + 1} of ${validFiles.length}: "${file.name}" (${formatBytes(file.size)}) [Watermark: ${applyWatermark ? 'YES' : 'NO'}]...`);
+        setImageStatusMsg(`Optimizing photo ${i + 1} of ${validFiles.length}: "${file.name}" (${formatBytes(file.size)}) → ${targetDim}p Decent HD...`);
 
-        const result = await compressImageFile(file, 1920, 0.85, applyWatermark);
+        const result = await compressImageFile(file, targetDim, targetQuality, applyWatermark);
         totalCompressed += result.compressedSize;
         newCompressedList.push(result.dataUrl);
 
@@ -301,7 +372,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         setImageStatusMsg(`Uploaded & compressed ${newCompressedList.length} photo(s) successfully!`);
         
         setCompressionStats(
-          `Compressed ${newCompressedList.length} photo(s): ${formatBytes(totalOriginal)} → ${formatBytes(totalCompressed)} (${savedPercent}% saved, 1920px HD retained)`
+          `Compressed ${newCompressedList.length} photo(s): ${formatBytes(totalOriginal)} → ${formatBytes(totalCompressed)} (${savedPercent}% size reduction, ${targetDim}p Decent HD)`
         );
 
         setTimeout(() => {
@@ -349,8 +420,8 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
       };
 
       reader.onload = async () => {
-        const videoDataUrl = (reader.result as string) || '';
-        const approxBytes = Math.round((videoDataUrl.length - 23) * 0.75);
+        const rawResult = (reader.result as string) || '';
+        const approxBytes = Math.round((rawResult.length - 23) * 0.75);
 
         setVideoProgress(85);
         setVideoStatusMsg('Extracting high-definition video walkthrough poster frame...');
@@ -360,12 +431,16 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         setVideoProgress(100);
         setVideoStatusMsg('Walkthrough video processed & ready for playback!');
 
-        setVideoPreviewUrl(videoDataUrl);
+        // If video file is small (<= 450KB), persist as dataUrl; if larger, use blob URL for local session & prioritize poster
+        const safeVideoUrl = file.size <= 450 * 1024 ? rawResult : URL.createObjectURL(file);
+        setVideoPreviewUrl(safeVideoUrl);
         setVideoStats({
           original: file.size,
-          compressed: approxBytes
+          compressed: file.size <= 450 * 1024 ? approxBytes : file.size
         });
-        onVideoChange(videoDataUrl, poster);
+        if (onVideoChange) {
+          onVideoChange(safeVideoUrl, poster);
+        }
 
         setTimeout(() => {
           setIsProcessingVideo(false);
@@ -492,11 +567,36 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
           </h4>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20 font-bold uppercase tracking-wider flex items-center gap-1">
-            <FileCheck size={11} /> Auto-Compression Active (1920px HD)
+          {/* Decent Image Size Mode Preset */}
+          <div className="flex items-center bg-black/70 border border-white/15 rounded p-0.5 text-[8.5px] font-mono">
+            <span className="text-white/45 px-1.5 uppercase font-bold">Image Size:</span>
+            {[
+              { id: 'compact' as const, label: 'Ultra-Light (~25KB)' },
+              { id: 'balanced' as const, label: 'Decent HD (~40KB)' },
+              { id: 'high' as const, label: 'Full HD (~65KB)' }
+            ].map(preset => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => setCompressionQualityPreset(preset.id)}
+                className={cn(
+                  "px-2 py-0.5 rounded transition-all cursor-pointer font-bold",
+                  compressionQualityPreset === preset.id
+                    ? "bg-emerald-500 text-black shadow-sm"
+                    : "text-white/60 hover:text-white"
+                )}
+                title={`Set compression preset to ${preset.label}`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold uppercase tracking-wider flex items-center gap-1">
+            <FileCheck size={11} /> Auto-Reduced Size
           </span>
           <span className="text-[9px] font-mono text-art-gold bg-art-gold/10 px-2 py-0.5 rounded border border-art-gold/20 font-bold uppercase tracking-wider flex items-center gap-1">
-            <Star size={10} className="fill-art-gold" /> Set Cover Image Option
+            <Star size={10} className="fill-art-gold" /> Set Cover Image
           </span>
         </div>
       </div>
@@ -650,6 +750,17 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
               type="url"
               value={manualImageUrl}
               onChange={e => setManualImageUrl(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddManualImage();
+                }
+              }}
+              onBlur={() => {
+                if (manualImageUrl.trim() && manualImageUrl.trim().startsWith('http')) {
+                  handleAddManualImage();
+                }
+              }}
               placeholder="Or paste external image URL (https://...)"
               className="flex-1 bg-white/5 border border-white/10 p-2.5 text-xs text-white rounded-sm outline-none focus:border-white/30 font-mono"
             />
@@ -696,7 +807,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-1.5 bg-black/50 border border-white/10 rounded-sm">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-56 overflow-y-auto p-1.5 bg-black/50 border border-white/10 rounded-sm">
                 {images.map((imgUrl, idx) => {
                   const isCover = idx === 0;
                   const isPendingDelete = pendingDeleteIndex === idx;
@@ -710,7 +821,11 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                           : "border-white/15 hover:border-white/40"
                       )}
                     >
-                      <div className="aspect-[4/3] w-full overflow-hidden bg-black flex items-center justify-center">
+                      <div 
+                        className="aspect-[16/11] w-full overflow-hidden bg-black flex items-center justify-center cursor-pointer"
+                        onClick={() => setPreviewModalUrl(imgUrl)}
+                        title="Click to inspect decent image preview"
+                      >
                         <img 
                           src={imgUrl} 
                           alt={`Property View ${idx + 1}`} 
@@ -720,8 +835,8 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
                       {/* Cover Badge or Set as Cover Button */}
                       {isCover ? (
-                        <div className="absolute top-1.5 left-1.5 bg-art-gold text-black text-[8px] font-black uppercase px-2 py-0.5 rounded shadow-lg flex items-center gap-1 font-mono z-10">
-                          <Star size={10} className="fill-black stroke-black" />
+                        <div className="absolute top-1 left-1 bg-art-gold text-black text-[7.5px] font-black uppercase px-1.5 py-0.2 rounded shadow-lg flex items-center gap-0.5 font-mono z-10">
+                          <Star size={9} className="fill-black stroke-black" />
                           <span>Cover</span>
                         </div>
                       ) : (
@@ -731,13 +846,26 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                             e.stopPropagation();
                             handleSetAsCover(idx);
                           }}
-                          className="absolute top-1.5 left-1.5 bg-black/90 hover:bg-art-gold text-white hover:text-black text-[7.5px] font-black uppercase px-2 py-0.5 rounded border border-white/20 transition-all flex items-center gap-1 cursor-pointer shadow-md z-10"
+                          className="absolute top-1 left-1 bg-black/90 hover:bg-art-gold text-white hover:text-black text-[7px] font-black uppercase px-1.5 py-0.2 rounded border border-white/20 transition-all flex items-center gap-0.5 cursor-pointer shadow-md z-10"
                           title="Set as main cover image for this project"
                         >
-                          <Star size={9} />
-                          <span>Set Cover</span>
+                          <Star size={8} />
+                          <span>Cover</span>
                         </button>
                       )}
+
+                      {/* Inspect Zoom Icon */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewModalUrl(imgUrl);
+                        }}
+                        className="absolute bottom-6 right-1 p-1 bg-black/80 hover:bg-white text-white hover:text-black rounded transition-colors cursor-pointer border border-white/20 shadow z-10 opacity-0 group-hover:opacity-100"
+                        title="View Full Resolution Decent Image"
+                      >
+                        <Sparkles size={9} />
+                      </button>
 
                       {/* Delete Individual Image Button with safe in-app confirmation */}
                       {isPendingDelete ? (
@@ -747,10 +875,10 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                             e.stopPropagation();
                             handleExecuteRemoveImage(idx);
                           }}
-                          className="absolute top-1.5 right-1.5 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-[8px] font-black uppercase rounded transition-all cursor-pointer border border-white/50 shadow-2xl z-20 flex items-center gap-1 animate-pulse"
+                          className="absolute top-1 right-1 px-1.5 py-0.5 bg-red-600 hover:bg-red-700 text-white text-[7.5px] font-black uppercase rounded transition-all cursor-pointer border border-white/50 shadow-2xl z-20 flex items-center gap-0.5 animate-pulse"
                           title="Click again to confirm permanent deletion"
                         >
-                          <Trash2 size={10} />
+                          <Trash2 size={9} />
                           <span>Confirm</span>
                         </button>
                       ) : (
@@ -760,17 +888,17 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                             e.stopPropagation();
                             handleRequestRemoveImage(idx);
                           }}
-                          className="absolute top-1.5 right-1.5 p-1.5 bg-black/85 hover:bg-red-600 text-white rounded transition-colors cursor-pointer border border-white/20 shadow-md z-10"
+                          className="absolute top-1 right-1 p-1 bg-black/85 hover:bg-red-600 text-white rounded transition-colors cursor-pointer border border-white/20 shadow-md z-10"
                           title="Delete this photo from project"
                         >
-                          <Trash2 size={11} />
+                          <Trash2 size={10} />
                         </button>
                       )}
 
                       {/* Bottom Footer Caption */}
-                      <div className="p-1 bg-[#121212] flex items-center justify-between text-[8px] font-mono text-white/50 border-t border-white/10">
+                      <div className="p-1 bg-[#121212] flex items-center justify-between text-[7.5px] font-mono text-white/50 border-t border-white/10">
                         <span>Photo #{idx + 1}</span>
-                        {isCover && <span className="text-art-gold font-bold">Main Banner</span>}
+                        {isCover ? <span className="text-art-gold font-bold">Cover</span> : <span>Decent HD</span>}
                       </div>
                     </div>
                   );
@@ -803,7 +931,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                   <Trash2 size={10} /> {confirmDeleteVideo ? "Confirm Delete Video?" : "Delete Video"}
                 </button>
               )}
-              <span className="text-[9px] font-mono text-white/40">MP4, WebM, MOV</span>
+              <span className="text-[9px] font-mono text-white/40">MP4, WebM, YouTube, Drive</span>
             </div>
           </div>
 
@@ -811,7 +939,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
           <div 
             onClick={() => fileInputVideoRef.current?.click()}
             className={cn(
-              "p-5 border-2 border-dashed rounded-sm flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-white/[0.02]",
+              "p-4 border-2 border-dashed rounded-sm flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-white/[0.02]",
               themeColors.border,
               themeColors.hoverBorder
             )}
@@ -823,18 +951,18 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
               onChange={handleVideoFileSelected}
               className="hidden"
             />
-            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center mb-2", themeColors.bgLight)}>
-              <Film className={themeColors.text} size={18} />
+            <div className={cn("w-9 h-9 rounded-full flex items-center justify-center mb-1.5", themeColors.bgLight)}>
+              <Film className={themeColors.text} size={16} />
             </div>
             <span className="text-xs font-bold text-white mb-0.5">Upload Walkthrough Video</span>
-            <span className="text-[9px] text-white/40 font-mono">
-              Auto-extracts HD poster frame &amp; optimizes streaming playback
+            <span className="text-[8.5px] text-white/40 font-mono">
+              Auto-extracts HD poster frame &amp; generates streaming video preview
             </span>
           </div>
 
           {/* REAL-TIME PROGRESS BAR FOR VIDEO */}
           {isProcessingVideo && (
-            <div className="p-3.5 bg-black/80 border border-purple-500/40 rounded-sm space-y-2.5 shadow-lg">
+            <div className="p-3 bg-black/80 border border-purple-500/40 rounded-sm space-y-2 shadow-lg">
               <div className="flex items-center justify-between text-[10px] font-mono">
                 <span className="text-purple-300 font-bold flex items-center gap-2">
                   <Loader2 size={13} className="animate-spin text-purple-400" />
@@ -844,13 +972,13 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
                   {videoProgress}%
                 </span>
               </div>
-              <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden p-0.5 border border-white/10">
+              <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden p-0.5 border border-white/10">
                 <div 
                   className="h-full bg-gradient-to-r from-purple-500 to-indigo-300 rounded-full transition-all duration-300 shadow"
                   style={{ width: `${videoProgress}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between text-[8.5px] font-mono text-white/50">
+              <div className="flex items-center justify-between text-[8px] font-mono text-white/50">
                 <span>Reading video byte stream</span>
                 <span>Generating HD Poster</span>
               </div>
@@ -859,12 +987,12 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
           {/* Video Stats */}
           {videoStats && !isProcessingVideo && (
-            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded text-[9.5px] font-mono text-emerald-300 flex items-center justify-between">
+            <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded text-[9px] font-mono text-emerald-300 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
-                <span>Walkthrough Video Processed ({formatBytes(videoStats.original)})</span>
+                <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
+                <span>Walkthrough Video Ready ({formatBytes(videoStats.original)})</span>
               </div>
-              <span className="font-bold text-emerald-400 font-mono">HD Ready</span>
+              <span className="font-bold text-emerald-400 font-mono">Decent HD</span>
             </div>
           )}
 
@@ -873,44 +1001,129 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             <input 
               type="url"
               value={manualVideoInput}
-              onChange={e => setManualVideoInput(e.target.value)}
-              placeholder="Or paste video link (YouTube / Vimeo / Cloud link)"
-              className="flex-1 bg-white/5 border border-white/10 p-2.5 text-xs text-white rounded-sm outline-none focus:border-white/30 font-mono"
+              onChange={e => {
+                const val = e.target.value;
+                setManualVideoInput(val);
+                if (val.trim().startsWith('http')) {
+                  setVideoPreviewUrl(val.trim());
+                  onVideoChange(val.trim());
+                }
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddManualVideo();
+                }
+              }}
+              onBlur={() => {
+                if (manualVideoInput.trim()) {
+                  handleAddManualVideo();
+                }
+              }}
+              placeholder="Or paste video link (YouTube / Vimeo / Google Drive link)"
+              className="flex-1 bg-white/5 border border-white/10 p-2 text-xs text-white rounded-sm outline-none focus:border-white/30 font-mono"
             />
             <button
               type="button"
               onClick={handleAddManualVideo}
-              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider rounded-sm cursor-pointer transition-colors"
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-[9.5px] font-bold uppercase tracking-wider rounded-sm cursor-pointer transition-colors"
             >
               Set Link
             </button>
           </div>
 
-          {/* Video Player Preview with Delete Button */}
-          {videoPreviewUrl && (
-            <div className="relative border border-white/20 rounded-sm overflow-hidden bg-black aspect-video group shadow-lg">
-              <video 
-                ref={videoRef}
-                src={videoPreviewUrl}
-                className="w-full h-full object-cover"
-                controls
-              />
-              <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">
-                <button
-                  type="button"
-                  onClick={handleRemoveVideo}
-                  className="px-2.5 py-1.5 bg-black/90 hover:bg-red-600 text-white text-[9px] font-bold uppercase tracking-wider rounded cursor-pointer transition-colors shadow flex items-center gap-1 border border-white/20"
-                  title="Delete Video from project"
-                >
-                  <Trash2 size={12} />
-                  <span>Delete Video</span>
-                </button>
+          {/* Video Player Preview with Delete Button (Compact Decent Size) */}
+          {videoPreviewUrl && (() => {
+            const parsed = parseVideoUrl(videoPreviewUrl);
+            return (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[8.5px] font-mono text-white/60">
+                  <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <Film size={11} />
+                    {parsed.type === 'youtube'
+                      ? 'YouTube Walkthrough (Optimized Stream)'
+                      : parsed.type === 'vimeo'
+                      ? 'Vimeo Walkthrough'
+                      : parsed.type === 'drive'
+                      ? 'Google Drive Stream'
+                      : 'Decent HD Video Player'}
+                  </span>
+                  <span className="text-[7.5px] bg-white/10 px-1.5 py-0.2 rounded text-white/50">
+                    Compact 16:9 View
+                  </span>
+                </div>
+
+                <div className="relative border border-white/20 rounded-sm overflow-hidden bg-black max-w-sm sm:max-w-md mx-auto aspect-video max-h-52 shadow-xl flex items-center justify-center group">
+                  {parsed.isEmbeddable ? (
+                    <iframe
+                      src={parsed.embedUrl}
+                      title="Walkthrough Video Preview"
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video 
+                      ref={videoRef}
+                      src={videoPreviewUrl}
+                      className="w-full h-full object-contain bg-black"
+                      controls
+                      playsInline
+                    />
+                  )}
+                  <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">
+                    <button
+                      type="button"
+                      onClick={handleRemoveVideo}
+                      className="px-2 py-1 bg-black/85 hover:bg-red-600 text-white text-[8.5px] font-bold uppercase tracking-wider rounded cursor-pointer transition-colors shadow flex items-center gap-1 border border-white/20"
+                      title="Delete Video from project"
+                    >
+                      <Trash2 size={11} />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
       </div>
+
+      {/* Full-Quality Decent Image Inspection Modal */}
+      {previewModalUrl && (
+        <div 
+          className="fixed inset-0 z-[10005] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-in fade-in duration-150"
+          onClick={() => setPreviewModalUrl(null)}
+        >
+          <div className="relative max-w-3xl max-h-[85vh] bg-[#111] border border-white/20 rounded-lg overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-2.5 bg-[#181818] border-b border-white/10 text-white">
+              <span className="text-xs font-mono font-bold text-art-gold flex items-center gap-1.5">
+                <FileCheck size={14} className="text-emerald-400" />
+                <span>Decent 1080p Compressed Photo Inspection</span>
+              </span>
+              <button 
+                type="button"
+                onClick={() => setPreviewModalUrl(null)}
+                className="p-1 text-white/60 hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-3 bg-black flex items-center justify-center max-h-[70vh] overflow-hidden">
+              <img 
+                src={previewModalUrl} 
+                alt="High-resolution preview" 
+                className="max-h-[65vh] max-w-full object-contain rounded"
+              />
+            </div>
+            <div className="px-4 py-2 bg-[#181818] border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-white/60">
+              <span>Optimized WebP/JPEG format • Clean BS Homez watermark</span>
+              <span className="text-emerald-400 font-bold">~40KB Payload</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

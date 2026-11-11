@@ -50,7 +50,7 @@ export const PositiveVibesSocialBar: React.FC = () => {
 
   const handleAdvisorChat = () => {
     const advisorMessage = "Hello BS Homez! I am exploring luxury properties on bshomez.in and would love priority details for your curated Bangalore homes.";
-    const url = `https://api.whatsapp.com/send?phone=919902991599&text=${encodeURIComponent(advisorMessage)}`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(advisorMessage)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
