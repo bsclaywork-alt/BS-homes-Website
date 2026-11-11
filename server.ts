@@ -9,6 +9,7 @@ import {
   generateSitemapXml, 
   generatePropertyMetaTags, 
   SITEMAP_PROJECTS,
+  CORRIDOR_SLUGS,
   slugify
 } from "./src/data/projectsSitemapData";
 import { updateSitemap } from "./scripts/update-sitemap";
@@ -1567,12 +1568,40 @@ Rules:
     next();
   });
 
-  // Clean Project Route
-  app.get("/projects/:slug", async (req, res, next) => {
+  // Helper for corridor display names
+  const getCorridorDisplayName = (slug: string): string => {
+    const mapping: Record<string, string> = {
+      'whitefield': 'Whitefield',
+      'hoskote': 'Hoskote',
+      'varthur': 'Varthur',
+      'gunjur': 'Gunjur',
+      'hosa-road': 'Hosa Road',
+      'kasavanahalli': 'Kasavanahalli',
+      'off-sarjapur-road': 'Off Sarjapur Road',
+      'sarjapur': 'Sarjapur',
+      'electronic-city': 'Electronic City',
+      'marathalli': 'Marathalli',
+      'bellandur': 'Bellandur',
+      'east-bangalore': 'East Bangalore'
+    };
+    return mapping[slug.toLowerCase()] || slug.replace(/-/g, ' ');
+  };
+
+  // Clean Project Route (supporting optional trailing slash, strict 404, error logging)
+  app.get(["/projects/:slug", "/projects/:slug/"], async (req, res, next) => {
     const slug = req.params.slug;
     const target = SITEMAP_PROJECTS.find(p => slugify(p.name) === slug || slugify(p.id) === slug);
     if (!target) {
-      return next();
+      console.warn(`[SEO Warning] Project slug not found in registry: "${slug}"`);
+      try {
+        const htmlPath = process.env.NODE_ENV !== "production"
+          ? path.resolve(process.cwd(), "index.html")
+          : path.join(process.cwd(), "dist", "index.html");
+        if (fs.existsSync(htmlPath)) {
+          return res.status(404).set({ "Content-Type": "text/html" }).sendFile(htmlPath);
+        }
+      } catch (e) {}
+      return res.status(404).send("Project Not Found");
     }
     try {
       const htmlPath = process.env.NODE_ENV !== "production"
@@ -1598,30 +1627,67 @@ Rules:
 
       return res.status(200).set({ "Content-Type": "text/html" }).send(html);
     } catch (err) {
-      next();
+      console.error("[SEO Error] Failed to generate project metadata for slug:", slug, err);
+      return res.status(500).send("Internal Server Error");
     }
   });
 
-  // Clean Location Route
-  app.get("/locations/:slug", async (req, res, next) => {
+  // Clean Location Route (supporting optional trailing slash, strict corridor validation, error logging)
+  app.get(["/locations/:slug", "/locations/:slug/"], async (req, res, next) => {
     const slug = req.params.slug;
-    const corridorName = slug.replace(/-/g, ' ');
+    const isValidCorridor = CORRIDOR_SLUGS.some(c => slugify(c) === slug);
+    if (!isValidCorridor) {
+      console.warn(`[SEO Warning] Location corridor slug not found: "${slug}"`);
+      try {
+        const htmlPath = process.env.NODE_ENV !== "production"
+          ? path.resolve(process.cwd(), "index.html")
+          : path.join(process.cwd(), "dist", "index.html");
+        if (fs.existsSync(htmlPath)) {
+          return res.status(404).set({ "Content-Type": "text/html" }).sendFile(htmlPath);
+        }
+      } catch (e) {}
+      return res.status(404).send("Location Not Found");
+    }
     try {
       const htmlPath = process.env.NODE_ENV !== "production"
         ? path.resolve(process.cwd(), "index.html")
         : path.join(process.cwd(), "dist", "index.html");
       let html = fs.readFileSync(htmlPath, "utf-8");
+      const corridorName = getCorridorDisplayName(slug);
       const title = `Properties in ${corridorName}, Bangalore | Price, Floor Plans & Details – BS Homez`;
-      const desc = `Explore verified luxury properties, apartments, villas and plots in ${corridorName}, Bangalore. 0% brokerage with BS Homez.`;
-      const canonicalUrl = `https://bshomez.in/locations/${slug}/`;
+      const description = `Explore verified luxury properties, apartments, villas and plots in ${corridorName}, Bangalore. 0% brokerage with BS Homez.`;
+      const canonical = `https://bshomez.in/locations/${slug}/`;
+      const schemaJson = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": title,
+        "description": description,
+        "url": canonical,
+        "provider": {
+          "@type": "RealEstateAgent",
+          "name": "BS Homez",
+          "url": "https://bshomez.in/"
+        }
+      });
 
       html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
-      html = html.replace(/<meta\s+name="description"\s+content="[\s\S]*?"\s*\/?>/i, `<meta name="description" content="${desc.replace(/"/g, '&quot;')}" />`);
-      html = html.replace(/<link\s+rel="canonical"\s+href="[\s\S]*?"\s*\/?>/i, `<link rel="canonical" href="${canonicalUrl}" />`);
+      html = html.replace(/<meta\s+name="description"\s+content="[\s\S]*?"\s*\/?>/i, `<meta name="description" content="${description.replace(/"/g, '&quot;')}" />`);
+      html = html.replace(/<link\s+rel="canonical"\s+href="[\s\S]*?"\s*\/?>/i, `<link rel="canonical" href="${canonical}" />`);
+      html = html.replace(/<meta\s+property="og:title"\s+content="[\s\S]*?"\s*\/?>/i, `<meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />`);
+      html = html.replace(/<meta\s+property="og:description"\s+content="[\s\S]*?"\s*\/?>/i, `<meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />`);
+      html = html.replace(/<meta\s+property="og:url"\s+content="[\s\S]*?"\s*\/?>/i, `<meta property="og:url" content="${canonical}" />`);
+
+      const locationJsonLdSnippet = `
+      <script type="application/ld+json" id="location-jsonld">
+        ${schemaJson}
+      </script>
+    </head>`;
+      html = html.replace(/<\/head>/i, locationJsonLdSnippet);
 
       return res.status(200).set({ "Content-Type": "text/html" }).send(html);
     } catch (err) {
-      next();
+      console.error("[SEO Error] Failed to generate location metadata for slug:", slug, err);
+      return res.status(500).send("Internal Server Error");
     }
   });
 
