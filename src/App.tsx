@@ -13909,7 +13909,15 @@ export default function App() {
 
   const [activePropertyUrlId, setActivePropertyUrlId] = useState<string | null>(() => {
     try {
-      return new URLSearchParams(window.location.search).get('project');
+      const params = new URLSearchParams(window.location.search);
+      const qProj = params.get('project');
+      if (qProj) return qProj;
+      const pathname = window.location.pathname;
+      if (pathname.startsWith('/projects/')) {
+        const parts = pathname.split('/').filter(Boolean);
+        if (parts[1]) return parts[1]; // slug e.g. prestige-somerville
+      }
+      return null;
     } catch {
       return null;
     }
@@ -14355,21 +14363,30 @@ export default function App() {
     agentJsonLd.textContent = JSON.stringify(dynamicAgentSchema, null, 2);
   }, [effectiveProjects, activePropertyUrlId, selectedProject, activeMainTab, filters.zone]);
 
-  // Initial URL search parameters detection (tab, corridor, project)
+  // Initial URL search parameters & clean path detection (tab, corridor, project)
   useEffect(() => {
     try {
+      const pathname = window.location.pathname;
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab') as MainAppTab;
       if (tabParam && ['overview', 'projects', 'grow-business', 'services', 'why-choose', 'insights', 'opportunity', 'referral', 'testimonials', 'loans', 'faq', 'about', 'admin'].includes(tabParam)) {
         setActiveMainTab(tabParam);
       }
-      const corridorParam = params.get('corridor');
+      let corridorParam = params.get('corridor');
+      if (!corridorParam && pathname.startsWith('/locations/')) {
+        const parts = pathname.split('/').filter(Boolean);
+        if (parts[1]) corridorParam = parts[1];
+      }
       if (corridorParam) {
         const normalized = corridorParam.replace(/-/g, ' ');
         setFilters(f => ({ ...f, zone: normalized }));
         setActiveMainTab('projects');
       }
-      const projectParam = params.get('project');
+      let projectParam = params.get('project');
+      if (!projectParam && pathname.startsWith('/projects/')) {
+        const parts = pathname.split('/').filter(Boolean);
+        if (parts[1]) projectParam = parts[1];
+      }
       if (projectParam) {
         setActivePropertyUrlId(projectParam);
         setActiveMainTab('projects');

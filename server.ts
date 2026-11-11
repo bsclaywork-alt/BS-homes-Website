@@ -8,7 +8,8 @@ import { GoogleGenAI } from "@google/genai";
 import { 
   generateSitemapXml, 
   generatePropertyMetaTags, 
-  SITEMAP_PROJECTS 
+  SITEMAP_PROJECTS,
+  slugify
 } from "./src/data/projectsSitemapData";
 import { updateSitemap } from "./scripts/update-sitemap";
 import nodemailer from "nodemailer";
@@ -1547,6 +1548,82 @@ Rules:
 
     return modifiedHtml;
   }
+
+  // 301 Permanent Redirects for legacy query URLs
+  app.get("/", (req, res, next) => {
+    const projQuery = req.query.project as string;
+    const corrQuery = req.query.corridor as string;
+    if (projQuery) {
+      const cleanQ = decodeURIComponent(projQuery).trim().toLowerCase();
+      const match = SITEMAP_PROJECTS.find(p => p.id.toLowerCase() === cleanQ || p.name.toLowerCase() === cleanQ || slugify(p.name) === cleanQ);
+      if (match) {
+        return res.redirect(301, `https://bshomez.in/projects/${slugify(match.name)}/`);
+      }
+    }
+    if (corrQuery) {
+      const cleanCorr = decodeURIComponent(corrQuery).trim();
+      return res.redirect(301, `https://bshomez.in/locations/${slugify(cleanCorr)}/`);
+    }
+    next();
+  });
+
+  // Clean Project Route
+  app.get("/projects/:slug", async (req, res, next) => {
+    const slug = req.params.slug;
+    const target = SITEMAP_PROJECTS.find(p => slugify(p.name) === slug || slugify(p.id) === slug);
+    if (!target) {
+      return next();
+    }
+    try {
+      const htmlPath = process.env.NODE_ENV !== "production"
+        ? path.resolve(process.cwd(), "index.html")
+        : path.join(process.cwd(), "dist", "index.html");
+      let html = fs.readFileSync(htmlPath, "utf-8");
+      const baseUrl = "https://bshomez.in";
+      const meta = generatePropertyMetaTags(target, baseUrl);
+
+      html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${meta.title}</title>`);
+      html = html.replace(/<meta\s+name="description"\s+content="[\s\S]*?"\s*\/?>/i, `<meta name="description" content="${meta.description.replace(/"/g, '&quot;')}" />`);
+      html = html.replace(/<link\s+rel="canonical"\s+href="[\s\S]*?"\s*\/?>/i, `<link rel="canonical" href="${meta.canonical}" />`);
+      html = html.replace(/<meta\s+property="og:title"\s+content="[\s\S]*?"\s*\/?>/i, `<meta property="og:title" content="${meta.ogTitle.replace(/"/g, '&quot;')}" />`);
+      html = html.replace(/<meta\s+property="og:description"\s+content="[\s\S]*?"\s*\/?>/i, `<meta property="og:description" content="${meta.ogDescription.replace(/"/g, '&quot;')}" />`);
+      html = html.replace(/<meta\s+property="og:url"\s+content="[\s\S]*?"\s*\/?>/i, `<meta property="og:url" content="${meta.ogUrl}" />`);
+      
+      const propertyJsonLdSnippet = `
+      <script type="application/ld+json" id="property-jsonld">
+        ${meta.schemaJson}
+      </script>
+    </head>`;
+      html = html.replace(/<\/head>/i, propertyJsonLdSnippet);
+
+      return res.status(200).set({ "Content-Type": "text/html" }).send(html);
+    } catch (err) {
+      next();
+    }
+  });
+
+  // Clean Location Route
+  app.get("/locations/:slug", async (req, res, next) => {
+    const slug = req.params.slug;
+    const corridorName = slug.replace(/-/g, ' ');
+    try {
+      const htmlPath = process.env.NODE_ENV !== "production"
+        ? path.resolve(process.cwd(), "index.html")
+        : path.join(process.cwd(), "dist", "index.html");
+      let html = fs.readFileSync(htmlPath, "utf-8");
+      const title = `Properties in ${corridorName}, Bangalore | Price, Floor Plans & Details – BS Homez`;
+      const desc = `Explore verified luxury properties, apartments, villas and plots in ${corridorName}, Bangalore. 0% brokerage with BS Homez.`;
+      const canonicalUrl = `https://bshomez.in/locations/${slug}/`;
+
+      html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
+      html = html.replace(/<meta\s+name="description"\s+content="[\s\S]*?"\s*\/?>/i, `<meta name="description" content="${desc.replace(/"/g, '&quot;')}" />`);
+      html = html.replace(/<link\s+rel="canonical"\s+href="[\s\S]*?"\s*\/?>/i, `<link rel="canonical" href="${canonicalUrl}" />`);
+
+      return res.status(200).set({ "Content-Type": "text/html" }).send(html);
+    } catch (err) {
+      next();
+    }
+  });
 
   // SEO: robots.txt for Google Search Console & Googlebot Crawlers
   app.get("/robots.txt", (req, res) => {

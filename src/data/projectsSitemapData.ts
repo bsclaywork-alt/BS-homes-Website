@@ -741,19 +741,13 @@ export const CORRIDOR_SLUGS = [
   'East-Bangalore'
 ];
 
-export const APP_TABS = [
-  'overview',
-  'projects',
-  'services',
-  'why-choose',
-  'insights',
-  'opportunity',
-  'referral',
-  'loans',
-  'testimonials',
-  'faq',
-  'about'
-];
+export function slugify(str: string): string {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
 
 function escapeXml(str: string): string {
   if (!str) return '';
@@ -766,16 +760,16 @@ function escapeXml(str: string): string {
 }
 
 /**
- * Builds the complete dynamic sitemap.xml
+ * Builds the complete dynamic sitemap.xml with clean SEO-friendly paths
  */
 export function generateSitemapXml(
-  baseUrl: string, 
+  baseUrl: string = 'https://bshomez.in', 
   projectsList: SitemapProjectItem[] = SITEMAP_PROJECTS
 ): string {
-  const cleanBase = baseUrl.replace(/\/$/, '');
+  const cleanBase = 'https://bshomez.in';
   const today = new Date().toISOString().split('T')[0];
 
-  // Core Landing & Tab URLs
+  // Core Landing & Clean Location (Corridor) URLs
   const coreUrls = [
     `  <url>
     <loc>${cleanBase}/</loc>
@@ -783,23 +777,18 @@ export function generateSitemapXml(
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>`,
-    ...APP_TABS.map(tab => `  <url>
-    <loc>${cleanBase}/?tab=${tab}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>${tab === 'projects' ? '0.95' : '0.85'}</priority>
-  </url>`),
     ...CORRIDOR_SLUGS.map(corridor => `  <url>
-    <loc>${cleanBase}/?corridor=${corridor}</loc>
+    <loc>${cleanBase}/locations/${slugify(corridor)}/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>`)
   ];
 
-  // Individual Property URLs with Google Image Extensions
+  // Individual Clean Project URLs with Google Image Extensions
   const projectUrls = projectsList.map(project => {
-    const projectUrl = `${cleanBase}/?project=${encodeURIComponent(project.id || project.name)}`;
+    const projectSlug = slugify(project.name);
+    const projectUrl = `${cleanBase}/projects/${projectSlug}/`;
     const imageBlock = project.imageUrl ? `
     <image:image>
       <image:loc>${escapeXml(project.imageUrl)}</image:loc>
@@ -824,14 +813,15 @@ ${projectUrls.join('\n')}
 }
 
 /**
- * Generates SEO meta tags and Schema.org JSON-LD for a specific property
+ * Generates SEO meta tags and Schema.org JSON-LD for a specific property using clean URL
  */
 export function generatePropertyMetaTags(
   project: SitemapProjectItem, 
-  baseUrl: string
+  baseUrl: string = 'https://bshomez.in'
 ) {
-  const cleanBase = baseUrl.replace(/\/$/, '');
-  const propertyUrl = `${cleanBase}/?project=${encodeURIComponent(project.id || project.name)}`;
+  const cleanBase = 'https://bshomez.in';
+  const projectSlug = slugify(project.name);
+  const propertyUrl = `${cleanBase}/projects/${projectSlug}/`;
   const title = `${project.name} in ${project.zone}, Bangalore | Price, Floor Plans & Details – BS Homez`;
   
   // Clean description under 160 characters

@@ -8,145 +8,79 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=overview</loc>
+    <loc>https://bshomez.in/locations/whitefield/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=projects</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?tab=services</loc>
+    <loc>https://bshomez.in/locations/hoskote/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=why-choose</loc>
+    <loc>https://bshomez.in/locations/varthur/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=insights</loc>
+    <loc>https://bshomez.in/locations/gunjur/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=opportunity</loc>
+    <loc>https://bshomez.in/locations/hosa-road/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=referral</loc>
+    <loc>https://bshomez.in/locations/kasavanahalli/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=loans</loc>
+    <loc>https://bshomez.in/locations/off-sarjapur-road/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=testimonials</loc>
+    <loc>https://bshomez.in/locations/sarjapur/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=faq</loc>
+    <loc>https://bshomez.in/locations/electronic-city/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?tab=about</loc>
+    <loc>https://bshomez.in/locations/marathalli/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?corridor=Whitefield</loc>
+    <loc>https://bshomez.in/locations/bellandur/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?corridor=Hoskote</loc>
+    <loc>https://bshomez.in/locations/east-bangalore/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://bshomez.in/?corridor=Varthur</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?corridor=Gunjur</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?corridor=Hosa-Road</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?corridor=Kasavanahalli</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?corridor=Off-Sarjapur-Road</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?corridor=Sarjapur</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?corridor=Electronic-City</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?corridor=Marathalli</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?corridor=Bellandur</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?corridor=East-Bangalore</loc>
-    <lastmod>2026-11-11</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=curated_whitefield_primary_1</loc>
+    <loc>https://bshomez.in/projects/prestige-somerville/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -157,7 +91,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_whitefield_resale_1</loc>
+    <loc>https://bshomez.in/projects/brigade-woods-botanica/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -168,7 +102,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_whitefield_rental_1</loc>
+    <loc>https://bshomez.in/projects/total-environment-windmills-of-your-mind/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -179,7 +113,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_primary_aplus_godrej_woodscapes</loc>
+    <loc>https://bshomez.in/projects/godrej-woodscapes/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -190,7 +124,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_primary_c_radiant_jasmine</loc>
+    <loc>https://bshomez.in/projects/radiant-jasmine-gardens/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -201,7 +135,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_hoskote_primary_1</loc>
+    <loc>https://bshomez.in/projects/sobha-galera/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -212,7 +146,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_hoskote_resale_1</loc>
+    <loc>https://bshomez.in/projects/cjn-sai-fortune/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -223,7 +157,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_hoskote_rental_1</loc>
+    <loc>https://bshomez.in/projects/brigade-golden-triangle-signature/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -234,7 +168,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_primary_c_sri_sai_brindavan</loc>
+    <loc>https://bshomez.in/projects/sri-sai-brindavan-enclave/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -245,7 +179,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_varthur_primary_1</loc>
+    <loc>https://bshomez.in/projects/prestige-raintree-park/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -256,7 +190,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_varthur_resale_1</loc>
+    <loc>https://bshomez.in/projects/brigade-cornerstone-utopia-eden-serene/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -267,7 +201,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_varthur_rental_1</loc>
+    <loc>https://bshomez.in/projects/prestige-lakeside-habitat/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -278,7 +212,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_primary_b_candeur_skyline</loc>
+    <loc>https://bshomez.in/projects/candeur-skyline/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -289,7 +223,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_gunjur_primary_1</loc>
+    <loc>https://bshomez.in/projects/sobha-neopolis/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -300,7 +234,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_gunjur_resale_1</loc>
+    <loc>https://bshomez.in/projects/dsr-highland-greenz/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -311,7 +245,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_gunjur_rental_1</loc>
+    <loc>https://bshomez.in/projects/candeur-landmark/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -322,7 +256,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_primary_c_slv_lakeview</loc>
+    <loc>https://bshomez.in/projects/slv-lakeview-residency/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -333,7 +267,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_hosaroad_primary_1</loc>
+    <loc>https://bshomez.in/projects/assetz-canvas-cove-phase-2/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -344,7 +278,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_hosaroad_resale_1</loc>
+    <loc>https://bshomez.in/projects/snn-raj-etternia/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -355,7 +289,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_hosaroad_rental_1</loc>
+    <loc>https://bshomez.in/projects/purva-skywood/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -366,7 +300,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_primary_b_casagrand_flamingo</loc>
+    <loc>https://bshomez.in/projects/casagrand-flamingo/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -377,7 +311,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_kasavanahalli_primary_1</loc>
+    <loc>https://bshomez.in/projects/assetz-63-degree-east-tower-d-e/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -388,7 +322,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_kasavanahalli_resale_1</loc>
+    <loc>https://bshomez.in/projects/psr-aster-villas-residences/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -399,7 +333,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_kasavanahalli_rental_1</loc>
+    <loc>https://bshomez.in/projects/bren-imperia/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -410,7 +344,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_primary_c_bm_glorietta</loc>
+    <loc>https://bshomez.in/projects/bm-glorietta-phase-2/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -421,7 +355,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_plot_prestige_marigold</loc>
+    <loc>https://bshomez.in/projects/prestige-marigold-phase-2-plotted-enclave/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -432,7 +366,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_plot_brigade_oasis_eoi</loc>
+    <loc>https://bshomez.in/projects/brigade-oasis-phase-3-eoi-plotted-launch/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -443,7 +377,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_plot_assetz_earth_essence</loc>
+    <loc>https://bshomez.in/projects/assetz-earth-essence-plotted-sanctuary/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -454,7 +388,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_plot_century_seasons</loc>
+    <loc>https://bshomez.in/projects/century-seasons-meadows-plotted-estate/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -465,7 +399,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_plot_myhna_maple_leaf</loc>
+    <loc>https://bshomez.in/projects/myhna-maple-leaf-plotted-enclave/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -476,7 +410,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_plot_radiant_silver_oak</loc>
+    <loc>https://bshomez.in/projects/radiant-silver-oak-villa-plots/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -487,7 +421,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_plot_slv_silicon_county_eoi</loc>
+    <loc>https://bshomez.in/projects/slv-silicon-county-eoi-villa-plots/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -498,7 +432,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_sobha_oakshire_villas</loc>
+    <loc>https://bshomez.in/projects/sobha-oakshire-tudor-style-villas/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -509,7 +443,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_godrej_park_retreat_phase2</loc>
+    <loc>https://bshomez.in/projects/godrej-park-retreat-phase-2/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -520,7 +454,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_total_environment_tqe_ready</loc>
+    <loc>https://bshomez.in/projects/total-environment-in-that-quiet-earth/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -531,7 +465,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_birla_trimaya_phase2_eoi</loc>
+    <loc>https://bshomez.in/projects/birla-trimaya-phase-2-the-hills/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -542,7 +476,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_sumadhura_folium_uc</loc>
+    <loc>https://bshomez.in/projects/sumadhura-folium/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -553,7 +487,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_mana_dale_eoi</loc>
+    <loc>https://bshomez.in/projects/mana-dale-tower-solstice/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -564,7 +498,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_shriram_greenfield_ready</loc>
+    <loc>https://bshomez.in/projects/shriram-greenfield-phase-2/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -575,7 +509,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_dsr_the_courtyard_ready</loc>
+    <loc>https://bshomez.in/projects/dsr-the-courtyard/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -586,7 +520,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_bren_palms_lakeview_uc</loc>
+    <loc>https://bshomez.in/projects/bren-palms-lakeview-residences/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -597,7 +531,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_casagrand_boulevard_eoi</loc>
+    <loc>https://bshomez.in/projects/casagrand-boulevard-phase-2/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -608,7 +542,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_gopalan_lakefront_uc</loc>
+    <loc>https://bshomez.in/projects/gopalan-lakefront-enclave/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -619,7 +553,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_sri_sai_golden_nest_ready</loc>
+    <loc>https://bshomez.in/projects/sri-sai-golden-nest/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -630,7 +564,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_durga_petals_horizon_uc</loc>
+    <loc>https://bshomez.in/projects/durga-petals-horizon/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -641,7 +575,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bshomez.in/?project=curated_amrutha_heights_phase2_uc</loc>
+    <loc>https://bshomez.in/projects/amrutha-heights-phase-2/</loc>
     <lastmod>2026-11-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
@@ -649,354 +583,6 @@
       <image:loc>https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
       <image:title>Amrutha Heights (Phase 2) – Varthur - Gunjur Main Road, Bangalore</image:title>
       <image:caption>High rental-yield affordable luxury apartments in the heart of Varthur tech catchment with children play zones and gym.</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=2KBgfUYql4JzETrKu0e2</loc>
-    <lastmod>2026-10-29</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Celebrity Nature Habitat Phase 1 – Sarjapur</image:title>
-      <image:caption>Celebrity Nature Habitat Phase 1 - Verified Resale 3BHK Villa in Sarjapur. SUBA: 3300, Carpet Area: 2700, Approved Authority: BMRDA, RERA: PRM/KA/RERA/Verified. Big Balcony, Privat</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=3DLkWADahkJAUaAamx4U</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Sobha Ayana – Panathur</image:title>
-      <image:caption>Tropical forest theme -
-
-Location
--  opposite to sobha Dream acres. Panathur Road near Varthur.
-
-Project Overview
-- Net Site Area: 6.28 Acres
-- Total Units: 683
-- Total Wings: 12
-
-</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=63e5iENUyBPjwicHWQNE</loc>
-    <lastmod>2026-06-14</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Shriram Songs of the Earth – Anekal</image:title>
-      <image:caption>Premium Lifestyle Residences in South Bengaluru
-Near Electronic City
-
-📌 Project Overview
-* Project Name: The One
-* Developer: Shriram Properties Limited
-* Total Land Area: 4 Acres</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=EMYNrEP4w2nJIC5x6N8i</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Ramky Fortuna – Whitefield </image:title>
-      <image:caption>PROJECT AT A GLANCE
-* Name: Ramky Fortuna 
-* Land Area: ~11 Acres
-* Typology: 1, 2, 2.5, 3BHK Apartments
-* Sizes: ~624 – 1610 Sq.ft
-
-
-✨ WHY RAMKY FORTUNA – 
-✔️ 74% Carpet area
-✔️ 8</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=IiJKwpgP8q4QiD6OOsUo</loc>
-    <lastmod>2026-06-05</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>GRC Shreekrish – Choodasandra</image:title>
-      <image:caption>🏡 GRC Shreekrish – Ready-to-Move Luxury by the Lake
-
-✨ Why GRC Shreekrish?
-
-✅ Lake-facing units
-✅ Vaastu-compliant homes
-✅ 1.5 acres open space
-✅ 50+ World Class amenities
-🏡 Read</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=NIZXXuc1kzbWmFvknJYy</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>ATZ AREVA – Marathalli</image:title>
-      <image:caption>Land parcel __1.5 acres
-Tower ___one tower
-Number of total units ___144
-G+12 construction
-Basement ,ground floor ___parking
-20+ amenities </image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=OZ5p4OnHXo9nSN1cD35x</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Inspira Infinity – Sarjapur Raod</image:title>
-      <image:caption>Inspira Builder&apos;s Infinity project at Carmelaram
-(Before Wipro SEZ &amp; Decathlon)
-
-Basic Project Details - 
-
--Location : Carmelram road, Sarjapur-Marathahalli Road
--Land Parcel - 1.1</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=P2Dm1D0lbGkCuoOt4O5R</loc>
-    <lastmod>2026-06-05</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Godrej Parkshire – Hoskote</image:title>
-      <image:caption> 📍Godrej Parkshire –Whitefield -Hoskote Bangalore 🌿
-Where Green Living Meets Smart Connectivity!
-
-🏡 Project Highlights
-✨ Spread across 13.5 Acres | 5 Iconic Towers | 1130 Units
-</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=P5WxbbBfCo6h82H8qWqd</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>MSR Passion Square – Sarjapur Raod</image:title>
-      <image:caption>Own Your Dream Home in a society that blends traditional values with new-age philosophies.
-
-Welcome to MSR Passion Square — thoughtfully designed 2 &amp; 3 BHK homes in a serene BDA-ga</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=RmXR8cBHpRLdaD4stxO6</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>CELEBRITY NATURES HABITAT PHASE II – Sarjapur</image:title>
-      <image:caption>. 97 Villas
-- BMRDA and STRR Approved 
-. Amenities are ready to use
-. 30 x 40
-. 40 x 60
-. odd sites
-. **Internal Customization available**
-. Vaastu Complaint</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=Si4UYg5v1Y4k9Rybqkl2</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Ramky - Codename – CLUB CLASS – Thanisandra</image:title>
-      <image:caption>PROJECT AT A GLANCE
-* Name: Codename – CLUB CLASS
-* Land Area: ~3 Acres
-* Residences: 200+ Ultra-Premium Homes
-* Typology: 3 &amp; 3.5 BHK
-* Sizes: ~1800 – 2350 sq.ft
-WHY CLUB CLASS? –</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=WSdE7oB2SEJsnEixF1WY</loc>
-    <lastmod>2026-10-28</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>KLASSIK EXOTICA – Sarjapur</image:title>
-      <image:caption>Luxury Beyond Ordinary!
-
-📍 Off Sarjapur Road | 120 Elite Homes | B+G+14
-
-🏡 3 &amp; 4 BHK Spacious Residences
-3 BHK: 1780–2100 sq.ft
-4 BHK: 2420–2430 sq.ft
-💰 ₹1.75 Cr – ₹2.5 Cr
-
-✨ To</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=XUMXL875YU2ID8nXNTzJ</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Inspira Winds of Life – Sarjapur</image:title>
-      <image:caption>Inspira Winds of Life – Sarjapur Main Road
-Refined living surrounded by nature &amp; unmatched connectivity!
-
-🌿 Why Inspira Winds of life?
-* Located in Main Road
-* Spacious 3 BHK Vill</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=cVvfFnVDaNmXAGK9tE9P</loc>
-    <lastmod>2026-10-29</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Celebrity Nature Habitat – Sarjapur, Bangalore</image:title>
-      <image:caption>Celebrity Nature Habitat by Premier Bangalore Developer in Sarjapur, Bangalore, Bangalore. Nearby Connectivity (Sarjapur): Schools: Deens Academy / Greenwood High / Vibgyor High (1</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=d0a3SJkFExeZvu5hMoCw</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Sobha Scarlet – Sarjapur Road</image:title>
-      <image:caption>Royal Pavilion phase 2 
-Sobha Scarlet , Sarjapur road near RGA tech park
-
-4 acres
-200 plus units 
-3 wings 
-2B+G+18 floors 
-Club house 16000 sft 
-G+3 structure 
-3 BHK 1875 SFT it’s </image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=dQfq9wi1jDaLuTO9qckT</loc>
-    <lastmod>2026-10-25</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>GLOBAL EDIFICE THE CLAN – Whitefield, Bangalore</image:title>
-      <image:caption>GLOBAL EDIFICE by Premier Bangalore Developer (Cat A) is a thoughtfully master-planned apartment enclave situated in Whitefield, Bangalore. Designed with Vaastu-compliant layouts, </image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=eZcBtpzGqcsRCfO3jVsi</loc>
-    <lastmod>2026-06-05</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Sri Balaji Urban Retreat – Sarjapur</image:title>
-      <image:caption>✅Urban Retreat - 
-Villa property on Sarjapur Road offers a harmonious blend of peaceful living and luxurious design, where every corner exudes serenity and every detail speaks of e</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=j4hQGIjqQJRckevxwOjV</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>RAMKY LUMINA – Hosa Road - E-city</image:title>
-      <image:caption>PROJECT HIGHLIGHTS:
-🏠 729 Corner Apartments with 75% Carpet Area
-🏠 6 majestic towers of 14-floors each on 7.4 acres
-🏠 80% open space with 40+ lifestyle amenities
-🏠 20,000 Sq. f</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=jK8ySfOaKF8odMtUjkBR</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Geo Own Oasis – Sarjapur</image:title>
-      <image:caption> - All major Banks approved
-- BMRDA  Approved 
-. Amenities are ready to use</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=vlobgPE8I1tguaYiInKL</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Sobha One World – Whitefield</image:title>
-      <image:caption>About the Project
-Along Old Madras Road near Hoskote Toll Gate, a landmark of rare scale
-is set to rise, heralding the next generation of integrated townships —
-SOBHA OneWorld. Thi</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=xhHvlaHE77X1Yf08oD9T</loc>
-    <lastmod>2026-05-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>Maa Ayana Woods – Sarjapur</image:title>
-      <image:caption>The BIGGEST Balinese-themed Villa Township in Sarjapur – an enchanting 75-Acre tropical heaven! 🌺🌊
-
-Project Highlights
-🌿 Total Land: 75 Acres of pure paradise
-🏞️ Phase 1 Launch</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bshomez.in/?project=xyZj9A0HWDpC8JpehK69</loc>
-    <lastmod>2026-06-05</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.90</priority>
-    <image:image>
-      <image:loc>https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=1200&amp;q=80</image:loc>
-      <image:title>GRC SAVOR – Choodasandra</image:title>
-      <image:caption>Project Details:
-📐• Total Land Parcel – 2.4 Acres
-🏘️• Low Density Community with Only 150 Units
-🏗️•Structure – G + 4 Floors
-👷• Construction Type – Premium Mivan Construction
-✅•</image:caption>
     </image:image>
   </url>
 </urlset>
