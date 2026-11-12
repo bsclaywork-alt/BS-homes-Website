@@ -14145,12 +14145,25 @@ export default function App() {
     const projectQuery = activePropertyUrlId || params.get('project');
 
     // Case 1: Specific Project Detail (Modal open or URL direct link)
-    const activeProjectTarget = selectedProject || (projectQuery
-      ? effectiveProjects.find(
-          p => (p.id && p.id.toLowerCase() === decodeURIComponent(projectQuery).trim().toLowerCase()) ||
-               p.name.toLowerCase() === decodeURIComponent(projectQuery).trim().toLowerCase()
-        )
-      : null);
+    const normalizedProjectQuery = projectQuery
+  ? projectQuery.trim().toLowerCase()
+  : '';
+
+const activeProjectTarget = selectedProject || (
+  normalizedProjectQuery
+    ? effectiveProjects.find(p => {
+        const projectId = (p.id || '').toLowerCase();
+        const projectName = (p.name || '').toLowerCase();
+        const projectSlug = createProjectSlug(p.name || '');
+
+        return (
+          projectId === normalizedProjectQuery ||
+          projectName === normalizedProjectQuery ||
+          projectSlug === normalizedProjectQuery
+        );
+      })
+    : null
+);
 
     if (activeProjectTarget) {
       const seoData = generateOptimizedSeoMetadata(activeProjectTarget, baseUrl);
