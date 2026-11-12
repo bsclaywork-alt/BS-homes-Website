@@ -159,6 +159,12 @@ import imgLuxuryPlotEstate from './assets/images/luxury_villa_plot_estate_179178
 
 const LEGACY_PROJECT_NAMES = ['The Royal Orchard', 'East Gate Residences', 'Azure Lakes'];
 
+const createProjectSlug = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
