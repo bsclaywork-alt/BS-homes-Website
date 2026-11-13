@@ -749,6 +749,65 @@ export function slugify(str: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
+/**
+ * Creates one shared deterministic, collision-safe slug mapping for all projects.
+ * Uses a loop to ensure no two projects ever receive the same slug. Does not use Math.random().
+ */
+export function generateProjectSlugMap(projects: SitemapProjectItem[]): Map<string, string> {
+  const slugMap = new Map<string, string>();
+  const usedSlugs = new Set<string>();
+  const slugCounts = new Map<string, number>();
+
+  for (const project of projects) {
+    const key = project.id || project.name;
+    if (!project.name) {
+      slugMap.set(key, 'unknown-project');
+      continue;
+    }
+
+    const baseSlug = slugify(project.name);
+    if (!baseSlug) {
+      slugMap.set(key, 'project');
+      continue;
+    }
+
+    let candidate = baseSlug;
+    let counter = (slugCounts.get(baseSlug) || 0) + 1;
+    slugCounts.set(baseSlug, counter);
+
+    // Collision loop with while check ensuring 100% uniqueness without Math.random()
+    while (usedSlugs.has(candidate)) {
+      counter++;
+      slugCounts.set(baseSlug, counter);
+      const suffix = project.id ? slugify(project.id) : counter.toString();
+      candidate = `${baseSlug}-${suffix}`;
+      if (usedSlugs.has(candidate)) {
+        candidate = `${baseSlug}-${counter}`;
+      }
+    }
+
+    if (counter > 1 && candidate === baseSlug) {
+      const suffix = project.id ? slugify(project.id) : counter.toString();
+      candidate = `${baseSlug}-${suffix}`;
+      while (usedSlugs.has(candidate)) {
+        counter++;
+        candidate = `${baseSlug}-${counter}`;
+      }
+    }
+
+    usedSlugs.add(candidate);
+    slugMap.set(key, candidate);
+  }
+
+  return slugMap;
+}
+
+export function getProjectSlug(project: SitemapProjectItem, allProjects: SitemapProjectItem[] = SITEMAP_PROJECTS): string {
+  const map = generateProjectSlugMap(allProjects);
+  const key = project.id || project.name;
+  return map.get(key) || slugify(project.name) || 'project';
+}
+
 function escapeXml(str: string): string {
   if (!str) return '';
   return str
@@ -768,6 +827,7 @@ export function generateSitemapXml(
 ): string {
   const cleanBase = 'https://bshomez.in';
   const today = new Date().toISOString().split('T')[0];
+  const slugMap = generateProjectSlugMap(projectsList);
 
   // Core Landing & Clean Location (Corridor) URLs
   const coreUrls = [
@@ -787,7 +847,8 @@ export function generateSitemapXml(
 
   // Individual Clean Project URLs with Google Image Extensions
   const projectUrls = projectsList.map(project => {
-    const projectSlug = slugify(project.name);
+    const key = project.id || project.name;
+    const projectSlug = slugMap.get(key) || slugify(project.name);
     const projectUrl = `${cleanBase}/projects/${projectSlug}/`;
     const imageBlock = project.imageUrl ? `
     <image:image>
@@ -817,17 +878,19 @@ ${projectUrls.join('\n')}
  */
 export function generatePropertyMetaTags(
   project: SitemapProjectItem, 
-  baseUrl: string = 'https://bshomez.in'
+  baseUrl: string = 'https://bshomez.in',
+  allProjects: SitemapProjectItem[] = SITEMAP_PROJECTS
 ) {
   const cleanBase = 'https://bshomez.in';
-  const projectSlug = slugify(project.name);
+  const projectSlug = getProjectSlug(project, allProjects);
   const propertyUrl = `${cleanBase}/projects/${projectSlug}/`;
   const title = `${project.name} in ${project.zone}, Bangalore | Price, Floor Plans & Details – BS Homez`;
   
-  // Clean description under 160 characters
-  const shortDesc = `${project.name} by ${project.builderName} in ${project.location}. Price: ${project.price}. RERA Verified. 0% Brokerage on Primary with BS Homez.`;
+  // Clean description under 160 characters using only verified project data
+  const reraStr = project.reraNumber ? ` RERA: ${project.reraNumber}.` : '';
+  const shortDesc = `${project.name} by ${project.builderName} in ${project.location}. Price: ${project.price}.${reraStr} Explore floor plans and details with BS Homez.`.slice(0, 160);
 
-  const ldJson = {
+  const ldJson: any = {
     "@context": "https://schema.org",
     "@type": project.propertyType === 'Villa' ? "SingleFamilyResidence" : project.propertyType === 'Plot' ? "LandParcel" : "ApartmentComplex",
     "name": project.name,
@@ -855,6 +918,10 @@ export function generatePropertyMetaTags(
       "url": cleanBase
     }
   };
+
+  if (project.reraNumber) {
+    ldJson.identifier = project.reraNumber;
+  }
 
   return {
     title,

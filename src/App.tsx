@@ -139,6 +139,8 @@ import { GrowBusinessSection } from './components/GrowBusinessSection';
 import { dispatchEnquiryEmailAlert } from './lib/enquiryAlert';
 import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from './lib/seoAuditReport';
 import { autoEnhanceAllProjects, generateOptimizedSeoMetadata } from './lib/autoSeoEnhancer';
+import { ProjectDetailView } from './components/ProjectDetailView';
+import { slugify } from './data/projectsSitemapData';
 
 import imgEastEoi from './assets/images/east_bangalore_eoi_towers_1791731720202.jpg';
 import imgSouthEastConst from './assets/images/southeast_bangalore_construction_1791731732392.jpg';
@@ -14547,6 +14549,17 @@ export default function App() {
     return copy;
   }, [effectiveProjects, activePropertyUrlId]);
 
+  const matchedProjectDetail = useMemo(() => {
+    if (!activePropertyUrlId) return null;
+    const cleanQuery = decodeURIComponent(activePropertyUrlId).trim().toLowerCase();
+    return effectiveProjects.find(p => 
+      slugify(p.name) === cleanQuery || 
+      (p.id && p.id.toLowerCase() === cleanQuery) || 
+      slugify(p.id || '') === cleanQuery || 
+      p.name.toLowerCase() === cleanQuery
+    );
+  }, [activePropertyUrlId, effectiveProjects]);
+
   const handleSaveProject = async (updated: Project) => {
     const formattedUpdated: Project = autoEnrichProjectData({
       ...updated,
@@ -15106,7 +15119,7 @@ export default function App() {
           </div>
         )}
 
-        {activeMainTab === 'projects' && (
+        {activeMainTab === 'projects' && !activePropertyUrlId && (
           <ProjectGrid 
             projects={projectsForGrid} 
             isAdmin={Boolean(user)}
@@ -15129,6 +15142,37 @@ export default function App() {
             onOpenMetaData={handleOpenPropertyMetaDataModal}
             isLoading={isLoading} 
           />
+        )}
+
+        {activeMainTab === 'projects' && activePropertyUrlId && matchedProjectDetail && (
+          <ProjectDetailView 
+            project={matchedProjectDetail}
+            onBack={() => {
+              setActivePropertyUrlId(null);
+              window.history.pushState({}, '', '/?tab=projects');
+            }}
+            onEnquire={handleEnquireProject}
+            onSiteVisit={handleScheduleSiteVisit}
+            onDownloadBrochure={handleDownloadBrochure}
+          />
+        )}
+
+        {activeMainTab === 'projects' && activePropertyUrlId && !matchedProjectDetail && (
+          <div className="min-h-screen bg-[#0c0c0c] text-white pt-32 pb-20 px-4 text-center">
+            <div className="max-w-md mx-auto bg-[#141414] border border-[#262626] rounded-2xl p-8 shadow-2xl">
+              <h1 className="text-2xl font-bold font-serif text-[#C5A059] mb-3">Project Not Found</h1>
+              <p className="text-gray-400 text-sm mb-6">The project URL you requested ("{activePropertyUrlId}") does not exist or has been removed.</p>
+              <button
+                onClick={() => {
+                  setActivePropertyUrlId(null);
+                  window.history.pushState({}, '', '/?tab=projects');
+                }}
+                className="px-6 py-3 rounded-xl bg-[#C5A059] text-black font-bold text-xs uppercase tracking-wider hover:bg-[#d4af37] transition-all cursor-pointer"
+              >
+                Return to All Projects
+              </button>
+            </div>
+          </div>
         )}
 
         {activeMainTab === 'grow-business' && (

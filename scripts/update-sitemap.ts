@@ -32,7 +32,12 @@ export interface SitemapUpdateResult {
 /**
  * Fetches all active projects from the Firestore database
  */
-async function fetchActiveDbProjects(): Promise<SitemapProjectItem[]> {
+/**
+ * Fetches all active projects from the Firestore database with snapshot caching and stale-cache protection
+ */
+export async function fetchActiveDbProjects(): Promise<SitemapProjectItem[]> {
+  const cachePath = path.resolve(process.cwd(), 'src/data/cachedFirestoreProjects.json');
+
   try {
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
@@ -43,13 +48,18 @@ async function fetchActiveDbProjects(): Promise<SitemapProjectItem[]> {
     for (const doc of snap.docs) {
       const data = doc.data();
 
-      // Skip deleted or paused projects
+      // Skip deleted or paused projects (Reconciliation: prune inactive/deleted projects)
       if (data.isDeleted === true || data.isPaused === true) {
         continue;
       }
 
       // Skip legacy mock projects
       if (data.name && LEGACY_PROJECT_NAMES.includes(data.name)) {
+        continue;
+      }
+
+      // Validate required fields
+      if (!doc.id || !data.name) {
         continue;
       }
 
@@ -85,19 +95,53 @@ async function fetchActiveDbProjects(): Promise<SitemapProjectItem[]> {
       });
     }
 
+    // Never overwrite with empty/failed result if successfully fetched but empty unexpectedly,
+    // but if live fetch is valid, update the persistent JSON snapshot
+    if (items.length > 0) {
+      const cachePayload = {
+        lastSuccessfulFetch: new Date().toISOString(),
+        projectCount: items.length,
+        dataSource: 'firestore-live',
+        schemaVersion: '1.0',
+        projects: items
+      };
+      try {
+        fs.writeFileSync(cachePath, JSON.stringify(cachePayload, null, 2), 'utf-8');
+        console.log(`[Firestore Cache] Successfully refreshed snapshot with ${items.length} active projects.`);
+      } catch (cacheErr) {
+        console.warn('[Firestore Cache] Warning writing snapshot file:', cacheErr);
+      }
+    }
+
     return items;
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    if (
-      errMsg.includes('Quota') ||
-      errMsg.includes('quota') ||
-      errMsg.includes('resource-exhausted') ||
-      (err as { code?: string })?.code === 'resource-exhausted'
-    ) {
-      console.info('[Sitemap Generator] Daily Firestore read quota reached; generated sitemap using verified curated baseline data.');
-    } else {
-      console.warn('[Sitemap Generator] Notice fetching from Firestore, proceeding with curated baseline:', errMsg);
+    console.warn('[Firestore Fetch Warning] Live Firestore fetch failed:', errMsg);
+    console.log('[Firestore Cache] Attempting fallback to persistent JSON snapshot...');
+
+    // Fallback to cached snapshot
+    try {
+      if (fs.existsSync(cachePath)) {
+        const cacheRaw = fs.readFileSync(cachePath, 'utf-8');
+        const cacheParsed = JSON.parse(cacheRaw);
+        const lastFetchTime = cacheParsed.lastSuccessfulFetch ? new Date(cacheParsed.lastSuccessfulFetch).getTime() : 0;
+        const ageDays = (Date.now() - lastFetchTime) / (1000 * 60 * 60 * 24);
+
+        // Strict 14-day freshness threshold
+        if (ageDays > 14) {
+          console.error(`[Build Error] Firestore snapshot cache is older than 14 days (last refreshed: ${cacheParsed.lastSuccessfulFetch}, age: ${ageDays.toFixed(1)} days). Stale inventory publishing blocked.`);
+          process.exit(1);
+        }
+
+        const cachedProjects: SitemapProjectItem[] = Array.isArray(cacheParsed.projects) ? cacheParsed.projects : [];
+        console.warn(`[Build Warning] Firestore unavailable. Using cached snapshot (dataSource: cached-potentially-outdated, refreshed: ${cacheParsed.lastSuccessfulFetch}, age: ${ageDays.toFixed(1)} days) containing ${cachedProjects.length} active projects.`);
+        return cachedProjects;
+      }
+    } catch (fallbackErr) {
+      console.error('[Build Error] Failed to read cached Firestore snapshot:', fallbackErr);
     }
+
+    console.warn('[Build Warning] No valid cached Firestore snapshot found. Proceeding with curated baseline data.');
     return [];
   }
 }
@@ -105,7 +149,7 @@ async function fetchActiveDbProjects(): Promise<SitemapProjectItem[]> {
 /**
  * Merges active database projects with curated projects
  */
-function mergeProjects(curated: SitemapProjectItem[], fromDb: SitemapProjectItem[]): SitemapProjectItem[] {
+export function mergeProjects(curated: SitemapProjectItem[], fromDb: SitemapProjectItem[]): SitemapProjectItem[] {
   const mergedMap = new Map<string, SitemapProjectItem>();
 
   // Add curated projects first
