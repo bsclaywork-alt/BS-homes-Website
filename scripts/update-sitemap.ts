@@ -6,8 +6,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, setLogLevel, terminate } from 'firebase/firestore';
 import { 
   generateSitemapXml, 
   SITEMAP_PROJECTS, 
@@ -16,6 +16,11 @@ import {
 import firebaseConfig from '../firebase-applet-config.json';
 
 const LEGACY_PROJECT_NAMES = ['The Royal Orchard', 'East Gate Residences', 'Azure Lakes'];
+
+// Prevent background ticks from repeatedly hitting Firestore after quota exhaustion or on fresh cache
+let lastQuotaExceededTimestamp = 0;
+const QUOTA_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 hours
+const BACKGROUND_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 export interface SitemapUpdateResult {
   success: boolean;
@@ -29,18 +34,60 @@ export interface SitemapUpdateResult {
   error?: string;
 }
 
-/**
- * Fetches all active projects from the Firestore database
- */
+function readCachedSnapshot(cachePath: string, allowStaleOnQuota: boolean): SitemapProjectItem[] | null {
+  try {
+    if (!fs.existsSync(cachePath)) return null;
+    const cacheRaw = fs.readFileSync(cachePath, 'utf-8');
+    const cacheParsed = JSON.parse(cacheRaw);
+    const lastFetchTime = cacheParsed.lastSuccessfulFetch ? new Date(cacheParsed.lastSuccessfulFetch).getTime() : 0;
+    const ageDays = (Date.now() - lastFetchTime) / (1000 * 60 * 60 * 24);
+
+    if (ageDays > 14 && !allowStaleOnQuota) {
+      console.error(`[Build Error] Firestore snapshot cache is older than 14 days (last refreshed: ${cacheParsed.lastSuccessfulFetch}, age: ${ageDays.toFixed(1)} days). Stale inventory publishing blocked.`);
+      process.exit(1);
+    }
+
+    return Array.isArray(cacheParsed.projects) ? cacheParsed.projects : [];
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Fetches all active projects from the Firestore database with snapshot caching and stale-cache protection
  */
-export async function fetchActiveDbProjects(): Promise<SitemapProjectItem[]> {
+export async function fetchActiveDbProjects(options?: { forceRefresh?: boolean }): Promise<SitemapProjectItem[]> {
   const cachePath = path.resolve(process.cwd(), 'src/data/cachedFirestoreProjects.json');
+  const forceRefresh = options?.forceRefresh ?? false;
+
+  // For automated background refreshes, skip live Firestore read if quota was recently exceeded or cache is still fresh
+  if (!forceRefresh) {
+    if (lastQuotaExceededTimestamp && Date.now() - lastQuotaExceededTimestamp < QUOTA_COOLDOWN_MS) {
+      const cached = readCachedSnapshot(cachePath, true);
+      if (cached) return cached;
+    }
+
+    try {
+      if (fs.existsSync(cachePath)) {
+        const cacheRaw = fs.readFileSync(cachePath, 'utf-8');
+        const cacheParsed = JSON.parse(cacheRaw);
+        const lastFetchTime = cacheParsed.lastSuccessfulFetch ? new Date(cacheParsed.lastSuccessfulFetch).getTime() : 0;
+        if (lastFetchTime > 0 && Date.now() - lastFetchTime < BACKGROUND_CACHE_TTL_MS && Array.isArray(cacheParsed.projects)) {
+          return cacheParsed.projects;
+        }
+      }
+    } catch {
+      // Proceed to live fetch if cache cannot be parsed
+    }
+  }
+
+  let tempApp: FirebaseApp | null = null;
+  let db: ReturnType<typeof getFirestore> | null = null;
 
   try {
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-    const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+    setLogLevel('silent');
+    tempApp = initializeApp(firebaseConfig, `sitemap-fetch-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`);
+    db = getFirestore(tempApp, firebaseConfig.firestoreDatabaseId);
     const snap = await getDocs(collection(db, 'projects'));
 
     const items: SitemapProjectItem[] = [];
@@ -95,6 +142,9 @@ export async function fetchActiveDbProjects(): Promise<SitemapProjectItem[]> {
       });
     }
 
+    // Reset quota cooldown on successful live fetch
+    lastQuotaExceededTimestamp = 0;
+
     // Never overwrite with empty/failed result if successfully fetched but empty unexpectedly,
     // but if live fetch is valid, update the persistent JSON snapshot
     if (items.length > 0) {
@@ -116,33 +166,33 @@ export async function fetchActiveDbProjects(): Promise<SitemapProjectItem[]> {
     return items;
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.warn('[Firestore Fetch Warning] Live Firestore fetch failed:', errMsg);
-    console.log('[Firestore Cache] Attempting fallback to persistent JSON snapshot...');
+    const isQuotaExceeded =
+      errMsg.includes('Quota') ||
+      errMsg.includes('quota') ||
+      errMsg.includes('resource-exhausted') ||
+      errMsg.includes('Free daily read units');
 
-    // Fallback to cached snapshot
-    try {
-      if (fs.existsSync(cachePath)) {
-        const cacheRaw = fs.readFileSync(cachePath, 'utf-8');
-        const cacheParsed = JSON.parse(cacheRaw);
-        const lastFetchTime = cacheParsed.lastSuccessfulFetch ? new Date(cacheParsed.lastSuccessfulFetch).getTime() : 0;
-        const ageDays = (Date.now() - lastFetchTime) / (1000 * 60 * 60 * 24);
-
-        // Strict 14-day freshness threshold
-        if (ageDays > 14) {
-          console.error(`[Build Error] Firestore snapshot cache is older than 14 days (last refreshed: ${cacheParsed.lastSuccessfulFetch}, age: ${ageDays.toFixed(1)} days). Stale inventory publishing blocked.`);
-          process.exit(1);
-        }
-
-        const cachedProjects: SitemapProjectItem[] = Array.isArray(cacheParsed.projects) ? cacheParsed.projects : [];
-        console.warn(`[Build Warning] Firestore unavailable. Using cached snapshot (dataSource: cached-potentially-outdated, refreshed: ${cacheParsed.lastSuccessfulFetch}, age: ${ageDays.toFixed(1)} days) containing ${cachedProjects.length} active projects.`);
-        return cachedProjects;
-      }
-    } catch (fallbackErr) {
-      console.error('[Build Error] Failed to read cached Firestore snapshot:', fallbackErr);
+    if (isQuotaExceeded) {
+      lastQuotaExceededTimestamp = Date.now();
+      console.info('[Firestore Cache] Daily free-tier read quota reached; using cached project snapshot until quota resets.');
+    } else {
+      console.info('[Firestore Cache] Live Firestore fetch unavailable; falling back to cached snapshot:', errMsg);
     }
 
-    console.warn('[Build Warning] No valid cached Firestore snapshot found. Proceeding with curated baseline data.');
+    const cachedProjects = readCachedSnapshot(cachePath, isQuotaExceeded);
+    if (cachedProjects) {
+      return cachedProjects;
+    }
+
+    console.info('[Firestore Cache] No cached snapshot found. Proceeding with curated baseline data.');
     return [];
+  } finally {
+    if (db) {
+      await terminate(db).catch(() => {});
+    }
+    if (tempApp) {
+      await deleteApp(tempApp).catch(() => {});
+    }
   }
 }
 
@@ -173,6 +223,7 @@ export function mergeProjects(curated: SitemapProjectItem[], fromDb: SitemapProj
 export async function updateSitemap(options?: { 
   baseUrl?: string; 
   silent?: boolean;
+  forceRefresh?: boolean;
 }): Promise<SitemapUpdateResult> {
   // Enforce production custom domain https://bshomez.in for search engines & web platforms
   const rawBase = options?.baseUrl || (process.env.APP_URL && !process.env.APP_URL.includes('run.app') ? process.env.APP_URL : 'https://bshomez.in');
@@ -184,8 +235,8 @@ export async function updateSitemap(options?: {
       console.log(`[Sitemap Generator] Starting automated XML sitemap update for ${baseUrl}...`);
     }
 
-    // 1. Fetch active projects from Firestore
-    const dbProjects = await fetchActiveDbProjects();
+    // 1. Fetch active projects from Firestore (respecting cache/cooldown unless forceRefresh is true)
+    const dbProjects = await fetchActiveDbProjects({ forceRefresh: options?.forceRefresh });
 
     // 2. Merge with curated baseline projects
     const allActiveProjects = mergeProjects(SITEMAP_PROJECTS, dbProjects);

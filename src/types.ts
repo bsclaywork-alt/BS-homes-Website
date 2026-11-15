@@ -1,5 +1,185 @@
+export interface UploadedMediaItem {
+  id: string;
+  url: string;
+  thumbnailUrl?: string;
+  posterUrl?: string;
+  storagePath?: string;
+  kind?: 'photo' | 'video';
+  fileName: string;
+  mimeType: string;
+  originalSize: number;
+  compressedSize: number;
+  wasCompressed: boolean;
+  durationSec?: number;
+  sha256?: string;
+  hash?: string;
+  source?: 'firebase-storage' | 'server-storage' | 'external-url' | 'google-drive';
+  uploadedAt?: string;
+}
+
+export type SubmissionWorkflowStatus =
+  | 'Pending Review'
+  | 'Approved'
+  | 'Published'
+  | 'Rejected'
+  | 'Archived';
+
+export type OfferWillingTo = 'Sell' | 'Rental';
+export type OfferSellerType = 'Resale' | 'Builder' | 'Landlord';
+export type OfferPropertyType = 'Apartment' | 'Villa' | 'Plot' | 'Commercial';
+export type OfferSocietyType = 'Gated' | 'Individual';
+export type OfferPropertyStatus =
+  | 'Ready to Move'
+  | 'Under Construction'
+  | 'EOI'
+  | 'Nearing Completion';
+export type OfferConfiguration = 'Studio' | '1 BHK' | '2 BHK' | '3 BHK' | '4 BHK' | '5 BHK';
+export type OfferDoorFacing =
+  | 'East'
+  | 'North'
+  | 'West'
+  | 'South'
+  | 'South East'
+  | 'North East';
+export type OfferFurnishing = 'Semi Furnished' | 'Furnished' | 'Unfurnished';
+
+export const OFFER_AMENITIES = [
+  'Club House',
+  'Gym',
+  'Swimming Pool',
+  'Kids Play Area',
+  'Pet Park',
+  'Outdoor Multipurpose Court',
+  'Indoor Multipurpose Court',
+  'Squash Court',
+  'Multipurpose Hall',
+  'Security',
+  'CCTV',
+  'Visitor Parking',
+  'Lift',
+  'Playground',
+  'Home Theatre',
+  'Super Market',
+  'Salon',
+  'Indoor Games',
+  'Guest Rooms',
+  'Garden',
+  'Park',
+  'Senior Citizen Park',
+  'Walking and Jogging Track'
+] as const;
+
+export type OfferAmenity = (typeof OFFER_AMENITIES)[number];
+
+export interface PropertySubmission {
+  id?: string;
+  publicPortfolioId: string;
+  dedupKey?: string;
+
+  // Section A: Owner Information (STRICTLY PRIVATE - Admin Only)
+  ownerName: string;
+  ownerMobile: string;
+  propertyName: string;
+  location: string;
+  fullAddress: string;
+  googleMapUrl: string;
+
+  // Section B: Willing To
+  willingTo: OfferWillingTo;
+  sellerType?: OfferSellerType; // Only when willingTo === 'Sell'
+  rentPerMonth?: number; // Only when willingTo === 'Rental'
+  maintenance?: string;
+  advance?: string;
+  availableFrom?: string; // ISO YYYY-MM-DD calendar picker
+
+  // Derived Portfolio Category
+  targetCategory: 'Primary' | 'Resale' | 'Rental';
+
+  // Section C: Property Details
+  propertyType: OfferPropertyType;
+  societyType: OfferSocietyType;
+  expectedPrice?: number;
+  propertyStatus: OfferPropertyStatus;
+  possessionDate?: string; // ISO YYYY-MM-DD calendar picker
+  configuration: OfferConfiguration;
+  doorFacing: OfferDoorFacing;
+  floorNumber: string;
+  towerNumber: string;
+  totalAcres: string;
+
+  // Section D: Amenities
+  amenities: string[];
+
+  // Section E: Furnishing
+  furnishing: OfferFurnishing;
+
+  // Section F: Additional Info
+  others: string; // Max 500 chars
+
+  // Media
+  photos: UploadedMediaItem[];
+  video?: UploadedMediaItem | null;
+
+  // Workflow & Audit
+  submissionStatus: SubmissionWorkflowStatus;
+  reviewNotes?: string;
+  reviewedBy?: string;
+  reviewedAt?: any;
+  isDeleted?: boolean;
+  deletedAt?: any;
+  createdAt: any;
+  updatedAt?: any;
+}
+
+/**
+ * Sanitized public portfolio document stored in `public_portfolio/{portfolioId}`.
+ * STRICT PRIVACY INVARIANT: Must NEVER contain ownerName, ownerMobile, or private contact details.
+ */
+export interface PublicPortfolioItem {
+  id: string;
+  submissionId: string;
+  name: string;
+  location: string;
+  publicAddressHint?: string;
+  googleMapUrl?: string;
+  category: 'Primary' | 'Resale' | 'Rental';
+  propertyType: OfferPropertyType;
+  societyType: OfferSocietyType;
+  sellerType?: OfferSellerType;
+  expectedPrice?: number;
+  formattedPrice: string;
+  rentPerMonth?: number;
+  maintenance?: string;
+  advance?: string;
+  availableFrom?: string;
+  propertyStatus: OfferPropertyStatus;
+  possessionDate?: string;
+  configuration: OfferConfiguration;
+  doorFacing: OfferDoorFacing;
+  floorNumber?: string;
+  towerNumber?: string;
+  totalAcres?: string;
+  amenities: string[];
+  furnishing: OfferFurnishing;
+  others?: string;
+  mainImageUrl: string;
+  imageUrls: string[];
+  photoThumbnails?: string[];
+  videoUrl?: string;
+  videoPosterUrl?: string;
+  storagePaths?: string[];
+  publicationStatus: SubmissionWorkflowStatus;
+  isPublished: boolean;
+  isDeleted: boolean;
+  createdAt: any;
+  updatedAt?: any;
+}
+
 export interface Project {
   id?: string;
+  submissionId?: string;
+  sourceCollection?: 'projects' | 'public_portfolio';
+  publicationStatus?: SubmissionWorkflowStatus;
   name: string;
   description: string;
   price: string;
@@ -47,6 +227,8 @@ export interface Project {
   mobileImageUrl?: string;
   videoUrl?: string;
   mobileVideoUrl?: string;
+  videoPosterUrl?: string;
+  storagePaths?: string[];
   features: string[];
   priceChanged?: boolean;
   lastCheckedPrice?: string;
@@ -68,7 +250,7 @@ export interface Project {
   tenantType?: 'Bachelors' | 'Spinsters' | 'Family' | string;
   amenitiesAvailability?: 'Yes' | 'No' | string;
   petFriendly?: 'Yes' | 'No' | string;
-  furnishType?: 'Unfurnished' | 'Semi Furnished' | 'Full Furnished' | string;
+  furnishType?: 'Unfurnished' | 'Semi Furnished' | 'Full Furnished' | 'Furnished' | string;
   advance?: string;
   monthlyRental?: string;
   maintenance?: string;
@@ -82,7 +264,7 @@ export interface Project {
   approvedAuthority?: 'BDA' | 'BBMP' | 'BMRDA' | 'STRR' | 'DTCP' | 'MPA' | 'SPA' | 'BIAPPA' | string;
 
   // Portfolio Curator Exact Fields
-  projectTypeCategory?: 'Gated' | 'Stand Alone' | string;
+  projectTypeCategory?: 'Gated' | 'Stand Alone' | 'Individual' | string;
   presentStatus?: 'EOI' | 'Under Construction' | 'Nearing Completion' | 'Ready to Move-IN' | string;
   vaastuCompliant?: 'Yes' | 'No' | string;
   facingAvailable?: string[];
@@ -90,10 +272,10 @@ export interface Project {
   totalUnits?: string;
   floorPlanSize?: string;
   bookingAmount?: string;
-  interiorStatus?: 'Semi Furnished' | 'Un Furnished' | 'Fully Furnished' | string;
+  interiorStatus?: 'Semi Furnished' | 'Un Furnished' | 'Fully Furnished' | 'Furnished' | 'Unfurnished' | string;
   availability?: 'Yes' | 'No' | string;
   floorAvailability?: string;
-  saleFrom?: 'Investor' | 'Builder' | 'Land Lord' | 'Individual' | string;
+  saleFrom?: 'Investor' | 'Builder' | 'Land Lord' | 'Individual' | 'Resale' | 'Landlord' | string;
   aop?: '0-1 Year' | '2-5 Years' | '6-10 Years' | '11-15 Years' | '15+ Years' | string;
   expectedRentalIncome?: string;
   terrace?: 'Yes' | 'No' | string;
@@ -164,7 +346,7 @@ export interface Opportunity {
   propertyStatus?: 'Ready to Move' | 'Under Construction' | 'On Going' | 'Nearing Completion' | string;
   propertyType?: 'Villa' | 'Flat' | 'Plot' | string;
   rooms?: '1BHK' | '2BHK' | '3BHK' | '4BHK' | '5BHK' | string;
-  facing?: string; // East, North, West, South, or custom choice
+  facing?: string;
   tower?: string;
   floorNumber?: string;
   willingTo?: 'Rent' | 'Sell' | string;
@@ -201,18 +383,18 @@ export interface Referral {
   createdAt?: any;
 }
 
-export type PublicTabKey = 
-  | 'overview' 
-  | 'projects' 
-  | 'grow-business' 
-  | 'services' 
-  | 'why-choose' 
-  | 'insights' 
-  | 'opportunity' 
-  | 'referral' 
-  | 'loans' 
-  | 'testimonials' 
-  | 'faq' 
+export type PublicTabKey =
+  | 'overview'
+  | 'projects'
+  | 'grow-business'
+  | 'services'
+  | 'why-choose'
+  | 'insights'
+  | 'opportunity'
+  | 'referral'
+  | 'loans'
+  | 'testimonials'
+  | 'faq'
   | 'about';
 
 export type TabVisibilityConfig = Record<PublicTabKey, boolean>;

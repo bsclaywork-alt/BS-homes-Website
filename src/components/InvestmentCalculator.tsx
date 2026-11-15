@@ -116,19 +116,19 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
       return {
         label: "Aggressive Growth Corridor",
         description: `This corridor (${project.zone}) outperforms index averages, fueled by persistent corporate expansions and infra development.`,
-        badgeColor: "bg-art-gold/10 text-art-gold border-art-gold/30"
+        badgeColor: "bg-lux-card text-lux-forest border-lux-gold/50 shadow-2xs"
       };
     } else if (yoyGrowth >= 10) {
       return {
         label: "Stable High-Yield Compounder",
         description: `Characterized by premium microgrid demand in ${project.location}, this asset boasts powerful defensive compounding.`,
-        badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/30"
+        badgeColor: "bg-lux-card text-lux-forest border-lux-border shadow-2xs"
       };
     } else {
       return {
         label: "Preservation & Yield Compound",
         description: "Focus on capital preservation with defensive dividends and premium lifestyle valuation in the regional center.",
-        badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+        badgeColor: "bg-lux-card text-lux-charcoal border-lux-border shadow-2xs"
       };
     }
   };
@@ -141,24 +141,24 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 24 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="absolute inset-0 bg-[#090909]/98 backdrop-blur-lg z-40 flex flex-col p-6 md:p-8 border border-art-gold/30 overflow-y-auto select-none"
+      className="absolute inset-0 bg-lux-ivory/98 backdrop-blur-lg z-40 flex flex-col p-6 md:p-8 border border-lux-border overflow-y-auto select-none shadow-xl"
     >
       {/* Top Header */}
-      <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-6 shrink-0">
+      <div className="flex justify-between items-center pb-4 border-b border-lux-border mb-6 shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-art-gold/10 flex items-center justify-center border border-art-gold/25">
-            <Calculator className="text-art-gold" size={14} />
+          <div className="w-8 h-8 rounded-full bg-lux-card flex items-center justify-center border border-lux-border shadow-2xs">
+            <Calculator className="text-lux-forest" size={14} />
           </div>
           <div>
-            <h4 className="text-sm font-serif italic text-white font-bold">Appreciation Modeler</h4>
-            <span className="text-[8px] text-white/50 uppercase tracking-[0.2em] font-mono block">
+            <h4 className="text-sm font-serif italic text-lux-forest font-bold">Appreciation Modeler</h4>
+            <span className="text-[8px] text-lux-muted uppercase tracking-[0.2em] font-mono block">
               Direct Historical YoY Projection Index
             </span>
           </div>
         </div>
         <button 
           onClick={onClose}
-          className="px-3 py-1.5 rounded-full bg-white text-black hover:bg-art-gold font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all cursor-pointer z-50 border border-white"
+          className="px-3 py-1.5 rounded-full bg-lux-card text-lux-charcoal hover:bg-lux-forest hover:text-lux-card font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer z-50 border border-lux-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
           aria-label="Close Calculator"
           title="Close (Esc)"
         >
@@ -169,19 +169,19 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
 
       <div className="flex-grow space-y-6">
         <div>
-          <span className="text-art-gold text-[8px] uppercase tracking-[0.3em] font-black font-mono">Location Trends Link</span>
-          <p className="text-[10px] text-white/70 leading-relaxed mt-1 font-mono uppercase">
-            {project.zone} baseline growth is indexed at <span className="text-art-gold font-bold font-sans">{baselineRate}% YoY</span>
+          <span className="text-lux-gold text-[8px] uppercase tracking-[0.3em] font-black font-mono">Location Trends Link</span>
+          <p className="text-[10px] text-lux-charcoal leading-relaxed mt-1 font-mono uppercase">
+            {project.zone} baseline growth is indexed at <span className="text-lux-forest font-bold font-sans">{baselineRate}% YoY</span>
           </p>
         </div>
 
         {/* Inputs section */}
-        <div className="space-y-4 bg-white/[0.02] border border-white/5 p-4 rounded-sm">
+        <div className="space-y-4 bg-lux-card border border-lux-border p-4 rounded-sm shadow-2xs">
           {/* Initial Value Slider */}
           <div className="space-y-2">
             <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-              <span className="text-white/40">Initial Value Setup</span>
-              <span className="text-art-gold">{formatINRCurrency(initialInvestment)}</span>
+              <span className="text-lux-muted">Initial Value Setup</span>
+              <span className="text-lux-forest">{formatINRCurrency(initialInvestment)}</span>
             </div>
             <input 
               type="range"
@@ -190,9 +190,9 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
               step={pricingData.average < 10000000 ? 500000 : 2000000}
               value={initialInvestment}
               onChange={(e) => setInitialInvestment(Number(e.target.value))}
-              className="w-full accent-art-gold h-1 bg-white/10 rounded-lg cursor-pointer"
+              className="w-full accent-lux-forest h-1.5 bg-lux-border rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/30"
             />
-            <div className="flex justify-between text-[8px] text-white/20 font-mono">
+            <div className="flex justify-between text-[8px] text-lux-muted font-mono">
               <span>{formatINRCurrency(Math.max(1000000, pricingData.min * 0.5))}</span>
               <span>{formatINRCurrency(pricingData.max * 2.5)}</span>
             </div>
@@ -201,10 +201,10 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
           {/* YoY Growth Rate Slider */}
           <div className="space-y-2">
             <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-              <span className="text-white/40">Appreciation Rate (YoY)</span>
-              <span className="text-art-gold flex items-center gap-1">
+              <span className="text-lux-muted">Appreciation Rate (YoY)</span>
+              <span className="text-lux-forest flex items-center gap-1">
                 {yoyGrowth}%
-                <Percent size={10} />
+                <Percent size={10} className="text-lux-gold" />
               </span>
             </div>
             <input 
@@ -214,9 +214,9 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
               step={0.5}
               value={yoyGrowth}
               onChange={(e) => setYoyGrowth(Number(e.target.value))}
-              className="w-full accent-art-gold h-1 bg-white/10 rounded-lg cursor-pointer"
+              className="w-full accent-lux-forest h-1.5 bg-lux-border rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/30"
             />
-            <div className="flex justify-between text-[8px] text-white/20 font-mono">
+            <div className="flex justify-between text-[8px] text-lux-muted font-mono">
               <span>2% Conservative</span>
               <span>30% Venture-Cap</span>
             </div>
@@ -225,8 +225,8 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
           {/* Horizon Slider */}
           <div className="space-y-2">
             <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-              <span className="text-white/40">Projection Range</span>
-              <span className="text-art-gold">{horizonYears} Years</span>
+              <span className="text-lux-muted">Projection Range</span>
+              <span className="text-lux-forest">{horizonYears} Years</span>
             </div>
             <input 
               type="range"
@@ -235,9 +235,9 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
               step={1}
               value={horizonYears}
               onChange={(e) => setHorizonYears(Number(e.target.value))}
-              className="w-full accent-art-gold h-1 bg-white/10 rounded-lg cursor-pointer"
+              className="w-full accent-lux-forest h-1.5 bg-lux-border rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/30"
             />
-            <div className="flex justify-between text-[8px] text-white/20 font-mono">
+            <div className="flex justify-between text-[8px] text-lux-muted font-mono">
               <span>1 Year</span>
               <span>15 Years Long Horizon</span>
             </div>
@@ -246,31 +246,31 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
 
         {/* Results Metrics Grid */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white/[0.03] border border-white/[0.08] p-3.5 rounded-sm relative overflow-hidden">
-            <span className="text-[7px] text-white/40 uppercase tracking-[0.2em] block font-semibold mb-1">Projected Valuation</span>
-            <div className="text-lg md:text-xl font-serif italic text-white font-bold leading-tight tracking-tight">
+          <div className="bg-lux-card border border-lux-border p-3.5 rounded-sm relative overflow-hidden shadow-2xs">
+            <span className="text-[7px] text-lux-muted uppercase tracking-[0.2em] block font-semibold mb-1">Projected Valuation</span>
+            <div className="text-lg md:text-xl font-serif italic text-lux-forest font-bold leading-tight tracking-tight">
               {formatINRCurrency(finalValue)}
             </div>
-            <span className="text-[7.5px] uppercase font-bold text-green-400 mt-1.5 flex items-center gap-0.5 font-mono">
-              <ArrowUpRight size={10} />
+            <span className="text-[7.5px] uppercase font-bold text-lux-forest mt-1.5 flex items-center gap-0.5 font-mono">
+              <ArrowUpRight size={10} className="text-lux-gold" />
               {yieldMultiplier.toFixed(2)}x yield
             </span>
           </div>
           
-          <div className="bg-white/[0.03] border border-white/[0.08] p-3.5 rounded-sm relative overflow-hidden">
-            <span className="text-[7px] text-white/40 uppercase tracking-[0.2em] block font-semibold mb-1">Estimated Gain</span>
-            <div className="text-lg md:text-xl font-serif italic text-art-gold font-bold leading-tight tracking-tight">
+          <div className="bg-lux-card border border-lux-border p-3.5 rounded-sm relative overflow-hidden shadow-2xs">
+            <span className="text-[7px] text-lux-muted uppercase tracking-[0.2em] block font-semibold mb-1">Estimated Gain</span>
+            <div className="text-lg md:text-xl font-serif italic text-lux-gold font-bold leading-tight tracking-tight">
               {formatINRCurrency(totalGain)}
             </div>
-            <span className="text-[7.5px] text-white/30 uppercase mt-1.5 block font-mono">
+            <span className="text-[7.5px] text-lux-muted uppercase mt-1.5 block font-mono">
               Total appreciation
             </span>
           </div>
         </div>
 
         {/* Dynamic Visual Compound Growth Bar Graph */}
-        <div className="bg-black/40 border border-white/5 p-4 rounded-sm space-y-3">
-          <div className="flex justify-between text-[8px] font-bold uppercase text-white/40 tracking-widest font-mono">
+        <div className="bg-lux-card border border-lux-border p-4 rounded-sm space-y-3 shadow-2xs">
+          <div className="flex justify-between text-[8px] font-bold uppercase text-lux-muted tracking-widest font-mono">
             <span>Dynamic Appreciation Index Chart</span>
             <span>Years 0 to {horizonYears}</span>
           </div>
@@ -288,14 +288,14 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
                       style={{ height: `${heightPercent}%` }}
                       className={`w-full rounded-t-sm transition-all duration-500 relative ${
                         isLast 
-                          ? 'bg-gradient-to-t from-[#C5A059]/40 to-art-gold shadow-[0_0_15px_rgba(212,175,55,0.4)]' 
+                          ? 'bg-gradient-to-t from-lux-forest/80 to-lux-forest shadow-xs'
                           : isFirst
-                            ? 'bg-white/10 group-hover/bar:bg-white/20'
-                            : 'bg-[#C5A059]/20 group-hover/bar:bg-[#C5A059]/35'
+                            ? 'bg-lux-border group-hover/bar:bg-lux-muted/40'
+                            : 'bg-lux-gold/55 group-hover/bar:bg-lux-gold'
                       }`}
                     />
                   </div>
-                  <span className={`text-[8px] font-mono ${isLast ? 'text-art-gold font-bold' : 'text-white/30'}`}>
+                  <span className={`text-[8px] font-mono ${isLast ? 'text-lux-forest font-bold' : 'text-lux-muted'}`}>
                     Yr {proj.yearIndex}
                   </span>
                 </div>
@@ -307,40 +307,40 @@ export const InvestmentCalculator: React.FC<InvestmentCalculatorProps> = ({ proj
         {/* Dynamic Recommendation Message */}
         <div className={`p-4 border rounded-sm font-sans relative ${profile.badgeColor}`}>
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="text-art-gold animate-pulse shrink-0" size={13} />
-            <h5 className="text-[10px] uppercase font-extrabold tracking-widest text-white leading-none">
+            <Sparkles className="text-lux-gold animate-pulse shrink-0" size={13} />
+            <h5 className="text-[10px] uppercase font-extrabold tracking-widest text-lux-forest leading-none">
               {profile.label}
             </h5>
           </div>
-          <p className="text-[10.5px] text-white/70 leading-relaxed">
+          <p className="text-[10.5px] text-lux-charcoal leading-relaxed">
             {profile.description}
           </p>
-          <div className="mt-3 pt-2.5 border-t border-white/5 text-[9px] uppercase tracking-widest text-white/35 font-mono">
-            Historical metric support provided by <span className="text-white">BS Homez Research Group</span>.
+          <div className="mt-3 pt-2.5 border-t border-lux-border text-[9px] uppercase tracking-widest text-lux-muted font-mono">
+            Historical metric support provided by <span className="text-lux-forest font-semibold">BS Homez Research Group</span>.
           </div>
         </div>
       </div>
 
       {/* Advisory Trigger / CTA */}
-      <div className="pt-4 border-t border-white/5 mt-auto shrink-0 flex items-center justify-between gap-3">
+      <div className="pt-4 border-t border-lux-border mt-auto shrink-0 flex items-center justify-between gap-3">
         <div className="flex flex-col">
-          <span className="text-[7.5px] text-white/25 uppercase tracking-widest font-mono">Estimated Future Value</span>
-          <span className="text-xs text-art-gold font-bold">{formatINRCurrency(finalValue)}</span>
+          <span className="text-[7.5px] text-lux-muted uppercase tracking-widest font-mono">Estimated Future Value</span>
+          <span className="text-xs text-lux-forest font-bold">{formatINRCurrency(finalValue)}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-[9px] uppercase tracking-[0.18em] rounded-sm transition-all border border-white/20 cursor-pointer"
+            className="px-4 py-3 bg-lux-card hover:bg-lux-ivory text-lux-charcoal font-bold text-[9px] uppercase tracking-[0.18em] rounded-sm transition-all border border-lux-border cursor-pointer"
           >
             Close
           </button>
           <button
             onClick={onClose}
-            className="flex items-center gap-2 px-5 py-3 bg-art-gold text-black hover:bg-white hover:text-black font-black text-[9px] uppercase tracking-[0.2em] rounded-sm transition-all shadow-[0_0_15px_rgba(212,175,55,0.2)] cursor-pointer outline-none"
+            className="flex items-center gap-2 px-5 py-3 bg-lux-forest text-lux-card hover:bg-lux-forest-hover font-black text-[9px] uppercase tracking-[0.2em] rounded-sm transition-all shadow-sm cursor-pointer outline-none"
           >
             Acquire Portfolio
-            <ArrowUpRight size={12} className="stroke-[2.5]" />
+            <ArrowUpRight size={12} className="stroke-[2.5] text-lux-gold" />
           </button>
         </div>
       </div>

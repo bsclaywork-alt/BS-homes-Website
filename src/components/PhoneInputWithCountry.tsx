@@ -194,40 +194,40 @@ export const PhoneInputWithCountry: React.FC<PhoneInputWithCountryProps> = ({
   return (
     <div className={`space-y-1.5 ${className}`}>
       {label && (
-        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] font-bold text-white/70">
-          <span>{label} {required && <span className="text-art-gold">*</span>}</span>
-          <span className="font-mono text-[9px] text-white/40">
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] font-bold text-lux-charcoal">
+          <span>{label} {required && <span className="text-lux-gold">*</span>}</span>
+          <span className="font-mono text-[9px] text-lux-muted">
             {digits.length}/{activeCountry.digits} digits
           </span>
         </div>
       )}
 
-      <div className="flex rounded-sm overflow-hidden border border-white/15 focus-within:border-art-gold transition-all bg-white/[0.04]">
+      <div className="flex rounded-sm overflow-hidden border border-lux-border focus-within:border-lux-forest focus-within:ring-2 focus-within:ring-lux-forest/15 transition-all bg-lux-card shadow-2xs">
         {/* Country Code Dropdown: Compact and fitted to country code */}
-        <div className="relative w-[78px] sm:w-[88px] shrink-0 flex items-center bg-white/10 border-r border-white/15 hover:bg-white/15 transition-colors">
+        <div className="relative w-[78px] sm:w-[88px] shrink-0 flex items-center bg-lux-ivory border-r border-lux-border hover:bg-lux-forest/5 transition-colors">
           <select
             value={selectedCode}
             onChange={handleCountryChange}
             disabled={disabled}
             aria-label="Select Country Code"
-            className="w-full appearance-none bg-transparent pl-2.5 pr-6 py-3 text-xs font-mono font-bold text-art-gold outline-none cursor-pointer text-center"
+            className="w-full appearance-none bg-transparent pl-2.5 pr-6 py-3 text-xs font-mono font-bold text-lux-forest outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/30 cursor-pointer text-center"
             title={`${activeCountry.name} (${activeCountry.code})`}
           >
             {SUPPORTED_COUNTRIES.map(country => (
               <option 
                 key={country.iso} 
                 value={country.code} 
-                className="bg-[#1a1a1a] text-white font-sans text-xs py-1"
+                className="bg-lux-card text-lux-charcoal font-sans text-xs py-1"
               >
                 {country.flag} {country.code} ({country.name})
               </option>
             ))}
           </select>
-          <ChevronDown size={11} className="absolute right-1.5 text-art-gold pointer-events-none opacity-80" />
+          <ChevronDown size={11} className="absolute right-1.5 text-lux-forest pointer-events-none opacity-80" />
         </div>
 
         {/* Mobile Number Input: Expanded and prominent for clear visibility of all digits */}
-        <div className="relative flex-1 flex items-center">
+        <div className="relative flex-1 flex items-center bg-lux-card">
           <input
             type="tel"
             inputMode="numeric"
@@ -241,10 +241,10 @@ export const PhoneInputWithCountry: React.FC<PhoneInputWithCountryProps> = ({
             placeholder={`Enter ${activeCountry.digits} digit mobile (e.g. ${activeCountry.placeholder})`}
             disabled={disabled}
             required={required}
-            className={`w-full bg-transparent px-4 py-3 text-sm sm:text-base font-mono tracking-wider text-white placeholder-white/25 outline-none transition-all ${inputClassName}`}
+            className={`w-full bg-transparent px-4 py-3 text-sm sm:text-base font-mono tracking-wider text-lux-charcoal placeholder-lux-muted/60 outline-none transition-all ${inputClassName}`}
           />
           {isComplete && (
-            <span className="pr-3 text-emerald-400" title="Valid mobile number">
+            <span className="pr-3 text-lux-forest" title="Valid mobile number">
               <CheckCircle2 size={16} />
             </span>
           )}
@@ -253,8 +253,8 @@ export const PhoneInputWithCountry: React.FC<PhoneInputWithCountryProps> = ({
 
       {/* Validation Alert */}
       {showValidationAlert && showError && (
-        <div className="flex items-center gap-1.5 p-2 bg-red-500/10 border border-red-500/30 rounded-sm text-red-400 text-[10px] font-mono animate-fadeIn">
-          <AlertCircle size={13} className="shrink-0 text-red-400" />
+        <div className="flex items-center gap-1.5 p-2 bg-red-50 border border-red-200 rounded-sm text-red-700 text-[10px] font-mono animate-fadeIn">
+          <AlertCircle size={13} className="shrink-0 text-red-600" />
           <span>{validation.message}</span>
         </div>
       )}

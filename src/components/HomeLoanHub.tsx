@@ -209,21 +209,21 @@ export const HomeLoanHub: React.FC = () => {
       metric: "RBI Repo rate Benchmark",
       value: "6.50%",
       trend: "Stable",
-      textColor: "text-[#C5A059]",
+      textColor: "text-lux-forest",
       desc: "Kept stable by MCC since Q4 2025 setup, signaling rate defense parameters."
     },
     {
       metric: "Special Women Concession",
       value: "-0.05%",
       trend: "Available",
-      textColor: "text-emerald-400",
+      textColor: "text-lux-forest",
       desc: "Prominent state lenders offer 5 bps reduction off normal spread profiles."
     },
     {
       metric: "Green Home Loan Rebate",
       value: "-0.10%",
       trend: "Eco-Active",
-      textColor: "text-green-400",
+      textColor: "text-lux-gold",
       desc: "Eligible for platinum and gold IGBC status certified real estate arrays."
     }
   ];
@@ -305,7 +305,7 @@ export const HomeLoanHub: React.FC = () => {
       id: 'news-prop-1',
       category: 'properties',
       categoryLabel: 'Properties Across Bangalore',
-      badgeColor: 'text-art-gold border-art-gold/30 bg-art-gold/10',
+      badgeColor: 'text-lux-forest border-lux-forest/25 bg-lux-forest/10',
       title: 'Bangalore East & North Corridors Drive 14.8% YoY Luxury Capital Appreciation',
       summary: 'Grade-A gated enclaves across Whitefield, Sarjapur Road, and Hebbal outpace metro averages, backed by sustained GCC hiring and tech wealth creation.',
       keyPoints: [
@@ -322,7 +322,7 @@ export const HomeLoanHub: React.FC = () => {
       id: 'news-dev-1',
       category: 'developments',
       categoryLabel: 'Developments Across Bangalore',
-      badgeColor: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
+      badgeColor: 'text-lux-forest border-lux-forest/25 bg-lux-forest/10',
       title: 'Namma Metro Phase 2A (Silk Board to KR Puram) & Phase 2B (Airport Line) on Fast-Track',
       summary: 'Critical viaduct spans across Outer Ring Road tech parks and Hebbal airport corridors reach 85% structural readiness, driving commercial and residential demand.',
       keyPoints: [
@@ -339,7 +339,7 @@ export const HomeLoanHub: React.FC = () => {
       id: 'news-dev-2',
       category: 'developments',
       categoryLabel: 'Developments Across Bangalore',
-      badgeColor: 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10',
+      badgeColor: 'text-lux-charcoal border-lux-gold/40 bg-lux-gold/20',
       title: 'Bangalore Business Corridor (PRR) & Satellite Town Ring Road (STRR) Expansion',
       summary: '73km 8-lane expressway connecting Tumkur Road and Hosur Road via Whitefield progresses alongside the 280km STRR (NH-948A) connecting Hoskote, Doddaballapur & Anekal.',
       keyPoints: [
@@ -356,7 +356,7 @@ export const HomeLoanHub: React.FC = () => {
       id: 'news-launch-1',
       category: 'launches',
       categoryLabel: 'New Launches in Bangalore',
-      badgeColor: 'text-purple-400 border-purple-500/30 bg-purple-500/10',
+      badgeColor: 'text-lux-forest border-lux-forest/25 bg-lux-forest/10',
       title: 'Marquee High-Rise & Biophilic Township Pre-Launches Across East Bangalore',
       summary: 'Premier developers release new 20+ acre phases in Whitefield and Off Sarjapur Road featuring 80% open landscape, IGBC Platinum credentials, and luxury clubhouse suites.',
       keyPoints: [
@@ -373,7 +373,7 @@ export const HomeLoanHub: React.FC = () => {
       id: 'news-launch-2',
       category: 'launches',
       categoryLabel: 'New Launches in Bangalore',
-      badgeColor: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
+      badgeColor: 'text-lux-charcoal border-lux-gold/40 bg-lux-gold/20',
       title: 'Plotted Enclaves & Luxury Villa Sanctions Surge in North Bangalore Aerotropolis',
       summary: 'RERA and BIAPA-approved gated villa plots in Bagalur, Devanahalli, and Doddaballapur achieve rapid sell-outs backed by the IT-Hardware Park and Aero SEZ.',
       keyPoints: [
@@ -390,7 +390,7 @@ export const HomeLoanHub: React.FC = () => {
       id: 'news-loan-1',
       category: 'loans',
       categoryLabel: 'Home Loans & Financing',
-      badgeColor: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
+      badgeColor: 'text-lux-forest border-lux-forest/25 bg-lux-forest/10',
       title: 'RBI Repo Rate Steady at 6.50%: Top Banks Offer Home Loans from 8.40% with Zero Processing Fee',
       summary: 'State Bank of India, HDFC Bank, ICICI Bank, and Bank of Baroda maintain competitive festive and strategic home loan interest spreads for salaried and self-employed buyers.',
       keyPoints: [
@@ -407,7 +407,7 @@ export const HomeLoanHub: React.FC = () => {
       id: 'news-loan-2',
       category: 'loans',
       categoryLabel: 'Home Loans & Financing',
-      badgeColor: 'text-teal-400 border-teal-500/30 bg-teal-500/10',
+      badgeColor: 'text-lux-charcoal border-lux-gold/40 bg-lux-gold/20',
       title: 'Green Home Loan Concessions & Real Estate Tax Deductions for FY 2026-27',
       summary: 'Borrowers investing in eco-certified projects unlock 5 to 10 bps interest rate discounts alongside tax deductions up to ₹3.5 Lakhs under Section 24(b) and 80EEA.',
       keyPoints: [
@@ -517,37 +517,37 @@ export const HomeLoanHub: React.FC = () => {
   };
 
   return (
-    <section id="loan-advisor" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-[#090909] border-t border-white/5 relative overflow-hidden">
+    <section id="loan-advisor" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-lux-ivory border-t border-lux-border relative overflow-hidden">
       {/* Visual background atmospheric elements */}
-      <div className="absolute top-1/3 right-1/10 w-[500px] h-[500px] bg-art-gold/5 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-1/10 left-1/12 w-[350px] h-[350px] bg-art-gold/3 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/3 right-1/10 w-[500px] h-[500px] bg-lux-gold/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-1/10 left-1/12 w-[350px] h-[350px] bg-lux-forest/5 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative z-10">
         
         {/* Header Block */}
         <div className="text-center mb-10 sm:mb-16 md:mb-20">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-art-gold/15 border border-art-gold/25 rounded-full mb-4">
-            <Coins className="text-art-gold" size={12} />
-            <span className="text-[10px] uppercase tracking-[0.3em] font-black font-mono text-art-gold">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-lux-forest/10 border border-lux-forest/20 rounded-full mb-4">
+            <Coins className="text-lux-gold" size={12} />
+            <span className="text-[10px] uppercase tracking-[0.3em] font-black font-mono text-lux-forest">
               Capital Advisory Portal
             </span>
           </div>
           
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-serif text-white tracking-wide italic leading-normal">
-            Bespoke <span className="not-italic text-art-gold">Capital Financing</span>
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-serif text-lux-forest tracking-wide italic leading-normal">
+            Bespoke <span className="not-italic text-lux-gold">Capital Financing</span>
           </h2>
-          <p className="text-xs sm:text-sm font-light text-white/50 tracking-wide max-w-xl mx-auto mt-4 leading-relaxed">
+          <p className="text-xs sm:text-sm font-normal text-lux-muted tracking-wide max-w-xl mx-auto mt-4 leading-relaxed">
             Configure capital structures, calculate loan eligibility based on age and income, evaluate premier bank-wise alignments, and leverage real-time discount parameters securely.
           </p>
 
           {/* Core Tab Selector */}
-          <div className="mt-8 sm:mt-12 flex items-center overflow-x-auto no-scrollbar w-full sm:max-w-2xl sm:flex-wrap p-1 bg-white/[0.02] border border-white/10 rounded-sm mr-auto gap-1">
+          <div className="mt-8 sm:mt-12 flex items-center overflow-x-auto no-scrollbar w-full sm:max-w-2xl sm:flex-wrap p-1.5 bg-lux-card border border-lux-border shadow-sm rounded-sm mr-auto gap-1">
             <button
               onClick={() => setActiveTab('calculator')}
               className={`px-4 py-3 text-[9px] uppercase tracking-[0.15em] font-bold transition-all rounded-sm cursor-pointer ${
                 activeTab === 'calculator' 
-                  ? 'bg-art-gold text-black shadow-[0_4px_12px_rgba(197,160,89,0.25)]' 
-                  : 'text-white/50 hover:text-white hover:bg-white/[0.02]'
+                  ? 'bg-lux-forest text-lux-card shadow-md'
+                  : 'text-lux-charcoal hover:text-lux-forest hover:bg-lux-ivory'
               }`}
             >
               Loan EMI Calculator
@@ -556,19 +556,19 @@ export const HomeLoanHub: React.FC = () => {
               onClick={() => setActiveTab('eligibility')}
               className={`px-4 py-3 text-[9px] uppercase tracking-[0.15em] font-bold transition-all rounded-sm cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'eligibility' 
-                  ? 'bg-art-gold text-black shadow-[0_4px_12px_rgba(197,160,89,0.25)]' 
-                  : 'text-white/50 hover:text-white hover:bg-white/[0.02]'
+                  ? 'bg-lux-forest text-lux-card shadow-md'
+                  : 'text-lux-charcoal hover:text-lux-forest hover:bg-lux-ivory'
               }`}
             >
-              <Sparkles size={11} className={activeTab === 'eligibility' ? 'text-black' : 'text-art-gold'} />
+              <Sparkles size={11} className={activeTab === 'eligibility' ? 'text-lux-gold' : 'text-lux-forest'} />
               Loan Eligibility Calculator
             </button>
             <button
               onClick={() => setActiveTab('bank_wise')}
               className={`px-4 py-3 text-[9px] uppercase tracking-[0.15em] font-bold transition-all rounded-sm cursor-pointer ${
                 activeTab === 'bank_wise' 
-                  ? 'bg-art-gold text-black shadow-[0_4px_12px_rgba(197,160,89,0.25)]' 
-                  : 'text-white/50 hover:text-white hover:bg-white/[0.02]'
+                  ? 'bg-lux-forest text-lux-card shadow-md'
+                  : 'text-lux-charcoal hover:text-lux-forest hover:bg-lux-ivory'
               }`}
             >
               Bank-Wise Setup
@@ -577,8 +577,8 @@ export const HomeLoanHub: React.FC = () => {
               onClick={() => setActiveTab('interest_rate')}
               className={`px-4 py-3 text-[9px] uppercase tracking-[0.15em] font-bold transition-all rounded-sm cursor-pointer ${
                 activeTab === 'interest_rate' 
-                  ? 'bg-art-gold text-black shadow-[0_4px_12px_rgba(197,160,89,0.25)]' 
-                  : 'text-white/50 hover:text-white hover:bg-white/[0.02]'
+                  ? 'bg-lux-forest text-lux-card shadow-md'
+                  : 'text-lux-charcoal hover:text-lux-forest hover:bg-lux-ivory'
               }`}
             >
               Latest Rates
@@ -587,13 +587,15 @@ export const HomeLoanHub: React.FC = () => {
               onClick={() => setActiveTab('news')}
               className={`px-4 py-3 text-[9px] uppercase tracking-[0.15em] font-bold transition-all rounded-sm cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'news' 
-                  ? 'bg-art-gold text-black shadow-[0_4px_12px_rgba(197,160,89,0.25)]' 
-                  : 'text-white/50 hover:text-white hover:bg-white/[0.02]'
+                  ? 'bg-lux-forest text-lux-card shadow-md'
+                  : 'text-lux-charcoal hover:text-lux-forest hover:bg-lux-ivory'
               }`}
             >
-              <Newspaper size={11} className={activeTab === 'news' ? 'text-black' : 'text-art-gold'} />
+              <Newspaper size={11} className={activeTab === 'news' ? 'text-lux-gold' : 'text-lux-forest'} />
               News
-              <span className="ml-1 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 text-[7px] font-mono rounded">
+              <span className={`ml-1 px-1.5 py-0.5 text-[7px] font-mono rounded ${
+                activeTab === 'news' ? 'bg-lux-gold text-lux-charcoal font-bold' : 'bg-lux-forest/10 text-lux-forest'
+              }`}>
                 24h Auto
               </span>
             </button>
@@ -604,8 +606,8 @@ export const HomeLoanHub: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Main Workspace Frame */}
-          <div className="lg:col-span-8 bg-white/[0.02] border border-white/5 p-6 md:p-8 rounded-sm self-stretch min-h-[460px] flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-[2px] h-full bg-gradient-to-b from-art-gold/30 via-transparent to-transparent" />
+          <div className="lg:col-span-8 bg-lux-card border border-lux-border p-6 md:p-8 rounded-sm self-stretch min-h-[460px] flex flex-col justify-between relative overflow-hidden shadow-md">
+            <div className="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-lux-forest via-lux-gold to-transparent" />
             
             <AnimatePresence mode="wait">
               {activeTab === 'calculator' && (
@@ -617,12 +619,12 @@ export const HomeLoanHub: React.FC = () => {
                   transition={{ duration: 0.3 }}
                   className="space-y-6 flex-grow"
                 >
-                  <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                  <div className="flex justify-between items-center pb-4 border-b border-lux-border">
                     <div className="flex items-center gap-2">
-                      <Calculator className="text-art-gold" size={16} />
-                      <h3 className="text-lg font-serif italic text-white">Dynamic Asset Structuring</h3>
+                      <Calculator className="text-lux-gold" size={16} />
+                      <h3 className="text-lg font-serif italic text-lux-forest font-bold">Dynamic Asset Structuring</h3>
                     </div>
-                    <span className="text-[8px] font-mono text-white/30 uppercase tracking-widest">Compounding Formula Driven</span>
+                    <span className="text-[8px] font-mono text-lux-muted uppercase tracking-widest">Compounding Formula Driven</span>
                   </div>
 
                   {/* Sliders Zone */}
@@ -631,8 +633,8 @@ export const HomeLoanHub: React.FC = () => {
                     {/* Amount Input */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-end">
-                        <span className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Principal Loan Amount</span>
-                        <span className="text-sm font-bold text-art-gold">{formatINR(loanAmount)}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-lux-charcoal font-bold">Principal Loan Amount</span>
+                        <span className="text-sm font-bold text-lux-forest">{formatINR(loanAmount)}</span>
                       </div>
                       <input 
                         type="range"
@@ -641,9 +643,9 @@ export const HomeLoanHub: React.FC = () => {
                         step={500000} // 5L
                         value={loanAmount}
                         onChange={(e) => setLoanAmount(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-sm accent-art-gold cursor-pointer"
+                        className="w-full h-1.5 bg-lux-border rounded-sm accent-lux-forest cursor-pointer"
                       />
-                      <div className="flex justify-between text-[8px] text-white/20 font-mono">
+                      <div className="flex justify-between text-[8px] text-lux-muted font-mono">
                         <span>{formatINR(1000000)}</span>
                         <span>{formatINR(100000000)}</span>
                       </div>
@@ -656,8 +658,8 @@ export const HomeLoanHub: React.FC = () => {
                             onClick={() => setLoanAmount(preset.value)}
                             className={`px-3 py-1 text-[8.5px] uppercase tracking-wider font-mono border rounded-sm transition-all cursor-pointer ${
                               loanAmount === preset.value
-                                ? 'bg-art-gold/15 border-art-gold text-art-gold'
-                                : 'border-white/5 bg-white/[0.01] text-white/40 hover:text-white hover:border-white/20'
+                                ? 'bg-lux-forest border-lux-forest text-lux-card font-bold'
+                                : 'border-lux-border bg-lux-ivory text-lux-charcoal hover:border-lux-forest/40'
                             }`}
                           >
                             {preset.label}
@@ -669,8 +671,8 @@ export const HomeLoanHub: React.FC = () => {
                     {/* Interest Rate */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-end">
-                        <span className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Expected Annual Interest</span>
-                        <span className="text-sm font-bold text-white tracking-wide">{interestRate}% YoY</span>
+                        <span className="text-[10px] uppercase tracking-wider text-lux-charcoal font-bold">Expected Annual Interest</span>
+                        <span className="text-sm font-bold text-lux-forest tracking-wide">{interestRate}% YoY</span>
                       </div>
                       <input 
                         type="range"
@@ -679,9 +681,9 @@ export const HomeLoanHub: React.FC = () => {
                         step={0.05}
                         value={interestRate}
                         onChange={(e) => setInterestRate(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-sm accent-art-gold cursor-pointer"
+                        className="w-full h-1.5 bg-lux-border rounded-sm accent-lux-forest cursor-pointer"
                       />
-                      <div className="flex justify-between text-[8px] text-white/20 font-mono">
+                      <div className="flex justify-between text-[8px] text-lux-muted font-mono">
                         <span>7.00% Premium Core</span>
                         <span>15.00% High Risk</span>
                       </div>
@@ -690,8 +692,8 @@ export const HomeLoanHub: React.FC = () => {
                     {/* Tenure */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-end">
-                        <span className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Amortization Tenure</span>
-                        <span className="text-sm font-bold text-white tracking-wide">{tenureYears} Years</span>
+                        <span className="text-[10px] uppercase tracking-wider text-lux-charcoal font-bold">Amortization Tenure</span>
+                        <span className="text-sm font-bold text-lux-forest tracking-wide">{tenureYears} Years</span>
                       </div>
                       <input 
                         type="range"
@@ -700,9 +702,9 @@ export const HomeLoanHub: React.FC = () => {
                         step={1}
                         value={tenureYears}
                         onChange={(e) => setTenureYears(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-sm accent-art-gold cursor-pointer"
+                        className="w-full h-1.5 bg-lux-border rounded-sm accent-lux-forest cursor-pointer"
                       />
-                      <div className="flex justify-between text-[8px] text-white/20 font-mono">
+                      <div className="flex justify-between text-[8px] text-lux-muted font-mono">
                         <span>5 Years</span>
                         <span>30 Years Limit</span>
                       </div>
@@ -721,18 +723,18 @@ export const HomeLoanHub: React.FC = () => {
                   transition={{ duration: 0.3 }}
                   className="space-y-6 flex-grow"
                 >
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-4 border-b border-white/5">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-4 border-b border-lux-border">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="text-art-gold" size={16} />
-                      <h3 className="text-lg font-serif italic text-white flex gap-1.5 items-center">
+                      <Sparkles className="text-lux-gold" size={16} />
+                      <h3 className="text-lg font-serif italic text-lux-forest font-bold flex gap-1.5 items-center">
                         Loan Eligibility Calculator
                       </h3>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-art-gold/15 text-art-gold border border-art-gold/30 rounded text-[8px] font-mono uppercase tracking-widest font-black">
+                      <span className="px-2 py-0.5 bg-lux-forest/10 text-lux-forest border border-lux-forest/25 rounded text-[8px] font-mono uppercase tracking-widest font-black">
                         Tiered FOIR ({Math.round(foirRate * 100)}%)
                       </span>
-                      <span className="text-[8px] font-mono text-white/40 uppercase tracking-widest">Age-Indexed</span>
+                      <span className="text-[8px] font-mono text-lux-muted uppercase tracking-widest">Age-Indexed</span>
                     </div>
                   </div>
 
@@ -743,8 +745,8 @@ export const HomeLoanHub: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-end">
                         <div>
-                          <span className="text-[10px] uppercase tracking-wider text-white/50 font-bold block">1. Monthly Net In-Hand Income</span>
-                          <span className="text-[8px] text-white/30 font-mono">Salary or Business Net Profit after Tax</span>
+                          <span className="text-[10px] uppercase tracking-wider text-lux-charcoal font-bold block">1. Monthly Net In-Hand Income</span>
+                          <span className="text-[8px] text-lux-muted font-mono">Salary or Business Net Profit after Tax</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <input
@@ -753,9 +755,9 @@ export const HomeLoanHub: React.FC = () => {
                             max={5000000}
                             value={monthlyIncome}
                             onChange={(e) => setMonthlyIncome(Math.max(0, Number(e.target.value)))}
-                            className="bg-white/[0.04] border border-white/15 text-art-gold font-mono text-xs rounded-sm p-1.5 w-28 text-right outline-none focus:border-art-gold"
+                            className="bg-lux-ivory border border-lux-border text-lux-forest font-mono text-xs font-bold rounded-sm p-1.5 w-28 text-right outline-none focus:border-lux-forest focus:bg-lux-card"
                           />
-                          <span className="text-xs text-white/60 font-mono">INR</span>
+                          <span className="text-xs text-lux-muted font-mono">INR</span>
                         </div>
                       </div>
                       <input 
@@ -765,9 +767,9 @@ export const HomeLoanHub: React.FC = () => {
                         step={10000}
                         value={monthlyIncome > 1000000 ? 1000000 : monthlyIncome}
                         onChange={(e) => setMonthlyIncome(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-sm accent-art-gold cursor-pointer"
+                        className="w-full h-1.5 bg-lux-border rounded-sm accent-lux-forest cursor-pointer"
                       />
-                      <div className="flex justify-between text-[8px] text-white/20 font-mono">
+                      <div className="flex justify-between text-[8px] text-lux-muted font-mono">
                         <span>₹20,000 / mo</span>
                         <span>₹10,00,000 / mo</span>
                       </div>
@@ -785,8 +787,8 @@ export const HomeLoanHub: React.FC = () => {
                             onClick={() => setMonthlyIncome(pill.val)}
                             className={`px-2.5 py-1 text-[8px] font-mono uppercase tracking-wider border rounded-sm transition-all cursor-pointer ${
                               monthlyIncome === pill.val 
-                                ? 'bg-art-gold/20 border-art-gold text-art-gold' 
-                                : 'border-white/10 bg-white/[0.01] text-white/40 hover:text-white'
+                                ? 'bg-lux-forest border-lux-forest text-lux-card font-bold'
+                                : 'border-lux-border bg-lux-ivory text-lux-charcoal hover:border-lux-forest/40'
                             }`}
                           >
                             {pill.label}
@@ -799,8 +801,8 @@ export const HomeLoanHub: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-end">
                         <div>
-                          <span className="text-[10px] uppercase tracking-wider text-white/50 font-bold block">2. Existing Monthly EMIs / Liabilities</span>
-                          <span className="text-[8px] text-white/30 font-mono">Personal loans, car EMIs, active cards</span>
+                          <span className="text-[10px] uppercase tracking-wider text-lux-charcoal font-bold block">2. Existing Monthly EMIs / Liabilities</span>
+                          <span className="text-[8px] text-lux-muted font-mono">Personal loans, car EMIs, active cards</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <input
@@ -809,9 +811,9 @@ export const HomeLoanHub: React.FC = () => {
                             max={2000000}
                             value={existingEMIs}
                             onChange={(e) => setExistingEMIs(Math.max(0, Number(e.target.value)))}
-                            className="bg-white/[0.04] border border-white/15 text-white font-mono text-xs rounded-sm p-1.5 w-28 text-right outline-none focus:border-art-gold"
+                            className="bg-lux-ivory border border-lux-border text-lux-charcoal font-mono text-xs font-bold rounded-sm p-1.5 w-28 text-right outline-none focus:border-lux-forest focus:bg-lux-card"
                           />
-                          <span className="text-xs text-white/60 font-mono">INR</span>
+                          <span className="text-xs text-lux-muted font-mono">INR</span>
                         </div>
                       </div>
                       <input 
@@ -821,9 +823,9 @@ export const HomeLoanHub: React.FC = () => {
                         step={5000}
                         value={existingEMIs > 500000 ? 500000 : existingEMIs}
                         onChange={(e) => setExistingEMIs(Number(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-sm accent-art-gold cursor-pointer"
+                        className="w-full h-1.5 bg-lux-border rounded-sm accent-lux-forest cursor-pointer"
                       />
-                      <div className="flex justify-between text-[8px] text-white/20 font-mono">
+                      <div className="flex justify-between text-[8px] text-lux-muted font-mono">
                         <span>₹0 (Nil Liabilities)</span>
                         <span>₹5,00,000 / mo</span>
                       </div>
@@ -841,8 +843,8 @@ export const HomeLoanHub: React.FC = () => {
                             onClick={() => setExistingEMIs(pill.val)}
                             className={`px-2.5 py-1 text-[8px] font-mono uppercase tracking-wider border rounded-sm transition-all cursor-pointer ${
                               existingEMIs === pill.val 
-                                ? 'bg-art-gold/20 border-art-gold text-art-gold' 
-                                : 'border-white/10 bg-white/[0.01] text-white/40 hover:text-white'
+                                ? 'bg-lux-forest border-lux-forest text-lux-card font-bold'
+                                : 'border-lux-border bg-lux-ivory text-lux-charcoal hover:border-lux-forest/40'
                             }`}
                           >
                             {pill.label}
@@ -859,31 +861,31 @@ export const HomeLoanHub: React.FC = () => {
                         const isModerate = realTimeLtvEligibility >= 45 && realTimeLtvEligibility < 70;
 
                         return (
-                          <div className="p-3.5 bg-black/60 border border-art-gold/30 rounded-sm space-y-2 mt-3 shadow-inner">
+                          <div className="p-3.5 bg-lux-ivory border border-lux-border rounded-sm space-y-2 mt-3 shadow-sm">
                             <div className="flex items-center justify-between text-[9px] uppercase tracking-wider">
-                              <span className="text-white/80 font-bold flex items-center gap-1.5">
-                                <Sparkles size={11} className="text-art-gold" />
+                              <span className="text-lux-forest font-bold flex items-center gap-1.5">
+                                <Sparkles size={11} className="text-lux-gold" />
                                 Real-Time LTV (Loan-to-Value) Eligibility
                               </span>
                               <span className={`font-mono font-black px-2 py-0.5 rounded text-[10px] ${
                                 isPrime 
-                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                  ? 'bg-lux-forest/15 text-lux-forest border border-lux-forest/30'
                                   : isModerate 
-                                  ? 'bg-art-gold/20 text-art-gold border border-art-gold/30' 
-                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                  ? 'bg-lux-gold/25 text-lux-charcoal border border-lux-gold/50'
+                                  : 'bg-amber-100 text-amber-800 border border-amber-300'
                               }`}>
                                 {realTimeLtvEligibility}% LTV Eligible
                               </span>
                             </div>
 
                             {/* Visual Progress Bar */}
-                            <div className="relative w-full h-2.5 bg-white/10 rounded-full overflow-hidden">
+                            <div className="relative w-full h-2.5 bg-lux-card border border-lux-border/60 rounded-full overflow-hidden">
                               <div 
                                 className={`h-full transition-all duration-500 rounded-full ${
                                   isPrime 
-                                    ? 'bg-gradient-to-r from-art-gold via-emerald-400 to-emerald-500' 
+                                    ? 'bg-gradient-to-r from-lux-forest to-lux-forest-hover'
                                     : isModerate 
-                                    ? 'bg-gradient-to-r from-amber-500 to-art-gold' 
+                                    ? 'bg-gradient-to-r from-lux-gold to-lux-forest'
                                     : 'bg-gradient-to-r from-red-500 to-amber-500'
                                 }`}
                                 style={{ width: `${Math.min(100, (realTimeLtvEligibility / 85) * 100)}%` }}
@@ -891,9 +893,9 @@ export const HomeLoanHub: React.FC = () => {
                             </div>
 
                             {/* Dynamic Indicator Meta */}
-                            <div className="flex justify-between items-center text-[8px] font-mono text-white/50 pt-0.5">
-                              <span>Existing EMI Burden: <strong className={foirBurdenPct > 50 ? 'text-amber-400' : 'text-white'}>{foirBurdenPct}%</strong></span>
-                              <span className="text-right text-art-gold font-bold">
+                            <div className="flex justify-between items-center text-[8px] font-mono text-lux-muted pt-0.5">
+                              <span>Existing EMI Burden: <strong className={foirBurdenPct > 50 ? 'text-amber-700' : 'text-lux-charcoal'}>{foirBurdenPct}%</strong></span>
+                              <span className="text-right text-lux-forest font-bold">
                                 {isPrime 
                                   ? '✓ Tier-1 Bank Clearance (Max Property Funding)' 
                                   : isModerate 
@@ -907,13 +909,13 @@ export const HomeLoanHub: React.FC = () => {
                     </div>
 
                     {/* Applicant Age Input & Real-Time Tenure Cap */}
-                    <div className="space-y-2 p-3 bg-white/[0.02] border border-white/10 rounded-sm">
+                    <div className="space-y-2 p-3 bg-lux-ivory border border-lux-border rounded-sm">
                       <div className="flex justify-between items-end">
                         <div>
-                          <span className="text-[10px] uppercase tracking-wider text-art-gold font-bold block flex items-center gap-1.5">
-                            <Coins size={12} /> 3. Applicant Age (Years)
+                          <span className="text-[10px] uppercase tracking-wider text-lux-forest font-bold block flex items-center gap-1.5">
+                            <Coins size={12} className="text-lux-gold" /> 3. Applicant Age (Years)
                           </span>
-                          <span className="text-[8px] text-white/40 font-mono">
+                          <span className="text-[8px] text-lux-muted font-mono">
                             Determines maximum loan tenure until retirement (Age 60)
                           </span>
                         </div>
@@ -931,9 +933,9 @@ export const HomeLoanHub: React.FC = () => {
                                 setTenureYears(maxT);
                               }
                             }}
-                            className="bg-black/60 border border-art-gold/40 text-art-gold font-mono text-sm rounded-sm p-1.5 w-20 text-right outline-none focus:border-art-gold font-bold"
+                            className="bg-lux-card border border-lux-border text-lux-forest font-mono text-sm rounded-sm p-1.5 w-20 text-right outline-none focus:border-lux-forest font-bold"
                           />
-                          <span className="text-xs text-white/70 font-mono">Yrs</span>
+                          <span className="text-xs text-lux-muted font-mono">Yrs</span>
                         </div>
                       </div>
                       <input 
@@ -950,9 +952,9 @@ export const HomeLoanHub: React.FC = () => {
                             setTenureYears(maxT);
                           }
                         }}
-                        className="w-full h-1 bg-white/10 rounded-sm accent-art-gold cursor-pointer"
+                        className="w-full h-1.5 bg-lux-border rounded-sm accent-lux-forest cursor-pointer"
                       />
-                      <div className="flex justify-between text-[8px] text-white/30 font-mono">
+                      <div className="flex justify-between text-[8px] text-lux-muted font-mono">
                         <span>21 Yrs (Entry Level)</span>
                         <span>58 Yrs (Pre-Retirement Limit)</span>
                       </div>
@@ -972,8 +974,8 @@ export const HomeLoanHub: React.FC = () => {
                             }}
                             className={`px-2.5 py-1 text-[8.5px] font-mono uppercase tracking-wider border rounded-sm transition-all cursor-pointer ${
                               applicantAge === preset.value
-                                ? 'bg-art-gold/25 border-art-gold text-art-gold font-bold'
-                                : 'border-white/10 bg-white/[0.01] text-white/40 hover:text-white'
+                                ? 'bg-lux-forest border-lux-forest text-lux-card font-bold'
+                                : 'border-lux-border bg-lux-card text-lux-charcoal hover:border-lux-forest/40'
                             }`}
                           >
                             {preset.label}
@@ -982,12 +984,12 @@ export const HomeLoanHub: React.FC = () => {
                       </div>
 
                       {/* Dynamic Age-Based Horizon Insight Banner */}
-                      <div className="mt-2 p-2.5 bg-black/40 border border-art-gold/20 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[9px] font-mono">
-                        <div className="flex items-center gap-2 text-white/80">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>Retirement Horizon: <strong className="text-white">{retirementHorizon} Years</strong></span>
+                      <div className="mt-2 p-2.5 bg-lux-card border border-lux-border rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[9px] font-mono">
+                        <div className="flex items-center gap-2 text-lux-charcoal">
+                          <span className="w-1.5 h-1.5 rounded-full bg-lux-forest animate-pulse" />
+                          <span>Retirement Horizon: <strong className="text-lux-forest">{retirementHorizon} Years</strong></span>
                         </div>
-                        <div className="text-art-gold font-bold">
+                        <div className="text-lux-forest font-bold">
                           Max Eligible Bank Tenure: <span>{maxEligibleTenure} Years ({maxEligibleTenure * 12} EMIs)</span>
                         </div>
                       </div>
@@ -997,7 +999,7 @@ export const HomeLoanHub: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4 pt-1">
                       {/* Interest Rate */}
                       <div className="space-y-1.5">
-                        <span className="text-[8.5px] uppercase tracking-wider text-white/40 font-bold">Interest Rate (% YoY)</span>
+                        <span className="text-[8.5px] uppercase tracking-wider text-lux-charcoal font-bold">Interest Rate (% YoY)</span>
                         <div className="flex items-center gap-2">
                           <input 
                             type="number" 
@@ -1006,18 +1008,18 @@ export const HomeLoanHub: React.FC = () => {
                             max="15.0"
                             value={interestRate} 
                             onChange={(e) => setInterestRate(Number(e.target.value))} 
-                            className="bg-white/[0.04] border border-white/15 text-white font-mono text-xs rounded-sm p-2 w-24 outline-none focus:border-art-gold"
+                            className="bg-lux-ivory border border-lux-border text-lux-charcoal font-mono text-xs font-bold rounded-sm p-2 w-24 outline-none focus:border-lux-forest focus:bg-lux-card"
                           />
-                          <span className="text-xs text-white/60 font-mono">% p.a.</span>
+                          <span className="text-xs text-lux-muted font-mono">% p.a.</span>
                         </div>
-                        <span className="text-[7.5px] text-white/30 font-mono block">SBI / HDFC benchmark: 8.50%</span>
+                        <span className="text-[7.5px] text-lux-muted font-mono block">SBI / HDFC benchmark: 8.50%</span>
                       </div>
 
                       {/* Tenure Clamped to maxEligibleTenure */}
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-center">
-                          <span className="text-[8.5px] uppercase tracking-wider text-white/40 font-bold">Applied Tenure</span>
-                          <span className="text-[8px] text-art-gold font-mono">Max {maxEligibleTenure} Yrs</span>
+                          <span className="text-[8.5px] uppercase tracking-wider text-lux-charcoal font-bold">Applied Tenure</span>
+                          <span className="text-[8px] text-lux-forest font-bold font-mono">Max {maxEligibleTenure} Yrs</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input 
@@ -1029,11 +1031,11 @@ export const HomeLoanHub: React.FC = () => {
                               const val = Math.max(1, Math.min(maxEligibleTenure, Number(e.target.value)));
                               setTenureYears(val);
                             }} 
-                            className="bg-white/[0.04] border border-white/15 text-white font-mono text-xs rounded-sm p-2 w-24 outline-none focus:border-art-gold"
+                            className="bg-lux-ivory border border-lux-border text-lux-charcoal font-mono text-xs font-bold rounded-sm p-2 w-24 outline-none focus:border-lux-forest focus:bg-lux-card"
                           />
-                          <span className="text-xs text-white/60 font-mono">Years</span>
+                          <span className="text-xs text-lux-muted font-mono">Years</span>
                         </div>
-                        <span className="text-[7.5px] text-white/30 font-mono block">Auto-adjusted for age {applicantAge}</span>
+                        <span className="text-[7.5px] text-lux-muted font-mono block">Auto-adjusted for age {applicantAge}</span>
                       </div>
                     </div>
 
@@ -1050,18 +1052,18 @@ export const HomeLoanHub: React.FC = () => {
                   transition={{ duration: 0.3 }}
                   className="space-y-6 flex-grow"
                 >
-                  <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                  <div className="flex justify-between items-center pb-4 border-b border-lux-border">
                     <div className="flex items-center gap-2">
-                      <Building className="text-art-gold" size={16} />
-                      <h3 className="text-lg font-serif italic text-white flex gap-1.5 items-center">
+                      <Building className="text-lux-gold" size={16} />
+                      <h3 className="text-lg font-serif italic text-lux-forest font-bold flex gap-1.5 items-center">
                         Institution Offer Alignment (Indicative)
                       </h3>
                     </div>
-                    <span className="text-[8px] font-mono text-white/30 uppercase tracking-widest">Q2 2026 Indexed</span>
+                    <span className="text-[8px] font-mono text-lux-muted uppercase tracking-widest">Q2 2026 Indexed</span>
                   </div>
 
-                  <p className="text-[11px] text-white/50 leading-relaxed font-sans mt-2">
-                    Below is your customized monthly outlay across major regional and national lending partners, based on your current principal setup of <span className="text-art-gold font-bold">{formatINR(loanAmount)}</span> for <span className="text-white font-semibold">{tenureYears} years</span>:
+                  <p className="text-[11px] text-lux-muted leading-relaxed font-sans mt-2">
+                    Below is your customized monthly outlay across major regional and national lending partners, based on your current principal setup of <span className="text-lux-forest font-bold">{formatINR(loanAmount)}</span> for <span className="text-lux-charcoal font-semibold">{tenureYears} years</span>:
                   </p>
 
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
@@ -1075,20 +1077,20 @@ export const HomeLoanHub: React.FC = () => {
                       return (
                         <div 
                           key={bank.bankName}
-                          className="p-4 bg-white/[0.01] border border-white/5 hover:border-art-gold/35 rounded-sm transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group"
+                          className="p-4 bg-lux-ivory border border-lux-border hover:border-lux-gold/60 rounded-sm transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group"
                         >
                           <div>
-                            <h4 className="text-xs font-serif font-bold text-white tracking-wide group-hover:text-art-gold transition-colors">
+                            <h4 className="text-xs font-serif font-bold text-lux-forest tracking-wide group-hover:text-lux-forest-hover transition-colors">
                               {bank.bankName}
                             </h4>
-                            <p className="text-[9.5px] text-white/40 mt-1 font-mono uppercase tracking-wider">
+                            <p className="text-[9.5px] text-lux-muted mt-1 font-mono uppercase tracking-wider">
                               Range: {bank.interestRate.min}% - {bank.interestRate.max}% | Setup: {bank.processingFee}
                             </p>
                           </div>
                           
                           <div className="text-left md:text-right shrink-0">
-                            <span className="text-[8px] uppercase tracking-widest text-white/30 block mb-0.5">Est. Monthly Base</span>
-                            <span className="text-xs font-black text-white group-hover:text-art-gold transition-colors">
+                            <span className="text-[8px] uppercase tracking-widest text-lux-muted block mb-0.5">Est. Monthly Base</span>
+                            <span className="text-xs font-black text-lux-forest group-hover:text-lux-forest-hover transition-colors">
                               ₹{Math.round(displayEMI).toLocaleString('en-IN')}/mo
                             </span>
                           </div>
@@ -1108,15 +1110,15 @@ export const HomeLoanHub: React.FC = () => {
                   transition={{ duration: 0.3 }}
                   className="space-y-6 flex-grow"
                 >
-                  <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                  <div className="flex justify-between items-center pb-4 border-b border-lux-border">
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="text-art-gold" size={16} />
-                      <h3 className="text-lg font-serif italic text-white">Latest Strategic Interest Index</h3>
+                      <TrendingUp className="text-lux-gold" size={16} />
+                      <h3 className="text-lg font-serif italic text-lux-forest font-bold">Latest Strategic Interest Index</h3>
                     </div>
-                    <span className="text-[8px] font-mono text-[#C5A059] uppercase tracking-widest">Live Updates Verified</span>
+                    <span className="text-[8px] font-mono text-lux-forest font-bold uppercase tracking-widest">Live Updates Verified</span>
                   </div>
 
-                  <p className="text-[11px] text-white/50 leading-relaxed font-sans">
+                  <p className="text-[11px] text-lux-muted leading-relaxed font-sans">
                     National real estate indexing indicates defensive consolidation in luxury microgrids. Explore prevailing sub-discount matrices active this month:
                   </p>
 
@@ -1124,16 +1126,16 @@ export const HomeLoanHub: React.FC = () => {
                     {rateUpdates.map((item) => (
                       <div 
                         key={item.metric}
-                        className="p-4 bg-white/[0.01] border border-white/5 rounded-sm flex flex-col justify-between h-36"
+                        className="p-4 bg-lux-ivory border border-lux-border rounded-sm flex flex-col justify-between h-36"
                       >
                         <div>
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-[8.5px] font-mono uppercase text-white/30 tracking-wider">
+                            <span className="text-[8.5px] font-mono uppercase text-lux-muted tracking-wider">
                               {item.trend}
                             </span>
-                            <Sparkles size={10} className="text-art-gold/50" />
+                            <Sparkles size={10} className="text-lux-gold" />
                           </div>
-                          <h4 className="text-[10px] uppercase tracking-wider font-extrabold text-white">
+                          <h4 className="text-[10px] uppercase tracking-wider font-extrabold text-lux-charcoal">
                             {item.metric}
                           </h4>
                         </div>
@@ -1142,7 +1144,7 @@ export const HomeLoanHub: React.FC = () => {
                           <p className={`text-xl font-serif italic font-bold my-1 ${item.textColor}`}>
                             {item.value}
                           </p>
-                          <p className="text-[9.5px] text-white/40 leading-snug font-sans">
+                          <p className="text-[9.5px] text-lux-muted leading-snug font-sans">
                             {item.desc}
                           </p>
                         </div>
@@ -1151,9 +1153,9 @@ export const HomeLoanHub: React.FC = () => {
                   </div>
 
                   {/* Real estate advice note */}
-                  <div className="p-4 bg-art-gold/5 border border-art-gold/15 rounded-sm flex items-center gap-3">
-                    <ShieldCheck className="text-art-gold shrink-0" size={16} />
-                    <p className="text-[10px] text-white/70 leading-relaxed">
+                  <div className="p-4 bg-lux-ivory border border-lux-gold/40 rounded-sm flex items-center gap-3">
+                    <ShieldCheck className="text-lux-forest shrink-0" size={16} />
+                    <p className="text-[10px] text-lux-charcoal leading-relaxed">
                       <strong>Institution Clause:</strong> External approvals are contingent upon verified CIBIL rating profiles (preferrably 750+) and institutional underwriting checks of individual landmark builders.
                     </p>
                   </div>
@@ -1170,12 +1172,12 @@ export const HomeLoanHub: React.FC = () => {
                   className="space-y-6 flex-grow"
                 >
                   {/* News Header & Auto-Refresh Bar */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-white/5">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-lux-border">
                     <div className="flex items-center gap-2">
-                      <Newspaper className="text-art-gold shrink-0" size={18} />
+                      <Newspaper className="text-lux-gold shrink-0" size={18} />
                       <div>
-                        <h3 className="text-lg font-serif italic text-white">Bangalore Real Estate &amp; Capital News</h3>
-                        <p className="text-[10.5px] text-white/50 font-sans">
+                        <h3 className="text-lg font-serif italic text-lux-forest font-bold">Bangalore Real Estate &amp; Capital News</h3>
+                        <p className="text-[10.5px] text-lux-muted font-sans">
                           Market trends, infrastructure progress, luxury pre-launches &amp; retail home loan policies.
                         </p>
                       </div>
@@ -1183,9 +1185,9 @@ export const HomeLoanHub: React.FC = () => {
                     
                     {/* 24-Hour Auto-Refresh Badge & Manual Refresh Button */}
                     <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-sm">
-                        <Clock size={11} className="text-emerald-400 shrink-0" />
-                        <span className="text-[9px] font-mono text-emerald-300 font-bold tracking-wider">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-lux-forest/10 border border-lux-forest/25 rounded-sm">
+                        <Clock size={11} className="text-lux-forest shrink-0" />
+                        <span className="text-[9px] font-mono text-lux-forest font-bold tracking-wider">
                           {lastNewsRefreshDate || 'Daily 24h Auto-Refreshed'}
                         </span>
                       </div>
@@ -1194,7 +1196,7 @@ export const HomeLoanHub: React.FC = () => {
                         onClick={handleManualNewsRefresh}
                         disabled={isRefreshingNews}
                         title="Trigger instantaneous real-time sync across Bangalore desks"
-                        className="p-1.5 bg-white/5 hover:bg-art-gold hover:text-black text-art-gold border border-art-gold/30 rounded-sm transition-all cursor-pointer disabled:opacity-50"
+                        className="p-1.5 bg-lux-ivory hover:bg-lux-forest hover:text-lux-card text-lux-forest border border-lux-border rounded-sm transition-all cursor-pointer disabled:opacity-50"
                       >
                         <RefreshCw size={12} className={isRefreshingNews ? "animate-spin" : ""} />
                       </button>
@@ -1216,8 +1218,8 @@ export const HomeLoanHub: React.FC = () => {
                         onClick={() => setNewsFilter(sub.id as any)}
                         className={`px-3 py-1.5 text-[9px] uppercase tracking-wider font-mono font-bold rounded-sm border transition-all cursor-pointer ${
                           newsFilter === sub.id
-                            ? 'bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.3)]'
-                            : 'bg-white/[0.03] text-white/60 border-white/10 hover:text-white hover:border-white/20'
+                            ? 'bg-lux-forest text-lux-card border-lux-forest shadow-sm'
+                            : 'bg-lux-ivory text-lux-charcoal border-lux-border hover:border-lux-forest/40'
                         }`}
                       >
                         {sub.label}
@@ -1230,18 +1232,18 @@ export const HomeLoanHub: React.FC = () => {
                     {filteredNews.map((article) => (
                       <div
                         key={article.id}
-                        className="p-4 sm:p-5 bg-white/[0.015] border border-white/5 hover:border-art-gold/35 rounded-sm transition-all duration-300 flex flex-col justify-between group space-y-3"
+                        className="p-4 sm:p-5 bg-lux-ivory border border-lux-border hover:border-lux-gold/60 rounded-sm transition-all duration-300 flex flex-col justify-between group space-y-3"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`px-2.5 py-0.5 text-[8.5px] uppercase tracking-wider font-mono font-bold border rounded-sm ${article.badgeColor}`}>
                               {article.categoryLabel}
                             </span>
-                            <span className="text-[9px] font-mono text-art-gold/90 font-bold px-2 py-0.5 bg-art-gold/10 border border-art-gold/20 rounded-sm">
+                            <span className="text-[9px] font-mono text-lux-forest font-bold px-2 py-0.5 bg-lux-card border border-lux-border rounded-sm">
                               {article.impactTag}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-[9px] font-mono text-white/40">
+                          <div className="flex items-center gap-2 text-[9px] font-mono text-lux-muted">
                             <span>{article.date}</span>
                             <span>•</span>
                             <span>{article.readTime}</span>
@@ -1249,32 +1251,32 @@ export const HomeLoanHub: React.FC = () => {
                         </div>
 
                         <div>
-                          <h4 className="text-sm sm:text-base font-serif italic font-bold text-white group-hover:text-art-gold transition-colors leading-snug">
+                          <h4 className="text-sm sm:text-base font-serif italic font-bold text-lux-forest group-hover:text-lux-forest-hover transition-colors leading-snug">
                             {article.title}
                           </h4>
-                          <p className="text-xs text-white/70 leading-relaxed font-sans mt-1.5">
+                          <p className="text-xs text-lux-charcoal leading-relaxed font-sans mt-1.5">
                             {article.summary}
                           </p>
                         </div>
 
                         {/* Key Insights bullets */}
-                        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-sm space-y-1.5">
-                          <span className="text-[8px] uppercase tracking-widest font-mono text-art-gold/80 font-black block">
+                        <div className="p-3 bg-lux-card border border-lux-border rounded-sm space-y-1.5">
+                          <span className="text-[8px] uppercase tracking-widest font-mono text-lux-forest font-black block">
                             Market Intelligence Takeaways
                           </span>
                           <ul className="space-y-1">
                             {article.keyPoints.map((pt, idx) => (
-                              <li key={idx} className="text-[10.5px] text-white/75 flex items-start gap-1.5">
-                                <span className="text-art-gold shrink-0 mt-0.5">▸</span>
+                              <li key={idx} className="text-[10.5px] text-lux-charcoal flex items-start gap-1.5">
+                                <span className="text-lux-gold shrink-0 mt-0.5">▸</span>
                                 <span>{pt}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5 text-[9px]">
-                          <span className="text-white/45 font-mono flex items-center gap-1">
-                            <MapPin size={10} className="text-art-gold" />
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-lux-border text-[9px]">
+                          <span className="text-lux-muted font-mono flex items-center gap-1">
+                            <MapPin size={10} className="text-lux-gold" />
                             {article.corridor}
                           </span>
                         </div>
@@ -1287,52 +1289,52 @@ export const HomeLoanHub: React.FC = () => {
           </div>
 
           {/* Right Summary Sidebar Dashboard */}
-          <div className="lg:col-span-4 bg-gradient-to-b from-white/[0.03] to-[#0A0A0A] border border-white/5 rounded-sm p-6 relative overflow-hidden flex flex-col justify-between self-stretch min-h-[460px]">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-art-gold/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="lg:col-span-4 bg-lux-forest text-lux-card border border-lux-gold/40 rounded-sm p-6 relative overflow-hidden flex flex-col justify-between self-stretch min-h-[460px] shadow-xl">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-lux-gold/10 rounded-full blur-2xl pointer-events-none" />
             
             {/* Upper Metric Hub */}
             <div className="space-y-6">
               {activeTab === 'news' ? (
                 <>
                   <div>
-                    <span className="text-[8px] uppercase tracking-[0.3em] font-mono text-art-gold">Bangalore Market Pulse</span>
-                    <h4 className="text-xl font-serif text-white italic mt-1 font-bold">Intelligence Digest</h4>
-                    <p className="text-[10px] text-white/50 font-sans mt-1">
+                    <span className="text-[8px] uppercase tracking-[0.3em] font-mono text-lux-gold font-bold">Bangalore Market Pulse</span>
+                    <h4 className="text-xl font-serif text-lux-card italic mt-1 font-bold">Intelligence Digest</h4>
+                    <p className="text-[10px] text-lux-ivory/80 font-sans mt-1">
                       Consolidated 24-hour market feed across high-growth corridors.
                     </p>
                   </div>
 
                   <div className="space-y-3.5">
-                    <div className="p-3 bg-white/[0.02] border border-white/5 rounded-sm space-y-2">
+                    <div className="p-3 bg-white/10 border border-white/15 rounded-sm space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[8px] uppercase tracking-wider text-white/40">Feed Refresh Cycle</span>
-                        <span className="text-[8px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        <span className="text-[8px] uppercase tracking-wider text-lux-ivory/75">Feed Refresh Cycle</span>
+                        <span className="text-[8px] font-mono text-lux-gold font-bold bg-lux-gold/15 px-2 py-0.5 rounded border border-lux-gold/30">
                           24h Daily Auto-Sync
                         </span>
                       </div>
-                      <p className="text-xs font-mono text-white/90">
+                      <p className="text-xs font-mono text-lux-card">
                         {lastNewsRefreshDate || 'Daily 24h Auto-Refreshed'}
                       </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2.5 bg-white/[0.02] border border-white/5 rounded-sm">
-                        <span className="text-[8px] text-white/40 uppercase tracking-wider block">Luxury Price Growth</span>
-                        <span className="text-sm font-bold text-art-gold font-serif italic mt-0.5 block">+14.8% YoY</span>
-                        <span className="text-[7px] text-white/30 font-mono">East &amp; North Corridor</span>
+                      <div className="p-2.5 bg-white/10 border border-white/15 rounded-sm">
+                        <span className="text-[8px] text-lux-ivory/75 uppercase tracking-wider block">Luxury Price Growth</span>
+                        <span className="text-sm font-bold text-lux-gold font-serif italic mt-0.5 block">+14.8% YoY</span>
+                        <span className="text-[7px] text-lux-ivory/60 font-mono">East &amp; North Corridor</span>
                       </div>
-                      <div className="p-2.5 bg-white/[0.02] border border-white/5 rounded-sm">
-                        <span className="text-[8px] text-white/40 uppercase tracking-wider block">Lowest Home Loan Rate</span>
-                        <span className="text-sm font-bold text-emerald-400 font-mono mt-0.5 block">8.40% p.a.</span>
-                        <span className="text-[7px] text-white/30 font-mono">Zero Processing Fee</span>
+                      <div className="p-2.5 bg-white/10 border border-white/15 rounded-sm">
+                        <span className="text-[8px] text-lux-ivory/75 uppercase tracking-wider block">Lowest Home Loan Rate</span>
+                        <span className="text-sm font-bold text-lux-card font-mono mt-0.5 block">8.40% p.a.</span>
+                        <span className="text-[7px] text-lux-ivory/60 font-mono">Zero Processing Fee</span>
                       </div>
                     </div>
 
-                    <div className="p-3 bg-art-gold/[0.05] border border-art-gold/20 rounded-sm">
-                      <span className="text-[8px] uppercase tracking-[0.2em] font-bold text-art-gold block mb-1">
+                    <div className="p-3 bg-lux-gold/15 border border-lux-gold/35 rounded-sm">
+                      <span className="text-[8px] uppercase tracking-[0.2em] font-bold text-lux-gold block mb-1">
                         Key Infrastructure Catalyst
                       </span>
-                      <p className="text-[11px] text-white/80 leading-relaxed font-sans">
+                      <p className="text-[11px] text-lux-ivory/90 leading-relaxed font-sans">
                         Namma Metro Phase 2A/2B and PRR expressway are catalyzing commercial absorption and 18-25% residential capital gains.
                       </p>
                     </div>
@@ -1341,61 +1343,61 @@ export const HomeLoanHub: React.FC = () => {
               ) : activeTab === 'eligibility' ? (
                 <>
                   <div>
-                    <span className="text-[8px] uppercase tracking-[0.3em] font-mono text-art-gold">Credit Evaluation Suite</span>
-                    <h4 className="text-xl font-serif text-white italic mt-1 font-bold">Eligibility Profile</h4>
+                    <span className="text-[8px] uppercase tracking-[0.3em] font-mono text-lux-gold font-bold">Credit Evaluation Suite</span>
+                    <h4 className="text-xl font-serif text-lux-card italic mt-1 font-bold">Eligibility Profile</h4>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="pb-3 border-b border-white/5">
-                      <span className="text-[9px] text-white/40 uppercase tracking-widest font-semibold block">Maximum Loan Eligibility</span>
-                      <div className="text-2xl font-serif italic text-art-gold font-bold tracking-tight mt-1">
+                    <div className="pb-3 border-b border-white/15">
+                      <span className="text-[9px] text-lux-ivory/75 uppercase tracking-widest font-semibold block">Maximum Loan Eligibility</span>
+                      <div className="text-2xl font-serif italic text-lux-gold font-bold tracking-tight mt-1">
                         {formatINR(eligibilityAmount)}
-                        <span className="text-[11px] font-sans not-italic text-white/40 font-light ml-1"> estimated sanction*</span>
+                        <span className="text-[11px] font-sans not-italic text-lux-ivory/70 font-light ml-1"> estimated sanction*</span>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-white/[0.02] border border-white/5 rounded-sm">
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-white/10 border border-white/15 rounded-sm">
                       <div>
-                        <span className="text-[8px] text-white/40 uppercase tracking-wider block">Property Buying Budget</span>
-                        <span className="text-sm font-bold text-white font-serif italic mt-0.5 block">{formatINR(propertyBudget)}*</span>
-                        <span className="text-[7px] text-white/30 font-mono">80% Loan + 20% Down</span>
+                        <span className="text-[8px] text-lux-ivory/75 uppercase tracking-wider block">Property Buying Budget</span>
+                        <span className="text-sm font-bold text-lux-card font-serif italic mt-0.5 block">{formatINR(propertyBudget)}*</span>
+                        <span className="text-[7px] text-lux-ivory/60 font-mono">80% Loan + 20% Down</span>
                       </div>
                       <div>
-                        <span className="text-[8px] text-white/40 uppercase tracking-wider block">Max Allowed EMI</span>
-                        <span className="text-sm font-bold text-emerald-400 font-mono mt-0.5 block">
+                        <span className="text-[8px] text-lux-ivory/75 uppercase tracking-wider block">Max Allowed EMI</span>
+                        <span className="text-sm font-bold text-lux-gold font-mono mt-0.5 block">
                           ₹{Math.round(monthlyAllowedEMI).toLocaleString('en-IN')}/mo
                         </span>
-                        <span className="text-[7px] text-white/30 font-mono">{Math.round(foirRate * 100)}% FOIR Tier</span>
+                        <span className="text-[7px] text-lux-ivory/60 font-mono">{Math.round(foirRate * 100)}% FOIR Tier</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
-                        <span className="text-[8px] text-white/40 uppercase tracking-wider block">Applicant Age & Tenure</span>
-                        <span className="text-xs font-semibold text-white/90 font-mono mt-0.5 block">
+                        <span className="text-[8px] text-lux-ivory/75 uppercase tracking-wider block">Applicant Age &amp; Tenure</span>
+                        <span className="text-xs font-semibold text-lux-card font-mono mt-0.5 block">
                           {applicantAge} Yrs • {effectiveTenure} Yrs Tenure
                         </span>
                       </div>
                       <div>
-                        <span className="text-[8px] text-white/40 uppercase tracking-wider block">Existing Liabilities</span>
-                        <span className="text-xs font-semibold text-white/60 font-mono mt-0.5 block">{formatINR(existingEMIs)}</span>
+                        <span className="text-[8px] text-lux-ivory/75 uppercase tracking-wider block">Existing Liabilities</span>
+                        <span className="text-xs font-semibold text-lux-ivory/85 font-mono mt-0.5 block">{formatINR(existingEMIs)}</span>
                       </div>
                     </div>
 
                     {/* Progress Visual Bar */}
                     <div className="space-y-1.5 pt-2">
-                      <div className="flex justify-between text-[8px] font-mono text-white/30 uppercase">
+                      <div className="flex justify-between text-[8px] font-mono text-lux-ivory/75 uppercase">
                         <span>Liabilities: {Math.min(100, Math.round((existingEMIs / foirLimit) * 100 || 0))}%</span>
                         <span>Loan Capacity: {Math.max(0, 100 - Math.round((existingEMIs / foirLimit) * 100 || 0))}%</span>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden flex">
+                      <div className="w-full h-1.5 rounded-full bg-white/15 overflow-hidden flex">
                         <div 
                           style={{ width: `${Math.min(100, (existingEMIs / foirLimit) * 100 || 0)}%` }} 
-                          className="h-full bg-white/20 transition-all duration-500" 
+                          className="h-full bg-white/40 transition-all duration-500"
                         />
                         <div 
                           style={{ width: `${Math.max(0, 100 - (existingEMIs / foirLimit) * 100 || 0)}%` }} 
-                          className="h-full bg-art-gold transition-all duration-500" 
+                          className="h-full bg-lux-gold transition-all duration-500"
                         />
                       </div>
                     </div>
@@ -1404,50 +1406,50 @@ export const HomeLoanHub: React.FC = () => {
               ) : (
                 <>
                   <div>
-                    <span className="text-[8px] uppercase tracking-[0.3em] font-mono text-art-gold">Amortization Estimates</span>
-                    <h4 className="text-xl font-serif text-white italic mt-1 font-bold">Repayment Layout</h4>
+                    <span className="text-[8px] uppercase tracking-[0.3em] font-mono text-lux-gold font-bold">Amortization Estimates</span>
+                    <h4 className="text-xl font-serif text-lux-card italic mt-1 font-bold">Repayment Layout</h4>
                   </div>
 
                   {/* Layout numbers */}
                   <div className="space-y-4">
-                    <div className="pb-3 border-b border-white/5">
-                      <span className="text-[9px] text-white/40 uppercase tracking-widest font-semibold block">Monthly EMI Outlay</span>
-                      <div className="text-2xl font-serif italic text-white font-bold tracking-tight mt-1">
+                    <div className="pb-3 border-b border-white/15">
+                      <span className="text-[9px] text-lux-ivory/75 uppercase tracking-widest font-semibold block">Monthly EMI Outlay</span>
+                      <div className="text-2xl font-serif italic text-lux-card font-bold tracking-tight mt-1">
                         ₹{Math.round(monthlyEMI).toLocaleString('en-IN')}
-                        <span className="text-[11px] font-sans not-italic text-white/40 font-light ml-1">/ month</span>
+                        <span className="text-[11px] font-sans not-italic text-lux-ivory/70 font-light ml-1">/ month</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <span className="text-[8px] text-white/40 uppercase tracking-wider block">Principal Amount</span>
-                        <span className="text-xs font-semibold text-white/90 font-sans mt-0.5 block">{formatINR(loanAmount)}</span>
+                        <span className="text-[8px] text-lux-ivory/75 uppercase tracking-wider block">Principal Amount</span>
+                        <span className="text-xs font-semibold text-lux-card font-sans mt-0.5 block">{formatINR(loanAmount)}</span>
                       </div>
                       <div>
-                        <span className="text-[8px] text-white/40 uppercase tracking-wider block">Interest Payable</span>
-                        <span className="text-xs font-semibold text-art-gold font-sans mt-0.5 block">{formatINR(totalInterest)}</span>
+                        <span className="text-[8px] text-lux-ivory/75 uppercase tracking-wider block">Interest Payable</span>
+                        <span className="text-xs font-semibold text-lux-gold font-sans mt-0.5 block">{formatINR(totalInterest)}</span>
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-[8px] text-white/40 uppercase tracking-wider block">Total Estimated Outlay</span>
-                      <span className="text-sm font-bold text-white font-serif italic mt-0.5 block">{formatINR(totalAmount)}</span>
+                      <span className="text-[8px] text-lux-ivory/75 uppercase tracking-wider block">Total Estimated Outlay</span>
+                      <span className="text-sm font-bold text-lux-card font-serif italic mt-0.5 block">{formatINR(totalAmount)}</span>
                     </div>
 
                     {/* Progress Visual Bar */}
                     <div className="space-y-1.5 pt-2">
-                      <div className="flex justify-between text-[8px] font-mono text-white/30 uppercase">
+                      <div className="flex justify-between text-[8px] font-mono text-lux-ivory/75 uppercase">
                         <span>Principal: {Math.round((loanAmount / totalAmount) * 100 || 0)}%</span>
                         <span>Interest: {Math.round((totalInterest / totalAmount) * 100 || 0)}%</span>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden flex">
+                      <div className="w-full h-1.5 rounded-full bg-white/15 overflow-hidden flex">
                         <div 
                           style={{ width: `${(loanAmount / totalAmount) * 100 || 0}%` }} 
-                          className="h-full bg-white/40 transition-all duration-500" 
+                          className="h-full bg-white/50 transition-all duration-500"
                         />
                         <div 
                           style={{ width: `${(totalInterest / totalAmount) * 100 || 0}%` }} 
-                          className="h-full bg-art-gold transition-all duration-500" 
+                          className="h-full bg-lux-gold transition-all duration-500"
                         />
                       </div>
                     </div>
@@ -1457,10 +1459,10 @@ export const HomeLoanHub: React.FC = () => {
             </div>
 
             {/* Contact buttons group at bottom */}
-            <div className="space-y-4 mt-8 pt-6 border-t border-white/5 text-center flex flex-col items-center justify-center">
+            <div className="space-y-4 mt-8 pt-6 border-t border-white/15 text-center flex flex-col items-center justify-center">
               <div className="max-w-xs mx-auto text-center">
-                <span className="text-[10px] uppercase tracking-[0.25em] font-extrabold text-art-gold block mb-2">More Information</span>
-                <p className="text-[11px] text-white/50 leading-relaxed font-sans">
+                <span className="text-[10px] uppercase tracking-[0.25em] font-extrabold text-lux-gold block mb-2">More Information</span>
+                <p className="text-[11px] text-lux-ivory/80 leading-relaxed font-sans">
                   Connect instantaneously with our premier relationship advisors for bespoke loan profiling and zero-fee bank alignment templates.
                 </p>
               </div>
@@ -1470,7 +1472,7 @@ export const HomeLoanHub: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsInquiryModalOpen(true)}
-                  className="flex items-center justify-center gap-2.5 w-full h-11 bg-art-gold hover:bg-white text-black text-[10px] uppercase tracking-[0.2em] font-extrabold rounded-sm transition-all shadow-[0_4px_15px_rgba(197,160,89,0.2)] outline-none cursor-pointer"
+                  className="flex items-center justify-center gap-2.5 w-full h-11 bg-lux-gold hover:bg-lux-card text-lux-charcoal text-[10px] uppercase tracking-[0.2em] font-extrabold rounded-sm transition-all shadow-md outline-none cursor-pointer"
                 >
                   <FileText size={13} className="shrink-0" />
                   Submit Inquiry Form
@@ -1493,46 +1495,46 @@ export const HomeLoanHub: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsInquiryModalOpen(false)}
-              className="fixed inset-0 bg-black/95 backdrop-blur-md"
+              className="fixed inset-0 bg-lux-charcoal/75 backdrop-blur-sm"
             />
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative bg-[#101010] w-full max-w-xl border-2 border-white rounded-md shadow-2xl p-6 sm:p-8 overflow-y-auto max-h-[90vh] my-auto z-20"
+              className="relative bg-lux-card w-full max-w-xl border border-lux-border rounded-md shadow-2xl p-6 sm:p-8 overflow-y-auto max-h-[90vh] my-auto z-20"
             >
               <button 
                 type="button"
                 onClick={() => setIsInquiryModalOpen(false)} 
-                className="absolute top-5 right-5 p-2 hover:bg-white/10 transition-colors text-white/50 hover:text-white rounded-full cursor-pointer"
+                className="absolute top-5 right-5 p-2 hover:bg-lux-ivory transition-colors text-lux-muted hover:text-lux-charcoal rounded-full cursor-pointer"
               >
                 <X size={18} />
               </button>
 
               {inquirySuccess ? (
                 <div className="py-10 text-center space-y-4">
-                  <div className="w-16 h-16 bg-art-gold/15 border border-art-gold/30 rounded-full flex items-center justify-center mx-auto text-art-gold">
+                  <div className="w-16 h-16 bg-lux-forest/15 border border-lux-forest/30 rounded-full flex items-center justify-center mx-auto text-lux-forest">
                     <CheckCircle2 size={36} />
                   </div>
-                  <h3 className="text-2xl font-serif text-white italic">Inquiry Successfully Transmitted</h3>
-                  <p className="text-xs text-white/60 tracking-wider">
-                    Our verified Relationship Manager for <strong className="text-art-gold">{inquiryCategory}</strong> will connect with you directly.
+                  <h3 className="text-2xl font-serif text-lux-forest italic">Inquiry Successfully Transmitted</h3>
+                  <p className="text-xs text-lux-muted tracking-wider">
+                    Our verified Relationship Manager for <strong className="text-lux-forest">{inquiryCategory}</strong> will connect with you directly.
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleInquirySubmit} className="space-y-5 text-left">
-                  <div className="border-b border-white/10 pb-4">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-art-gold/15 border border-art-gold/30 rounded-full mb-2">
-                      <Sparkles size={10} className="text-art-gold" />
-                      <span className="text-[8px] font-mono uppercase tracking-widest text-art-gold font-bold">Priority Advisory Desk</span>
+                  <div className="border-b border-lux-border pb-4">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-lux-forest/10 border border-lux-forest/20 rounded-full mb-2">
+                      <Sparkles size={10} className="text-lux-gold" />
+                      <span className="text-[8px] font-mono uppercase tracking-widest text-lux-forest font-bold">Priority Advisory Desk</span>
                     </div>
-                    <h3 className="text-2xl font-serif italic text-white">Direct Intelligence &amp; Advisory</h3>
-                    <p className="text-[11px] text-white/50 mt-1">Select your property or loan inquiry category below to connect with a senior advisor.</p>
+                    <h3 className="text-2xl font-serif italic text-lux-forest">Direct Intelligence &amp; Advisory</h3>
+                    <p className="text-[11px] text-lux-muted mt-1">Select your property or loan inquiry category below to connect with a senior advisor.</p>
                   </div>
 
                   {/* Category Option Selector: Primary, Resale, Rent, Home Loan */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold block">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-lux-forest block">
                       Select Inquiry Category *
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1543,8 +1545,8 @@ export const HomeLoanHub: React.FC = () => {
                           onClick={() => setInquiryCategory(cat)}
                           className={`py-2.5 px-2 text-[10px] font-bold uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
                             inquiryCategory === cat
-                              ? 'bg-art-gold text-black border-art-gold shadow-md font-black'
-                              : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30 hover:text-white'
+                              ? 'bg-lux-forest text-lux-card border-lux-forest shadow-sm font-black'
+                              : 'bg-lux-ivory text-lux-charcoal border-lux-border hover:border-lux-forest/40'
                           }`}
                         >
                           <span>{cat}</span>
@@ -1556,14 +1558,14 @@ export const HomeLoanHub: React.FC = () => {
                   {/* Form Inputs */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">Full Name *</label>
+                      <label className="text-[9px] uppercase font-bold tracking-widest text-lux-forest block">Full Name *</label>
                       <input
                         required
                         type="text"
                         value={inquiryForm.name}
                         onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
                         placeholder="Your Full Name"
-                        className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all"
+                        className="w-full bg-lux-ivory border border-lux-border rounded-sm p-3 text-lux-charcoal placeholder-lux-muted/60 text-xs outline-none focus:border-lux-forest focus:bg-lux-card transition-all"
                       />
                     </div>
                     <PhoneInputWithCountry
@@ -1575,18 +1577,18 @@ export const HomeLoanHub: React.FC = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">Email Address (Optional)</label>
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-lux-forest block">Email Address (Optional)</label>
                     <input
                       type="email"
                       value={inquiryForm.email}
                       onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
                       placeholder="you@example.com"
-                      className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-3 text-lux-charcoal placeholder-lux-muted/60 text-xs outline-none focus:border-lux-forest focus:bg-lux-card transition-all"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-bold tracking-widest text-white/50 block">
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-lux-forest block">
                       Specific Inquiries &amp; Capital Requirement
                     </label>
                     <textarea
@@ -1594,12 +1596,12 @@ export const HomeLoanHub: React.FC = () => {
                       value={inquiryForm.message}
                       onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
                       placeholder={`Provide any specific property preferences or financing details for ${inquiryCategory}...`}
-                      className="w-full bg-white/5 border border-white/15 rounded-sm p-3 text-white text-xs outline-none focus:border-art-gold transition-all resize-none"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-3 text-lux-charcoal placeholder-lux-muted/60 text-xs outline-none focus:border-lux-forest focus:bg-lux-card transition-all resize-none"
                     />
                   </div>
 
                   {inquiryError && (
-                    <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded text-[10px] text-red-400 font-mono">
+                    <div className="p-2.5 bg-red-50 border border-red-300 rounded text-[10px] text-red-700 font-mono">
                       {inquiryError}
                     </div>
                   )}
@@ -1608,7 +1610,7 @@ export const HomeLoanHub: React.FC = () => {
                     <button
                       type="submit"
                       disabled={isSubmittingInquiry}
-                      className="flex-1 bg-art-gold hover:bg-white text-black py-3.5 px-4 text-xs font-black uppercase tracking-widest rounded-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="flex-1 bg-lux-forest hover:bg-lux-forest-hover text-lux-card py-3.5 px-4 text-xs font-black uppercase tracking-widest rounded-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       <Send size={13} />
                       {isSubmittingInquiry ? 'Transmitting...' : `Submit ${inquiryCategory} Inquiry`}
@@ -1616,7 +1618,7 @@ export const HomeLoanHub: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsInquiryModalOpen(false)}
-                      className="px-5 py-3.5 bg-white/5 hover:bg-white/10 text-white/60 border border-white/15 text-xs font-bold uppercase tracking-wider rounded-sm transition-colors cursor-pointer"
+                      className="px-5 py-3.5 bg-lux-ivory hover:bg-lux-border/30 text-lux-charcoal border border-lux-border text-xs font-bold uppercase tracking-wider rounded-sm transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>

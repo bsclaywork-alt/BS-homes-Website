@@ -8,11 +8,11 @@ import {
   serverTimestamp,
   doc,
   setDoc,
+  getDoc,
   getDocs,
   deleteDoc,
   updateDoc,
   where,
-  increment,
   writeBatch
 } from 'firebase/firestore';
 import { 
@@ -118,7 +118,7 @@ import {
   Cell,
   Legend
 } from 'recharts';
-import { Project, Enquiry, Opportunity, Referral, PublicTabKey, TabVisibilityConfig, DEFAULT_TAB_VISIBILITY } from './types';
+import { Project, Enquiry, Opportunity, Referral, PublicTabKey, TabVisibilityConfig, DEFAULT_TAB_VISIBILITY, PublicPortfolioItem } from './types';
 import { Testimonials } from './components/Testimonials';
 import { ReferralSection } from './components/ReferralSection';
 import { FAQSection } from './components/FAQSection';
@@ -132,6 +132,8 @@ import { AdminSeoAuditPanel } from './components/AdminSeoAuditPanel';
 import { MediaUploadCompressor } from './components/MediaUploadCompressor';
 import { MediaViewerModal } from './components/MediaViewerModal';
 import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
+import { OfferYourAssetForm } from './components/OfferYourAssetForm';
+import { HomepageShowcase } from './components/HomepageShowcase';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { PhoneInputWithCountry, validateMobileNumber } from './components/PhoneInputWithCountry';
@@ -139,7 +141,9 @@ import { GrowBusinessSection } from './components/GrowBusinessSection';
 import { dispatchEnquiryEmailAlert } from './lib/enquiryAlert';
 import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from './lib/seoAuditReport';
 import { autoEnhanceAllProjects, generateOptimizedSeoMetadata } from './lib/autoSeoEnhancer';
+import { publicPortfolioToProject } from './lib/propertyWorkflow';
 import { ProjectDetailView } from './components/ProjectDetailView';
+import { OptimizedImage } from './components/OptimizedImage';
 import { slugify } from './data/projectsSitemapData';
 
 import imgEastEoi from './assets/images/east_bangalore_eoi_towers_1791731720202.jpg';
@@ -220,9 +224,9 @@ const MarketInsights = () => {
   ];
 
   const distributionData = [
-    { name: 'Luxury Residentials', value: 35, color: '#C5A059' },
-    { name: 'Premium High-Rise', value: 45, color: '#3b82f6' },
-    { name: 'Exclusive Enclaves', value: 20, color: '#10b981' },
+    { name: 'Luxury Residentials', value: 35, color: '#153D32' },
+    { name: 'Premium High-Rise', value: 45, color: '#C5A46D' },
+    { name: 'Exclusive Enclaves', value: 20, color: '#245747' },
   ];
 
   const locationPerformance = [
@@ -233,9 +237,9 @@ const MarketInsights = () => {
   ];
 
   return (
-    <section id="insights" className="py-16 sm:py-24 md:py-36 px-4 sm:px-6 md:px-12 bg-art-dark border-t border-white/5 relative">
+    <section id="insights" className="py-16 sm:py-24 md:py-36 px-4 sm:px-6 md:px-12 bg-lux-ivory border-t border-lux-border relative">
       <div className="absolute right-12 top-24 z-10 hidden lg:block">
-        <span className="vertical-text text-[9px] text-white/10 font-bold tracking-[0.5em] uppercase">Intelligence / LIVE {istTime} IST</span>
+        <span className="vertical-text text-[9px] text-lux-muted/40 font-bold tracking-[0.5em] uppercase">Intelligence / LIVE {istTime} IST</span>
       </div>
       
       <div className="max-w-7xl mx-auto">
@@ -245,23 +249,23 @@ const MarketInsights = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <span className="text-art-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Market Vault</span>
-            <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white leading-tight italic">
-              Strategic <span className="not-italic text-art-gold">Metrics.</span>
+            <span className="text-lux-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Market Vault</span>
+            <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-lux-forest leading-tight italic">
+              Strategic <span className="not-italic text-lux-gold">Metrics.</span>
             </h2>
           </motion.div>
           <div className="space-y-6 sm:space-y-8">
-            <p className="text-white/40 text-xs sm:text-[13px] leading-[1.8] sm:leading-[2] uppercase tracking-widest font-medium max-w-md">
+            <p className="text-lux-muted text-xs sm:text-[13px] leading-[1.8] sm:leading-[2] uppercase tracking-widest font-medium max-w-md">
               Our proprietary intelligence engine tracks capital appreciation across Bangalore's primary growth sectors.
             </p>
             <div className="flex gap-8 sm:gap-12">
                <div className="flex flex-col gap-1 sm:gap-2">
-                 <span className="text-white text-2xl sm:text-3xl font-serif italic">+24%</span>
-                 <span className="text-[8px] uppercase tracking-widest text-art-gold font-bold">Avg. YoY Appreciation</span>
+                 <span className="text-lux-forest text-2xl sm:text-3xl font-serif italic font-bold">+24%</span>
+                 <span className="text-[8px] uppercase tracking-widest text-lux-gold font-bold">Avg. YoY Appreciation</span>
                </div>
                <div className="flex flex-col gap-1 sm:gap-2">
-                 <span className="text-white text-2xl sm:text-3xl font-serif italic">₹480Cr+</span>
-                 <span className="text-[8px] uppercase tracking-widest text-art-gold font-bold">Asset Volume Advisory</span>
+                 <span className="text-lux-forest text-2xl sm:text-3xl font-serif italic font-bold">₹480Cr+</span>
+                 <span className="text-[8px] uppercase tracking-widest text-lux-gold font-bold">Asset Volume Advisory</span>
                </div>
             </div>
           </div>
@@ -269,51 +273,51 @@ const MarketInsights = () => {
 
         <div className="grid lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12">
           {/* Main Chart */}
-          <div className="lg:col-span-8 bg-white/[0.02] border border-white/5 p-6 sm:p-8 lg:p-12 rounded-sm relative overflow-hidden">
+          <div className="lg:col-span-8 bg-lux-card border border-lux-border p-6 sm:p-8 lg:p-12 rounded-sm relative overflow-hidden shadow-md">
              <div className="absolute top-0 right-0 p-4 sm:p-8">
-               <TrendingUp className="text-art-gold/20" size={48} />
+               <TrendingUp className="text-lux-gold/30" size={48} />
              </div>
-             <h3 className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/40 mb-8 sm:mb-12">Capital Velocity / East Corridor</h3>
+             <h3 className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-lux-forest mb-8 sm:mb-12">Capital Velocity / East Corridor</h3>
              <div className="h-[250px] sm:h-[320px] lg:h-[400px]">
                <ResponsiveContainer width="100%" height="100%">
                  <AreaChart data={trendData}>
                    <defs>
                      <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                       <stop offset="5%" stopColor="#C5A059" stopOpacity={0.2}/>
-                       <stop offset="95%" stopColor="#C5A059" stopOpacity={0}/>
+                       <stop offset="5%" stopColor="#153D32" stopOpacity={0.25}/>
+                       <stop offset="95%" stopColor="#153D32" stopOpacity={0}/>
                      </linearGradient>
                    </defs>
-                   <CartesianGrid strokeDasharray="4 4" stroke="#ffffff05" vertical={false} />
-                   <XAxis dataKey="year" stroke="#ffffff20" fontSize={9} tickLine={false} axisLine={false} />
+                   <CartesianGrid strokeDasharray="4 4" stroke="rgba(21,61,50,0.08)" vertical={false} />
+                   <XAxis dataKey="year" stroke="#5A625E" fontSize={10} tickLine={false} axisLine={false} />
                    <YAxis hide />
                    <Tooltip 
-                     contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid #C5A05930', borderRadius: '0' }}
-                     labelStyle={{ color: '#C5A059', fontWeight: 'bold', fontSize: '10px' }}
+                     contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(21,61,50,0.18)', borderRadius: '4px', color: '#252A27', boxShadow: '0 8px 24px rgba(21,61,50,0.1)' }}
+                     labelStyle={{ color: '#153D32', fontWeight: 'bold', fontSize: '10px' }}
                    />
-                   <Area type="monotone" dataKey="price" stroke="#C5A059" strokeWidth={2} fill="url(#colorVal)" />
+                   <Area type="monotone" dataKey="price" stroke="#153D32" strokeWidth={2.5} fill="url(#colorVal)" />
                  </AreaChart>
                </ResponsiveContainer>
              </div>
           </div>
 
           <div className="lg:col-span-4 flex flex-col gap-6 sm:gap-8 lg:gap-12">
-            <div className="bg-white/[0.02] border border-white/5 p-6 sm:p-8 lg:p-10 rounded-sm">
-               <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40 mb-6 sm:mb-8">Asset Breakdown</h3>
+            <div className="bg-lux-card border border-lux-border p-6 sm:p-8 lg:p-10 rounded-sm shadow-md">
+               <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-lux-forest mb-6 sm:mb-8">Asset Breakdown</h3>
                <div className="h-[180px] sm:h-[200px]">
                  <ResponsiveContainer width="100%" height="100%">
                    <PieChart>
                      <Pie data={distributionData} innerRadius={50} outerRadius={75} paddingAngle={10} dataKey="value">
                        {distributionData.map((e, i) => <Cell key={i} fill={e.color} />)}
                      </Pie>
-                     <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', border: 'none', fontSize: '10px' }} />
+                     <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(21,61,50,0.15)', fontSize: '10px', color: '#252A27' }} />
                    </PieChart>
                  </ResponsiveContainer>
                </div>
             </div>
-            <div className="bg-art-gold p-6 sm:p-8 lg:p-10 rounded-sm">
-              <span className="text-black text-[9px] font-black uppercase tracking-widest block mb-3 sm:mb-4">Investment Alpha</span>
-              <p className="text-black text-lg sm:text-xl font-serif italic mb-4 sm:mb-6">"Strategic location selection precedes architectural preference."</p>
-              <div className="w-12 h-px bg-black" />
+            <div className="bg-lux-forest text-lux-card border border-lux-gold/40 p-6 sm:p-8 lg:p-10 rounded-sm shadow-lg">
+              <span className="text-lux-gold text-[9px] font-black uppercase tracking-widest block mb-3 sm:mb-4">Investment Alpha</span>
+              <p className="text-lux-card text-lg sm:text-xl font-serif italic mb-4 sm:mb-6">"Strategic location selection precedes architectural preference."</p>
+              <div className="w-12 h-px bg-lux-gold" />
             </div>
           </div>
         </div>
@@ -394,8 +398,8 @@ const Navbar = ({
       <nav className={cn(
         "fixed top-0 w-full z-50 px-3 sm:px-6 md:px-8 transition-all duration-300 flex flex-col gap-1 sm:gap-1.5 max-w-[100vw]",
         scrolled
-          ? "py-1 sm:py-1.5 bg-art-dark/95 backdrop-blur-md border-b border-white/15 shadow-xl"
-          : "py-1 sm:py-1.5 bg-art-dark/95 backdrop-blur-md border-b border-white/10"
+          ? "py-1 sm:py-1.5 bg-lux-forest/95 backdrop-blur-md border-b border-lux-gold/30 shadow-xl"
+          : "py-1 sm:py-1.5 bg-lux-forest backdrop-blur-md border-b border-lux-gold/20 shadow-md"
       )}>
         <div className="flex justify-between items-center w-full gap-3">
           <button
@@ -410,24 +414,24 @@ const Navbar = ({
             <button
               type="button"
               onClick={onInquire}
-              className="px-3.5 py-1.5 bg-art-gold text-black text-[9.5px] sm:text-[10px] uppercase tracking-[0.2em] font-black hover:bg-white transition-colors whitespace-nowrap cursor-pointer rounded-sm"
+              className="px-3.5 py-1.5 bg-lux-gold text-lux-charcoal text-[9.5px] sm:text-[10px] uppercase tracking-[0.2em] font-black hover:bg-lux-card transition-colors whitespace-nowrap cursor-pointer rounded-sm shadow-sm"
             >
               Inquire Now
             </button>
             <button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex items-center justify-center p-2 rounded-sm bg-white/5 hover:bg-white/10 border border-white/15 hover:border-art-gold/50 transition-all cursor-pointer group"
+              className="flex items-center justify-center p-2 rounded-sm bg-white/10 hover:bg-white/20 border border-white/20 hover:border-lux-gold transition-all cursor-pointer group"
               aria-label="Navigation Tabs Menu"
               title="Open Navigation Tabs"
             >
-              <MoreVertical className="text-art-gold group-hover:text-white transition-colors" size={20} />
+              <MoreVertical className="text-lux-gold group-hover:text-lux-card transition-colors" size={20} />
             </button>
           </div>
         </div>
 
         {/* Dedicated Multi-Tab Navigation Bar - Visible on desktop, removed on mobile */}
-        <div className="w-full overflow-x-auto no-scrollbar border-t border-white/10 pt-1 hidden md:block">
+        <div className="w-full overflow-x-auto no-scrollbar border-t border-white/15 pt-1 hidden md:block">
           <div className="flex items-center gap-1 min-w-max pb-0.5">
             {visibleLinks.map(link => {
               const isActive = activeMainTab === link.id;
@@ -441,18 +445,18 @@ const Navbar = ({
                   className={cn(
                     "px-2.5 py-1 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5",
                     isActive
-                      ? "bg-art-gold text-black border-art-gold shadow-[0_0_15px_rgba(197,160,89,0.35)]"
+                      ? "bg-lux-gold text-lux-charcoal border-lux-gold shadow-sm"
                       : link.isSpecial
-                      ? "bg-art-gold/10 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
-                      : "bg-white/[0.05] text-white/80 border-white/15 hover:text-white hover:border-white/35 hover:bg-white/[0.1]",
-                    isTabHiddenFromPublic && !isActive && "border-amber-500/40 text-amber-200/90"
+                      ? "bg-white/10 text-lux-gold border-lux-gold/40 hover:bg-lux-gold hover:text-lux-charcoal"
+                      : "bg-white/[0.06] text-lux-card/90 border-white/15 hover:text-lux-card hover:border-white/35 hover:bg-white/[0.14]",
+                    isTabHiddenFromPublic && !isActive && "border-amber-400/50 text-amber-200"
                   )}
                 >
                   {link.id === 'overview' && <Home size={12} className="shrink-0" />}
-                  {link.id === 'grow-business' && <TrendingUp size={12} className={cn("shrink-0", isActive ? "text-black" : "text-art-gold")} />}
+                  {link.id === 'grow-business' && <TrendingUp size={12} className={cn("shrink-0", isActive ? "text-lux-charcoal" : "text-lux-gold")} />}
                   <span>{link.name}</span>
                   {isTabHiddenFromPublic && (
-                    <EyeOff size={10} className="text-amber-400 shrink-0" />
+                    <EyeOff size={10} className="text-amber-300 shrink-0" />
                   )}
                 </button>
               );
@@ -469,19 +473,19 @@ const Navbar = ({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[60] bg-art-dark flex flex-col p-8 sm:p-12 overflow-y-auto select-none"
+            className="fixed inset-0 z-[60] bg-lux-ivory text-lux-charcoal flex flex-col p-8 sm:p-12 overflow-y-auto select-none"
           >
-            <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/10">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-lux-border bg-lux-forest p-4 rounded-sm text-lux-card shadow-sm">
               <div>
                 <Logo />
-                <span className="text-[9px] uppercase tracking-[0.3em] text-art-gold font-bold block mt-1">
+                <span className="text-[9px] uppercase tracking-[0.3em] text-lux-gold font-bold block mt-1">
                   Navigation Tabs Directory
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsMenuOpen(false)}
-                className="text-art-gold hover:text-white transition-colors duration-300 cursor-pointer p-2 rounded-sm bg-white/5 hover:bg-white/10 border border-white/10"
+                className="text-lux-gold hover:text-lux-card transition-colors duration-300 cursor-pointer p-2 rounded-sm bg-white/10 hover:bg-white/20 border border-white/15"
                 aria-label="Close Tabs Directory"
               >
                 <X size={26} />
@@ -497,19 +501,19 @@ const Navbar = ({
                     type="button"
                     onClick={() => handleTabClick(link.id)}
                     className={cn(
-                      "p-4 rounded-sm text-left font-serif italic text-xl transition-all border cursor-pointer flex items-center justify-between",
+                      "p-4 rounded-sm text-left font-serif italic text-xl transition-all border cursor-pointer flex items-center justify-between shadow-sm",
                       isActive
-                        ? "bg-art-gold text-black border-art-gold font-bold shadow-lg"
-                        : "bg-white/5 text-white border-white/10 hover:border-art-gold hover:text-art-gold",
+                        ? "bg-lux-forest text-lux-card border-lux-forest font-bold shadow-md"
+                        : "bg-lux-card text-lux-charcoal border-lux-border hover:border-lux-forest hover:text-lux-forest",
                       isTabHiddenFromPublic && !isActive && "border-amber-500/40"
                     )}
                   >
                     <span className="flex items-center gap-2.5">
-                      {link.id === 'overview' && <Home size={20} className={isActive ? "text-black" : "text-art-gold"} />}
-                      {link.id === 'grow-business' && <TrendingUp size={20} className={isActive ? "text-black" : "text-art-gold"} />}
+                      {link.id === 'overview' && <Home size={20} className={isActive ? "text-lux-gold" : "text-lux-forest"} />}
+                      {link.id === 'grow-business' && <TrendingUp size={20} className={isActive ? "text-lux-gold" : "text-lux-forest"} />}
                       <span>{link.name}</span>
                       {isTabHiddenFromPublic && (
-                        <span className="text-[9px] font-mono not-italic px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                        <span className="text-[9px] font-mono not-italic px-2 py-0.5 rounded bg-amber-500/15 text-amber-800 border border-amber-500/30 flex items-center gap-1">
                           <EyeOff size={10} /> Hidden Online
                         </span>
                       )}
@@ -519,15 +523,15 @@ const Navbar = ({
                 );
               })}
             </div>
-            <div className="mt-auto pt-8 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="mt-auto pt-8 border-t border-lux-border flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div>
-                <span className="text-[10px] text-art-gold uppercase tracking-[0.5em] font-black block mb-1">Direct Advisory</span>
-                <a href="mailto:contact@bshomez.in" className="text-xl font-serif text-white italic hover:text-art-gold transition-colors">contact@bshomez.in</a>
+                <span className="text-[10px] text-lux-gold uppercase tracking-[0.5em] font-black block mb-1">Direct Advisory</span>
+                <a href="mailto:contact@bshomez.in" className="text-xl font-serif text-lux-forest italic hover:text-lux-gold transition-colors">contact@bshomez.in</a>
               </div>
               <button
                 type="button"
                 onClick={() => setIsMenuOpen(false)}
-                className="py-3.5 px-8 bg-white/5 border border-white/10 hover:border-art-gold hover:text-art-gold transition-all text-white text-[10px] uppercase tracking-[0.25em] font-extrabold rounded-sm cursor-pointer"
+                className="py-3.5 px-8 bg-lux-forest hover:bg-lux-forest-hover border border-lux-forest transition-all text-lux-card text-[10px] uppercase tracking-[0.25em] font-extrabold rounded-sm cursor-pointer shadow-sm"
               >
                 Close Menu
               </button>
@@ -539,7 +543,17 @@ const Navbar = ({
   );
 };
 
-const Hero = ({ onConsult, onExplorePortfolios }: { onConsult?: () => void; onExplorePortfolios?: () => void }) => {
+const Hero = ({
+  onConsult,
+  onExplorePortfolios,
+  onOfferAsset,
+  onReferAndEarn
+}: {
+  onConsult?: () => void;
+  onExplorePortfolios?: () => void;
+  onOfferAsset?: () => void;
+  onReferAndEarn?: () => void;
+}) => {
   const getISTGreeting = () => {
     const now = new Date();
     const istTime = new Date(now.getTime() + (new Date().getTimezoneOffset() * 60000) + (5.5 * 60 * 60 * 1000));
@@ -551,17 +565,18 @@ const Hero = ({ onConsult, onExplorePortfolios }: { onConsult?: () => void; onEx
   };
 
   return (
-    <section className="w-full relative flex items-center py-6 sm:py-16 md:py-20 overflow-hidden bg-art-dark">
-      {/* Cinematic Backdrop */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-art-dark/85 z-10" />
+    <section className="w-full relative flex items-center py-6 sm:py-16 md:py-20 overflow-hidden bg-lux-ivory border-b border-lux-border">
+      {/* Subtle Luxury Backdrop */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-lux-gold/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-lux-forest/5 rounded-full blur-3xl" />
       </div>
 
       {/* Vertical Graphic Elements */}
       <div className="absolute left-6 xl:left-10 bottom-12 z-20 hidden lg:block">
         <div className="flex flex-col items-center gap-12">
-          <div className="w-[1px] h-24 bg-art-gold/30" />
-          <span className="vertical-text text-[9px] text-white/20 font-bold select-none tracking-widest uppercase">Pinnacle Living / Bangalore</span>
+          <div className="w-[1px] h-24 bg-lux-gold/50" />
+          <span className="vertical-text text-[9px] text-lux-muted/60 font-bold select-none tracking-widest uppercase">Pinnacle Living / Bangalore</span>
         </div>
       </div>
 
@@ -573,12 +588,12 @@ const Hero = ({ onConsult, onExplorePortfolios }: { onConsult?: () => void; onEx
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
             >
-              <div className="text-art-gold tracking-wider sm:tracking-[0.25em] uppercase mb-3 sm:mb-5 flex items-center flex-wrap gap-2 sm:gap-3 font-bold text-[10.5px] sm:text-xs leading-normal">
-                <span className="w-5 sm:w-10 h-[1px] bg-art-gold/50 shrink-0" />
-                <span>{getISTGreeting()} • Primary, Resale & Rental Advisory</span>
+              <div className="text-lux-forest tracking-wider sm:tracking-[0.25em] uppercase mb-3 sm:mb-5 flex items-center flex-wrap gap-2 sm:gap-3 font-bold text-[10.5px] sm:text-xs leading-normal">
+                <span className="w-5 sm:w-10 h-[1px] bg-lux-gold shrink-0" />
+                <span>{getISTGreeting()} • Primary, Resale &amp; Rental Advisory</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-serif text-white leading-tight sm:leading-none tracking-tight mb-4 sm:mb-8 italic break-words">
-                Legacy <span className="not-italic text-art-gold/90">Refined.</span>
+              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif text-lux-forest leading-tight tracking-tight mb-4 sm:mb-7 italic break-words">
+                Your Property. Our Network. <span className="not-italic text-lux-gold">Better Opportunities.</span>
               </h1>
 
               {/* Highly Prominent Brokerage Message */}
@@ -586,63 +601,78 @@ const Hero = ({ onConsult, onExplorePortfolios }: { onConsult?: () => void; onEx
                  initial={{ opacity: 0, y: 15 }}
                  animate={{ opacity: 1, y: 0 }}
                  transition={{ delay: 0.2, duration: 0.7 }}
-                 className="mb-6 sm:mb-10 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 p-4 sm:p-6 md:p-8 border border-art-gold/25 bg-white/[0.03] backdrop-blur-md relative overflow-hidden group w-full rounded-sm"
+                 className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 p-4 sm:p-6 md:p-7 border border-lux-border bg-lux-card shadow-lg relative overflow-hidden group w-full rounded-sm"
               >
-                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-art-gold/40 to-transparent" />
+                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-lux-forest via-lux-gold to-lux-forest" />
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-4xl sm:text-6xl md:text-7xl font-serif text-art-gold italic leading-none font-bold">0%</span>
-                  <span className="sm:hidden text-lg font-serif tracking-wide italic text-white font-light">Brokerage Fee</span>
+                  <span className="text-4xl sm:text-6xl font-serif text-lux-forest italic leading-none font-bold">0%</span>
+                  <span className="sm:hidden text-lg font-serif tracking-wide italic text-lux-charcoal font-medium">Brokerage Fee</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="hidden sm:block text-xl sm:text-2xl md:text-3xl font-serif tracking-wide sm:tracking-widest italic font-light text-white">Brokerage Fee</span>
-                  <span className="text-art-gold text-[9.5px] sm:text-[10.5px] uppercase tracking-wider sm:tracking-[0.2em] font-black mt-0.5 sm:mt-1.5">
+                  <span className="hidden sm:block text-xl sm:text-2xl font-serif tracking-wide sm:tracking-widest italic font-medium text-lux-charcoal">Brokerage Fee</span>
+                  <span className="text-lux-gold text-[9.5px] sm:text-[10.5px] uppercase tracking-wider sm:tracking-[0.2em] font-black mt-0.5 sm:mt-1.5">
                     On All Primary Market Portfolio Acquisitions
                   </span>
-                  <span className="text-white/70 text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold mt-1">
+                  <span className="text-lux-muted text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold mt-1">
                     Resale: 2% Commission • Rental: 1 Month Rent Commission
                   </span>
                 </div>
               </motion.div>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 sm:gap-8 mb-4 sm:mb-0">
-                <p className="text-white/60 max-w-sm text-[11px] sm:text-xs leading-relaxed font-medium uppercase tracking-wider">
-                  Strategically curating high-performance Primary, Resale, and Rental residential portfolios across Bangalore's exclusive corridors.
+              <div className="flex flex-col gap-4 mb-4 sm:mb-0">
+                <p className="text-lux-muted max-w-2xl text-xs sm:text-sm leading-relaxed font-medium">
+                  Explore curated Primary, Resale, and Rental properties across Bangalore corridors, offer your own residential or commercial asset privately, or connect buyers and owners through our verified referral network.
                 </p>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 w-full sm:w-auto shrink-0">
-                  <motion.button 
+                <div className="flex flex-wrap items-center gap-3 w-full">
+                  <button
                     type="button"
                     onClick={onExplorePortfolios}
-                    whileHover={{ scale: 1.02 }}
-                    className="bg-art-gold hover:bg-white text-black px-6 sm:px-8 py-3 sm:py-3.5 text-[10px] sm:text-[11px] uppercase font-black tracking-widest text-center w-full sm:w-auto cursor-pointer rounded-sm shadow-lg transition-all"
+                    className="bg-lux-forest hover:bg-lux-forest-hover text-lux-card px-6 py-3.5 text-[11px] uppercase font-black tracking-widest text-center cursor-pointer rounded-sm shadow-lg transition-all"
                   >
-                    Open Portfolios Tab
-                  </motion.button>
-                  <button 
-                    type="button"
-                    onClick={onConsult} 
-                    className="text-white hover:text-art-gold text-[10px] sm:text-[11px] uppercase font-black tracking-widest border border-white/20 sm:border-0 sm:border-b sm:border-white/30 py-2.5 sm:py-1 px-4 sm:px-0 hover:border-art-gold transition-all text-center rounded-sm sm:rounded-none cursor-pointer w-full sm:w-auto"
-                  >
-                    Private Consultation
+                    Explore Properties
                   </button>
+                  <button
+                    type="button"
+                    onClick={onOfferAsset}
+                    className="bg-lux-gold hover:bg-lux-card text-lux-charcoal border border-lux-gold px-6 py-3.5 text-[11px] uppercase font-black tracking-widest text-center cursor-pointer rounded-sm shadow-md transition-all"
+                  >
+                    Offer Your Asset
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onReferAndEarn}
+                    className="bg-lux-card hover:bg-lux-ivory text-lux-forest border border-lux-forest/40 px-6 py-3.5 text-[11px] uppercase font-black tracking-widest text-center cursor-pointer rounded-sm transition-all"
+                  >
+                    Refer &amp; Earn
+                  </button>
+                  {onConsult && (
+                    <button
+                      type="button"
+                      onClick={onConsult}
+                      className="text-lux-forest hover:text-lux-forest-hover text-[11px] uppercase font-black tracking-widest border-b border-lux-forest/40 py-2 px-1 transition-all cursor-pointer"
+                    >
+                      Private Consultation
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
           </div>
 
           {/* Right Column Metrics Window - Mobile Friendly Non-Merging Grid */}
-          <div className="lg:col-span-4 flex flex-col lg:items-end justify-end gap-3 sm:gap-5 pt-4 lg:pt-0 border-t lg:border-t-0 border-white/10">
+          <div className="lg:col-span-4 flex flex-col lg:items-end justify-end gap-3 sm:gap-5 pt-4 lg:pt-0 border-t lg:border-t-0 border-lux-border">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2.5 sm:gap-4 w-full lg:w-auto">
-              <div className="bg-white/[0.03] p-2.5 sm:p-3 rounded-sm border border-white/10 lg:bg-transparent lg:p-0 lg:border-0 lg:text-right">
-                <span className="text-white text-2xl sm:text-3xl font-serif block font-bold">100%</span>
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-art-gold font-bold block mt-0.5">Verified Direct Inventory</span>
+              <div className="bg-lux-card p-2.5 sm:p-3 rounded-sm border border-lux-border lg:bg-transparent lg:p-0 lg:border-0 lg:text-right shadow-sm lg:shadow-none">
+                <span className="text-lux-forest text-2xl sm:text-3xl font-serif block font-bold">100%</span>
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-lux-gold font-bold block mt-0.5">Verified Direct Inventory</span>
               </div>
-              <div className="bg-white/[0.03] p-2.5 sm:p-3 rounded-sm border border-white/10 lg:bg-transparent lg:p-0 lg:border-0 lg:text-right">
-                <span className="text-[11px] sm:text-xs text-white font-bold tracking-wider block">EAST & SOUTH-EAST</span>
-                <span className="text-[8.5px] sm:text-[9px] text-white/60 uppercase tracking-wider block mt-0.5">Primary Jurisdiction</span>
+              <div className="bg-lux-card p-2.5 sm:p-3 rounded-sm border border-lux-border lg:bg-transparent lg:p-0 lg:border-0 lg:text-right shadow-sm lg:shadow-none">
+                <span className="text-[11px] sm:text-xs text-lux-forest font-bold tracking-wider block">EAST & SOUTH-EAST</span>
+                <span className="text-[8.5px] sm:text-[9px] text-lux-muted uppercase tracking-wider block mt-0.5">Primary Jurisdiction</span>
               </div>
-              <div className="col-span-2 sm:col-span-1 bg-white/[0.03] p-2.5 sm:p-3 rounded-sm border border-white/10 lg:bg-transparent lg:p-0 lg:border-0 lg:text-right">
-                <span className="text-[11px] sm:text-xs text-white font-bold tracking-wider block">PRIMARY • RESALE • RENTAL</span>
-                <span className="text-[8.5px] sm:text-[9px] text-white/60 uppercase tracking-wider block mt-0.5">Complete Lifecycle Stages</span>
+              <div className="col-span-2 sm:col-span-1 bg-lux-card p-2.5 sm:p-3 rounded-sm border border-lux-border lg:bg-transparent lg:p-0 lg:border-0 lg:text-right shadow-sm lg:shadow-none">
+                <span className="text-[11px] sm:text-xs text-lux-forest font-bold tracking-wider block">PRIMARY • RESALE • RENTAL</span>
+                <span className="text-[8.5px] sm:text-[9px] text-lux-muted uppercase tracking-wider block mt-0.5">Complete Lifecycle Stages</span>
               </div>
             </div>
           </div>
@@ -653,8 +683,8 @@ const Hero = ({ onConsult, onExplorePortfolios }: { onConsult?: () => void; onEx
 };
 
 const Services = () => (
-  <section id="services" className="py-16 sm:py-24 md:py-36 px-4 sm:px-6 md:px-12 bg-art-dark relative overflow-hidden">
-    <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-art-gold/30 to-transparent" />
+  <section id="services" className="py-16 sm:py-24 md:py-36 px-4 sm:px-6 md:px-12 bg-lux-ivory relative overflow-hidden">
+    <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-lux-gold/40 to-transparent" />
     
     <div className="max-w-7xl mx-auto">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-24 items-end mb-12 sm:mb-20 md:mb-32">
@@ -663,80 +693,80 @@ const Services = () => (
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <span className="text-art-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Expertise & Nexus</span>
-          <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white leading-tight italic">
-            Property <span className="not-italic text-art-gold">Intelligence.</span>
+          <span className="text-lux-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Expertise & Nexus</span>
+          <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-lux-forest leading-tight italic">
+            Property <span className="not-italic text-lux-gold">Intelligence.</span>
           </h2>
         </motion.div>
         <div className="max-w-md">
-          <p className="text-white/40 text-xs sm:text-[13px] leading-[1.8] sm:leading-[2] uppercase tracking-widest font-medium pb-4 sm:pb-6 border-b border-art-gold/20">
+          <p className="text-lux-muted text-xs sm:text-[13px] leading-[1.8] sm:leading-[2] uppercase tracking-widest font-medium pb-4 sm:pb-6 border-b border-lux-border">
             We operate at the intersection of architectural passion and strategic asset management, providing a gateway to the most coveted residential sanctuaries.
           </p>
         </div>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
-        <div className="p-6 sm:p-8 lg:p-12 bg-white/[0.02] border border-white/5 rounded-sm group hover:border-art-gold transition-all flex flex-col justify-between">
+        <div className="p-6 sm:p-8 lg:p-12 bg-lux-card border border-lux-border rounded-sm group hover:border-lux-gold shadow-md hover:shadow-xl transition-all flex flex-col justify-between">
           <div>
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-art-gold/10 flex items-center justify-center rounded-full mb-6 sm:mb-12 group-hover:bg-art-gold transition-all duration-500">
-              <ShieldCheck className="text-art-gold group-hover:text-black" size={28} />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-lux-forest/10 flex items-center justify-center rounded-full mb-6 sm:mb-12 group-hover:bg-lux-forest transition-all duration-500">
+              <ShieldCheck className="text-lux-forest group-hover:text-lux-card" size={28} />
             </div>
-            <span className="text-[10px] text-art-gold font-bold uppercase tracking-widest mb-3 sm:mb-4 block">01 / Acquisition</span>
-            <h3 className="text-2xl sm:text-3xl font-serif text-white mb-4 sm:mb-8">Primary Portfolios</h3>
-            <p className="text-xs text-white/30 leading-[1.8] sm:leading-[2] uppercase tracking-[0.1em] font-medium mb-8">
+            <span className="text-[10px] text-lux-gold font-bold uppercase tracking-widest mb-3 sm:mb-4 block">01 / Acquisition</span>
+            <h3 className="text-2xl sm:text-3xl font-serif text-lux-forest mb-4 sm:mb-8">Primary Portfolios</h3>
+            <p className="text-xs text-lux-muted leading-[1.8] sm:leading-[2] uppercase tracking-[0.1em] font-medium mb-8">
               Direct access to major builders across all lifecycle stages—from EOI and Pre-launch to Ready-to-Move.
             </p>
           </div>
-          <div className="flex items-center gap-4 text-[9px] uppercase font-black text-art-gold tracking-widest pt-6 border-t border-white/5">
-             <span className="w-8 h-[1px] bg-art-gold" /> 0% CLIENT BROKERAGE
+          <div className="flex items-center gap-4 text-[9px] uppercase font-black text-lux-forest tracking-widest pt-6 border-t border-lux-border">
+             <span className="w-8 h-[1px] bg-lux-gold" /> 0% CLIENT BROKERAGE
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 lg:p-12 bg-white/[0.02] border border-white/5 rounded-sm group hover:border-art-gold transition-all flex flex-col justify-between">
+        <div className="p-6 sm:p-8 lg:p-12 bg-lux-card border border-lux-border rounded-sm group hover:border-lux-gold shadow-md hover:shadow-xl transition-all flex flex-col justify-between">
           <div>
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-art-gold/10 flex items-center justify-center rounded-full mb-6 sm:mb-12 group-hover:bg-art-gold transition-all duration-500">
-              <TrendingUp className="text-art-gold group-hover:text-black" size={28} />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-lux-forest/10 flex items-center justify-center rounded-full mb-6 sm:mb-12 group-hover:bg-lux-forest transition-all duration-500">
+              <TrendingUp className="text-lux-forest group-hover:text-lux-card" size={28} />
             </div>
-            <span className="text-[10px] text-art-gold font-bold uppercase tracking-widest mb-3 sm:mb-4 block">02 / Growth</span>
-            <h3 className="text-2xl sm:text-3xl font-serif text-white mb-4 sm:mb-8">Resale & Investment</h3>
-            <p className="text-xs text-white/30 leading-[1.8] sm:leading-[2] uppercase tracking-[0.1em] font-medium mb-8">
+            <span className="text-[10px] text-lux-gold font-bold uppercase tracking-widest mb-3 sm:mb-4 block">02 / Growth</span>
+            <h3 className="text-2xl sm:text-3xl font-serif text-lux-forest mb-4 sm:mb-8">Resale & Investment</h3>
+            <p className="text-xs text-lux-muted leading-[1.8] sm:leading-[2] uppercase tracking-[0.1em] font-medium mb-8">
               Maximize your equity through strategic secondary market positioning. We engineer high-yield exit strategies and portfolio rebalancing for long-term capital appreciation.
             </p>
           </div>
-          <div className="flex items-center gap-4 text-[9px] uppercase font-black text-art-gold tracking-widest pt-6 border-t border-white/5">
-             <span className="w-8 h-[1px] bg-art-gold" /> PORTFOLIO OPTIMIZATION
+          <div className="flex items-center gap-4 text-[9px] uppercase font-black text-lux-forest tracking-widest pt-6 border-t border-lux-border">
+             <span className="w-8 h-[1px] bg-lux-gold" /> PORTFOLIO OPTIMIZATION
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 lg:p-12 bg-white/[0.02] border border-white/5 rounded-sm group hover:border-art-gold transition-all flex flex-col justify-between">
+        <div className="p-6 sm:p-8 lg:p-12 bg-lux-card border border-lux-border rounded-sm group hover:border-lux-gold shadow-md hover:shadow-xl transition-all flex flex-col justify-between">
           <div>
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-art-gold/10 flex items-center justify-center rounded-full mb-6 sm:mb-12 group-hover:bg-art-gold transition-all duration-500">
-              <CreditCard className="text-art-gold group-hover:text-black" size={28} />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-lux-forest/10 flex items-center justify-center rounded-full mb-6 sm:mb-12 group-hover:bg-lux-forest transition-all duration-500">
+              <CreditCard className="text-lux-forest group-hover:text-lux-card" size={28} />
             </div>
-            <span className="text-[10px] text-art-gold font-bold uppercase tracking-widest mb-3 sm:mb-4 block">03 / Nexus</span>
-            <h3 className="text-2xl sm:text-3xl font-serif text-white mb-4 sm:mb-8">Capital Concierge</h3>
-            <p className="text-xs text-white/30 leading-[1.8] sm:leading-[2] uppercase tracking-[0.1em] font-medium mb-8">
+            <span className="text-[10px] text-lux-gold font-bold uppercase tracking-widest mb-3 sm:mb-4 block">03 / Nexus</span>
+            <h3 className="text-2xl sm:text-3xl font-serif text-lux-forest mb-4 sm:mb-8">Capital Concierge</h3>
+            <p className="text-xs text-lux-muted leading-[1.8] sm:leading-[2] uppercase tracking-[0.1em] font-medium mb-8">
               Strategic alliances with Tier-1 banking institutions. We orchestrate comprehensive doorstep concierge services, ensuring your financial structuring is as seamless as your sanctuary selection.
             </p>
           </div>
-          <div className="flex items-center gap-4 text-[9px] uppercase font-black text-art-gold tracking-widest pt-6 border-t border-white/5">
-             <span className="w-8 h-[1px] bg-art-gold" /> SYNCHRONIZED APPROVALS
+          <div className="flex items-center gap-4 text-[9px] uppercase font-black text-lux-forest tracking-widest pt-6 border-t border-lux-border">
+             <span className="w-8 h-[1px] bg-lux-gold" /> SYNCHRONIZED APPROVALS
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 lg:p-12 bg-white/[0.02] border border-white/5 rounded-sm group hover:border-art-gold transition-all flex flex-col justify-between">
+        <div className="p-6 sm:p-8 lg:p-12 bg-lux-card border border-lux-border rounded-sm group hover:border-lux-gold shadow-md hover:shadow-xl transition-all flex flex-col justify-between">
           <div>
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-art-gold/10 flex items-center justify-center rounded-full mb-6 sm:mb-12 group-hover:bg-art-gold transition-all duration-500">
-              <Home className="text-art-gold group-hover:text-black" size={28} />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-lux-forest/10 flex items-center justify-center rounded-full mb-6 sm:mb-12 group-hover:bg-lux-forest transition-all duration-500">
+              <Home className="text-lux-forest group-hover:text-lux-card" size={28} />
             </div>
-            <span className="text-[10px] text-art-gold font-bold uppercase tracking-widest mb-3 sm:mb-4 block">04 / Lifestyle</span>
-            <h3 className="text-2xl sm:text-3xl font-serif text-white mb-4 sm:mb-8">Bespoke Design</h3>
-            <p className="text-xs text-white/30 leading-[1.8] sm:leading-[2] uppercase tracking-[0.1em] font-medium mb-8">
+            <span className="text-[10px] text-lux-gold font-bold uppercase tracking-widest mb-3 sm:mb-4 block">04 / Lifestyle</span>
+            <h3 className="text-2xl sm:text-3xl font-serif text-lux-forest mb-4 sm:mb-8">Bespoke Design</h3>
+            <p className="text-xs text-lux-muted leading-[1.8] sm:leading-[2] uppercase tracking-[0.1em] font-medium mb-8">
               Curated interior design collaborations and 3D architectural visualization to personalize your new sanctuary.
             </p>
           </div>
-          <div className="flex items-center gap-4 text-[9px] uppercase font-black text-art-gold tracking-widest pt-6 border-t border-white/5">
-             <span className="w-8 h-[1px] bg-art-gold" /> 3D VISUALIZATION SUPPORT
+          <div className="flex items-center gap-4 text-[9px] uppercase font-black text-lux-forest tracking-widest pt-6 border-t border-lux-border">
+             <span className="w-8 h-[1px] bg-lux-gold" /> 3D VISUALIZATION SUPPORT
           </div>
         </div>
       </div>
@@ -791,57 +821,45 @@ const WhyChoose = ({ onConsult }: { onConsult?: () => void }) => {
   ];
 
   return (
-    <section id="why-choose" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-white/[0.01] relative overflow-hidden">
-      <div className="absolute right-0 top-0 w-px h-full bg-white/5 hidden lg:block" />
+    <section id="why-choose" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-lux-ivory border-t border-lux-border relative overflow-hidden">
+      <div className="absolute right-0 top-0 w-px h-full bg-lux-border hidden lg:block" />
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 lg:gap-12 mb-12 sm:mb-16 md:mb-24">
           <div className="max-w-2xl">
-            <span className="text-art-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Our Philosophy • Primary, Resale & Rental</span>
-            <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-white tracking-tight italic">
-              Why Choose <span className="not-italic text-art-gold">BS Homez.</span>
+            <span className="text-lux-gold text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.6em] font-black block mb-4 sm:mb-6">Our Philosophy • Primary, Resale & Rental</span>
+            <h2 className="text-3xl sm:text-5xl md:text-7xl font-serif text-lux-forest tracking-tight italic">
+              Why Choose <span className="not-italic text-lux-gold">BS Homez.</span>
             </h2>
           </div>
           <div className="lg:pb-8">
-            <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.3em] sm:tracking-[0.4em] font-black text-white/30">
-              <div className="w-12 h-px bg-art-gold/30" /> Seven Pillars of Sales & Rental Trust
+            <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.3em] sm:tracking-[0.4em] font-black text-lux-muted">
+              <div className="w-12 h-px bg-lux-gold" /> Seven Pillars of Sales & Rental Trust
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 lg:gap-12 gap-y-10 sm:gap-y-16">
           {points.map((point) => {
-            const colorMap: Record<string, string> = {
-              "01": "#f4f3f2",
-              "02": "#fbf9f5",
-              "03": "#fbf9f5",
-              "04": "#faf6ed",
-              "05": "#f6f4f0",
-              "06": "#f4f0e9",
-              "07": "#f4f2ed",
-            };
             return (
               <motion.div 
                 key={point.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="relative group h-full flex flex-col"
+                className="relative group h-full flex flex-col p-6 bg-lux-card border border-lux-border rounded-sm shadow-sm hover:shadow-md transition-all"
               >
-                <div 
-                  className="text-[10px] font-mono text-art-gold/20 font-black mb-6 group-hover:text-art-gold transition-colors duration-500"
-                  style={{ color: colorMap[point.id] || undefined }}
-                >
+                <div className="text-[10px] font-mono text-lux-gold font-black mb-6">
                   // {point.id}
                 </div>
-                <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-sm mb-8 text-art-gold border border-white/10 group-hover:bg-art-gold group-hover:text-black transition-all duration-500">
+                <div className="w-12 h-12 bg-lux-ivory flex items-center justify-center rounded-sm mb-8 text-lux-forest border border-lux-border group-hover:bg-lux-forest group-hover:text-lux-card transition-all duration-500">
                   {point.icon}
                 </div>
-                <h3 className="text-2xl font-serif text-white mb-6 italic leading-snug">{point.title}</h3>
-                <p className="text-[11px] text-white/30 uppercase tracking-widest leading-[2] font-medium group-hover:text-white/60 transition-colors">
+                <h3 className="text-2xl font-serif text-lux-forest mb-6 italic leading-snug">{point.title}</h3>
+                <p className="text-[11px] text-lux-muted uppercase tracking-widest leading-[2] font-medium group-hover:text-lux-charcoal transition-colors">
                   {point.description}
                 </p>
                 <div className="mt-auto pt-8">
-                  <div className="w-0 h-[1px] bg-art-gold group-hover:w-full transition-all duration-700" />
+                  <div className="w-0 h-[1px] bg-lux-gold group-hover:w-full transition-all duration-700" />
                 </div>
               </motion.div>
             );
@@ -852,15 +870,15 @@ const WhyChoose = ({ onConsult }: { onConsult?: () => void }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="relative lg:col-span-1 xl:col-span-1 bg-art-gold p-10 flex flex-col justify-between"
+            className="relative lg:col-span-1 xl:col-span-1 bg-lux-forest text-lux-card border border-lux-gold/40 p-10 flex flex-col justify-between rounded-sm shadow-lg"
           >
             <div>
-              <span className="text-black text-[9px] font-black uppercase tracking-widest block mb-12">Actionable Intelligence</span>
-              <h3 className="text-4xl font-serif text-black leading-[1.1] italic mb-6">Experience the Service Difference.</h3>
+              <span className="text-lux-gold text-[9px] font-black uppercase tracking-widest block mb-12">Actionable Intelligence</span>
+              <h3 className="text-4xl font-serif text-lux-card leading-[1.1] italic mb-6">Experience the Service Difference.</h3>
             </div>
             <button 
               onClick={onConsult} 
-              className="flex items-center justify-between text-black text-[10px] uppercase font-black tracking-widest border-t border-black/20 pt-8 group/btn text-left mt-auto w-full"
+              className="flex items-center justify-between text-lux-gold hover:text-lux-card text-[10px] uppercase font-black tracking-widest border-t border-white/20 pt-8 group/btn text-left mt-auto w-full cursor-pointer"
             >
               Consult Now
               <ChevronRight size={16} className="group-hover/btn:translate-x-2 transition-transform" />
@@ -1046,26 +1064,18 @@ export const getHandoverBorderAccent = (status?: string): string => {
  */
 export const getProjectColorBorder = (project: Project, index?: number): string => {
   if (project.isInventorySoldOut || project.sticker === 'Sold Out') {
-    return 'border-2 border-red-500/80 hover:border-red-400 shadow-[0_4px_25px_rgba(239,68,68,0.25)] border-l-4 sm:border-l-[6px] border-l-red-500';
+    return 'border border-red-500/70 hover:border-red-500 shadow-md border-l-4 sm:border-l-[6px] border-l-red-500';
   }
 
   const colorBorders = [
-    // 0: Royal Gold / Amber
-    'border-2 border-amber-400/80 hover:border-amber-300 shadow-[0_4px_25px_rgba(251,191,36,0.2)] border-l-4 sm:border-l-[6px] border-l-amber-400',
-    // 1: Emerald Green
-    'border-2 border-emerald-500/80 hover:border-emerald-400 shadow-[0_4px_25px_rgba(16,185,129,0.2)] border-l-4 sm:border-l-[6px] border-l-emerald-500',
-    // 2: Electric Cyan / Sapphire
-    'border-2 border-cyan-400/80 hover:border-cyan-300 shadow-[0_4px_25px_rgba(6,182,212,0.2)] border-l-4 sm:border-l-[6px] border-l-cyan-400',
-    // 3: Imperial Violet / Purple
-    'border-2 border-purple-400/80 hover:border-purple-300 shadow-[0_4px_25px_rgba(168,85,247,0.2)] border-l-4 sm:border-l-[6px] border-l-purple-400',
-    // 4: Rose / Ruby
-    'border-2 border-rose-400/80 hover:border-rose-300 shadow-[0_4px_25px_rgba(244,63,94,0.2)] border-l-4 sm:border-l-[6px] border-l-rose-400',
-    // 5: Teal / Sea Green
-    'border-2 border-teal-400/80 hover:border-teal-300 shadow-[0_4px_25px_rgba(45,212,191,0.2)] border-l-4 sm:border-l-[6px] border-l-teal-400',
-    // 6: Sky Blue
-    'border-2 border-sky-400/80 hover:border-sky-300 shadow-[0_4px_25px_rgba(56,189,248,0.2)] border-l-4 sm:border-l-[6px] border-l-sky-400',
-    // 7: Radiant Orange / Coral
-    'border-2 border-orange-400/80 hover:border-orange-300 shadow-[0_4px_25px_rgba(251,146,60,0.2)] border-l-4 sm:border-l-[6px] border-l-orange-400'
+    // 0: Forest Green
+    'border border-lux-border hover:border-lux-forest shadow-md hover:shadow-xl border-l-4 sm:border-l-[6px] border-l-lux-forest',
+    // 1: Champagne Gold
+    'border border-lux-border hover:border-lux-gold shadow-md hover:shadow-xl border-l-4 sm:border-l-[6px] border-l-lux-gold',
+    // 2: Forest Hover
+    'border border-lux-border hover:border-lux-forest-hover shadow-md hover:shadow-xl border-l-4 sm:border-l-[6px] border-l-lux-forest-hover',
+    // 3: Forest Green
+    'border border-lux-border hover:border-lux-forest shadow-md hover:shadow-xl border-l-4 sm:border-l-[6px] border-l-lux-forest'
   ];
 
   if (typeof index === 'number') {
@@ -1175,41 +1185,21 @@ const ProjectCard: React.FC<{
     }
   }, [project.organicViews]);
 
-  // High-performance session-guarded view increment (organic views are live-synced by parent portfolio listener)
+  // Session-guarded local view counter display.
+  // Cross-visitor persistent organicViews increments require a dedicated rate-limited server endpoint
+  // backed by Admin SDK credentials; client-side writes to Admin-only `projects` docs are disabled.
   useEffect(() => {
     if (!project.id) return;
-    const projectDocRef = doc(db, 'projects', project.id);
-
     const sessionKey = `viewed_proj_${project.id}`;
-    let timer: NodeJS.Timeout | undefined;
     const alreadyViewed = typeof sessionStorage !== 'undefined' && sessionStorage.getItem(sessionKey);
 
     if (!alreadyViewed) {
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.setItem(sessionKey, '1');
       }
-
-      // Defer Firestore increment slightly to let first frame render smoothly
-      timer = setTimeout(async () => {
-        try {
-          await updateDoc(projectDocRef, {
-            organicViews: increment(1)
-          });
-        } catch {
-          // If the document lacks organicViews or updateDoc fails, upsert safely
-          try {
-            await setDoc(projectDocRef, { 
-              organicViews: (project.organicViews || baselineViews) + 1 
-            }, { merge: true });
-          } catch {}
-        }
-      }, 1000);
+      setViews((prev) => prev + 1);
     }
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [project.id, baselineViews]);
+  }, [project.id]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1249,12 +1239,29 @@ const ProjectCard: React.FC<{
       return;
     }
 
+    const targetProjectId = project.id?.trim();
+    if (
+      !targetProjectId ||
+      targetProjectId === 'unspecified' ||
+      targetProjectId.startsWith('local_') ||
+      project.sourceCollection === 'public_portfolio'
+    ) {
+      setSubscribeError("Price alerts are only available for published developer projects in the live registry.");
+      return;
+    }
+
     setIsSubscribing(true);
     setSubscribeError('');
 
     try {
+      const projectSnap = await getDoc(doc(db, 'projects', targetProjectId));
+      if (!projectSnap.exists()) {
+        setSubscribeError("This listing is not yet registered for automated alerts. Please use Enquire for updates.");
+        return;
+      }
+
       await addDoc(collection(db, 'subscriptions'), {
-        projectId: project.id || 'unspecified',
+        projectId: targetProjectId,
         projectName: project.name,
         email: subscribeEmail.trim().toLowerCase(),
         createdAt: serverTimestamp()
@@ -1532,7 +1539,7 @@ const ProjectCard: React.FC<{
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
       whileHover={{ 
         y: isEditingCard ? 0 : -4,
-        boxShadow: "0 20px 45px -10px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.08)"
+        boxShadow: "0 20px 45px -10px rgba(21, 61, 50, 0.14)"
       }}
       transition={{ 
         type: "spring", 
@@ -1541,7 +1548,7 @@ const ProjectCard: React.FC<{
         opacity: { duration: 0.4 }
       }}
       className={cn(
-        "project-grid-item group relative flex flex-col md:flex-row bg-[#111111] transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-lg",
+        "project-grid-item group relative flex flex-col md:flex-row bg-lux-card text-lux-charcoal transition-all duration-300 overflow-hidden w-full max-w-full box-border rounded-lg",
         getProjectColorBorder(project, index),
         isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
       )}
@@ -1559,14 +1566,14 @@ const ProjectCard: React.FC<{
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="absolute inset-0 bg-art-dark/98 backdrop-blur-md z-40 flex flex-col justify-center p-8 border border-art-gold/30"
+            className="absolute inset-0 bg-lux-card/98 backdrop-blur-md z-40 flex flex-col justify-center p-8 border border-lux-border text-lux-charcoal"
           >
             <button 
               onClick={() => {
                 setIsSubscribeOpen(false);
                 setSubscribeError('');
               }}
-              className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors p-2 z-40"
+              className="absolute top-6 right-6 text-lux-muted hover:text-lux-forest transition-colors p-2 z-40 cursor-pointer"
               aria-label="Close"
             >
               <X size={16} />
@@ -1575,13 +1582,13 @@ const ProjectCard: React.FC<{
             {!subscribeSuccess ? (
               <form onSubmit={handleSubscribeSubmit} className="space-y-6">
                 <div className="text-center">
-                  <div className="w-10 h-10 rounded-full bg-art-gold/10 flex items-center justify-center mx-auto mb-4 border border-art-gold/25">
-                    <Bell className="text-art-gold" size={16} />
+                  <div className="w-10 h-10 rounded-full bg-lux-forest/10 flex items-center justify-center mx-auto mb-4 border border-lux-border">
+                    <Bell className="text-lux-forest" size={16} />
                   </div>
-                  <h4 className="text-lg font-serif italic text-white tracking-wide">Property Alerts</h4>
-                  <p className="text-[9px] text-white/50 uppercase tracking-[0.2em] leading-relaxed mt-2 px-1">
+                  <h4 className="text-lg font-serif italic text-lux-forest tracking-wide">Property Alerts</h4>
+                  <p className="text-[9px] text-lux-muted uppercase tracking-[0.2em] leading-relaxed mt-2 px-1">
                     Receive priority email notification updates on any capital value adjustments within <br/>
-                    <span className="text-art-gold font-bold font-serif italic normal-case tracking-normal">{project.name}</span>.
+                    <span className="text-lux-forest font-bold font-serif italic normal-case tracking-normal">{project.name}</span>.
                   </p>
                 </div>
                 
@@ -1592,11 +1599,11 @@ const ProjectCard: React.FC<{
                     placeholder="Enter proprietary email"
                     value={subscribeEmail}
                     onChange={(e) => setSubscribeEmail(e.target.value)}
-                    className="w-full text-xs bg-white/[0.02] border border-white/15 focus:border-art-gold/50 text-white placeholder-white/20 px-4 py-3 rounded-sm outline-none transition-all font-mono"
+                    className="w-full text-xs bg-lux-ivory border border-lux-border focus:border-lux-forest text-lux-charcoal placeholder-lux-muted/60 px-4 py-3 rounded-sm outline-none transition-all font-mono"
                     disabled={isSubscribing}
                   />
                   {subscribeError && (
-                    <p className="text-[10px] text-red-400 uppercase tracking-widest text-center font-bold">
+                    <p className="text-[10px] text-red-600 uppercase tracking-widest text-center font-bold">
                       {subscribeError}
                     </p>
                   )}
@@ -1605,7 +1612,7 @@ const ProjectCard: React.FC<{
                 <button 
                   type="submit"
                   disabled={isSubscribing}
-                  className="w-full bg-art-gold text-black hover:bg-white hover:text-black font-black text-[9px] uppercase tracking-[0.25em] py-3.5 rounded-sm transition-all shadow-[0_0_20px_rgba(212,175,55,0.25)] disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full bg-lux-forest text-lux-card hover:bg-lux-forest-hover font-black text-[9px] uppercase tracking-[0.25em] py-3.5 rounded-sm transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSubscribing ? (
                     <>
@@ -1623,11 +1630,11 @@ const ProjectCard: React.FC<{
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center space-y-4 py-6"
               >
-                <div className="w-12 h-12 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-4 border border-green-500/20">
-                  <CheckCircle2 className="text-green-400" size={22} />
+                <div className="w-12 h-12 rounded-full bg-lux-forest/10 flex items-center justify-center mx-auto mb-4 border border-lux-forest/30">
+                  <CheckCircle2 className="text-lux-forest" size={22} />
                 </div>
-                <h4 className="text-base font-serif italic text-white">Registry Activated</h4>
-                <p className="text-[9px] text-white/40 uppercase tracking-[0.2em] leading-relaxed">
+                <h4 className="text-base font-serif italic text-lux-forest">Registry Activated</h4>
+                <p className="text-[9px] text-lux-muted uppercase tracking-[0.2em] leading-relaxed">
                   You are now registered to receive premium price advisory updates for {project.name}.
                 </p>
               </motion.div>
@@ -2007,21 +2014,21 @@ const ProjectCard: React.FC<{
       ) : (
         <>
           {/* Left Column: Property Visual & Media Showcase (Compact Ultra-Sleek Height) */}
-          <div className="w-full md:w-44 lg:w-48 xl:w-52 shrink-0 relative overflow-hidden bg-gradient-to-br from-[#181818] via-[#111111] to-[#0a0a0a] flex flex-col justify-between min-h-[110px] md:min-h-[135px] border-b md:border-b-0 md:border-r border-white/10 group/img">
+          <div className="w-full md:w-44 lg:w-48 xl:w-52 shrink-0 relative overflow-hidden bg-lux-forest flex flex-col justify-between min-h-[110px] md:min-h-[135px] border-b md:border-b-0 md:border-r border-lux-border group/img">
             {isPrimary ? (
               /* Hide project images and display official BS Homez logo for Primary projects */
               <div 
                 onClick={() => onEnquire(project)}
-                className="w-full h-full absolute inset-0 bg-gradient-to-br from-[#1b1b1b] via-[#121212] to-[#0a0a0a] flex flex-col items-center justify-center p-2 text-center cursor-pointer select-none group/logo-card"
+                className="w-full h-full absolute inset-0 bg-gradient-to-br from-lux-forest via-[#113128] to-lux-footer flex flex-col items-center justify-center p-2 text-center cursor-pointer select-none group/logo-card"
                 title="BS Homez Verified Primary Portfolio - Click to Inquire"
               >
                 <div className="relative flex flex-col items-center justify-center scale-90 sm:scale-95 group-hover/logo-card:scale-100 transition-transform duration-300">
-                  <Logo className="w-28 sm:w-32 h-auto drop-shadow-[0_2px_10px_rgba(227,37,38,0.25)]" />
+                  <Logo className="w-28 sm:w-32 h-auto drop-shadow-[0_2px_10px_rgba(197,164,109,0.25)]" />
                   <div className="mt-1 flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 rounded bg-art-gold/15 text-art-gold border border-art-gold/30 text-[7.5px] font-mono uppercase tracking-widest font-black">
+                    <span className="px-1.5 py-0.5 rounded bg-lux-gold/20 text-lux-gold border border-lux-gold/40 text-[7.5px] font-mono uppercase tracking-widest font-black">
                       Primary Partner
                     </span>
-                    <span className="text-[7px] uppercase font-mono text-white/50 tracking-wider">
+                    <span className="text-[7px] uppercase font-mono text-lux-card/70 tracking-wider">
                       Verified
                     </span>
                   </div>
@@ -2029,33 +2036,34 @@ const ProjectCard: React.FC<{
               </div>
             ) : canViewProjectImages ? (
               <>
-                <img
+                <OptimizedImage
                   src={coverImage}
                   alt={project.name}
                   className={cn(
                     "w-full h-full transition-transform duration-500 absolute inset-0 cursor-pointer",
                     (project.type === 'Rental' || project.type === 'Resale')
-                      ? (isCardImageZoomed ? "object-cover scale-110" : "object-contain bg-black/95 p-1")
+                      ? (isCardImageZoomed ? "object-cover scale-110" : "object-contain bg-lux-footer p-1")
                       : "object-cover group-hover/img:scale-105 duration-700"
                   )}
                   onClick={() => setIsMediaViewerOpen(true)}
-                  loading="lazy"
+                  width={400}
+                  height={250}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-black/60 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-lux-footer/90 via-lux-footer/20 to-lux-footer/60 pointer-events-none" />
               </>
             ) : (
               <div 
                 onClick={() => onEnquire(project)}
-                className="w-full h-full absolute inset-0 bg-gradient-to-br from-[#1c1c1c] via-[#111111] to-[#080808] flex flex-col items-center justify-center p-2.5 text-center cursor-pointer select-none group/lock"
+                className="w-full h-full absolute inset-0 bg-gradient-to-br from-lux-forest via-[#113128] to-lux-footer flex flex-col items-center justify-center p-2.5 text-center cursor-pointer select-none group/lock"
                 title="Direct Builder Portfolio - Inquire for official floor plans and verified gallery"
               >
-                <div className="w-8 h-8 rounded-full bg-art-gold/15 border border-art-gold/40 flex items-center justify-center text-art-gold mb-1 group-hover/lock:scale-110 transition-transform shadow-md">
+                <div className="w-8 h-8 rounded-full bg-lux-gold/20 border border-lux-gold/40 flex items-center justify-center text-lux-gold mb-1 group-hover/lock:scale-110 transition-transform shadow-md">
                   <Building2 size={16} />
                 </div>
-                <span className="text-[8.5px] uppercase font-mono font-bold tracking-wider text-art-gold block">
+                <span className="text-[8.5px] uppercase font-mono font-bold tracking-wider text-lux-gold block">
                   Developer Direct
                 </span>
-                <span className="text-[7px] uppercase font-mono text-white/50 block mt-0.5">
+                <span className="text-[7px] uppercase font-mono text-lux-card/70 block mt-0.5">
                   Verified RERA Portfolio
                 </span>
               </div>
@@ -2064,18 +2072,18 @@ const ProjectCard: React.FC<{
             {/* Top Overlays: Badges */}
             <div className="p-2 relative z-10 flex items-start justify-between gap-1.5 flex-wrap">
               <div className="flex items-center gap-1 flex-wrap">
-                <span className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-black/75 text-white border border-white/20 rounded-sm flex items-center gap-1 backdrop-blur-sm">
-                  <MapPin size={9} className="text-art-gold shrink-0" />
+                <span className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-lux-footer/85 text-lux-card border border-white/20 rounded-sm flex items-center gap-1 backdrop-blur-sm">
+                  <MapPin size={9} className="text-lux-gold shrink-0" />
                   {displayZone}
                 </span>
                 {project.handoverStatus && (
                   <span className={cn(
                     "text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 border rounded-sm backdrop-blur-sm",
-                    project.handoverStatus === 'EOI' && "bg-art-gold/25 border-art-gold/50 text-art-gold",
-                    project.handoverStatus === 'Under Construction' && "bg-blue-600/30 border-blue-400 text-blue-200",
-                    project.handoverStatus === 'Ready to Move' && "bg-emerald-600/30 border-emerald-400 text-emerald-200",
-                    project.handoverStatus === 'Handed Over' && "bg-purple-600/30 border-purple-400 text-purple-200",
-                    !['EOI', 'Under Construction', 'Ready to Move', 'Handed Over'].includes(project.handoverStatus) && "bg-black/60 border-white/20 text-white"
+                    project.handoverStatus === 'EOI' && "bg-lux-gold/30 border-lux-gold/60 text-lux-card",
+                    project.handoverStatus === 'Under Construction' && "bg-blue-700/80 border-blue-400/60 text-white",
+                    project.handoverStatus === 'Ready to Move' && "bg-emerald-700/85 border-emerald-400/60 text-white",
+                    project.handoverStatus === 'Handed Over' && "bg-purple-700/80 border-purple-400/60 text-white",
+                    !['EOI', 'Under Construction', 'Ready to Move', 'Handed Over'].includes(project.handoverStatus) && "bg-lux-footer/80 border-white/20 text-white"
                   )}>
                     {project.handoverStatus === 'Under Construction' ? 'Under .Const' : project.handoverStatus}
                   </span>
@@ -2092,7 +2100,7 @@ const ProjectCard: React.FC<{
                       setIsCardImageZoomed(prev => !prev);
                     }}
                     data-testid="resale-rental-zoom-toggle"
-                    className="flex items-center gap-1 px-1.5 py-0.5 bg-black/85 hover:bg-white text-art-gold hover:text-black border border-art-gold/40 hover:border-white rounded text-[8px] font-mono font-bold transition-all shadow-md cursor-pointer select-none"
+                    className="flex items-center gap-1 px-1.5 py-0.5 bg-lux-footer/90 hover:bg-lux-card text-lux-gold hover:text-lux-forest border border-lux-gold/50 hover:border-lux-card rounded text-[8px] font-mono font-bold transition-all shadow-md cursor-pointer select-none"
                     title={isCardImageZoomed ? "Switch to Normal Uncropped View" : "Zoom Resale / Rental Photo"}
                   >
                     {isCardImageZoomed ? <ZoomOut size={10} /> : <ZoomIn size={10} />}
@@ -2101,11 +2109,11 @@ const ProjectCard: React.FC<{
                 )}
                 {/* Small Organic Visits Counter */}
                 <div 
-                  className="flex items-center gap-1 px-1.5 py-0.5 bg-black/80 border border-white/20 rounded text-[8.5px] font-mono text-white/90 backdrop-blur-sm select-none shadow"
+                  className="flex items-center gap-1 px-1.5 py-0.5 bg-lux-footer/85 border border-white/20 rounded text-[8.5px] font-mono text-lux-card backdrop-blur-sm select-none shadow"
                 title={`${views.toLocaleString()} organic property views recorded`}
               >
-                <Eye size={10} className="text-art-gold shrink-0" />
-                <span className="font-bold text-white tracking-tight">{formatVisitsCount(views)}</span>
+                <Eye size={10} className="text-lux-gold shrink-0" />
+                <span className="font-bold text-lux-card tracking-tight">{formatVisitsCount(views)}</span>
                 </div>
               </div>
             </div>
@@ -2130,7 +2138,7 @@ const ProjectCard: React.FC<{
                         <span>⚡</span> LIMITED ({project.unitsRemaining === 1 ? '1 UNIT' : `${project.unitsRemaining} UNITS`})
                       </div>
                     ) : (
-                      <div className="px-2 py-0.5 bg-black/80 text-art-gold font-mono font-bold text-[8.5px] uppercase tracking-wider rounded-sm border border-art-gold/40 text-center">
+                      <div className="px-2 py-0.5 bg-lux-footer/85 text-lux-gold font-mono font-bold text-[8.5px] uppercase tracking-wider rounded-sm border border-lux-gold/40 text-center">
                         <span>📦</span> {project.unitsRemaining} Left
                       </div>
                     )
@@ -2147,10 +2155,10 @@ const ProjectCard: React.FC<{
                       e.stopPropagation();
                       setIsMediaViewerOpen(true);
                     }}
-                    className="px-2 py-0.5 rounded-sm text-[8.5px] font-mono font-bold bg-black/85 hover:bg-emerald-500 text-white hover:text-black border border-white/20 hover:border-emerald-400 transition-all flex items-center gap-1 cursor-pointer shadow"
+                    className="px-2 py-0.5 rounded-sm text-[8.5px] font-mono font-bold bg-lux-footer/90 hover:bg-lux-gold text-lux-card hover:text-lux-charcoal border border-white/20 hover:border-lux-gold transition-all flex items-center gap-1 cursor-pointer shadow"
                     title={isAdmin && isPrimary ? "Admin View: High-Definition Photos" : "View High-Definition Photos"}
                   >
-                    <ImageIcon size={10} className="text-emerald-400" />
+                    <ImageIcon size={10} className="text-lux-gold" />
                     <span>{project.imageUrls.length} Photos</span>
                   </button>
                 )}
@@ -2161,7 +2169,7 @@ const ProjectCard: React.FC<{
                       e.stopPropagation();
                       setIsMediaViewerOpen(true);
                     }}
-                    className="px-2 py-0.5 rounded-sm text-[8.5px] font-mono font-bold bg-black/85 hover:bg-purple-500 text-white hover:text-black border border-white/20 hover:border-purple-400 transition-all flex items-center gap-1 cursor-pointer shadow"
+                    className="px-2 py-0.5 rounded-sm text-[8.5px] font-mono font-bold bg-lux-footer/90 hover:bg-lux-gold text-lux-card hover:text-lux-charcoal border border-white/20 hover:border-lux-gold transition-all flex items-center gap-1 cursor-pointer shadow"
                     title="Watch Verified Video Walkthrough"
                   >
                     <span>🎥</span>
@@ -2169,7 +2177,7 @@ const ProjectCard: React.FC<{
                   </button>
                 )}
                 {project.availableFrom && (
-                  <span className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold bg-cyan-950/90 text-cyan-300 border border-cyan-500/40">
+                  <span className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold bg-lux-footer/90 text-lux-gold border border-lux-gold/40">
                     🗓️ {project.availableFrom}
                   </span>
                 )}
@@ -2178,19 +2186,19 @@ const ProjectCard: React.FC<{
           </div>
 
           {/* Right Column: Complete Details, Writeup, Amenities & Action Bar (Ultra-Compact Height) */}
-          <div className="flex-1 min-w-0 p-2.5 sm:p-3 flex flex-col justify-between space-y-1.5 bg-gradient-to-b from-[#131313] to-[#0c0c0c]">
+          <div className="flex-1 min-w-0 p-2.5 sm:p-3.5 flex flex-col justify-between space-y-1.5 bg-lux-card text-lux-charcoal">
             {/* 1. PROJECT NAME FIRST */}
-            <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-1.5">
+            <div className="flex items-start justify-between gap-2 border-b border-lux-border pb-1.5">
               <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-lg md:text-xl font-serif text-white font-bold italic leading-tight group-hover:text-art-gold transition-colors duration-200 tracking-tight break-words">
+                <h3 className="text-base sm:text-lg md:text-xl font-serif text-lux-forest font-bold italic leading-tight group-hover:text-lux-forest-hover transition-colors duration-200 tracking-tight break-words">
                   {project.name}
                 </h3>
                 <div className="flex items-center gap-1.5 flex-wrap mt-0.5 text-[8.5px] sm:text-[9.5px]">
-                  <span className="text-art-gold uppercase tracking-wider font-extrabold">
+                  <span className="text-lux-gold uppercase tracking-wider font-extrabold">
                     {displayPropertyType} {project.segment ? `• ${project.segment}` : ''}
                   </span>
                   {project.builderName && (
-                    <span className="px-1.5 py-0.5 rounded-sm bg-white/10 text-white font-mono text-[8.5px] font-semibold">
+                    <span className="px-1.5 py-0.5 rounded-sm bg-lux-ivory text-lux-forest border border-lux-border font-mono text-[8.5px] font-semibold">
                       {project.builderName} {project.builderCategory ? `(Cat ${project.builderCategory})` : ''}
                     </span>
                   )}
@@ -2205,7 +2213,7 @@ const ProjectCard: React.FC<{
                     e.stopPropagation();
                     onOpenMetaData?.(project);
                   }}
-                  className="add-meta-data-btn px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 flex items-center gap-1 cursor-pointer transition-colors shadow-sm"
+                  className="add-meta-data-btn px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border flex items-center gap-1 cursor-pointer transition-colors shadow-sm"
                   title="Add Meta Data & SEO"
                 >
                   <Sparkles size={9} />
@@ -2220,7 +2228,7 @@ const ProjectCard: React.FC<{
                         setEditDraft({ ...project });
                         setIsEditingCard(!isEditingCard);
                       }}
-                      className="px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 flex items-center gap-1 cursor-pointer transition-colors"
+                      className="px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border flex items-center gap-1 cursor-pointer transition-colors"
                       title="Edit Project Data"
                     >
                       <Edit size={9} /> Edit
@@ -2230,7 +2238,7 @@ const ProjectCard: React.FC<{
                       onClick={() => onTogglePause(project)}
                       className={cn(
                         "px-1.5 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black border cursor-pointer transition-colors",
-                        project.isPaused ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-white/5 text-art-gold border-art-gold/30 hover:bg-art-gold hover:text-black"
+                        project.isPaused ? "bg-emerald-500/15 text-emerald-800 border-emerald-500/40" : "bg-lux-ivory text-lux-forest border-lux-border hover:bg-lux-forest hover:text-lux-card"
                       )}
                       title={project.isPaused ? "Unhide project" : "Hide project"}
                     >
@@ -2239,7 +2247,7 @@ const ProjectCard: React.FC<{
                     <button
                       type="button"
                       onClick={() => onDeleteProject(project)}
-                      className="px-1.5 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-white/5 hover:bg-red-500/20 text-red-400 border border-red-500/30 cursor-pointer transition-colors"
+                      className="px-1.5 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-red-500/10 hover:bg-red-600 text-red-700 hover:text-white border border-red-500/30 cursor-pointer transition-colors"
                       title="Delete project"
                     >
                       Delete
@@ -2250,51 +2258,51 @@ const ProjectCard: React.FC<{
             </div>
 
             {/* 2. PRICING SECOND (Directly following Project Name) */}
-            <div className="flex items-center justify-between gap-2 flex-wrap bg-gradient-to-r from-black/90 via-black/80 to-transparent border border-art-gold/40 px-2.5 py-1.5 rounded-sm shadow-sm">
+            <div className="flex items-center justify-between gap-2 flex-wrap bg-lux-ivory border border-lux-border px-2.5 py-1.5 rounded-sm shadow-sm">
               <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="text-[9px] uppercase tracking-widest text-white/60 font-mono font-bold">
+                <span className="text-[9px] uppercase tracking-widest text-lux-muted font-mono font-bold">
                   Price:
                 </span>
-                <span className="text-base sm:text-lg font-mono font-black text-art-gold tracking-tight leading-tight">
+                <span className="text-base sm:text-lg font-mono font-black text-lux-forest tracking-tight leading-tight">
                   {formattedMainPrice}
                 </span>
-                <span className="text-[8px] uppercase tracking-wider text-white/65 font-mono font-semibold pl-1.5 border-l border-white/20">
+                <span className="text-[8px] uppercase tracking-wider text-lux-muted font-mono font-semibold pl-1.5 border-l border-lux-border">
                   * Conditions Apply
                 </span>
                 {project.configuration && project.configuration.length > 0 && (
-                  <span className="text-white/80 font-mono font-semibold uppercase text-[8.5px] pl-1.5 border-l border-white/20">
+                  <span className="text-lux-charcoal font-mono font-semibold uppercase text-[8.5px] pl-1.5 border-l border-lux-border">
                     {project.configuration.join(' | ')}
                   </span>
                 )}
               </div>
 
               {/* Handover quick pill */}
-              <div className="flex items-center gap-1.5 text-[9px] font-mono text-white/80">
-                <span className="px-2 py-0.5 rounded bg-white/10 text-white/90 border border-white/15">
+              <div className="flex items-center gap-1.5 text-[9px] font-mono text-lux-forest">
+                <span className="px-2 py-0.5 rounded bg-lux-card text-lux-forest border border-lux-border font-semibold">
                   🗓️ {effectiveHandoverDate}
                 </span>
               </div>
             </div>
 
             {/* Unified Location & Last Price Strip */}
-            <div className="px-2.5 py-1 bg-white/[0.025] border border-white/15 rounded-sm flex items-center justify-between gap-2 text-[9.5px] sm:text-[10px]">
+            <div className="px-2.5 py-1 bg-lux-ivory/70 border border-lux-border rounded-sm flex items-center justify-between gap-2 text-[9.5px] sm:text-[10px]">
               <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                <MapPin size={11} className="text-art-gold shrink-0" />
-                <span className="font-semibold text-white truncate">
+                <MapPin size={11} className="text-lux-forest shrink-0" />
+                <span className="font-semibold text-lux-charcoal truncate">
                   {project.location}
                 </span>
                 <a
                   href={googleMapsSearchUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[8px] uppercase tracking-wider text-art-gold hover:text-white flex items-center gap-0.5 font-mono font-bold transition-colors px-1.5 py-0.5 bg-art-gold/15 border border-art-gold/40 rounded shrink-0"
+                  className="text-[8px] uppercase tracking-wider text-lux-forest hover:text-lux-card hover:bg-lux-forest flex items-center gap-0.5 font-mono font-bold transition-colors px-1.5 py-0.5 bg-lux-card border border-lux-border rounded shrink-0"
                 >
                   <ExternalLink size={8} /> Map
                 </a>
               </div>
 
-              <div className="flex items-center gap-1.5 text-[9px] font-mono shrink-0 text-white/70">
-                <span className="text-white font-bold" title="Last Verified Price">
+              <div className="flex items-center gap-1.5 text-[9px] font-mono shrink-0 text-lux-muted">
+                <span className="text-lux-forest font-bold" title="Last Verified Price">
                   {effectiveLastPrice}
                 </span>
               </div>
@@ -2302,7 +2310,7 @@ const ProjectCard: React.FC<{
 
             {/* Curated Writeup (Clean without Nearby 2km text) */}
             {cleanProjectDescription(project.description) && (
-              <p className="text-[11px] text-white/80 font-sans leading-tight line-clamp-1">
+              <p className="text-[11px] text-lux-muted font-sans leading-tight line-clamp-1">
                 {cleanProjectDescription(project.description)}
               </p>
             )}
@@ -2313,9 +2321,9 @@ const ProjectCard: React.FC<{
                 {project.features.slice(0, 4).map((feat, idx) => (
                   <span
                     key={idx}
-                    className="text-[9.5px] font-sans font-medium text-white/85 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-sm flex items-center gap-1"
+                    className="text-[9.5px] font-sans font-medium text-lux-charcoal bg-lux-ivory border border-lux-border px-2 py-0.5 rounded-sm flex items-center gap-1"
                   >
-                    <Sparkles size={8} className="text-art-gold shrink-0" />
+                    <Sparkles size={8} className="text-lux-gold shrink-0" />
                     <span>{feat}</span>
                   </span>
                 ))}
@@ -2329,27 +2337,27 @@ const ProjectCard: React.FC<{
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="space-y-3 pt-2 overflow-hidden border-t border-white/10"
+                  className="space-y-3 pt-2 overflow-hidden border-t border-lux-border"
                 >
                   {/* Dynamic Nearby Amenities Panel Powered by Google Search Grounding */}
                   {showNearbyAmenities && (
-                    <div className="overflow-hidden bg-[#0c120e] border border-emerald-500/40 rounded-sm p-3 space-y-2.5 font-sans shadow-lg">
-                      <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2 flex-wrap gap-1.5">
+                    <div className="overflow-hidden bg-lux-ivory border border-lux-border rounded-sm p-3 space-y-2.5 font-sans shadow-sm">
+                      <div className="flex items-center justify-between border-b border-lux-border pb-2 flex-wrap gap-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                          <span className="w-2 h-2 rounded-full bg-lux-forest animate-pulse" />
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-lux-forest">
                             Nearby Amenities within 2km Radius
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[8.5px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          <span className="text-[8.5px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-lux-forest/10 text-lux-forest border border-lux-border">
                             ⚡ Google Search Grounding
                           </span>
                           <button
                             type="button"
                             onClick={fetchNearbyAmenities}
                             disabled={isLoadingAmenities}
-                            className="text-[8.5px] font-mono text-white/70 hover:text-white px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 border border-white/15 cursor-pointer disabled:opacity-50"
+                            className="text-[8.5px] font-mono text-lux-forest hover:text-lux-card px-2 py-0.5 rounded bg-lux-card hover:bg-lux-forest border border-lux-border cursor-pointer disabled:opacity-50"
                             title="Re-query verified amenities via Google Search Grounding"
                           >
                             {isLoadingAmenities ? <Loader2 size={10} className="animate-spin inline" /> : '↻ Refresh'}
@@ -2358,86 +2366,86 @@ const ProjectCard: React.FC<{
                       </div>
 
                       {isLoadingAmenities && !amenitiesData ? (
-                        <div className="flex items-center justify-center gap-2 py-5 text-emerald-300 text-xs font-mono">
-                          <Loader2 size={16} className="animate-spin text-emerald-400" />
+                        <div className="flex items-center justify-center gap-2 py-5 text-lux-forest text-xs font-mono">
+                          <Loader2 size={16} className="animate-spin text-lux-forest" />
                           <span>Discovering schools, hospitals &amp; transit via Google Search Grounding...</span>
                         </div>
                       ) : amenitiesError && !amenitiesData ? (
-                        <div className="text-center py-3 text-red-400 text-xs font-mono">
+                        <div className="text-center py-3 text-red-600 text-xs font-mono">
                           {amenitiesError}
                         </div>
                       ) : (
                         <>
                           {amenitiesData?.summary && (
-                            <p className="text-[11px] text-white/85 leading-relaxed font-sans bg-black/40 p-2 rounded border border-emerald-500/20">
+                            <p className="text-[11px] text-lux-charcoal leading-relaxed font-sans bg-lux-card p-2 rounded border border-lux-border">
                               {amenitiesData.summary}
                             </p>
                           )}
 
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono">
                             {/* Schools */}
-                            <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
-                              <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
+                            <div className="bg-lux-card border border-lux-border p-2 rounded-sm space-y-1">
+                              <div className="flex items-center justify-between text-[9.5px] font-bold text-lux-forest uppercase tracking-wider border-b border-lux-border pb-1">
                                 <span className="flex items-center gap-1">🎓 Schools (&le;2km)</span>
-                                <span className="text-[8.5px] text-white/50">{amenitiesData?.schools?.length || 0}</span>
+                                <span className="text-[8.5px] text-lux-muted">{amenitiesData?.schools?.length || 0}</span>
                               </div>
                               {amenitiesData?.schools && amenitiesData.schools.length > 0 ? (
                                 <ul className="space-y-1 pt-1">
                                   {amenitiesData.schools.map((item, idx) => (
-                                    <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
+                                    <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-lux-charcoal">
                                       <span className="truncate" title={item.name}>{item.name}</span>
-                                      <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
+                                      <span className="shrink-0 px-1 py-0.2 rounded bg-lux-forest/10 text-lux-forest font-bold text-[8.5px]">
                                         {item.distance}
                                       </span>
                                     </li>
                                   ))}
                                 </ul>
                               ) : (
-                                <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
+                                <span className="text-[9px] text-lux-muted block pt-1">None reported &lt;2km</span>
                               )}
                             </div>
 
                             {/* Hospitals */}
-                            <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
-                              <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
+                            <div className="bg-lux-card border border-lux-border p-2 rounded-sm space-y-1">
+                              <div className="flex items-center justify-between text-[9.5px] font-bold text-lux-forest uppercase tracking-wider border-b border-lux-border pb-1">
                                 <span className="flex items-center gap-1">🏥 Hospitals (&le;2km)</span>
-                                <span className="text-[8.5px] text-white/50">{amenitiesData?.hospitals?.length || 0}</span>
+                                <span className="text-[8.5px] text-lux-muted">{amenitiesData?.hospitals?.length || 0}</span>
                               </div>
                               {amenitiesData?.hospitals && amenitiesData.hospitals.length > 0 ? (
                                 <ul className="space-y-1 pt-1">
                                   {amenitiesData.hospitals.map((item, idx) => (
-                                    <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
+                                    <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-lux-charcoal">
                                       <span className="truncate" title={item.name}>{item.name}</span>
-                                      <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
+                                      <span className="shrink-0 px-1 py-0.2 rounded bg-lux-forest/10 text-lux-forest font-bold text-[8.5px]">
                                         {item.distance}
                                       </span>
                                     </li>
                                   ))}
                                 </ul>
                               ) : (
-                                <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
+                                <span className="text-[9px] text-lux-muted block pt-1">None reported &lt;2km</span>
                               )}
                             </div>
 
                             {/* Transit Points */}
-                            <div className="bg-black/50 border border-emerald-500/25 p-2 rounded-sm space-y-1">
-                              <div className="flex items-center justify-between text-[9.5px] font-bold text-emerald-300 uppercase tracking-wider border-b border-emerald-500/20 pb-1">
+                            <div className="bg-lux-card border border-lux-border p-2 rounded-sm space-y-1">
+                              <div className="flex items-center justify-between text-[9.5px] font-bold text-lux-forest uppercase tracking-wider border-b border-lux-border pb-1">
                                 <span className="flex items-center gap-1">🚇 Transit (&le;2km)</span>
-                                <span className="text-[8.5px] text-white/50">{amenitiesData?.transit?.length || 0}</span>
+                                <span className="text-[8.5px] text-lux-muted">{amenitiesData?.transit?.length || 0}</span>
                               </div>
                               {amenitiesData?.transit && amenitiesData.transit.length > 0 ? (
                                 <ul className="space-y-1 pt-1">
                                   {amenitiesData.transit.map((item, idx) => (
-                                    <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-white/90">
+                                    <li key={idx} className="flex items-center justify-between gap-1 text-[10px] text-lux-charcoal">
                                       <span className="truncate" title={item.name}>{item.name}</span>
-                                      <span className="shrink-0 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[8.5px]">
+                                      <span className="shrink-0 px-1 py-0.2 rounded bg-lux-forest/10 text-lux-forest font-bold text-[8.5px]">
                                         {item.distance}
                                       </span>
                                     </li>
                                   ))}
                                 </ul>
                               ) : (
-                                <span className="text-[9px] text-white/40 block pt-1">None reported &lt;2km</span>
+                                <span className="text-[9px] text-lux-muted block pt-1">None reported &lt;2km</span>
                               )}
                             </div>
                           </div>
@@ -2448,49 +2456,49 @@ const ProjectCard: React.FC<{
 
                   {/* Dedicated Rental Specifications Box */}
                   {project.type === 'Rental' && (
-                    <div className="p-3 bg-cyan-950/20 border border-cyan-500/30 rounded-sm space-y-1.5 font-mono text-[10px]">
-                      <div className="flex justify-between items-center text-cyan-300 font-bold border-b border-cyan-500/20 pb-1">
+                    <div className="p-3 bg-lux-ivory border border-lux-border rounded-sm space-y-1.5 font-mono text-[10px]">
+                      <div className="flex justify-between items-center text-lux-forest font-bold border-b border-lux-border pb-1">
                         <span>Rental Lease Terms:</span>
-                        <span className="text-white font-bold">{project.monthlyRental || project.price}</span>
+                        <span className="text-lux-charcoal font-bold">{project.monthlyRental || project.price}</span>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-white/70">
-                        <span>Advance: <strong className="text-white font-medium">{project.advance || 'Negotiable'}</strong></span>
-                        <span>Maint: <strong className="text-white font-medium">{project.maintenance || 'Nominal'}</strong></span>
-                        <span>Residence: <strong className="text-white font-medium">{project.residenceType || '2BHK'}</strong></span>
-                        <span>Tenant: <strong className="text-white font-medium">{project.tenantType || 'Family'}</strong></span>
-                        <span>Furnish: <strong className="text-white font-medium">{project.furnishType || 'Semi Furnished'}</strong></span>
-                        <span>Pets: <strong className="text-white font-medium">{project.petFriendly || 'Yes'}</strong></span>
-                        {project.suba && <span>SUBA: <strong className="text-white font-medium">{project.suba}</strong></span>}
-                        <span>Parking: <strong className="text-white font-medium">{project.carCloseParking || 1} Covered</strong></span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-lux-muted">
+                        <span>Advance: <strong className="text-lux-charcoal font-medium">{project.advance || 'Negotiable'}</strong></span>
+                        <span>Maint: <strong className="text-lux-charcoal font-medium">{project.maintenance || 'Nominal'}</strong></span>
+                        <span>Residence: <strong className="text-lux-charcoal font-medium">{project.residenceType || '2BHK'}</strong></span>
+                        <span>Tenant: <strong className="text-lux-charcoal font-medium">{project.tenantType || 'Family'}</strong></span>
+                        <span>Furnish: <strong className="text-lux-charcoal font-medium">{project.furnishType || 'Semi Furnished'}</strong></span>
+                        <span>Pets: <strong className="text-lux-charcoal font-medium">{project.petFriendly || 'Yes'}</strong></span>
+                        {project.suba && <span>SUBA: <strong className="text-lux-charcoal font-medium">{project.suba}</strong></span>}
+                        <span>Parking: <strong className="text-lux-charcoal font-medium">{project.carCloseParking || 1} Covered</strong></span>
                       </div>
                     </div>
                   )}
 
                   {/* Dedicated Resale Specifications Box */}
                   {project.type === 'Resale' && (
-                    <div className="p-3 bg-amber-950/20 border border-amber-500/30 rounded-sm space-y-1.5 font-mono text-[10px]">
-                      <div className="flex justify-between items-center text-amber-300 font-bold border-b border-amber-500/20 pb-1">
+                    <div className="p-3 bg-lux-ivory border border-lux-border rounded-sm space-y-1.5 font-mono text-[10px]">
+                      <div className="flex justify-between items-center text-lux-forest font-bold border-b border-lux-border pb-1">
                         <span>Resale Property Mandate:</span>
-                        <span className="text-white font-bold">{project.price}</span>
+                        <span className="text-lux-charcoal font-bold">{project.price}</span>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-white/70">
-                        <span>SUBA: <strong className="text-white font-medium">{project.suba || '1650 Sq.Ft.'}</strong></span>
-                        <span>Carpet: <strong className="text-white font-medium">{project.carpetArea || '1280 Sq.Ft.'}</strong></span>
-                        <span>Authority: <strong className="text-amber-300 font-bold">{project.approvedAuthority || project.approvalBody || 'BDA'}</strong></span>
-                        <span>Status: <strong className="text-white font-medium">{project.registrationStatus || 'Clear Title'}</strong></span>
-                        <span>Tower/Floor: <strong className="text-white font-medium">{project.tower || 'Block A'} / {project.floor || 'High'}</strong></span>
-                        <span>Parking: <strong className="text-white font-medium">{project.carCloseParking || 1} Covered</strong></span>
-                        {project.balcony && <span>Balcony: <strong className="text-white font-medium">{project.balcony}</strong></span>}
-                        {project.mainDoorFacing && <span>Facing: <strong className="text-white font-medium">{project.mainDoorFacing}</strong></span>}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-lux-muted">
+                        <span>SUBA: <strong className="text-lux-charcoal font-medium">{project.suba || '1650 Sq.Ft.'}</strong></span>
+                        <span>Carpet: <strong className="text-lux-charcoal font-medium">{project.carpetArea || '1280 Sq.Ft.'}</strong></span>
+                        <span>Authority: <strong className="text-lux-forest font-bold">{project.approvedAuthority || project.approvalBody || 'BDA'}</strong></span>
+                        <span>Status: <strong className="text-lux-charcoal font-medium">{project.registrationStatus || 'Clear Title'}</strong></span>
+                        <span>Tower/Floor: <strong className="text-lux-charcoal font-medium">{project.tower || 'Block A'} / {project.floor || 'High'}</strong></span>
+                        <span>Parking: <strong className="text-lux-charcoal font-medium">{project.carCloseParking || 1} Covered</strong></span>
+                        {project.balcony && <span>Balcony: <strong className="text-lux-charcoal font-medium">{project.balcony}</strong></span>}
+                        {project.mainDoorFacing && <span>Facing: <strong className="text-lux-charcoal font-medium">{project.mainDoorFacing}</strong></span>}
                       </div>
                     </div>
                   )}
 
                   {/* Floor Plan & Specifications */}
                   {project.floorPlan && (
-                    <div className="px-3 py-1.5 bg-white/[0.03] rounded-sm border border-art-gold/30 text-[10px] sm:text-[11px] flex items-center gap-2">
-                      <Layers size={12} className="text-art-gold shrink-0" />
-                      <span className="text-white font-mono font-medium">{project.floorPlan}</span>
+                    <div className="px-3 py-1.5 bg-lux-ivory rounded-sm border border-lux-border text-[10px] sm:text-[11px] flex items-center gap-2">
+                      <Layers size={12} className="text-lux-forest shrink-0" />
+                      <span className="text-lux-charcoal font-mono font-medium">{project.floorPlan}</span>
                     </div>
                   )}
 
@@ -2500,7 +2508,7 @@ const ProjectCard: React.FC<{
                       {project.features.slice(5).map((feat, idx) => (
                         <span
                           key={idx}
-                          className="text-[10px] font-mono font-medium text-white/80 bg-white/5 border border-white/10 px-2 py-0.5 rounded-sm"
+                          className="text-[10px] font-mono font-medium text-lux-charcoal bg-lux-ivory border border-lux-border px-2 py-0.5 rounded-sm"
                         >
                           + {feat}
                         </span>
@@ -2509,11 +2517,11 @@ const ProjectCard: React.FC<{
                   )}
 
                   {/* Social Share & Alerts inside Expanded Drawer */}
-                  <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap">
+                  <div className="pt-2 border-t border-lux-border flex items-center justify-between gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={() => setIsSubscribeOpen(true)}
-                      className="px-2.5 py-1 rounded-sm border bg-white/10 hover:bg-art-gold/20 text-art-gold border-white/20 text-[9px] font-mono transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-2.5 py-1 rounded-sm border bg-lux-ivory hover:bg-lux-forest hover:text-lux-card text-lux-forest border-lux-border text-[9px] font-mono transition-all cursor-pointer flex items-center gap-1.5 font-semibold"
                       title="Subscribe to Price Alerts"
                     >
                       <Bell size={10} />
@@ -2530,16 +2538,16 @@ const ProjectCard: React.FC<{
             </AnimatePresence>
 
             {/* Bottom Action Footer Bar */}
-            <div className="pt-2.5 border-t border-white/15 flex items-center justify-between gap-2 flex-wrap mt-auto">
-              <div className="flex items-center gap-2">
+            <div className="pt-2.5 border-t border-lux-border flex items-center justify-between gap-2 flex-wrap mt-auto">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => onEnquire(project)}
-                  className="px-3.5 sm:px-4 py-2 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-black bg-art-gold hover:bg-white text-black transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_2px_12px_rgba(197,160,89,0.35)]"
+                  className="px-3.5 sm:px-4 py-2 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-black bg-lux-forest hover:bg-lux-forest-hover text-lux-card transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
                   title={`${inquiriesSocialCount} verified buyer inquiries on ${project.name}`}
                 >
                   <span>Inquire Now</span>
-                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8px] font-mono font-bold bg-black text-art-gold rounded-full">
+                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8px] font-mono font-bold bg-lux-gold text-lux-charcoal rounded-full">
                     {inquiriesSocialCount}
                   </span>
                 </button>
@@ -2549,17 +2557,17 @@ const ProjectCard: React.FC<{
                   type="button"
                   data-testid={"schedule-site-visit-btn-" + (project.id || project.name)}
                   onClick={() => onScheduleSiteVisit ? onScheduleSiteVisit(project) : onEnquire(project)}
-                  className="px-3 sm:px-3.5 py-2 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-black border bg-emerald-500/15 hover:bg-emerald-500 hover:text-black text-emerald-400 border-emerald-500/35 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm group/visit"
+                  className="px-3 sm:px-3.5 py-2 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-black border bg-lux-ivory hover:bg-lux-forest hover:text-lux-card text-lux-forest border-lux-forest/30 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm group/visit"
                   title={`Schedule a site visit for ${project.name}`}
                 >
-                  <Calendar size={12} className="text-emerald-400 group-hover/visit:text-black transition-colors shrink-0" />
+                  <Calendar size={12} className="text-lux-forest group-hover/visit:text-lux-card transition-colors shrink-0" />
                   <span>Schedule Site Visit</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => onDownload(project)}
-                  className="px-3 sm:px-3.5 py-2 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border bg-white/10 hover:bg-white hover:text-black text-white border-white/25 transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 sm:px-3.5 py-2 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border bg-lux-ivory hover:bg-lux-forest hover:text-lux-card text-lux-charcoal border-lux-border transition-all flex items-center gap-1.5 cursor-pointer"
                   title="Download Official Brochure"
                 >
                   <Download size={11} />
@@ -2569,7 +2577,7 @@ const ProjectCard: React.FC<{
                 <button
                   type="button"
                   onClick={() => setIsCalculatorOpen(true)}
-                  className="px-2.5 py-2 rounded-sm border bg-art-gold/15 hover:bg-art-gold hover:text-black text-art-gold border-art-gold/40 text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer flex items-center gap-1"
+                  className="px-2.5 py-2 rounded-sm border bg-lux-gold/15 hover:bg-lux-gold text-lux-forest hover:text-lux-charcoal border-lux-gold/40 text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer flex items-center gap-1"
                   title="Open Investment & ROI Calculator"
                 >
                   <Calculator size={11} />
@@ -2584,8 +2592,8 @@ const ProjectCard: React.FC<{
                   className={cn(
                     "px-3 py-2 rounded-sm text-[9px] sm:text-[9.5px] uppercase tracking-wider font-extrabold border transition-all flex items-center gap-1 cursor-pointer",
                     isExpanded
-                      ? "bg-art-gold text-black border-art-gold shadow-[0_0_10px_rgba(197,160,89,0.3)]"
-                      : "bg-white/5 hover:bg-white/15 text-white/80 hover:text-white border-white/20"
+                      ? "bg-lux-forest text-lux-card border-lux-forest shadow-sm"
+                      : "bg-lux-ivory hover:bg-lux-forest/10 text-lux-forest border-lux-border"
                   )}
                   title={isExpanded ? "Collapse specifications" : "Expand full overview, 2km amenities & specifications"}
                 >
@@ -2612,24 +2620,24 @@ const ProjectCard: React.FC<{
 
 const ProjectCardSkeleton = () => {
   return (
-    <div className="group relative flex flex-col md:flex-row bg-[#111111] border border-white/20 overflow-hidden w-full max-w-full box-border rounded-lg shadow-md">
+    <div className="group relative flex flex-col md:flex-row bg-lux-card border border-lux-border overflow-hidden w-full max-w-full box-border rounded-lg shadow-sm">
       {/* Left Media Skeleton */}
-      <div className="w-full md:w-44 lg:w-48 xl:w-52 h-28 sm:h-32 md:h-auto min-h-[110px] md:min-h-[135px] bg-white/[0.04] shimmer-bg relative shrink-0" />
+      <div className="w-full md:w-44 lg:w-48 xl:w-52 h-28 sm:h-32 md:h-auto min-h-[110px] md:min-h-[135px] bg-lux-forest/10 shimmer-bg relative shrink-0" />
       {/* Right Details Skeleton */}
       <div className="flex-1 min-w-0 p-2.5 sm:p-3 flex flex-col space-y-1.5">
         <div className="flex items-center justify-between gap-2">
-          <div className="bg-white/10 h-4 w-1/3 rounded-sm shimmer-bg" />
-          <div className="bg-art-gold/25 h-5 w-20 rounded-sm shimmer-bg" />
+          <div className="bg-lux-forest/10 h-4 w-1/3 rounded-sm shimmer-bg" />
+          <div className="bg-lux-gold/25 h-5 w-20 rounded-sm shimmer-bg" />
         </div>
-        <div className="bg-white/20 h-5 w-1/2 rounded-sm shimmer-bg" />
-        <div className="bg-white/[0.05] h-3.5 w-2/5 rounded-sm shimmer-bg" />
-        <div className="bg-white/[0.03] h-6 w-full rounded-sm shimmer-bg" />
+        <div className="bg-lux-forest/15 h-5 w-1/2 rounded-sm shimmer-bg" />
+        <div className="bg-lux-ivory h-3.5 w-2/5 rounded-sm shimmer-bg" />
+        <div className="bg-lux-ivory h-6 w-full rounded-sm shimmer-bg" />
         <div className="flex gap-1.5">
-          <div className="bg-white/[0.06] h-4 w-16 rounded-sm shimmer-bg" />
-          <div className="bg-white/[0.06] h-4 w-20 rounded-sm shimmer-bg" />
-          <div className="bg-white/[0.06] h-4 w-14 rounded-sm shimmer-bg" />
+          <div className="bg-lux-ivory h-4 w-16 rounded-sm shimmer-bg" />
+          <div className="bg-lux-ivory h-4 w-20 rounded-sm shimmer-bg" />
+          <div className="bg-lux-ivory h-4 w-14 rounded-sm shimmer-bg" />
         </div>
-        <div className="bg-white/[0.04] h-7 w-full rounded-sm shimmer-bg mt-auto" />
+        <div className="bg-lux-ivory h-7 w-full rounded-sm shimmer-bg mt-auto" />
       </div>
     </div>
   );
@@ -2816,18 +2824,18 @@ const DownloadBrochureModal = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/95 backdrop-blur-md"
+        className="fixed inset-0 bg-lux-charcoal/80 backdrop-blur-md"
       />
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="relative bg-art-dark w-full max-w-xl border border-art-gold/30 rounded-sm shadow-2xl p-6 sm:p-10 overflow-y-auto max-h-[92vh] my-auto z-20 font-sans"
+        className="relative bg-lux-card text-lux-charcoal w-full max-w-xl border border-lux-border rounded-sm shadow-2xl p-6 sm:p-10 overflow-y-auto max-h-[92vh] my-auto z-20 font-sans"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 sm:top-6 sm:right-6 px-3 py-1.5 rounded-full bg-white text-black hover:bg-art-gold font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer z-30 border border-white"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 px-3 py-1.5 rounded-full bg-lux-forest text-lux-card hover:bg-lux-forest-hover font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all cursor-pointer z-30 border border-lux-forest"
           aria-label="Close modal"
           title="Close (Esc)"
         >
@@ -2837,29 +2845,29 @@ const DownloadBrochureModal = ({
 
         {submittedData ? (
           <div className="py-6 text-center space-y-6">
-            <div className="w-16 h-16 bg-emerald-500/15 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="text-emerald-400" size={34} />
+            <div className="w-16 h-16 bg-lux-forest/10 border border-lux-forest/30 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="text-lux-forest" size={34} />
             </div>
             <div>
-              <span className="text-[10px] uppercase tracking-[0.4em] text-art-gold font-black block mb-2">
+              <span className="text-[10px] uppercase tracking-[0.4em] text-lux-gold font-black block mb-2">
                 Brochure Dispatched & SMS Sent
               </span>
-              <h3 className="text-3xl font-serif italic text-white">
+              <h3 className="text-3xl font-serif italic text-lux-forest">
                 Welcome to BS Homez
               </h3>
-              <p className="text-xs text-white/70 mt-3 max-w-md mx-auto leading-relaxed">
-                In <strong className="text-art-gold">24Hrs</strong> our team member will keep in touch with you.
+              <p className="text-xs text-lux-muted mt-3 max-w-md mx-auto leading-relaxed">
+                In <strong className="text-lux-forest">24Hrs</strong> our team member will keep in touch with you.
               </p>
             </div>
 
-            <div className="bg-white/[0.03] border border-art-gold/25 rounded-sm p-5 text-left space-y-3">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                <span className="text-[9px] uppercase tracking-widest text-art-gold font-black flex items-center gap-1.5">
+            <div className="bg-lux-ivory border border-lux-border rounded-sm p-5 text-left space-y-3">
+              <div className="flex items-center justify-between border-b border-lux-border pb-2.5">
+                <span className="text-[9px] uppercase tracking-widest text-lux-forest font-black flex items-center gap-1.5">
                   <Phone size={11} /> Text Message Dispatched to +91 {submittedData.mobile}
                 </span>
-                <span className="text-[9px] font-mono text-emerald-400 uppercase font-bold">Delivered</span>
+                <span className="text-[9px] font-mono text-emerald-700 uppercase font-bold">Delivered</span>
               </div>
-              <p className="text-xs text-white/85 font-mono leading-relaxed">
+              <p className="text-xs text-lux-charcoal font-mono leading-relaxed">
                 "{submittedData.smsMessage}"
               </p>
             </div>
@@ -2868,7 +2876,7 @@ const DownloadBrochureModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full bg-art-gold hover:bg-white text-black py-3.5 px-4 rounded-sm text-[10px] uppercase tracking-widest font-black transition-all cursor-pointer"
+                className="w-full bg-lux-forest hover:bg-lux-forest-hover text-lux-card py-3.5 px-4 rounded-sm text-[10px] uppercase tracking-widest font-black transition-all cursor-pointer shadow-md"
               >
                 Done
               </button>
@@ -2876,21 +2884,21 @@ const DownloadBrochureModal = ({
           </div>
         ) : (
           <div>
-            <div className="mb-6 pb-5 border-b border-white/10">
-              <span className="text-art-gold uppercase tracking-[0.35em] text-[9px] mb-2 block font-black">
+            <div className="mb-6 pb-5 border-b border-lux-border">
+              <span className="text-lux-gold uppercase tracking-[0.35em] text-[9px] mb-2 block font-black">
                 Project Dossier & Brochure Download
               </span>
-              <h3 className="text-2xl sm:text-3xl font-serif text-white italic">
+              <h3 className="text-2xl sm:text-3xl font-serif text-lux-forest italic">
                 Download {project.name}
               </h3>
-              <p className="text-xs text-white/50 mt-1.5">
+              <p className="text-xs text-lux-muted mt-1.5">
                 Complete your details below to download the project dossier and receive an instant welcome text message from BS Homez.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-white/60 font-bold">
+                <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-lux-muted font-bold">
                   Name *
                 </label>
                 <input
@@ -2899,7 +2907,7 @@ const DownloadBrochureModal = ({
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter your full name"
-                  className="w-full bg-white/5 border border-white/15 rounded-sm p-3.5 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/25"
+                  className="w-full bg-lux-ivory border border-lux-border rounded-sm p-3.5 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60"
                 />
               </div>
 
@@ -2914,14 +2922,14 @@ const DownloadBrochureModal = ({
                   required
                 />
                 {mobileError && (
-                  <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider mt-1.5 font-mono">
+                  <p className="text-[10px] text-red-600 font-bold uppercase tracking-wider mt-1.5 font-mono">
                     {mobileError}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-white/60 font-bold">
+                <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-lux-muted font-bold">
                   Email ID *
                 </label>
                 <input
@@ -2930,12 +2938,12 @@ const DownloadBrochureModal = ({
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
                   placeholder="name@domain.com"
-                  className="w-full bg-white/5 border border-white/15 rounded-sm p-3.5 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/25"
+                  className="w-full bg-lux-ivory border border-lux-border rounded-sm p-3.5 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-white/60 font-bold">
+                <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-lux-muted font-bold">
                   Interested Projects *
                 </label>
                 <input
@@ -2945,7 +2953,7 @@ const DownloadBrochureModal = ({
                   value={formData.interestedProjects}
                   onChange={e => setFormData({ ...formData, interestedProjects: e.target.value })}
                   placeholder="Select or enter interested project(s)"
-                  className="w-full bg-white/5 border border-white/15 rounded-sm p-3.5 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/25"
+                  className="w-full bg-lux-ivory border border-lux-border rounded-sm p-3.5 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60"
                 />
                 <datalist id="bs-homez-projects-list">
                   {allProjects.map((p, idx) => (
@@ -2955,7 +2963,7 @@ const DownloadBrochureModal = ({
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-white/60 font-bold">
+                <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-lux-muted font-bold">
                   Preferred Location *
                 </label>
                 <input
@@ -2965,7 +2973,7 @@ const DownloadBrochureModal = ({
                   value={formData.preferredLocation}
                   onChange={e => setFormData({ ...formData, preferredLocation: e.target.value })}
                   placeholder="e.g., East Bangalore, Off Sarjapur Road, Sarjapur, Electronic City, Marathalli, Bellandur"
-                  className="w-full bg-white/5 border border-white/15 rounded-sm p-3.5 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/25"
+                  className="w-full bg-lux-ivory border border-lux-border rounded-sm p-3.5 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60"
                 />
                 <datalist id="bs-homez-locations-list">
                   <option value="Whitefield, East Bangalore" />
@@ -2981,14 +2989,14 @@ const DownloadBrochureModal = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="py-4 px-5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-sm uppercase tracking-[0.2em] text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="py-4 px-5 bg-lux-ivory hover:bg-lux-forest/10 text-lux-forest border border-lux-border rounded-sm uppercase tracking-[0.2em] text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <X size={14} /> Close Window
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-art-gold hover:bg-white text-black py-4 rounded-sm uppercase tracking-[0.25em] text-[11px] font-black transition-all disabled:opacity-50 shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-1 bg-lux-forest hover:bg-lux-forest-hover text-lux-card py-4 rounded-sm uppercase tracking-[0.25em] text-[11px] font-black transition-all disabled:opacity-50 shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {submitting ? (
                     <>
@@ -3313,32 +3321,32 @@ const ProjectGrid = ({
   ].filter(Boolean).length;
 
   return (
-    <section id="projects" className="pt-3 sm:pt-5 pb-16 px-3 sm:px-6 md:px-10 bg-art-dark relative">
-      <div className="absolute left-12 top-0 w-px h-full bg-white/5 hidden lg:block" />
+    <section id="projects" className="pt-3 sm:pt-5 pb-16 px-3 sm:px-6 md:px-10 bg-lux-ivory relative">
+      <div className="absolute left-12 top-0 w-px h-full bg-lux-border hidden lg:block" />
       
       <div className="max-w-7xl mx-auto">
         {/* Anchor for smooth scroll when changing pages */}
         <div id="portfolios-archive-anchor" className="scroll-mt-40" />
 
         {/* Frozen Sticky Header: Artisanal Portraits Title, Corridors, Search & Pagination */}
-        <div className="sticky top-[50px] sm:top-[56px] z-30 bg-[#0c0c0c]/95 backdrop-blur-md pb-2 pt-2 border-b border-art-gold/30 shadow-[0_10px_35px_rgba(0,0,0,0.85)] -mx-3 sm:-mx-6 md:-mx-10 px-3 sm:px-6 md:px-10 mb-4 transition-all">
+        <div className="sticky top-[50px] sm:top-[56px] z-30 bg-lux-ivory/95 backdrop-blur-md pb-2 pt-2 border-b border-lux-border shadow-md -mx-3 sm:-mx-6 md:-mx-10 px-3 sm:px-6 md:px-10 mb-4 transition-all">
           {/* Top Row: Section Title, Corridor Breadcrumbs & Admin Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 mb-2 border-b border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 mb-2 border-b border-lux-border">
             <div>
-              <span className="text-art-gold text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.25em] sm:tracking-[0.35em] font-black block">Archive / Portfolios</span>
-              <h2 className="text-lg sm:text-2xl md:text-3xl font-serif text-white tracking-tight italic leading-tight">
-                Artisanal <span className="not-italic text-art-gold">Portraits.</span>
+              <span className="text-lux-gold text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.25em] sm:tracking-[0.35em] font-black block">Archive / Portfolios</span>
+              <h2 className="text-lg sm:text-2xl md:text-3xl font-serif text-lux-forest tracking-tight italic leading-tight">
+                Artisanal <span className="not-italic text-lux-gold">Portraits.</span>
               </h2>
             </div>
             <div className="flex flex-col sm:items-end gap-1">
-              <p className="text-white/60 uppercase tracking-[0.12em] sm:tracking-[0.16em] font-bold text-[9px] sm:text-[10px] text-left sm:text-right hidden sm:block">
+              <p className="text-lux-muted uppercase tracking-[0.12em] sm:tracking-[0.16em] font-bold text-[9px] sm:text-[10px] text-left sm:text-right hidden sm:block">
                 Whitefield · Hoskote · Varthur · Gunjur · Hosa Road · Kasavanahalli · Sarjapur · Electronic City · Bellandur
               </p>
               <div className="flex flex-wrap items-center gap-1.5 justify-start sm:justify-end">
                 <button
                   type="button"
                   onClick={() => onOpenMetaData?.(displayedProjects[0])}
-                  className="add-meta-data-btn bg-art-gold/15 hover:bg-art-gold text-art-gold hover:text-black border border-art-gold/40 px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-[0_0_15px_rgba(197,160,89,0.2)] flex items-center gap-1 cursor-pointer w-max"
+                  className="add-meta-data-btn bg-lux-card hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-sm flex items-center gap-1 cursor-pointer w-max"
                   title="Add or edit SEO meta titles, meta descriptions, and keywords"
                 >
                   <Sparkles size={11} />
@@ -3348,7 +3356,7 @@ const ProjectGrid = ({
                   type="button"
                   data-testid="generate-seo-audit-report-grid-btn"
                   onClick={() => onOpenMetaData?.(displayedProjects[0])}
-                  className="generate-seo-audit-report-btn bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/40 px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all flex items-center gap-1 cursor-pointer w-max shadow-sm"
+                  className="generate-seo-audit-report-btn bg-lux-forest/10 hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all flex items-center gap-1 cursor-pointer w-max shadow-sm"
                   title="Compile summary of missing alt text for all images in the project and provide a downloadable CSV report for the admin"
                 >
                   <FileSpreadsheet size={11} />
@@ -3363,8 +3371,8 @@ const ProjectGrid = ({
                         className={cn(
                           "px-2.5 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.14em] font-black border transition-all cursor-pointer",
                           showHidden
-                            ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
-                            : "bg-white/5 text-white/60 border-white/15 hover:text-white"
+                            ? "bg-amber-500/15 text-amber-800 border-amber-500/40"
+                            : "bg-lux-card text-lux-muted border-lux-border hover:text-lux-forest"
                         )}
                       >
                         {showHidden ? `Hide (${hiddenCount})` : `Show Hidden (${hiddenCount})`}
@@ -3373,7 +3381,7 @@ const ProjectGrid = ({
                     <button
                       type="button"
                       onClick={onOpenNewProjectModal}
-                      className="bg-art-gold hover:bg-white text-black px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-[0_0_15px_rgba(197,160,89,0.3)] flex items-center gap-1 cursor-pointer w-max"
+                      className="bg-lux-forest hover:bg-lux-forest-hover text-lux-card px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-sm flex items-center gap-1 cursor-pointer w-max"
                     >
                       <Sparkles size={11} />
                       + Add Project
@@ -3385,22 +3393,22 @@ const ProjectGrid = ({
           </div>
 
           {/* Portfolios Top Search Bar */}
-          <div className="mb-2 p-2 sm:p-2.5 bg-black/85 border border-white/20 rounded-md shadow-md">
+          <div className="mb-2 p-2 sm:p-2.5 bg-lux-card border border-lux-border rounded-md shadow-sm">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <div className="relative flex-1 flex items-center">
-                <Search size={15} className="absolute left-2.5 text-art-gold shrink-0 pointer-events-none" />
+                <Search size={15} className="absolute left-2.5 text-lux-forest shrink-0 pointer-events-none" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by project name, corridor (Whitefield, Hoskote...), 2/3/4 BHK, amenities, RERA..."
-                  className="w-full bg-white/[0.05] border border-white/20 focus:border-art-gold text-white placeholder-white/40 text-xs sm:text-[13px] pl-8 pr-7 py-1.5 sm:py-2 rounded-sm outline-none transition-all font-sans"
+                  className="w-full bg-lux-ivory border border-lux-border focus:border-lux-forest text-lux-charcoal placeholder-lux-muted/60 text-xs sm:text-[13px] pl-8 pr-7 py-1.5 sm:py-2 rounded-sm outline-none transition-all font-sans"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 text-white/50 hover:text-white transition-colors p-1 cursor-pointer"
+                    className="absolute right-2 text-lux-muted hover:text-lux-forest transition-colors p-1 cursor-pointer"
                     title="Clear search"
                   >
                     <X size={13} />
@@ -3409,14 +3417,14 @@ const ProjectGrid = ({
               </div>
 
               <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-                <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-mono font-bold px-2 py-1 bg-white/5 border border-white/15 text-white/80 rounded-sm">
-                  <span className="text-art-gold font-black">{displayedProjects.length}</span> Portfolios
+                <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-mono font-bold px-2 py-1 bg-lux-ivory border border-lux-border text-lux-charcoal rounded-sm">
+                  <span className="text-lux-forest font-black">{displayedProjects.length}</span> Portfolios
                 </span>
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="text-[9px] uppercase tracking-wider text-art-gold hover:text-white font-mono cursor-pointer px-2 py-1 border border-art-gold/30 rounded-sm bg-art-gold/10 transition-colors"
+                    className="text-[9px] uppercase tracking-wider text-lux-forest hover:text-lux-card hover:bg-lux-forest font-mono cursor-pointer px-2 py-1 border border-lux-border rounded-sm bg-lux-ivory transition-colors"
                   >
                     Clear
                   </button>
@@ -3426,11 +3434,11 @@ const ProjectGrid = ({
           </div>
 
           {/* Direct Category Filters: Primary, Rental, Resale, All Types */}
-          <div className="mb-2 p-1.5 sm:p-2 bg-[#101010]/95 border border-white/20 rounded-md shadow-md backdrop-blur-sm">
+          <div className="mb-2 p-1.5 sm:p-2 bg-lux-card border border-lux-border rounded-md shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
               {/* Direct Filter Buttons */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[9px] uppercase tracking-[0.2em] text-art-gold font-mono font-bold mr-1 hidden sm:inline">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-lux-forest font-mono font-bold mr-1 hidden sm:inline">
                   Direct Filters:
                 </span>
 
@@ -3442,16 +3450,16 @@ const ProjectGrid = ({
                   className={cn(
                     "px-3 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase font-extrabold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border shadow-sm",
                     selectedType === 'All'
-                      ? "bg-gradient-to-r from-art-gold via-amber-400 to-yellow-500 text-black border-art-gold font-black shadow-[0_2px_12px_rgba(197,160,89,0.35)] scale-[1.02]"
-                      : "bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/10 border-white/15"
+                      ? "bg-lux-forest text-lux-card border-lux-forest font-black shadow-md scale-[1.02]"
+                      : "bg-lux-ivory text-lux-charcoal hover:text-lux-forest hover:bg-lux-forest/10 border-lux-border"
                   )}
                   title="Show all property listings across all categories"
                 >
-                  <LayoutGrid size={13} className={selectedType === 'All' ? 'text-black' : 'text-art-gold'} />
+                  <LayoutGrid size={13} className={selectedType === 'All' ? 'text-lux-gold' : 'text-lux-forest'} />
                   <span>All Types</span>
                   <span className={cn(
                     "text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold",
-                    selectedType === 'All' ? "bg-black/25 text-black" : "bg-white/10 text-white/60"
+                    selectedType === 'All' ? "bg-lux-gold text-lux-charcoal" : "bg-lux-card text-lux-muted border border-lux-border"
                   )}>
                     {typeCounts.All}
                   </span>
@@ -3465,16 +3473,16 @@ const ProjectGrid = ({
                   className={cn(
                     "px-3 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase font-extrabold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border shadow-sm",
                     selectedType === 'Primary'
-                      ? "bg-gradient-to-r from-art-gold via-amber-400 to-yellow-500 text-black border-art-gold font-black shadow-[0_2px_12px_rgba(197,160,89,0.35)] scale-[1.02]"
-                      : "bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/10 border-white/15"
+                      ? "bg-lux-forest text-lux-card border-lux-forest font-black shadow-md scale-[1.02]"
+                      : "bg-lux-ivory text-lux-charcoal hover:text-lux-forest hover:bg-lux-forest/10 border-lux-border"
                   )}
                   title="Direct builder & new launch primary sale properties (0% brokerage)"
                 >
-                  <Sparkles size={13} className={selectedType === 'Primary' ? 'text-black' : 'text-art-gold'} />
+                  <Sparkles size={13} className={selectedType === 'Primary' ? 'text-lux-gold' : 'text-lux-forest'} />
                   <span>Primary</span>
                   <span className={cn(
                     "text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold",
-                    selectedType === 'Primary' ? "bg-black/25 text-black" : "bg-white/10 text-white/60"
+                    selectedType === 'Primary' ? "bg-lux-gold text-lux-charcoal" : "bg-lux-card text-lux-muted border border-lux-border"
                   )}>
                     {typeCounts.Primary}
                   </span>
@@ -3488,16 +3496,16 @@ const ProjectGrid = ({
                   className={cn(
                     "px-3 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase font-extrabold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border shadow-sm",
                     selectedType === 'Rental'
-                      ? "bg-gradient-to-r from-art-gold via-amber-400 to-yellow-500 text-black border-art-gold font-black shadow-[0_2px_12px_rgba(197,160,89,0.35)] scale-[1.02]"
-                      : "bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/10 border-white/15"
+                      ? "bg-lux-forest text-lux-card border-lux-forest font-black shadow-md scale-[1.02]"
+                      : "bg-lux-ivory text-lux-charcoal hover:text-lux-forest hover:bg-lux-forest/10 border-lux-border"
                   )}
                   title="Verified premium rental homes in Bangalore"
                 >
-                  <Home size={13} className={selectedType === 'Rental' ? 'text-black' : 'text-blue-400'} />
+                  <Home size={13} className={selectedType === 'Rental' ? 'text-lux-gold' : 'text-lux-forest'} />
                   <span>Rental</span>
                   <span className={cn(
                     "text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold",
-                    selectedType === 'Rental' ? "bg-black/25 text-black" : "bg-white/10 text-white/60"
+                    selectedType === 'Rental' ? "bg-lux-gold text-lux-charcoal" : "bg-lux-card text-lux-muted border border-lux-border"
                   )}>
                     {typeCounts.Rental}
                   </span>
@@ -3511,16 +3519,16 @@ const ProjectGrid = ({
                   className={cn(
                     "px-3 py-1.5 rounded-sm text-[10px] sm:text-xs uppercase font-extrabold tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border shadow-sm",
                     selectedType === 'Resale'
-                      ? "bg-gradient-to-r from-art-gold via-amber-400 to-yellow-500 text-black border-art-gold font-black shadow-[0_2px_12px_rgba(197,160,89,0.35)] scale-[1.02]"
-                      : "bg-white/[0.04] text-white/70 hover:text-white hover:bg-white/10 border-white/15"
+                      ? "bg-lux-forest text-lux-card border-lux-forest font-black shadow-md scale-[1.02]"
+                      : "bg-lux-ivory text-lux-charcoal hover:text-lux-forest hover:bg-lux-forest/10 border-lux-border"
                   )}
                   title="Immediate possession resale apartments, villas, and plots"
                 >
-                  <RotateCcw size={13} className={selectedType === 'Resale' ? 'text-black' : 'text-emerald-400'} />
+                  <RotateCcw size={13} className={selectedType === 'Resale' ? 'text-lux-gold' : 'text-lux-forest'} />
                   <span>Resale</span>
                   <span className={cn(
                     "text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold",
-                    selectedType === 'Resale' ? "bg-black/25 text-black" : "bg-white/10 text-white/60"
+                    selectedType === 'Resale' ? "bg-lux-gold text-lux-charcoal" : "bg-lux-card text-lux-muted border border-lux-border"
                   )}>
                     {typeCounts.Resale}
                   </span>
@@ -3530,13 +3538,13 @@ const ProjectGrid = ({
               {/* Corridor & Typology Refinement Selectors */}
               <div className="flex items-center gap-1.5 flex-wrap justify-between sm:justify-end">
                 <div className="flex items-center gap-1">
-                  <span className="text-[8.5px] uppercase font-mono text-white/40 hidden lg:inline">
+                  <span className="text-[8.5px] uppercase font-mono text-lux-muted hidden lg:inline">
                     Corridor:
                   </span>
                   <select
                     value={selectedCorridor}
                     onChange={(e) => setSelectedCorridor(e.target.value)}
-                    className="bg-black/80 border border-white/20 text-white text-[10px] rounded px-2 py-1 outline-none focus:border-art-gold font-mono cursor-pointer"
+                    className="bg-lux-ivory border border-lux-border text-lux-charcoal text-[10px] rounded px-2 py-1 outline-none focus:border-lux-forest font-mono cursor-pointer"
                     title="Filter by corridor micro-market"
                   >
                     <option value="All">All Corridors ({corridors.length - 1})</option>
@@ -3547,13 +3555,13 @@ const ProjectGrid = ({
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <span className="text-[8.5px] uppercase font-mono text-white/40 hidden lg:inline">
+                  <span className="text-[8.5px] uppercase font-mono text-lux-muted hidden lg:inline">
                     Typology:
                   </span>
                   <select
                     value={selectedPropType}
                     onChange={(e) => setSelectedPropType(e.target.value as any)}
-                    className="bg-black/80 border border-white/20 text-white text-[10px] rounded px-2 py-1 outline-none focus:border-art-gold font-mono cursor-pointer"
+                    className="bg-lux-ivory border border-lux-border text-lux-charcoal text-[10px] rounded px-2 py-1 outline-none focus:border-lux-forest font-mono cursor-pointer"
                     title="Filter by Apartment, Villa, Plot"
                   >
                     <option value="All">All Typologies</option>
@@ -3570,15 +3578,15 @@ const ProjectGrid = ({
                   className={cn(
                     "text-[10px] uppercase font-mono tracking-wider cursor-pointer px-2.5 py-1.5 rounded transition-all whitespace-nowrap flex items-center gap-1.5 font-bold border",
                     isAnyFilterActive
-                      ? "bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40 shadow-sm"
-                      : "bg-white/5 text-white/50 border-white/10 hover:text-white hover:bg-white/10"
+                      ? "bg-red-500/10 hover:bg-red-600 text-red-700 hover:text-white border-red-500/30 shadow-sm"
+                      : "bg-lux-ivory text-lux-muted border-lux-border hover:text-lux-forest hover:bg-lux-forest/10"
                   )}
                   title="Reset selectedType, selectedCorridor, selectedPropType, and searchQuery simultaneously"
                 >
-                  <RotateCcw size={11} className={isAnyFilterActive ? "text-rose-300" : "text-white/40"} />
+                  <RotateCcw size={11} className={isAnyFilterActive ? "text-red-600 group-hover:text-white" : "text-lux-muted"} />
                   <span>Clear All Filters</span>
                   {activeFiltersCount > 0 && (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full font-mono bg-white/15 text-white font-bold">
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full font-mono bg-lux-forest text-lux-card font-bold">
                       {activeFiltersCount}
                     </span>
                   )}
@@ -3588,25 +3596,25 @@ const ProjectGrid = ({
           </div>
 
           {/* Price Range Slider Toolbar */}
-          <div className="mb-2 p-2 sm:p-2.5 bg-[#121212]/95 border border-white/20 rounded-md shadow-md backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="mb-2 p-2 sm:p-2.5 bg-lux-card border border-lux-border rounded-md shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
               <div className="flex items-center justify-between sm:justify-start gap-2 shrink-0">
-                <label htmlFor="price-range-slider" className="text-[10px] sm:text-[11px] font-mono uppercase font-black text-art-gold flex items-center gap-1.5 tracking-wider">
-                  <SlidersHorizontal size={13} className="text-art-gold" />
+                <label htmlFor="price-range-slider" className="text-[10px] sm:text-[11px] font-mono uppercase font-black text-lux-forest flex items-center gap-1.5 tracking-wider">
+                  <SlidersHorizontal size={13} className="text-lux-forest" />
                   <span>Price Range</span>
                 </label>
                 <span className={cn(
                   "px-2 py-0.5 rounded text-[10px] font-mono font-bold border",
                   maxPriceBudget < 100000000 
-                    ? "bg-art-gold/15 text-art-gold border-art-gold/40 shadow-[0_0_10px_rgba(197,160,89,0.25)]" 
-                    : "bg-white/5 text-white/60 border-white/10"
+                    ? "bg-lux-forest text-lux-card border-lux-forest shadow-sm"
+                    : "bg-lux-ivory text-lux-muted border-lux-border"
                 )}>
                   {formatBudgetLabel(maxPriceBudget)}
                 </span>
               </div>
 
               <div className="flex-1 flex items-center gap-2">
-                <span className="text-[9px] font-mono text-white/40 shrink-0">₹25L</span>
+                <span className="text-[9px] font-mono text-lux-muted shrink-0">₹25L</span>
                 <input
                   id="price-range-slider"
                   type="range"
@@ -3615,10 +3623,10 @@ const ProjectGrid = ({
                   step="2500000"
                   value={maxPriceBudget}
                   onChange={(e) => setMaxPriceBudget(Number(e.target.value))}
-                  className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#c5a059]"
+                  className="w-full h-1.5 bg-lux-border rounded-lg appearance-none cursor-pointer accent-[#153D32]"
                   aria-label="Price Range slider"
                 />
-                <span className="text-[9px] font-mono text-white/40 shrink-0">₹10Cr+</span>
+                <span className="text-[9px] font-mono text-lux-muted shrink-0">₹10Cr+</span>
               </div>
 
               {/* Quick Budget Presets */}
@@ -3636,8 +3644,8 @@ const ProjectGrid = ({
                     className={cn(
                       "px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider rounded border transition-all cursor-pointer whitespace-nowrap",
                       maxPriceBudget === preset.value
-                        ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
-                        : "bg-white/5 text-white/60 border-white/10 hover:text-white hover:bg-white/10"
+                        ? "bg-lux-forest text-lux-card border-lux-forest font-black shadow-sm"
+                        : "bg-lux-ivory text-lux-muted border-lux-border hover:text-lux-forest hover:bg-lux-forest/10"
                     )}
                   >
                     {preset.label}
@@ -3647,7 +3655,7 @@ const ProjectGrid = ({
             </div>
 
             {/* Clear All Filters button in slider toolbar */}
-            <div className="flex items-center justify-end gap-2 shrink-0 border-t md:border-t-0 md:border-l border-white/10 pt-2 md:pt-0 md:pl-3">
+            <div className="flex items-center justify-end gap-2 shrink-0 border-t md:border-t-0 md:border-l border-lux-border pt-2 md:pt-0 md:pl-3">
               <button
                 type="button"
                 data-testid="clear-all-filters-slider-btn"
@@ -3655,23 +3663,23 @@ const ProjectGrid = ({
                 className={cn(
                   "px-3 py-1.5 rounded-sm text-[10px] uppercase font-mono tracking-wider transition-all cursor-pointer flex items-center gap-1.5 border whitespace-nowrap font-bold",
                   isAnyFilterActive
-                    ? "bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40 shadow-sm"
-                    : "bg-white/5 text-white/40 border-white/10 hover:text-white hover:bg-white/10"
+                    ? "bg-red-500/10 hover:bg-red-600 text-red-700 hover:text-white border-red-500/30 shadow-sm"
+                    : "bg-lux-ivory text-lux-muted border-lux-border hover:text-lux-forest hover:bg-lux-forest/10"
                 )}
                 title="Clear All Filters"
               >
-                <RotateCcw size={11} className={isAnyFilterActive ? "text-rose-300" : "text-white/40"} />
+                <RotateCcw size={11} className={isAnyFilterActive ? "text-red-600" : "text-lux-muted"} />
                 <span>Clear All Filters</span>
               </button>
             </div>
           </div>
-          <div className="px-3 py-1.5 bg-[#111111]/90 border border-white/15 rounded-md flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm">
+          <div className="px-3 py-1.5 bg-lux-card border border-lux-border rounded-md flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-mono text-white/70">
-                Displaying <span className="text-art-gold font-bold">{totalProjects === 0 ? 0 : startIndex + 1}–{endIndex}</span> of <span className="text-white font-bold">{totalProjects}</span> Portfolios
+              <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-mono text-lux-muted">
+                Displaying <span className="text-lux-forest font-bold">{totalProjects === 0 ? 0 : startIndex + 1}–{endIndex}</span> of <span className="text-lux-charcoal font-bold">{totalProjects}</span> Portfolios
               </span>
               {totalPages > 1 && (
-                <span className="text-[8.5px] uppercase tracking-wider font-mono px-1.5 py-0.2 rounded-sm bg-white/10 text-white/60 border border-white/10">
+                <span className="text-[8.5px] uppercase tracking-wider font-mono px-1.5 py-0.2 rounded-sm bg-lux-ivory text-lux-muted border border-lux-border">
                   Page {activePage} of {totalPages}
                 </span>
               )}
@@ -3679,10 +3687,10 @@ const ProjectGrid = ({
 
             {/* Options to view in same page: 10, 20, 30, 40, 50 */}
             <div className="flex items-center gap-1.5">
-              <span className="text-[8.5px] uppercase tracking-widest text-white/60 font-mono font-bold whitespace-nowrap">
+              <span className="text-[8.5px] uppercase tracking-widest text-lux-muted font-mono font-bold whitespace-nowrap">
                 Per Page:
               </span>
-              <div className="flex items-center gap-0.5 bg-black/60 p-0.5 rounded border border-white/10">
+              <div className="flex items-center gap-0.5 bg-lux-ivory p-0.5 rounded border border-lux-border">
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <button
                     key={`top-pagesize-${size}`}
@@ -3691,8 +3699,8 @@ const ProjectGrid = ({
                     className={cn(
                       "px-2 py-0.5 text-[9px] font-mono font-bold rounded transition-all cursor-pointer",
                       pageSize === size
-                        ? "bg-art-gold text-black border border-art-gold shadow-[0_0_8px_rgba(197,160,89,0.35)]"
-                        : "text-white/70 hover:text-white hover:bg-white/10"
+                        ? "bg-lux-forest text-lux-card border border-lux-forest shadow-sm"
+                        : "text-lux-muted hover:text-lux-forest hover:bg-lux-forest/10"
                     )}
                     title={`Show ${size} projects per page`}
                   >
@@ -3711,14 +3719,14 @@ const ProjectGrid = ({
               <ProjectCardSkeleton key={`skeleton-${i}`} />
             ))
           ) : displayedProjects.length === 0 ? (
-            <div className="text-center py-20 border border-dashed border-white/10 rounded-lg bg-white/[0.01] space-y-4">
-              <span className="text-art-gold uppercase tracking-[0.4em] text-[10px] block font-mono">Advisory Archive</span>
-              <p className="text-white/60 font-serif italic text-xl">No matching portraits in this specific filter combination.</p>
+            <div className="text-center py-20 border border-dashed border-lux-border rounded-lg bg-lux-card space-y-4 shadow-sm">
+              <span className="text-lux-gold uppercase tracking-[0.4em] text-[10px] block font-mono font-bold">Advisory Archive</span>
+              <p className="text-lux-forest font-serif italic text-xl">No matching portraits in this specific filter combination.</p>
               <button
                 type="button"
                 data-testid="empty-clear-all-filters-btn"
                 onClick={handleClearAllFilters}
-                className="px-6 py-2.5 bg-art-gold text-black text-[10px] uppercase tracking-widest font-black rounded-sm cursor-pointer hover:bg-white transition-all shadow-md flex items-center gap-2 mx-auto"
+                className="px-6 py-2.5 bg-lux-forest text-lux-card text-[10px] uppercase tracking-widest font-black rounded-sm cursor-pointer hover:bg-lux-forest-hover transition-all shadow-md flex items-center gap-2 mx-auto"
               >
                 <RotateCcw size={12} />
                 <span>Clear All Filters</span>
@@ -3748,13 +3756,13 @@ const ProjectGrid = ({
 
         {/* Bottom Pagination & Navigation Controls */}
         {totalProjects > 0 && (
-          <div className="mt-8 pt-6 border-t border-white/15 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="mt-8 pt-6 border-t border-lux-border flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Left pagination details & page size quick change */}
             <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
-              <span className="text-[10px] sm:text-[11px] font-mono text-white/60 uppercase tracking-wider">
-                Showing <span className="text-art-gold font-bold">{startIndex + 1}–{endIndex}</span> of <span className="text-white font-bold">{totalProjects}</span>
+              <span className="text-[10px] sm:text-[11px] font-mono text-lux-muted uppercase tracking-wider">
+                Showing <span className="text-lux-forest font-bold">{startIndex + 1}–{endIndex}</span> of <span className="text-lux-charcoal font-bold">{totalProjects}</span>
               </span>
-              <div className="flex items-center gap-1.5 text-[9.5px] font-mono text-white/50">
+              <div className="flex items-center gap-1.5 text-[9.5px] font-mono text-lux-muted">
                 <span>· View:</span>
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <button
@@ -3764,8 +3772,8 @@ const ProjectGrid = ({
                     className={cn(
                       "px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer",
                       pageSize === size
-                        ? "bg-art-gold text-black font-black"
-                        : "bg-white/5 text-white/60 hover:text-white hover:bg-white/15 border border-white/10"
+                        ? "bg-lux-forest text-lux-card font-black shadow-sm"
+                        : "bg-lux-card text-lux-muted hover:text-lux-forest hover:bg-lux-forest/10 border border-lux-border"
                     )}
                   >
                     {size}
@@ -3785,8 +3793,8 @@ const ProjectGrid = ({
                   className={cn(
                     "px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded-sm border transition-all cursor-pointer",
                     activePage === 1
-                      ? "bg-white/[0.02] text-white/25 border-white/5 cursor-not-allowed"
-                      : "bg-white/5 text-white/80 hover:text-white hover:bg-white/15 border-white/15"
+                      ? "bg-lux-ivory text-lux-muted/40 border-lux-border cursor-not-allowed"
+                      : "bg-lux-card text-lux-charcoal hover:text-lux-forest hover:border-lux-forest border-lux-border shadow-sm"
                   )}
                   title="First Page"
                 >
@@ -3801,8 +3809,8 @@ const ProjectGrid = ({
                   className={cn(
                     "px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex items-center gap-1",
                     activePage === 1
-                      ? "bg-white/[0.02] text-white/25 border-white/5 cursor-not-allowed"
-                      : "bg-white/5 text-white/80 hover:text-white hover:bg-white/15 border-white/15"
+                      ? "bg-lux-ivory text-lux-muted/40 border-lux-border cursor-not-allowed"
+                      : "bg-lux-card text-lux-charcoal hover:text-lux-forest hover:border-lux-forest border-lux-border shadow-sm"
                   )}
                   title="Previous Page"
                 >
@@ -3813,7 +3821,7 @@ const ProjectGrid = ({
                 {getPageNumbers().map((pageItem, pIdx) => {
                   if (pageItem === '...') {
                     return (
-                      <span key={`dots-${pIdx}`} className="px-2 text-white/40 font-mono text-xs select-none">
+                      <span key={`dots-${pIdx}`} className="px-2 text-lux-muted font-mono text-xs select-none">
                         …
                       </span>
                     );
@@ -3829,8 +3837,8 @@ const ProjectGrid = ({
                       className={cn(
                         "min-w-[32px] h-[32px] px-2 text-[11px] font-mono font-bold rounded-sm border transition-all cursor-pointer flex items-center justify-center",
                         isCurrent
-                          ? "bg-art-gold text-black border-art-gold shadow-[0_0_12px_rgba(197,160,89,0.35)]"
-                          : "bg-white/5 text-white/70 hover:text-white hover:bg-white/15 border-white/15"
+                          ? "bg-lux-forest text-lux-card border-lux-forest shadow-md"
+                          : "bg-lux-card text-lux-charcoal hover:text-lux-forest hover:border-lux-forest border-lux-border shadow-sm"
                       )}
                     >
                       {pageNum}
@@ -3846,8 +3854,8 @@ const ProjectGrid = ({
                   className={cn(
                     "px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded-sm border transition-all cursor-pointer flex items-center gap-1",
                     activePage === totalPages
-                      ? "bg-white/[0.02] text-white/25 border-white/5 cursor-not-allowed"
-                      : "bg-white/5 text-white/80 hover:text-white hover:bg-white/15 border-white/15"
+                      ? "bg-lux-ivory text-lux-muted/40 border-lux-border cursor-not-allowed"
+                      : "bg-lux-card text-lux-charcoal hover:text-lux-forest hover:border-lux-forest border-lux-border shadow-sm"
                   )}
                   title="Next Page"
                 >
@@ -3862,8 +3870,8 @@ const ProjectGrid = ({
                   className={cn(
                     "px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded-sm border transition-all cursor-pointer",
                     activePage === totalPages
-                      ? "bg-white/[0.02] text-white/25 border-white/5 cursor-not-allowed"
-                      : "bg-white/5 text-white/80 hover:text-white hover:bg-white/15 border-white/15"
+                      ? "bg-lux-ivory text-lux-muted/40 border-lux-border cursor-not-allowed"
+                      : "bg-lux-card text-lux-charcoal hover:text-lux-forest hover:border-lux-forest border-lux-border shadow-sm"
                   )}
                   title="Last Page"
                 >
@@ -3977,7 +3985,7 @@ const EnquiryModal = ({
         type: enquiryType === 'Site Visit' ? 'Site Visit' : 'Form',
         enquiryCategory: selectedCategory,
         propertyCategory: selectedCategory === 'Rental' ? 'Rent' : selectedCategory,
-        intentSentiment: enquiryType === 'Site Visit' ? 'High' : undefined,
+        ...(enquiryType === 'Site Visit' ? { intentSentiment: 'High' as const } : {}),
         timestamp: serverTimestamp()
       };
       await addDoc(collection(db, 'enquiries'), enquiry);
@@ -4016,35 +4024,32 @@ const EnquiryModal = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/95 backdrop-blur-md"
+        className="fixed inset-0 bg-lux-charcoal/80 backdrop-blur-md"
       />
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="relative bg-art-dark w-full max-w-2xl border border-white/10 rounded-sm shadow-2xl p-6 sm:p-8 md:p-12 overflow-y-auto max-h-[90vh] my-auto z-20"
+        className="relative bg-lux-card text-lux-charcoal w-full max-w-2xl border border-lux-border rounded-sm shadow-2xl p-6 sm:p-8 md:p-12 overflow-y-auto max-h-[90vh] my-auto z-20"
       >
         {success ? (
           <div className="py-12 text-center">
-            <div className={cn(
-              "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8",
-              enquiryType === 'Site Visit' ? "bg-emerald-500/15 border border-emerald-500/30" : "bg-art-gold/10"
-            )}>
+            <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 bg-lux-forest/10 border border-lux-forest/30">
               {enquiryType === 'Site Visit' ? (
-                <Calendar className="text-emerald-400" size={48} />
+                <Calendar className="text-lux-forest" size={48} />
               ) : (
-                <CheckCircle2 className="text-art-gold" size={48} />
+                <CheckCircle2 className="text-lux-forest" size={48} />
               )}
             </div>
-            <h3 className="text-3xl sm:text-4xl font-serif mb-4 italic text-white">
+            <h3 className="text-3xl sm:text-4xl font-serif mb-4 italic text-lux-forest">
               {enquiryType === 'Site Visit' ? 'Site Visit Scheduled!' : 'Transmission Recorded'}
             </h3>
             {enquiryType === 'Site Visit' && project && (
-              <p className="text-emerald-300 font-mono text-xs mb-3 font-bold">
-                Target Property: <span className="text-white">{project.name}</span> &bull; {preferredVisitDate} ({preferredVisitTime})
+              <p className="text-lux-forest font-mono text-xs mb-3 font-bold">
+                Target Property: <span className="text-lux-charcoal">{project.name}</span> &bull; {preferredVisitDate} ({preferredVisitTime})
               </p>
             )}
-            <p className="text-white/60 tracking-widest uppercase text-[10px] max-w-md mx-auto">
+            <p className="text-lux-muted tracking-widest uppercase text-[10px] max-w-md mx-auto">
               {enquiryType === 'Site Visit'
                 ? `Our property specialist will connect with you to confirm your site visit appointment for ${preferredVisitDate} (${preferredVisitTime}).`
                 : 'A dedicated Relationship Advisor will contact you directly.'}
@@ -4055,7 +4060,7 @@ const EnquiryModal = ({
             <button 
               type="button"
               onClick={onClose} 
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 px-3 py-1.5 rounded-full bg-white text-black hover:bg-art-gold font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer z-30 border border-white"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 px-3 py-1.5 rounded-full bg-lux-forest text-lux-card hover:bg-lux-forest-hover font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all cursor-pointer z-30 border border-lux-forest"
               aria-label="Close modal"
               title="Close Window (Esc)"
             >
@@ -4064,15 +4069,15 @@ const EnquiryModal = ({
             </button>
 
             <div className="font-sans">
-              <div className="mb-6 pb-4 border-b border-white/10">
-                <span className="text-art-gold uppercase tracking-[0.4em] text-[10px] mb-2 block font-bold">{getSubTitle()}</span>
-                <p className="text-md text-white/60 font-mono text-xs uppercase mb-1">Connecting with respect to:</p>
-                <h3 className="text-2xl sm:text-3xl font-serif text-white italic">{getTitle()}</h3>
+              <div className="mb-6 pb-4 border-b border-lux-border">
+                <span className="text-lux-gold uppercase tracking-[0.4em] text-[10px] mb-2 block font-bold">{getSubTitle()}</span>
+                <p className="text-md text-lux-muted font-mono text-xs uppercase mb-1">Connecting with respect to:</p>
+                <h3 className="text-2xl sm:text-3xl font-serif text-lux-forest italic">{getTitle()}</h3>
               </div>
 
               {/* Category Segment Selector */}
               <div className="mb-5 space-y-1.5">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold block">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-lux-forest block">
                   Inquiry Category Queue
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -4084,8 +4089,8 @@ const EnquiryModal = ({
                       className={cn(
                         "py-2 px-2 text-[10px] font-bold uppercase tracking-wider rounded-sm border transition-all cursor-pointer text-center",
                         selectedCategory === cat
-                          ? "bg-art-gold text-black border-art-gold font-black shadow-sm"
-                          : "bg-white/5 text-white/50 border-white/10 hover:border-white/20 hover:text-white"
+                          ? "bg-lux-forest text-lux-card border-lux-forest font-black shadow-sm"
+                          : "bg-lux-ivory text-lux-muted border-lux-border hover:border-lux-forest hover:text-lux-forest"
                       )}
                     >
                       {cat}
@@ -4096,21 +4101,21 @@ const EnquiryModal = ({
 
               {/* Site Visit Intent Banner */}
               {enquiryType === 'Site Visit' && (
-                <div className="mb-6 p-4 rounded-sm bg-gradient-to-r from-emerald-950/40 via-emerald-900/20 to-black border border-emerald-500/40 flex items-start gap-3.5">
-                  <div className="p-2.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shrink-0 mt-0.5">
+                <div className="mb-6 p-4 rounded-sm bg-lux-ivory border border-lux-border flex items-start gap-3.5">
+                  <div className="p-2.5 rounded bg-lux-forest/10 text-lux-forest border border-lux-border shrink-0 mt-0.5">
                     <Calendar size={18} />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-                      <h4 className="text-xs uppercase font-mono font-black text-emerald-300 tracking-wider">
+                      <h4 className="text-xs uppercase font-mono font-black text-lux-forest tracking-wider">
                         Site Visit
                       </h4>
-                      <span className="text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
+                      <span className="text-[9px] font-mono font-bold bg-lux-forest/10 text-lux-forest px-2 py-0.5 rounded border border-lux-border">
                         Direct Developer Tour &bull; Verified Inventory
                       </span>
                     </div>
-                    <p className="text-[11.5px] text-white/80 leading-relaxed font-sans">
-                      Step into your future address — immerse yourself in actual layouts, natural light, panoramic balcony views, and premium architectural finishes at <strong className="text-white">{project?.name}</strong>.
+                    <p className="text-[11.5px] text-lux-muted leading-relaxed font-sans">
+                      Step into your future address — immerse yourself in actual layouts, natural light, panoramic balcony views, and premium architectural finishes at <strong className="text-lux-forest">{project?.name}</strong>.
                     </p>
                   </div>
                 </div>
@@ -4119,15 +4124,15 @@ const EnquiryModal = ({
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Preferred Site Visit Date & Timings */}
                 {enquiryType === 'Site Visit' && (
-                  <div className="p-4 bg-emerald-500/5 border border-emerald-500/30 rounded-sm space-y-3">
-                    <div className="flex items-center gap-1.5 text-emerald-300 font-mono text-xs font-bold uppercase tracking-wider">
-                      <Calendar size={13} className="text-emerald-400" />
+                  <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm space-y-3">
+                    <div className="flex items-center gap-1.5 text-lux-forest font-mono text-xs font-bold uppercase tracking-wider">
+                      <Calendar size={13} className="text-lux-forest" />
                       <span>Preferred Site Visit Schedule</span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-emerald-300 font-bold">
+                        <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-lux-forest font-bold">
                           Preferred Site Visit Date *
                         </label>
                         <input 
@@ -4136,17 +4141,17 @@ const EnquiryModal = ({
                           min={new Date().toISOString().split('T')[0]}
                           value={preferredVisitDate}
                           onChange={e => setPreferredVisitDate(e.target.value)}
-                          className="w-full bg-black/80 border border-emerald-500/40 focus:border-emerald-400 rounded-sm p-3 text-white outline-none transition-all text-xs font-mono"
+                          className="w-full bg-lux-card border border-lux-border focus:border-lux-forest rounded-sm p-3 text-lux-charcoal outline-none transition-all text-xs font-mono"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-emerald-300 font-bold">
+                        <label className="text-[10px] uppercase tracking-[0.2em] mb-1.5 block text-lux-forest font-bold">
                           Preferred Site Visit Timings *
                         </label>
                         <select
                           value={preferredVisitTime}
                           onChange={e => setPreferredVisitTime(e.target.value)}
-                          className="w-full bg-black/80 border border-emerald-500/40 focus:border-emerald-400 rounded-sm p-3 text-white outline-none transition-all text-xs font-mono"
+                          className="w-full bg-lux-card border border-lux-border focus:border-lux-forest rounded-sm p-3 text-lux-charcoal outline-none transition-all text-xs font-mono"
                         >
                           <option value="Morning (10:00 AM - 1:00 PM)">Morning (10:00 AM – 1:00 PM)</option>
                           <option value="Afternoon (1:00 PM - 4:00 PM)">Afternoon (1:00 PM – 4:00 PM)</option>
@@ -4156,21 +4161,21 @@ const EnquiryModal = ({
                       </div>
                     </div>
 
-                    <p className="text-[10px] text-white/50 font-mono">
-                      Selected appointment: <span className="text-emerald-300 font-bold">{preferredVisitDate}</span> during <span className="text-emerald-300 font-bold">{preferredVisitTime}</span>
+                    <p className="text-[10px] text-lux-muted font-mono">
+                      Selected appointment: <span className="text-lux-forest font-bold">{preferredVisitDate}</span> during <span className="text-lux-forest font-bold">{preferredVisitTime}</span>
                     </p>
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-white/40 font-bold">Individual Identity *</label>
+                    <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-lux-muted font-bold">Individual Identity *</label>
                     <input 
                       required
                       type="text" 
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white focus:border-art-gold outline-none transition-all placeholder:text-white/20 text-sm"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60 text-sm"
                       placeholder="Full Name"
                     />
                   </div>
@@ -4182,29 +4187,29 @@ const EnquiryModal = ({
                       required
                     />
                     {phoneError && (
-                      <p className="text-[10px] text-red-400 font-mono mt-1 font-bold">{phoneError}</p>
+                      <p className="text-[10px] text-red-600 font-mono mt-1 font-bold">{phoneError}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-white/40 font-bold">Email Communication *</label>
+                  <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-lux-muted font-bold">Email Communication *</label>
                   <input 
                     required
                     type="email" 
                     value={formData.email}
                     onChange={e => setFormData({...formData, email: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white focus:border-art-gold outline-none transition-all placeholder:text-white/20 text-sm"
+                    className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60 text-sm"
                     placeholder="name@domain.com"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-white/40 font-bold">Optional Notes / Particulars</label>
+                  <label className="text-[10px] uppercase tracking-[0.2em] mb-2 block text-lux-muted font-bold">Optional Notes / Particulars</label>
                   <textarea 
                     value={formData.message}
                     onChange={e => setFormData({...formData, message: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white focus:border-art-gold outline-none transition-all placeholder:text-white/20 text-sm h-24 resize-none"
+                    className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60 text-sm h-24 resize-none"
                     placeholder="Describe specific preferences (e.g. configurations, budget, timeline, floor choices)..."
                   />
                 </div>
@@ -4213,19 +4218,14 @@ const EnquiryModal = ({
                   <button 
                     type="button"
                     onClick={onClose}
-                    className="py-4 px-5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-sm uppercase tracking-[0.2em] text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="py-4 px-5 bg-lux-ivory hover:bg-lux-forest/10 text-lux-forest border border-lux-border rounded-sm uppercase tracking-[0.2em] text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <X size={14} /> Close Window
                   </button>
                   <button 
                     type="submit"
                     disabled={submitting}
-                    className={cn(
-                      "flex-1 py-4 rounded-sm uppercase tracking-[0.25em] text-[11px] font-black transition-all disabled:opacity-50 shadow-xl cursor-pointer",
-                      enquiryType === 'Site Visit'
-                        ? "bg-emerald-500 text-black hover:bg-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-                        : "bg-art-gold text-black hover:bg-white"
-                    )}
+                    className="flex-1 py-4 rounded-sm uppercase tracking-[0.25em] text-[11px] font-black transition-all disabled:opacity-50 shadow-lg cursor-pointer bg-lux-forest text-lux-card hover:bg-lux-forest-hover"
                   >
                     {submitting 
                       ? (enquiryType === 'Site Visit' ? 'CONFIRMING SITE VISIT...' : 'RECORDING INQUIRY...') 
@@ -7100,38 +7100,38 @@ const OpportunitySection = () => {
   };
 
   return (
-    <section id="opportunity" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-white/[0.01] border-t border-white/5 relative overflow-hidden">
-      <div className="absolute right-0 top-0 w-96 h-96 bg-art-gold/5 rounded-full filter blur-3xl -z-10" />
-      <div className="absolute left-12 top-0 w-px h-full bg-white/5 hidden lg:block" />
+    <section id="opportunity" className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 bg-lux-ivory border-t border-lux-border relative overflow-hidden">
+      <div className="absolute right-0 top-0 w-96 h-96 bg-lux-gold/10 rounded-full filter blur-3xl -z-10" />
+      <div className="absolute left-12 top-0 w-px h-full bg-lux-border hidden lg:block" />
       
       <div className="max-w-4xl mx-auto relative z-10">
         <div className="text-center mb-10 sm:mb-16 md:mb-20">
-          <span className="text-art-gold font-medium tracking-[0.5em] text-[10px] uppercase block mb-6 text-center">BS Homez Concierge</span>
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-serif text-white tracking-tight italic mb-6">
-            Offer Your <span className="not-italic text-art-gold">Asset</span>
+          <span className="text-lux-gold font-black tracking-[0.5em] text-[10px] uppercase block mb-6 text-center">BS Homez Concierge</span>
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-serif text-lux-forest tracking-tight italic mb-6">
+            Offer Your <span className="not-italic text-lux-gold">Asset</span>
           </h2>
-          <p className="text-xs sm:text-sm font-light text-white/50 tracking-wide leading-relaxed max-w-2xl mx-auto">
+          <p className="text-xs sm:text-sm font-normal text-lux-muted tracking-wide leading-relaxed max-w-2xl mx-auto">
             Authorize BS Homez to process your residential real estate assets. Complete the details below so that our direct HNWI and institutional channels can facilitate private placement.
           </p>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/10 p-5 sm:p-8 md:p-12 rounded-sm backdrop-blur-md font-sans">
+        <div className="bg-lux-card border border-lux-border p-5 sm:p-8 md:p-12 rounded-sm shadow-xl font-sans text-lux-charcoal">
           {success ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="text-center py-12"
             >
-              <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-green-500/20">
-                <CheckCircle2 className="text-green-500" size={40} />
+              <div className="w-20 h-20 bg-lux-forest/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-lux-forest/30">
+                <CheckCircle2 className="text-lux-forest" size={40} />
               </div>
-              <h3 className="text-3xl font-serif mb-4 text-white italic">Asset Successfully Filed</h3>
-              <p className="text-white/50 tracking-wide text-xs max-w-md mx-auto mb-10 leading-relaxed">
+              <h3 className="text-3xl font-serif mb-4 text-lux-forest italic">Asset Successfully Filed</h3>
+              <p className="text-lux-muted tracking-wide text-xs max-w-md mx-auto mb-10 leading-relaxed">
                 Thank you. Your property listing request is registered in our private system. A senior relationship advisor will review the metadata and verify details before initiating direct placement.
               </p>
               <button 
                 onClick={() => setSuccess(false)}
-                className="bg-white text-black text-[10px] font-bold uppercase tracking-widest px-8 py-4 rounded-sm hover:bg-art-gold transition-colors font-sans"
+                className="bg-lux-forest text-lux-card text-[10px] font-bold uppercase tracking-widest px-8 py-4 rounded-sm hover:bg-lux-forest-hover transition-colors font-sans cursor-pointer shadow-md"
               >
                 Register Another Property
               </button>
@@ -7139,26 +7139,26 @@ const OpportunitySection = () => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-10">
               {error && (
-                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-sm text-red-400 text-xs tracking-wider uppercase font-semibold font-sans">
+                <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-sm text-red-700 text-xs tracking-wider uppercase font-semibold font-sans">
                   Error: {error}
                 </div>
               )}
 
               {/* Owner Details */}
               <div>
-                <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-art-gold border-b border-white/5 pb-4 mb-8 font-sans">
+                <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-lux-forest border-b border-lux-border pb-4 mb-8 font-sans">
                   01. Owner Integrity
                 </h4>
                 <div className="grid md:grid-cols-2 gap-8">
                   <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold font-sans">Owner Name *</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold font-sans">Owner Name *</label>
                     <input 
                       required
                       type="text"
                       placeholder="Enter legal titleholder name"
                       value={formData.name}
                       onChange={e => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/20 font-sans"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60 font-sans"
                     />
                   </div>
                   <div>
@@ -7174,90 +7174,90 @@ const OpportunitySection = () => {
 
               {/* Property Details */}
               <div>
-                <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-art-gold border-b border-white/5 pb-4 mb-8 font-sans">
+                <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-lux-forest border-b border-lux-border pb-4 mb-8 font-sans">
                   02. Real Estate Coordinates
                 </h4>
                 <div className="grid md:grid-cols-2 gap-8 mb-8">
                   <div className="md:col-span-2">
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold font-sans">Property Name *</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold font-sans">Property Name *</label>
                     <input 
                       required
                       type="text"
                       placeholder="e.g., Prestige Lakeside Habitat, Sobha Royal Pavilion"
                       value={formData.propertyName}
                       onChange={e => setFormData({ ...formData, propertyName: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/20 font-sans"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60 font-sans"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold font-sans">Property Status *</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold font-sans">Property Status *</label>
                     <select 
                       value={formData.propertyStatus}
                       onChange={e => setFormData({ ...formData, propertyStatus: e.target.value as any })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all cursor-pointer font-sans"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all cursor-pointer font-sans"
                     >
-                      <option value="Ready to Move" className="bg-art-dark">Ready to Move</option>
-                      <option value="Under Construction" className="bg-art-dark">Under Construction</option>
-                      <option value="On Going" className="bg-art-dark">On Going</option>
-                      <option value="Nearing Completion" className="bg-art-dark">Nearing Completion</option>
+                      <option value="Ready to Move" className="bg-lux-card text-lux-charcoal">Ready to Move</option>
+                      <option value="Under Construction" className="bg-lux-card text-lux-charcoal">Under Construction</option>
+                      <option value="On Going" className="bg-lux-card text-lux-charcoal">On Going</option>
+                      <option value="Nearing Completion" className="bg-lux-card text-lux-charcoal">Nearing Completion</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold font-sans">Property Type *</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold font-sans">Property Type *</label>
                     <select 
                       value={formData.propertyType}
                       onChange={e => setFormData({ ...formData, propertyType: e.target.value as any })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all cursor-pointer font-sans"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all cursor-pointer font-sans"
                     >
-                      <option value="Flat" className="bg-art-dark">Flat (Apartment)</option>
-                      <option value="Villa" className="bg-art-dark">Villa</option>
-                      <option value="Plot" className="bg-art-dark">Plot (Land)</option>
+                      <option value="Flat" className="bg-lux-card text-lux-charcoal">Flat (Apartment)</option>
+                      <option value="Villa" className="bg-lux-card text-lux-charcoal">Villa</option>
+                      <option value="Plot" className="bg-lux-card text-lux-charcoal">Plot (Land)</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-8 mb-8 font-sans">
                   <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold">Rooms / Configuration *</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold">Rooms / Configuration *</label>
                     <select 
                       value={formData.rooms}
                       onChange={e => setFormData({ ...formData, rooms: e.target.value as any })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all cursor-pointer"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all cursor-pointer"
                     >
-                      <option value="1BHK" className="bg-art-dark font-mono">1 BHK</option>
-                      <option value="2BHK" className="bg-art-dark font-mono">2 BHK</option>
-                      <option value="3BHK" className="bg-art-dark font-mono">3 BHK</option>
-                      <option value="4BHK" className="bg-art-dark font-mono">4 BHK</option>
-                      <option value="5BHK" className="bg-art-dark font-mono">5 BHK</option>
+                      <option value="1BHK" className="bg-lux-card text-lux-charcoal font-mono">1 BHK</option>
+                      <option value="2BHK" className="bg-lux-card text-lux-charcoal font-mono">2 BHK</option>
+                      <option value="3BHK" className="bg-lux-card text-lux-charcoal font-mono">3 BHK</option>
+                      <option value="4BHK" className="bg-lux-card text-lux-charcoal font-mono">4 BHK</option>
+                      <option value="5BHK" className="bg-lux-card text-lux-charcoal font-mono">5 BHK</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold">Property Facing *</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold">Property Facing *</label>
                     <select 
                       value={formData.facingSelection}
                       onChange={e => setFormData({ ...formData, facingSelection: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all cursor-pointer"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all cursor-pointer"
                     >
-                      <option value="East" className="bg-art-dark">East</option>
-                      <option value="North" className="bg-art-dark">North</option>
-                      <option value="West" className="bg-art-dark">West</option>
-                      <option value="South" className="bg-art-dark">South</option>
-                      <option value="Custom" className="bg-art-dark">Custom Choice...</option>
+                      <option value="East" className="bg-lux-card text-lux-charcoal">East</option>
+                      <option value="North" className="bg-lux-card text-lux-charcoal">North</option>
+                      <option value="West" className="bg-lux-card text-lux-charcoal">West</option>
+                      <option value="South" className="bg-lux-card text-lux-charcoal">South</option>
+                      <option value="Custom" className="bg-lux-card text-lux-charcoal">Custom Choice...</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold">Floor Number *</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold">Floor Number *</label>
                     <input 
                       required
                       type="text"
                       placeholder="e.g., 4th Floor, Ground"
                       value={formData.floorNumber}
                       onChange={e => setFormData({ ...formData, floorNumber: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/20"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60"
                     />
                   </div>
                 </div>
@@ -7268,27 +7268,27 @@ const OpportunitySection = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8 font-sans"
                   >
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold">Specify Custom Facing Orientation *</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold">Specify Custom Facing Orientation *</label>
                     <input 
                       required
                       type="text"
                       placeholder="Enter facing orientation (e.g., North-East, West-Facing Garden View)"
                       value={formData.customFacing}
                       onChange={e => setFormData({ ...formData, customFacing: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/20"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60"
                     />
                   </motion.div>
                 )}
 
                 <div className="grid md:grid-cols-2 gap-8 font-sans">
                   <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold">Tower (Optional)</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold">Tower (Optional)</label>
                     <input 
                       type="text"
                       placeholder="e.g., Tower 3, Block B"
                       value={formData.tower}
                       onChange={e => setFormData({ ...formData, tower: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/20"
+                      className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60"
                     />
                   </div>
                 </div>
@@ -7296,20 +7296,20 @@ const OpportunitySection = () => {
 
               {/* Intent and Commercials */}
               <div>
-                <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-art-gold border-b border-white/5 pb-4 mb-8 font-sans">
+                <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-lux-forest border-b border-lux-border pb-4 mb-8 font-sans">
                   03. Intent & Value Alignment
                 </h4>
                 <div className="mb-8 font-sans">
-                  <label className="text-[9px] uppercase tracking-[0.2em] mb-4 block text-white/40 font-bold font-sans">Willing to *</label>
+                  <label className="text-[9px] uppercase tracking-[0.2em] mb-4 block text-lux-muted font-bold font-sans">Willing to *</label>
                   <div className="flex gap-4">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, willingTo: 'Sell' })}
                       className={cn(
-                        "flex-1 py-4 border rounded-sm text-xs uppercase font-black tracking-widest transition-all",
+                        "flex-1 py-4 border rounded-sm text-xs uppercase font-black tracking-widest transition-all cursor-pointer",
                         formData.willingTo === 'Sell' 
-                          ? "bg-art-gold text-black border-art-gold" 
-                          : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10"
+                          ? "bg-lux-forest text-lux-card border-lux-forest shadow-md"
+                          : "bg-lux-ivory border-lux-border text-lux-muted hover:text-lux-forest hover:border-lux-forest"
                       )}
                     >
                       Sell Property
@@ -7318,10 +7318,10 @@ const OpportunitySection = () => {
                       type="button"
                       onClick={() => setFormData({ ...formData, willingTo: 'Rent' })}
                       className={cn(
-                        "flex-1 py-4 border rounded-sm text-xs uppercase font-black tracking-widest transition-all",
+                        "flex-1 py-4 border rounded-sm text-xs uppercase font-black tracking-widest transition-all cursor-pointer",
                         formData.willingTo === 'Rent' 
-                          ? "bg-art-gold text-black border-art-gold" 
-                          : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10"
+                          ? "bg-lux-forest text-lux-card border-lux-forest shadow-md"
+                          : "bg-lux-ivory border-lux-border text-lux-muted hover:text-lux-forest hover:border-lux-forest"
                       )}
                     >
                       Rent Property
@@ -7336,14 +7336,14 @@ const OpportunitySection = () => {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                     >
-                      <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold">Expected Rent (Rs. Monthly, numbers only) *</label>
+                      <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold">Expected Rent (Rs. Monthly, numbers only) *</label>
                       <input 
                         required
                         type="number"
                         placeholder="e.g., 45000"
                         value={formData.expectedRent}
                         onChange={e => setFormData({ ...formData, expectedRent: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/20 font-mono"
+                        className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60 font-mono"
                       />
                     </motion.div>
                   ) : (
@@ -7352,14 +7352,14 @@ const OpportunitySection = () => {
                       initial={{ opacity: 0, x: 10 }}
                       animate={{ opacity: 1, x: 0 }}
                     >
-                      <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-white/40 font-bold">Expected Sell Price (Rs. total capital, numbers only) *</label>
+                      <label className="text-[9px] uppercase tracking-[0.2em] mb-3 block text-lux-muted font-bold">Expected Sell Price (Rs. total capital, numbers only) *</label>
                       <input 
                         required
                         type="number"
                         placeholder="e.g., 25000000"
                         value={formData.expectedSell}
                         onChange={e => setFormData({ ...formData, expectedSell: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/20 font-mono"
+                        className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60 font-mono"
                       />
                     </motion.div>
                   )}
@@ -7367,10 +7367,10 @@ const OpportunitySection = () => {
 
                 <div className="mt-8 font-sans">
                   <div className="flex justify-between items-center mb-3">
-                    <label className="text-[9px] uppercase tracking-[0.2em] block text-white/40 font-bold">Additional Notes / Specifications (Upto 2000 chars)</label>
+                    <label className="text-[9px] uppercase tracking-[0.2em] block text-lux-muted font-bold">Additional Notes / Specifications (Upto 2000 chars)</label>
                     <span className={cn(
                       "text-[9px] font-mono",
-                      formData.notes.length > 1900 ? "text-amber-400" : "text-white/20"
+                      formData.notes.length > 1900 ? "text-amber-700 font-bold" : "text-lux-muted"
                     )}>
                       {formData.notes.length}/2000
                     </span>
@@ -7380,7 +7380,7 @@ const OpportunitySection = () => {
                     placeholder="Enter proprietary details, specific preferences, configuration desires, handover expectations, or any other notes (up to 2000 characters)..."
                     value={formData.notes}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-sm p-4 text-white text-xs focus:border-art-gold outline-none transition-all placeholder:text-white/20 font-sans h-36 resize-none leading-relaxed"
+                    className="w-full bg-lux-ivory border border-lux-border rounded-sm p-4 text-lux-charcoal text-xs focus:border-lux-forest outline-none transition-all placeholder:text-lux-muted/60 font-sans h-36 resize-none leading-relaxed"
                   />
                 </div>
               </div>
@@ -7389,11 +7389,11 @@ const OpportunitySection = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-white hover:bg-art-gold text-black py-5 text-[11px] font-black uppercase tracking-[0.3em] transition-colors rounded-sm flex items-center justify-center gap-3 disabled:opacity-50 font-sans font-bold"
+                className="w-full bg-lux-forest hover:bg-lux-forest-hover text-lux-card py-5 text-[11px] font-black uppercase tracking-[0.3em] transition-colors rounded-sm flex items-center justify-center gap-3 disabled:opacity-50 font-sans cursor-pointer shadow-lg"
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="animate-spin text-black" size={16} />
+                    <Loader2 className="animate-spin text-lux-card" size={16} />
                     Processing Registry...
                   </>
                 ) : (
@@ -13843,6 +13843,8 @@ export default function App() {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [publicPortfolioItems, setPublicPortfolioItems] = useState<PublicPortfolioItem[]>([]);
+  const [dbTombstoneIds, setDbTombstoneIds] = useState<string[]>([]);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [filters, setFilters] = useState({
@@ -13902,17 +13904,14 @@ export default function App() {
   }, []);
 
   const handleUpdateTabVisibility = async (newConfig: TabVisibilityConfig) => {
+    if (!user || !isAdmin) {
+      throw new Error('Unauthorized: Verified admin authorization is required to modify tab visibility settings.');
+    }
     setTabVisibility(newConfig);
     try {
       localStorage.setItem('bs_homez_tab_visibility', JSON.stringify(newConfig));
     } catch {}
-    if (user) {
-      try {
-        await setDoc(doc(db, 'system_settings', 'tab_visibility'), newConfig, { merge: true });
-      } catch (err) {
-        console.warn('Failed to update Firestore tab visibility:', err);
-      }
-    }
+    await setDoc(doc(db, 'system_settings', 'tab_visibility'), newConfig, { merge: true });
   };
 
   const [activePropertyUrlId, setActivePropertyUrlId] = useState<string | null>(() => {
@@ -13992,6 +13991,7 @@ export default function App() {
       seoRevisions?: any[];
     }
   ) => {
+    if (!user || !isAdmin) return;
     // 1. Update in local state immediately for instant responsive UI
     setProjects(prev => prev.map(p => {
       if (p.id === projectId || p.name === projectId) {
@@ -14075,12 +14075,12 @@ export default function App() {
 
   // Redirect non-admin visitors if they navigate directly to a hidden tab
   useEffect(() => {
-    if (!user && activeMainTab !== 'admin' && activeMainTab !== 'overview') {
+    if (!isAdmin && activeMainTab !== 'admin' && activeMainTab !== 'overview') {
       if (tabVisibility[activeMainTab as PublicTabKey] === false) {
         setActiveMainTab('overview');
       }
     }
-  }, [activeMainTab, tabVisibility, user]);
+  }, [activeMainTab, tabVisibility, isAdmin]);
 
   const [isSeoModalOpen, setIsSeoModalOpen] = useState(false);
   const [currentSeoSnapshot, setCurrentSeoSnapshot] = useState({
@@ -14090,13 +14090,29 @@ export default function App() {
     imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85"
   });
 
-  // Merge local hidden/deleted preferences with Firestore state & auto-enrich all project data with memoization
+  // Merge local hidden/deleted preferences, DB tombstones, and published public_portfolio listings
   const effectiveProjects = useMemo(() => {
-    const list = projects.map(rawProj => {
+    const tombstoneSet = new Set(
+      [...deletedProjectIds, ...dbTombstoneIds].map((id) => id.trim().toLowerCase())
+    );
+    const portfolioProjects = publicPortfolioItems
+      .filter((item) => {
+        if (item.isDeleted) return false;
+        if (!item.isPublished || item.publicationStatus !== 'Published') return false;
+        const idLow = (item.id || '').toLowerCase();
+        const nameLow = (item.name || '').trim().toLowerCase();
+        if (idLow && tombstoneSet.has(idLow)) return false;
+        if (nameLow && tombstoneSet.has(nameLow)) return false;
+        return true;
+      })
+      .map(publicPortfolioToProject);
+
+    const list = [...portfolioProjects, ...projects].map(rawProj => {
       const p = autoEnrichProjectData(rawProj);
-      const key = p.id || p.name;
-      const isLocallyHidden = hiddenProjectIds.includes(key) || hiddenProjectIds.includes(p.name);
-      const isLocallyDeleted = deletedProjectIds.includes(key) || deletedProjectIds.includes(p.name);
+      const key = (p.id || p.name).trim().toLowerCase();
+      const nameKey = p.name.trim().toLowerCase();
+      const isLocallyHidden = hiddenProjectIds.includes(p.id || p.name) || hiddenProjectIds.includes(p.name);
+      const isLocallyDeleted = tombstoneSet.has(key) || tombstoneSet.has(nameKey);
       return {
         ...p,
         price: formatPriceWithCondition(p.price),
@@ -14105,10 +14121,9 @@ export default function App() {
         isDeleted: p.isDeleted || isLocallyDeleted
       };
     });
-    // Automatically keep enhancing all properties with complete SEO titles, descriptions & keywords
     const enhanced = autoEnhanceAllProjects(list);
     return deduplicateProjects(enhanced);
-  }, [projects, hiddenProjectIds, deletedProjectIds]);
+  }, [projects, publicPortfolioItems, hiddenProjectIds, deletedProjectIds, dbTombstoneIds]);
 
   const comparedProjects = useMemo(() => {
     return effectiveProjects.filter(
@@ -14561,6 +14576,9 @@ export default function App() {
   }, [activePropertyUrlId, effectiveProjects]);
 
   const handleSaveProject = async (updated: Project) => {
+    if (!user || !isAdmin) {
+      throw new Error('Unauthorized: Verified admin authorization is required to save projects.');
+    }
     const formattedUpdated: Project = autoEnrichProjectData({
       ...updated,
       price: formatPriceWithCondition(updated.price),
@@ -14639,6 +14657,7 @@ export default function App() {
   };
 
   const handleTogglePauseProject = async (project: Project) => {
+    if (!user || !isAdmin) return;
     const key = project.id || project.name;
     const nextPaused = !project.isPaused;
 
@@ -14673,6 +14692,9 @@ export default function App() {
   };
 
   const handleDeleteProject = async (project: Project) => {
+    if (!user || !isAdmin) {
+      throw new Error('Unauthorized: Verified admin authorization is required to delete projects.');
+    }
     const key = project.id || project.name;
 
     setDeletedProjectIds(prev => {
@@ -14713,6 +14735,9 @@ export default function App() {
 
   const handleDeleteAllProjects = async (projectsToDelete: Project[]) => {
     if (!projectsToDelete || projectsToDelete.length === 0) return;
+    if (!user || !isAdmin) {
+      throw new Error('Unauthorized: Verified admin authorization is required for batch deletion.');
+    }
 
     const idsToDelete = projectsToDelete.map(p => p.id || p.name);
     const namesToDelete = projectsToDelete.map(p => p.name.toLowerCase());
@@ -14770,10 +14795,18 @@ export default function App() {
   const handleLogout = () => signOut(auth);
 
   useEffect(() => {
-    const unsubAuth = onAuthStateChanged(auth, (u) => {
+    const unsubAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u);
-      if (u) setIsAdmin(true);
-      else setIsAdmin(false);
+      if (!u) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const tokenRes = await u.getIdTokenResult();
+        setIsAdmin(tokenRes?.claims?.admin === true);
+      } catch {
+        setIsAdmin(false);
+      }
     });
     return () => unsubAuth();
   }, []);
@@ -14880,8 +14913,17 @@ export default function App() {
       } catch {}
     }, (err) => {
       const errMsg = err?.message || String(err);
-      if (errMsg.includes('Quota') || errMsg.includes('quota') || errMsg.includes('resource-exhausted')) {
-        console.info('Firestore daily read limit reached; app operating seamlessly with verified local curated portfolio.');
+      if (
+        errMsg.includes('Quota') ||
+        errMsg.includes('quota') ||
+        errMsg.includes('resource-exhausted') ||
+        errMsg.includes('CANCELLED') ||
+        errMsg.includes('Disconnecting idle stream') ||
+        errMsg.includes('Timed out waiting for new targets') ||
+        errMsg.includes('offline') ||
+        errMsg.includes('unavailable')
+      ) {
+        console.info('Firestore projects listener using cached/curated fallback:', errMsg.includes('Quota') || errMsg.includes('quota') ? 'daily read quota limit reached' : 'reconnecting');
       } else {
         console.warn('Realtime projects listener fallback notice:', errMsg);
       }
@@ -14893,9 +14935,9 @@ export default function App() {
     return () => unsubProjects();
   }, []);
 
-  // Automatically purge legacy projects from Firestore when admin is signed in
+  // Automatically purge legacy projects from Firestore when verified admin is signed in
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isAdmin) return;
     const cleanupLegacyAndSeed = async () => {
       try {
         const snap = await getDocs(collection(db, 'projects'));
@@ -14910,12 +14952,12 @@ export default function App() {
       }
     };
     cleanupLegacyAndSeed();
-  }, [user]);
+  }, [user, isAdmin]);
 
   useEffect(() => {
     let unsubEnquiries: () => void = () => {};
     
-    if (user) {
+    if (user && isAdmin) {
       unsubEnquiries = onSnapshot(query(collection(db, 'enquiries'), orderBy('timestamp', 'desc')), (snapshot) => {
         setEnquiries(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Enquiry)));
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'enquiries'));
@@ -14924,12 +14966,12 @@ export default function App() {
     }
 
     return () => unsubEnquiries();
-  }, [user]);
+  }, [user, isAdmin]);
 
   useEffect(() => {
     let unsubOpportunities: () => void = () => {};
     
-    if (user) {
+    if (user && isAdmin) {
       unsubOpportunities = onSnapshot(query(collection(db, 'opportunities'), orderBy('timestamp', 'desc')), (snapshot) => {
         setOpportunities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Opportunity)));
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'opportunities'));
@@ -14938,12 +14980,12 @@ export default function App() {
     }
 
     return () => unsubOpportunities();
-  }, [user]);
+  }, [user, isAdmin]);
 
   useEffect(() => {
     let unsubReferrals: () => void = () => {};
     
-    if (user) {
+    if (user && isAdmin) {
       unsubReferrals = onSnapshot(query(collection(db, 'referrals'), orderBy('createdAt', 'desc')), (snapshot) => {
         setReferrals(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral)));
       }, (err) => handleFirestoreError(err, OperationType.LIST, 'referrals'));
@@ -14952,7 +14994,39 @@ export default function App() {
     }
 
     return () => unsubReferrals();
-  }, [user]);
+  }, [user, isAdmin]);
+
+  // Listen to persisted property tombstones (`deleted_projects`) so deleted curated/custom/portfolio records never resurrect
+  useEffect(() => {
+    const unsubTombstones = onSnapshot(
+      collection(db, 'deleted_projects'),
+      (snap) => {
+        const ids: string[] = [];
+        for (const d of snap.docs) {
+          ids.push(d.id);
+          const data = d.data();
+          if (data?.name) ids.push(String(data.name));
+        }
+        setDbTombstoneIds(ids);
+      },
+      () => {}
+    );
+    return () => unsubTombstones();
+  }, []);
+
+  // Listen to sanitized public_portfolio (Published items only on public website)
+  useEffect(() => {
+    const q = query(collection(db, 'public_portfolio'), where('publicationStatus', '==', 'Published'));
+    const unsubPublicPortfolio = onSnapshot(
+      q,
+      (snap) => {
+        const items = snap.docs.map((d) => ({ ...(d.data() as PublicPortfolioItem), id: d.id }));
+        setPublicPortfolioItems(items);
+      },
+      () => {}
+    );
+    return () => unsubPublicPortfolio();
+  }, []);
 
   const handleEnquireProject = (project: Project) => {
     setEnquiryType('Acquire');
@@ -15032,11 +15106,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-art-dark overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen flex flex-col bg-lux-ivory text-lux-charcoal overflow-x-hidden w-full max-w-full">
       <Navbar
         activeMainTab={activeMainTab}
         onSelectTab={handleSelectTab}
-        isAdminUser={Boolean(user)}
+        isAdminUser={Boolean(user && isAdmin)}
         tabVisibility={tabVisibility}
         onInquire={handleGeneralInquiry}
       />
@@ -15045,23 +15119,54 @@ export default function App() {
         {activeMainTab === 'overview' && (
           <div className="max-w-7xl mx-auto px-2.5 sm:px-6 md:px-12 pb-10 sm:pb-12">
             {/* Framed Home Window */}
-            <div className="border border-white/10 bg-white/[0.01] rounded-sm overflow-hidden shadow-2xl">
+            <div className="border border-lux-border bg-lux-ivory rounded-sm overflow-hidden shadow-xl">
               <Hero
                 onConsult={handlePrivateConsultation}
-                onExplorePortfolios={() => setActiveMainTab('projects')}
+                onExplorePortfolios={() => {
+                  setActiveMainTab('projects');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onOfferAsset={() => {
+                  setActiveMainTab('opportunity');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onReferAndEarn={() => {
+                  setActiveMainTab('referral');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+              <HomepageShowcase
+                projects={effectiveProjects}
+                onExploreProperties={() => {
+                  setActiveMainTab('projects');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onSelectProject={(proj) => {
+                  setActivePropertyUrlId(proj.id || proj.name);
+                  setActiveMainTab('projects');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onOfferAsset={() => {
+                  setActiveMainTab('opportunity');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onReferAndEarn={() => {
+                  setActiveMainTab('referral');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               />
               {/* Quick Tab Directory Cards inside the Home Window */}
-              <section className="py-6 sm:py-10 px-3 sm:px-8 md:px-12 bg-art-dark/95 border-t border-white/10">
+              <section className="py-6 sm:py-10 px-3 sm:px-8 md:px-12 bg-lux-ivory border-t border-lux-border">
                 <div className="mb-5 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 sm:gap-4">
                   <div>
-                    <span className="text-art-gold text-[9.5px] sm:text-[10px] uppercase tracking-[0.25em] sm:tracking-[0.4em] font-black block mb-1.5 sm:mb-2">
+                    <span className="text-lux-gold text-[9.5px] sm:text-[10px] uppercase tracking-[0.25em] sm:tracking-[0.4em] font-black block mb-1.5 sm:mb-2">
                       Dedicated Workspace Tabs
                     </span>
-                    <h2 className="text-xl sm:text-3xl md:text-4xl font-serif text-white italic">
-                      Explore by <span className="not-italic text-art-gold">Dedicated Tab.</span>
+                    <h2 className="text-xl sm:text-3xl md:text-4xl font-serif text-lux-forest italic">
+                      Explore by <span className="not-italic text-lux-gold">Dedicated Tab.</span>
                     </h2>
                   </div>
-                  <p className="text-[10px] sm:text-[11px] text-white/60 uppercase tracking-wider">
+                  <p className="text-[10px] sm:text-[11px] text-lux-muted uppercase tracking-wider">
                     Select any tab below to switch to its dedicated view.
                   </p>
                 </div>
@@ -15080,7 +15185,7 @@ export default function App() {
                     { id: 'faq' as MainAppTab, title: 'Advisory FAQ', sub: 'RERA, Khata, Resale & Rental Answers', icon: Info },
                     { id: 'about' as MainAppTab, title: 'About BS Homez', sub: 'Your Trusted Real Estate Partner', icon: Star }
                   ].filter(card => {
-                    if (Boolean(user)) return true;
+                    if (Boolean(user && isAdmin)) return true;
                     return tabVisibility ? tabVisibility[card.id as PublicTabKey] !== false : true;
                   }).map(card => {
                     const CardIcon = card.icon;
@@ -15092,21 +15197,21 @@ export default function App() {
                           setActiveMainTab(card.id);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="p-3.5 sm:p-4 bg-white/[0.025] hover:bg-art-gold/10 border border-white/10 hover:border-art-gold rounded-sm text-left transition-all group cursor-pointer flex flex-col justify-between"
+                        className="p-3.5 sm:p-4 bg-lux-card hover:bg-lux-forest text-lux-charcoal hover:text-lux-card border border-lux-border hover:border-lux-forest rounded-sm text-left transition-all group cursor-pointer flex flex-col justify-between shadow-sm hover:shadow-md"
                       >
                         <div>
                           <div className="flex items-center justify-between gap-2 mb-2">
-                            <span className="text-[8.5px] uppercase tracking-wider text-art-gold font-black">
+                            <span className="text-[8.5px] uppercase tracking-wider text-lux-gold font-black">
                               Open Tab
                             </span>
-                            <CardIcon size={14} className="text-art-gold/60 group-hover:text-art-gold transition-colors" />
+                            <CardIcon size={14} className="text-lux-forest group-hover:text-lux-gold transition-colors" />
                           </div>
-                          <h3 className="text-base sm:text-lg font-serif italic text-white group-hover:text-art-gold transition-colors leading-snug">
+                          <h3 className="text-base sm:text-lg font-serif italic text-lux-forest group-hover:text-lux-card transition-colors leading-snug">
                             {card.title}
                           </h3>
-                          <p className="text-[10px] text-white/55 mt-1 leading-relaxed">{card.sub}</p>
+                          <p className="text-[10px] text-lux-muted group-hover:text-lux-card/80 mt-1 leading-relaxed">{card.sub}</p>
                         </div>
-                        <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[8.5px] uppercase tracking-wider text-white/60 group-hover:text-art-gold font-bold">
+                        <div className="mt-3 pt-2 border-t border-lux-border group-hover:border-white/15 flex items-center justify-between text-[8.5px] uppercase tracking-wider text-lux-forest group-hover:text-lux-gold font-bold">
                           <span>Switch Tab</span>
                           <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
                         </div>
@@ -15122,7 +15227,7 @@ export default function App() {
         {activeMainTab === 'projects' && !activePropertyUrlId && (
           <ProjectGrid 
             projects={projectsForGrid} 
-            isAdmin={Boolean(user)}
+            isAdmin={Boolean(user && isAdmin)}
             hiddenCount={hiddenProjectsCount}
             showHidden={showHiddenProjects}
             onToggleShowHidden={() => setShowHiddenProjects(prev => !prev)}
@@ -15158,16 +15263,16 @@ export default function App() {
         )}
 
         {activeMainTab === 'projects' && activePropertyUrlId && !matchedProjectDetail && (
-          <div className="min-h-screen bg-[#0c0c0c] text-white pt-32 pb-20 px-4 text-center">
-            <div className="max-w-md mx-auto bg-[#141414] border border-[#262626] rounded-2xl p-8 shadow-2xl">
-              <h1 className="text-2xl font-bold font-serif text-[#C5A059] mb-3">Project Not Found</h1>
-              <p className="text-gray-400 text-sm mb-6">The project URL you requested ("{activePropertyUrlId}") does not exist or has been removed.</p>
+          <div className="min-h-screen bg-lux-ivory text-lux-charcoal pt-32 pb-20 px-4 text-center">
+            <div className="max-w-md mx-auto bg-lux-card border border-lux-border rounded-2xl p-8 shadow-xl">
+              <h1 className="text-2xl font-bold font-serif text-lux-forest mb-3">Project Not Found</h1>
+              <p className="text-lux-muted text-sm mb-6">The project URL you requested ("{activePropertyUrlId}") does not exist or has been removed.</p>
               <button
                 onClick={() => {
                   setActivePropertyUrlId(null);
                   window.history.pushState({}, '', '/?tab=projects');
                 }}
-                className="px-6 py-3 rounded-xl bg-[#C5A059] text-black font-bold text-xs uppercase tracking-wider hover:bg-[#d4af37] transition-all cursor-pointer"
+                className="px-6 py-3 rounded-xl bg-lux-forest text-lux-card font-bold text-xs uppercase tracking-wider hover:bg-lux-forest-hover transition-all cursor-pointer shadow-md"
               >
                 Return to All Projects
               </button>
@@ -15176,7 +15281,7 @@ export default function App() {
         )}
 
         {activeMainTab === 'grow-business' && (
-          <GrowBusinessSection isAdmin={Boolean(user)} onSuccessSubmitted={() => {}} />
+          <GrowBusinessSection isAdmin={Boolean(user && isAdmin)} onSuccessSubmitted={() => {}} />
         )}
 
         {activeMainTab === 'services' && <Services />}
@@ -15185,7 +15290,7 @@ export default function App() {
 
         {activeMainTab === 'insights' && <MarketInsights />}
 
-        {activeMainTab === 'opportunity' && <OpportunitySection />}
+        {activeMainTab === 'opportunity' && <OfferYourAssetForm />}
 
         {activeMainTab === 'referral' && <ReferralSection />}
 
@@ -15196,32 +15301,32 @@ export default function App() {
         {activeMainTab === 'faq' && <FAQSection />}
 
         {activeMainTab === 'about' && (
-          <section id="about" className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 md:px-12 bg-art-dark text-art-light">
+          <section id="about" className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 md:px-12 bg-lux-ivory text-lux-charcoal">
             <div className="max-w-5xl mx-auto">
               {/* Header */}
               <div className="text-center mb-12 sm:mb-16">
-                <span className="inline-block text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-art-gold font-black px-3.5 py-1.5 bg-art-gold/10 border border-art-gold/30 rounded-sm mb-4">
+                <span className="inline-block text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-lux-forest font-black px-3.5 py-1.5 bg-lux-forest/10 border border-lux-border rounded-sm mb-4">
                   RERA-Compliant Real Estate Consultancy
                 </span>
-                <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif text-white italic mb-4">
-                  About <span className="not-italic text-art-gold">BS Homez</span>
+                <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif text-lux-forest italic mb-4">
+                  About <span className="not-italic text-lux-gold">BS Homez</span>
                 </h1>
-                <p className="text-lg sm:text-2xl font-serif text-white/90 italic max-w-2xl mx-auto">
+                <p className="text-lg sm:text-2xl font-serif text-lux-charcoal italic max-w-2xl mx-auto">
                   Your Trusted Partner in Finding the Perfect Property
                 </p>
-                <div className="w-16 h-0.5 bg-art-gold/50 mx-auto mt-6" />
+                <div className="w-16 h-0.5 bg-lux-gold mx-auto mt-6" />
               </div>
 
               {/* Story Intro Card */}
-              <div className="mb-14 sm:mb-20 p-6 sm:p-10 md:p-12 bg-gradient-to-br from-white/[0.035] via-art-gold/[0.02] to-white/[0.015] border border-art-gold/25 rounded-sm shadow-2xl relative overflow-hidden space-y-5">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-art-gold/5 rounded-full blur-3xl pointer-events-none" />
-                <p className="text-base sm:text-lg text-white/90 font-light leading-relaxed">
-                  At <strong className="text-art-gold font-semibold">BS Homez</strong>, we believe that finding the right property is more than just a real estate transaction — it's about finding a place to call home, making smart investments, and building a secure future.
+              <div className="mb-14 sm:mb-20 p-6 sm:p-10 md:p-12 bg-lux-card border border-lux-border rounded-sm shadow-lg relative overflow-hidden space-y-5">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-lux-gold/10 rounded-full blur-3xl pointer-events-none" />
+                <p className="text-base sm:text-lg text-lux-charcoal font-normal leading-relaxed">
+                  At <strong className="text-lux-forest font-bold">BS Homez</strong>, we believe that finding the right property is more than just a real estate transaction — it's about finding a place to call home, making smart investments, and building a secure future.
                 </p>
-                <p className="text-base sm:text-lg text-white/80 font-light leading-relaxed">
+                <p className="text-base sm:text-lg text-lux-muted font-normal leading-relaxed">
                   We are a RERA-compliant real estate consultancy committed to making property buying, selling, and renting in Bangalore simple, transparent, and hassle-free. With a customer-first approach and in-depth understanding of the Bangalore real estate market, we help individuals, families, and investors make confident property decisions.
                 </p>
-                <p className="text-base sm:text-lg text-white/80 font-light leading-relaxed">
+                <p className="text-base sm:text-lg text-lux-muted font-normal leading-relaxed">
                   Whether you are looking for your dream home, a premium villa, a residential plot, a commercial property, or a profitable investment opportunity, BS Homez offers personalized guidance and end-to-end assistance at every step.
                 </p>
               </div>
@@ -15229,12 +15334,12 @@ export default function App() {
               {/* Our Services Section */}
               <div className="mb-16 sm:mb-24">
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="w-8 h-px bg-art-gold" />
-                  <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-black text-art-gold">Comprehensive Portfolio</span>
-                  <div className="flex-1 h-px bg-white/10" />
+                  <div className="w-8 h-px bg-lux-gold" />
+                  <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-black text-lux-gold">Comprehensive Portfolio</span>
+                  <div className="flex-1 h-px bg-lux-border" />
                 </div>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-white italic mb-8">
-                  Our <span className="not-italic text-art-gold">Services</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-lux-forest italic mb-8">
+                  Our <span className="not-italic text-lux-gold">Services</span>
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
@@ -15279,19 +15384,19 @@ export default function App() {
                     return (
                       <div 
                         key={idx} 
-                        className={`p-5 sm:p-6 bg-white/[0.02] border border-white/10 hover:border-art-gold/50 rounded-sm transition-all group ${
-                          idx === 6 ? 'md:col-span-2 bg-gradient-to-r from-art-gold/[0.05] to-transparent border-art-gold/30' : ''
+                        className={`p-5 sm:p-6 bg-lux-card border border-lux-border hover:border-lux-forest rounded-sm transition-all shadow-sm hover:shadow-md group ${
+                          idx === 6 ? 'md:col-span-2 border-l-4 border-l-lux-forest' : ''
                         }`}
                       >
                         <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 rounded-sm bg-art-gold/10 border border-art-gold/30 flex items-center justify-center shrink-0 group-hover:bg-art-gold group-hover:text-black transition-colors text-art-gold">
+                          <div className="w-10 h-10 rounded-sm bg-lux-ivory border border-lux-border flex items-center justify-center shrink-0 group-hover:bg-lux-forest group-hover:text-lux-card transition-colors text-lux-forest">
                             <SvgIcon size={18} />
                           </div>
                           <div>
-                            <h3 className="text-base sm:text-lg font-serif font-bold text-white group-hover:text-art-gold transition-colors mb-1.5">
+                            <h3 className="text-base sm:text-lg font-serif font-bold text-lux-forest mb-1.5">
                               {service.title}
                             </h3>
-                            <p className="text-xs sm:text-sm text-white/70 font-light leading-relaxed">
+                            <p className="text-xs sm:text-sm text-lux-muted font-normal leading-relaxed">
                               {service.desc}
                             </p>
                           </div>
@@ -15305,12 +15410,12 @@ export default function App() {
               {/* Why Choose BS Homez? */}
               <div className="mb-16 sm:mb-24">
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="w-8 h-px bg-art-gold" />
-                  <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-black text-art-gold">The BS Homez Advantage</span>
-                  <div className="flex-1 h-px bg-white/10" />
+                  <div className="w-8 h-px bg-lux-gold" />
+                  <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-black text-lux-gold">The BS Homez Advantage</span>
+                  <div className="flex-1 h-px bg-lux-border" />
                 </div>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-white italic mb-8">
-                  Why Choose <span className="not-italic text-art-gold">BS Homez?</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-lux-forest italic mb-8">
+                  Why Choose <span className="not-italic text-lux-gold">BS Homez?</span>
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -15324,12 +15429,12 @@ export default function App() {
                   ].map((item, idx) => (
                     <div 
                       key={idx}
-                      className="p-5 bg-white/[0.02] border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors flex items-start gap-3.5 group"
+                      className="p-5 bg-lux-card border border-lux-border rounded-sm hover:border-lux-forest shadow-sm transition-colors flex items-start gap-3.5 group"
                     >
-                      <div className="w-6 h-6 rounded-full bg-art-gold/10 border border-art-gold/40 flex items-center justify-center shrink-0 mt-0.5 text-art-gold">
-                        <Check size={13} className="text-art-gold" />
+                      <div className="w-6 h-6 rounded-full bg-lux-forest/10 border border-lux-border flex items-center justify-center shrink-0 mt-0.5 text-lux-forest">
+                        <Check size={13} className="text-lux-forest" />
                       </div>
-                      <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-light group-hover:text-white transition-colors">
+                      <p className="text-xs sm:text-sm text-lux-muted leading-relaxed font-normal group-hover:text-lux-charcoal transition-colors">
                         {item}
                       </p>
                     </div>
@@ -15340,24 +15445,24 @@ export default function App() {
               {/* Mission & Vision Side-by-Side Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-16 sm:mb-24">
                 {/* Mission Card */}
-                <div className="p-7 sm:p-9 bg-white/[0.025] border border-white/10 hover:border-art-gold/40 rounded-sm transition-all relative overflow-hidden flex flex-col justify-between">
-                  <div className="absolute top-0 left-0 w-2 h-full bg-art-gold" />
+                <div className="p-7 sm:p-9 bg-lux-card border border-lux-border hover:border-lux-forest rounded-sm shadow-sm transition-all relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-lux-forest" />
                   <div>
-                    <span className="text-[9.5px] uppercase tracking-[0.3em] text-art-gold font-black block mb-2">Purpose</span>
-                    <h3 className="text-2xl sm:text-3xl font-serif text-white italic mb-4">Our Mission</h3>
-                    <p className="text-sm sm:text-base text-white/80 font-light leading-relaxed">
+                    <span className="text-[9.5px] uppercase tracking-[0.3em] text-lux-gold font-black block mb-2">Purpose</span>
+                    <h3 className="text-2xl sm:text-3xl font-serif text-lux-forest italic mb-4">Our Mission</h3>
+                    <p className="text-sm sm:text-base text-lux-muted font-normal leading-relaxed">
                       To simplify real estate decisions by providing reliable property guidance, transparent services, and customer-focused solutions that create lasting value.
                     </p>
                   </div>
                 </div>
 
                 {/* Vision Card */}
-                <div className="p-7 sm:p-9 bg-white/[0.025] border border-white/10 hover:border-art-gold/40 rounded-sm transition-all relative overflow-hidden flex flex-col justify-between">
-                  <div className="absolute top-0 left-0 w-2 h-full bg-art-gold" />
+                <div className="p-7 sm:p-9 bg-lux-card border border-lux-border hover:border-lux-forest rounded-sm shadow-sm transition-all relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-lux-gold" />
                   <div>
-                    <span className="text-[9.5px] uppercase tracking-[0.3em] text-art-gold font-black block mb-2">Ambition</span>
-                    <h3 className="text-2xl sm:text-3xl font-serif text-white italic mb-4">Our Vision</h3>
-                    <p className="text-sm sm:text-base text-white/80 font-light leading-relaxed">
+                    <span className="text-[9.5px] uppercase tracking-[0.3em] text-lux-gold font-black block mb-2">Ambition</span>
+                    <h3 className="text-2xl sm:text-3xl font-serif text-lux-forest italic mb-4">Our Vision</h3>
+                    <p className="text-sm sm:text-base text-lux-muted font-normal leading-relaxed">
                       To become one of Bangalore's most trusted real estate consulting brands by building long-term relationships, delivering exceptional service, and helping every customer find the right property.
                     </p>
                   </div>
@@ -15365,16 +15470,16 @@ export default function App() {
               </div>
 
               {/* CTA Closing Box */}
-              <div className="p-8 sm:p-12 bg-gradient-to-br from-art-gold/15 via-white/[0.03] to-art-gold/5 border border-art-gold/40 rounded-sm text-center shadow-2xl relative overflow-hidden">
+              <div className="p-8 sm:p-12 bg-lux-forest text-lux-card border border-lux-gold/40 rounded-sm text-center shadow-xl relative overflow-hidden">
                 <div className="max-w-2xl mx-auto space-y-4">
-                  <h3 className="text-2xl sm:text-4xl font-serif text-white italic">
-                    Let's Find Your <span className="not-italic text-art-gold">Perfect Property!</span>
+                  <h3 className="text-2xl sm:text-4xl font-serif text-lux-card italic">
+                    Let's Find Your <span className="not-italic text-lux-gold">Perfect Property!</span>
                   </h3>
-                  <p className="text-sm sm:text-base text-white/85 font-light leading-relaxed">
+                  <p className="text-sm sm:text-base text-lux-card/85 font-normal leading-relaxed">
                     At BS Homez, your property goals are our priority. Whether you are buying your first home, upgrading your lifestyle, selling a property, or exploring investment opportunities, we are here to guide you at every step.
                   </p>
-                  <div className="pt-4 border-t border-art-gold/30 mt-6">
-                    <p className="text-base sm:text-xl font-serif italic text-art-gold font-bold tracking-wide">
+                  <div className="pt-4 border-t border-white/20 mt-6">
+                    <p className="text-base sm:text-xl font-serif italic text-lux-gold font-bold tracking-wide">
                       BS Homez – Your Property. Your Dreams. Our Commitment.
                     </p>
                   </div>
@@ -15385,14 +15490,14 @@ export default function App() {
                         setActiveMainTab('projects');
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="w-full sm:w-auto px-7 py-3 bg-art-gold text-black text-[11px] font-black uppercase tracking-widest rounded-sm hover:bg-white transition-all cursor-pointer shadow-lg"
+                      className="w-full sm:w-auto px-7 py-3 bg-lux-gold text-lux-charcoal text-[11px] font-black uppercase tracking-widest rounded-sm hover:bg-lux-card transition-all cursor-pointer shadow-lg"
                     >
                       Explore Portfolios
                     </button>
                     <button
                       type="button"
                       onClick={handlePrivateConsultation}
-                      className="w-full sm:w-auto px-7 py-3 bg-white/10 hover:bg-white/20 text-white text-[11px] font-black uppercase tracking-widest rounded-sm border border-white/20 transition-all cursor-pointer"
+                      className="w-full sm:w-auto px-7 py-3 bg-white/10 hover:bg-white/20 text-lux-card text-[11px] font-black uppercase tracking-widest rounded-sm border border-white/25 transition-all cursor-pointer"
                     >
                       Book Advisory Consultation
                     </button>
@@ -15403,7 +15508,7 @@ export default function App() {
           </section>
         )}
 
-        {activeMainTab === 'admin' && user && (
+        {activeMainTab === 'admin' && user && isAdmin && (
           <AdminView
             enquiries={enquiries}
             projects={effectiveProjects}
@@ -15445,31 +15550,46 @@ export default function App() {
           />
         )}
 
+        {activeMainTab === 'admin' && (!user || !isAdmin) && (
+          <div className="max-w-lg mx-auto my-20 p-8 bg-lux-card border border-red-300 rounded-sm text-center space-y-3 shadow-md">
+            <h3 className="text-xl font-serif font-bold text-lux-forest">Verified Admin Authorization Required</h3>
+            <p className="text-xs text-lux-muted">
+              {user
+                ? `Signed in as ${user.email}, but this account does not hold verified admin authorization required to access administrative controls.`
+                : 'Please sign in with a verified BS Homez administrator account to access administrative controls.'}
+            </p>
+          </div>
+        )}
+
         {/* Admin Login / Vault Switcher Bar */}
-        <div className="flex justify-center py-10 opacity-60 hover:opacity-100 transition-opacity flex-col items-center gap-4 border-t border-white/5">
+        <div className="flex justify-center py-10 opacity-80 hover:opacity-100 transition-opacity flex-col items-center gap-4 border-t border-lux-border bg-lux-ivory">
            {!user ? (
              <button 
                onClick={handleLogin}
-               className="text-[10px] bg-white/10 px-6 py-2.5 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 hover:bg-white hover:text-black transition-all cursor-pointer"
+               className="text-[10px] bg-lux-card text-lux-forest border border-lux-border px-6 py-2.5 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 hover:bg-lux-forest hover:text-lux-card transition-all cursor-pointer shadow-sm"
              >
                <ShieldCheck size={14} /> Admin Relationship Login
              </button>
            ) : (
              <div className="flex flex-col items-center gap-2">
-               <span className="text-[10px] uppercase tracking-widest text-white/50">Logged in as {user.email}</span>
+               <span className="text-[10px] uppercase tracking-widest text-lux-muted font-semibold">
+                 Logged in as {user.email} {isAdmin ? '• Verified Admin' : '• Standard User'}
+               </span>
                <div className="flex gap-4">
-                 <button 
-                   onClick={() => {
-                     setActiveMainTab(activeMainTab === 'admin' ? 'projects' : 'admin');
-                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                   }}
-                   className="text-[10px] bg-art-gold/20 text-art-gold px-6 py-2 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 cursor-pointer"
-                 >
-                   {activeMainTab === 'admin' ? 'Return to Portfolios Tab' : 'Open Admin Vault Tab'}
-                 </button>
+                 {isAdmin && (
+                   <button 
+                     onClick={() => {
+                       setActiveMainTab(activeMainTab === 'admin' ? 'projects' : 'admin');
+                       window.scrollTo({ top: 0, behavior: 'smooth' });
+                     }}
+                     className="text-[10px] bg-lux-forest text-lux-card px-6 py-2 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 cursor-pointer hover:bg-lux-forest-hover shadow-sm"
+                   >
+                     {activeMainTab === 'admin' ? 'Return to Portfolios Tab' : 'Open Admin Vault Tab'}
+                   </button>
+                 )}
                  <button 
                    onClick={handleLogout}
-                   className="text-[10px] bg-red-500/10 text-red-500 px-6 py-2 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 cursor-pointer"
+                   className="text-[10px] bg-red-500/10 text-red-700 border border-red-500/30 px-6 py-2 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
                  >
                    Logout
                  </button>
@@ -15479,59 +15599,59 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="bg-art-dark text-art-light py-16 px-8 border-t border-white/10">
+      <footer className="bg-lux-footer text-lux-ivory py-16 px-8 border-t border-lux-gold/25">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
           <Logo className="scale-110 origin-left" />
           <div className="flex flex-col md:flex-row gap-12 text-[10px] uppercase tracking-[0.2em] font-bold">
-            <div className="flex flex-col gap-3 text-white/40">
-              <span className="text-white mb-1 underline decoration-art-gold/50 underline-offset-8">Portfolio Tabs</span>
-              <button type="button" onClick={() => { setActiveMainTab('projects'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Artisanal Portraits</button>
-              <button type="button" onClick={() => { setActiveMainTab('opportunity'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Offer Your Asset</button>
-              <button type="button" onClick={() => { setActiveMainTab('referral'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Referral Program</button>
+            <div className="flex flex-col gap-3 text-lux-ivory/75">
+              <span className="text-lux-gold mb-1 underline decoration-lux-gold/50 underline-offset-8">Portfolio Tabs</span>
+              <button type="button" onClick={() => { setActiveMainTab('projects'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-lux-gold transition-colors cursor-pointer">Artisanal Portraits</button>
+              <button type="button" onClick={() => { setActiveMainTab('opportunity'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-lux-gold transition-colors cursor-pointer">Offer Your Asset</button>
+              <button type="button" onClick={() => { setActiveMainTab('referral'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-lux-gold transition-colors cursor-pointer">Referral Program</button>
             </div>
-            <div className="flex flex-col gap-3 text-white/40">
-              <span className="text-white mb-1 underline decoration-art-gold/50 underline-offset-8">Advisory &amp; Growth</span>
-              <button type="button" onClick={() => { setActiveMainTab('grow-business'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left text-art-gold hover:text-white transition-colors cursor-pointer font-bold">Grow Business</button>
-              <button type="button" onClick={() => { setActiveMainTab('services'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Expertise & Services</button>
-              <button type="button" onClick={() => { setActiveMainTab('insights'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Market Analysis</button>
-              <button type="button" onClick={() => { setActiveMainTab('loans'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-art-gold transition-colors cursor-pointer">Home Loan Hub</button>
+            <div className="flex flex-col gap-3 text-lux-ivory/75">
+              <span className="text-lux-gold mb-1 underline decoration-lux-gold/50 underline-offset-8">Advisory &amp; Growth</span>
+              <button type="button" onClick={() => { setActiveMainTab('grow-business'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left text-lux-gold hover:text-lux-card transition-colors cursor-pointer font-bold">Grow Business</button>
+              <button type="button" onClick={() => { setActiveMainTab('services'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-lux-gold transition-colors cursor-pointer">Expertise & Services</button>
+              <button type="button" onClick={() => { setActiveMainTab('insights'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-lux-gold transition-colors cursor-pointer">Market Analysis</button>
+              <button type="button" onClick={() => { setActiveMainTab('loans'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-left hover:text-lux-gold transition-colors cursor-pointer">Home Loan Hub</button>
             </div>
-            <div className="flex flex-col gap-3 text-white/40">
-              <span className="text-white mb-1 underline decoration-art-gold/50 underline-offset-8">Digital Presence</span>
-              <span className="text-art-gold font-black">www.bshomez.in</span>
-              <a href="mailto:contact@bshomez.in" className="hover:text-art-gold transition-colors">contact@bshomez.in</a>
-              {Boolean(user || isAdmin) && (
+            <div className="flex flex-col gap-3 text-lux-ivory/75">
+              <span className="text-lux-gold mb-1 underline decoration-lux-gold/50 underline-offset-8">Digital Presence</span>
+              <span className="text-lux-gold font-black">www.bshomez.in</span>
+              <a href="mailto:contact@bshomez.in" className="hover:text-lux-gold transition-colors">contact@bshomez.in</a>
+              {Boolean(user && isAdmin) && (
                 <button 
                   type="button" 
                   onClick={() => setIsSeoModalOpen(true)}
-                  className="flex items-center gap-1.5 text-art-gold hover:text-white transition-colors cursor-pointer text-left font-bold flex-wrap"
+                  className="flex items-center gap-1.5 text-lux-gold hover:text-lux-card transition-colors cursor-pointer text-left font-bold flex-wrap"
                   title="View live search engine snippets, social cards & Schema.org data across platforms (Admin Only)"
                 >
-                  <Globe size={11} className="text-art-gold shrink-0 animate-pulse" />
+                  <Globe size={11} className="text-lux-gold shrink-0 animate-pulse" />
                   <span>Google · WhatsApp · Meta · X SEO</span>
-                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-mono font-bold border border-emerald-500/30">
+                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[8px] font-mono font-bold border border-emerald-500/30">
                     Auto-Enhanced
                   </span>
                 </button>
               )}
             </div>
           </div>
-          <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/20">
+          <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-lux-ivory/50">
             © 2026 BS Homez. Architectural Integrity Guaranteed.
           </div>
         </div>
 
         {/* Official Disclaimers in small font */}
-        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-white/5 text-left">
-          <p className="text-[10px] sm:text-[11px] text-art-gold/90 font-mono tracking-wide leading-relaxed font-medium bg-white/[0.03] p-3 rounded border border-art-gold/25 flex items-start gap-2">
-            <span className="text-art-gold font-bold shrink-0">*</span>
+        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-white/10 text-left">
+          <p className="text-[10px] sm:text-[11px] text-lux-ivory/85 font-mono tracking-wide leading-relaxed font-medium bg-white/[0.04] p-3 rounded border border-lux-gold/30 flex items-start gap-2">
+            <span className="text-lux-gold font-bold shrink-0">*</span>
             <span>AI-generated information may not always reflect the latest project updates. For verified project details, pricing, availability, and other information, kindly contact our team directly.</span>
           </p>
         </div>
       </footer>
 
       <AnimatePresence>
-        {showProjectModal && (
+        {showProjectModal && Boolean(user && isAdmin) && (
           <ProjectForm 
             project={editingProject} 
             initialInventoryType={projectModalMode}
@@ -15621,25 +15741,25 @@ export default function App() {
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-black/95 backdrop-blur-xl border border-art-gold/50 rounded-full shadow-[0_10px_35px_rgba(0,0,0,0.85)] px-4 sm:px-6 py-2.5 sm:py-3 flex items-center gap-3 sm:gap-4 max-w-[95vw]"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-lux-forest/95 backdrop-blur-xl border border-lux-gold/50 rounded-full shadow-2xl px-4 sm:px-6 py-2.5 sm:py-3 flex items-center gap-3 sm:gap-4 max-w-[95vw]"
           >
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 bg-art-gold text-black rounded-full flex items-center justify-center font-black text-xs">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 bg-lux-gold text-lux-charcoal rounded-full flex items-center justify-center font-black text-xs">
                 {comparedProjectIds.length}
               </div>
-              <span className="text-[10px] sm:text-xs text-white font-serif italic hidden md:inline">
+              <span className="text-[10px] sm:text-xs text-lux-card font-serif italic hidden md:inline">
                 {comparedProjectIds.length} of 3 Properties Selected
               </span>
             </div>
 
             <div className="flex items-center gap-1.5 max-w-[160px] sm:max-w-xs overflow-x-auto py-1">
               {comparedProjects.map((cp, idx) => (
-                <div key={`compare-pill-${cp.id || cp.name}-${idx}`} className="flex items-center gap-1 px-2.5 py-0.5 sm:py-1 bg-white/10 border border-white/15 rounded-full text-[9px] text-white shrink-0 font-mono">
+                <div key={`compare-pill-${cp.id || cp.name}-${idx}`} className="flex items-center gap-1 px-2.5 py-0.5 sm:py-1 bg-white/10 border border-white/20 rounded-full text-[9px] text-lux-card shrink-0 font-mono">
                   <span className="truncate max-w-[70px] sm:max-w-[100px]">{cp.name}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveCompare(cp.id || cp.name)}
-                    className="text-white/40 hover:text-red-400 cursor-pointer"
+                    className="text-lux-card/60 hover:text-red-300 cursor-pointer"
                   >
                     <X size={11} />
                   </button>
@@ -15651,7 +15771,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsCompareModalOpen(true)}
-                className="px-3.5 sm:px-4 py-1.5 sm:py-2 bg-art-gold hover:bg-white text-black text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-full transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-md"
+                className="px-3.5 sm:px-4 py-1.5 sm:py-2 bg-lux-gold hover:bg-lux-card text-lux-charcoal text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-full transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-md"
               >
                 <ArrowLeftRight size={11} />
                 <span>Compare Side-by-Side</span>
@@ -15659,7 +15779,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleClearCompare}
-                className="p-1.5 text-white/40 hover:text-white rounded-full transition-colors cursor-pointer"
+                className="p-1.5 text-lux-card/60 hover:text-lux-card rounded-full transition-colors cursor-pointer"
                 title="Clear all compared properties"
               >
                 <Trash size={13} />
@@ -15705,7 +15825,7 @@ export default function App() {
 
       {/* Real-Time Google SERP, Meta & Twitter Card Visualizer - Visible to Admin Only */}
       <SEOPreviewModal
-        isOpen={isSeoModalOpen && Boolean(user || isAdmin)}
+        isOpen={isSeoModalOpen && Boolean(user && isAdmin)}
         onClose={() => setIsSeoModalOpen(false)}
         currentTitle={currentSeoSnapshot.title}
         currentDescription={currentSeoSnapshot.description}
@@ -15717,7 +15837,7 @@ export default function App() {
 
       {/* Property Specific SEO Meta Data & Accessibility Modal */}
       <PropertyMetaDataModal
-        isOpen={isPropertyMetaDataModalOpen}
+        isOpen={isPropertyMetaDataModalOpen && Boolean(user && isAdmin)}
         onClose={() => setIsPropertyMetaDataModalOpen(false)}
         projects={projectsForGrid}
         initialProject={metaDataTargetProject}
