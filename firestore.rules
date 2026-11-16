@@ -1,0 +1,268 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Collections ---
+
+    // Connectivity Test
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Projects: Publicly readable & editable for Artisanal Portraits inline curation
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if isValidId(projectId) && isValidProject(incoming());
+      allow update: if isValidId(projectId) && isValidProject(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'id', 'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
+          'location', 'locationTarget',
+          'zone', 'type', 'propertyType', 'builderCategory', 'builderName',
+          'approvalBody', 'floorPlan', 'floorPlanImageUrl',
+          'configuration', 'segment', 'imageUrls', 'videoUrl',
+          'features', 'handoverStatus', 'reraNumber', 'handoverDate', 'projectSize',
+          'noOfTowers', 'flatsPerFloor', 'floorsHeight', 'mapUrl',
+          'paymentOffers', 'isPaused', 'isDeleted', 'sticker',
+          'availableFrom', 'mainDoorFacing', 'tower', 'floor', 'residenceType',
+          'tenantType', 'amenitiesAvailability', 'petFriendly', 'furnishType',
+          'advance', 'monthlyRental', 'maintenance', 'suba', 'carpetArea',
+          'carCloseParking', 'balcony', 'comments', 'handedOverDate',
+          'registrationStatus', 'approvedAuthority', 'seoKeywords', 'ogImage',
+          'metaTitle', 'metaDescription', 'canonicalUrl',
+          'imageAltText', 'imageAltTexts', 'seoTitle', 'seoDescription', 'seoLastSyncedAt', 'seoLastEdited', 'seoRevisions',
+          'mobileImageUrl', 'mobileVideoUrl', 'unitsRemaining', 'isInventorySoldOut',
+          'projectTypeCategory', 'presentStatus', 'vaastuCompliant', 'facingAvailable', 'floorRise', 'totalUnits',
+          'floorPlanSize', 'bookingAmount', 'interiorStatus', 'availability', 'floorAvailability', 'saleFrom',
+          'aop', 'expectedRentalIncome', 'terrace', 'garden', 'projectWriteUps',
+          'organicViews', 'createdAt', 'updatedAt'
+        ])
+      );
+      allow delete: if isValidId(projectId);
+    }
+
+    function isValidProject(data) {
+      return data.name is string && data.name.size() <= 200 &&
+             data.location is string && data.location.size() <= 200 &&
+             (!('locationTarget' in data) || (data.locationTarget is string && data.locationTarget.size() <= 300)) &&
+             (!('zone' in data) || data.zone in [
+               'Whitefield', 'Hoskote', 'Varthur', 'Gunjur', 'Hosa Road', 'Kasavanahalli',
+               'East Bangalore', 'Off Sarjapur Road', 'Sarjapur', 'Electronic City',
+               'Marathalli', 'Bellandur', 'South East Bangalore', 'Bangalore East',
+               'Bangalore North', 'Bangalore West', 'Bangalore South', 'Bangalore Central', 'All Zone'
+             ]) &&
+             data.type in ['Primary', 'Resale', 'Rental', 'Primary Sale'] &&
+             (!('propertyType' in data) || data.propertyType in ['Apartment', 'Villa', 'Plot', 'Flat', 'Commercial', 'Stand Alone Building']) &&
+             (!('builderCategory' in data) || data.builderCategory in ['A+', 'A', 'B', 'C']) &&
+             (!('builderName' in data) || (data.builderName is string && data.builderName.size() <= 150)) &&
+             (!('approvalBody' in data) || (data.approvalBody is string && data.approvalBody.size() <= 150)) &&
+             (!('floorPlan' in data) || (data.floorPlan is string && data.floorPlan.size() <= 1000)) &&
+             (!('floorPlanImageUrl' in data) || (data.floorPlanImageUrl is string && data.floorPlanImageUrl.size() <= 900000)) &&
+             (!('configuration' in data) || (data.configuration is list && data.configuration.size() <= 20)) &&
+             data.price is string && data.price.size() <= 150 &&
+             (!('lastPrice' in data) || (data.lastPrice is string && data.lastPrice.size() <= 150)) &&
+             (!('lastCheckedPrice' in data) || (data.lastCheckedPrice is string && data.lastCheckedPrice.size() <= 150)) &&
+             (!('priceChanged' in data) || data.priceChanged is bool) &&
+             (!('priceHistory' in data) || (data.priceHistory is list && data.priceHistory.size() <= 20)) &&
+             (!('segment' in data) || (data.segment is string && data.segment.size() <= 100)) &&
+             (!('imageUrls' in data) || (data.imageUrls is list && data.imageUrls.size() <= 25)) &&
+             (!('features' in data) || (data.features is list && data.features.size() <= 50)) &&
+             (!('handoverStatus' in data) || (data.handoverStatus is string && data.handoverStatus.size() <= 100)) &&
+             (!('reraNumber' in data) || (data.reraNumber is string && data.reraNumber.size() <= 150)) &&
+             (!('handoverDate' in data) || (data.handoverDate is string && data.handoverDate.size() <= 100)) &&
+             (!('projectSize' in data) || (data.projectSize is string && data.projectSize.size() <= 150)) &&
+             (!('noOfTowers' in data) || (data.noOfTowers is string && data.noOfTowers.size() <= 100)) &&
+             (!('flatsPerFloor' in data) || (data.flatsPerFloor is string && data.flatsPerFloor.size() <= 100)) &&
+             (!('floorsHeight' in data) || (data.floorsHeight is string && data.floorsHeight.size() <= 100)) &&
+             (!('mapUrl' in data) || (data.mapUrl is string && data.mapUrl.size() <= 1000)) &&
+             (!('paymentOffers' in data) || (data.paymentOffers is string && data.paymentOffers.size() <= 500)) &&
+             (!('isPaused' in data) || data.isPaused is bool) &&
+             (!('isDeleted' in data) || data.isDeleted is bool) &&
+             (!('sticker' in data) || data.sticker in ['Sold Out', 'Rented Out', 'None']) &&
+             (!('availableFrom' in data) || (data.availableFrom is string && data.availableFrom.size() <= 100)) &&
+             (!('mainDoorFacing' in data) || (data.mainDoorFacing is string && data.mainDoorFacing.size() <= 100)) &&
+             (!('tower' in data) || (data.tower is string && data.tower.size() <= 100)) &&
+             (!('floor' in data) || (data.floor is string && data.floor.size() <= 100)) &&
+             (!('residenceType' in data) || (data.residenceType is string && data.residenceType.size() <= 100)) &&
+             (!('tenantType' in data) || (data.tenantType is string && data.tenantType.size() <= 100)) &&
+             (!('amenitiesAvailability' in data) || (data.amenitiesAvailability is string && data.amenitiesAvailability.size() <= 100)) &&
+             (!('petFriendly' in data) || (data.petFriendly is string && data.petFriendly.size() <= 100)) &&
+             (!('furnishType' in data) || (data.furnishType is string && data.furnishType.size() <= 100)) &&
+             (!('advance' in data) || (data.advance is string && data.advance.size() <= 100)) &&
+             (!('monthlyRental' in data) || (data.monthlyRental is string && data.monthlyRental.size() <= 100)) &&
+             (!('maintenance' in data) || (data.maintenance is string && data.maintenance.size() <= 100)) &&
+             (!('suba' in data) || (data.suba is string && data.suba.size() <= 100)) &&
+             (!('carpetArea' in data) || (data.carpetArea is string && data.carpetArea.size() <= 100)) &&
+             (!('carCloseParking' in data) || (data.carCloseParking is string && data.carCloseParking.size() <= 100)) &&
+             (!('balcony' in data) || (data.balcony is string && data.balcony.size() <= 100)) &&
+             (!('comments' in data) || (data.comments is string && data.comments.size() <= 2000)) &&
+             (!('handedOverDate' in data) || (data.handedOverDate is string && data.handedOverDate.size() <= 100)) &&
+             (!('registrationStatus' in data) || (data.registrationStatus is string && data.registrationStatus.size() <= 100)) &&
+             (!('approvedAuthority' in data) || (data.approvedAuthority is string && data.approvedAuthority.size() <= 100)) &&
+             (!('seoKeywords' in data) || (data.seoKeywords is list && data.seoKeywords.size() <= 30)) &&
+             (!('metaTitle' in data) || (data.metaTitle is string && data.metaTitle.size() <= 300)) &&
+             (!('metaDescription' in data) || (data.metaDescription is string && data.metaDescription.size() <= 1000)) &&
+             (!('canonicalUrl' in data) || (data.canonicalUrl is string && data.canonicalUrl.size() <= 500)) &&
+             (!('ogImage' in data) || (data.ogImage is string && data.ogImage.size() <= 900000)) &&
+              (!('imageAltText' in data) || (data.imageAltText is string && data.imageAltText.size() <= 1000)) &&
+              (!('imageAltTexts' in data) || data.imageAltTexts is map) &&
+              (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 300)) &&
+              (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 1000)) &&
+              (!('seoLastSyncedAt' in data) || (data.seoLastSyncedAt is string && data.seoLastSyncedAt.size() <= 100)) &&
+              (!('seoLastEdited' in data) || (data.seoLastEdited is string && data.seoLastEdited.size() <= 100)) &&
+              (!('seoRevisions' in data) || (data.seoRevisions is list && data.seoRevisions.size() <= 50)) &&
+              (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
+              (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 900000)) &&
+              (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 900000)) &&
+              (!('projectTypeCategory' in data) || (data.projectTypeCategory is string && data.projectTypeCategory.size() <= 100)) &&
+              (!('presentStatus' in data) || (data.presentStatus is string && data.presentStatus.size() <= 100)) &&
+              (!('vaastuCompliant' in data) || (data.vaastuCompliant is string && data.vaastuCompliant.size() <= 50)) &&
+              (!('facingAvailable' in data) || data.facingAvailable is list || (data.facingAvailable is string && data.facingAvailable.size() <= 200)) &&
+              (!('floorRise' in data) || (data.floorRise is string && data.floorRise.size() <= 150)) &&
+              (!('totalUnits' in data) || (data.totalUnits is string && data.totalUnits.size() <= 150)) &&
+              (!('floorPlanSize' in data) || (data.floorPlanSize is string && data.floorPlanSize.size() <= 500)) &&
+              (!('bookingAmount' in data) || (data.bookingAmount is string && data.bookingAmount.size() <= 150)) &&
+              (!('interiorStatus' in data) || (data.interiorStatus is string && data.interiorStatus.size() <= 100)) &&
+              (!('availability' in data) || (data.availability is string && data.availability.size() <= 50)) &&
+              (!('floorAvailability' in data) || (data.floorAvailability is string && data.floorAvailability.size() <= 100)) &&
+              (!('saleFrom' in data) || (data.saleFrom is string && data.saleFrom.size() <= 100)) &&
+              (!('aop' in data) || (data.aop is string && data.aop.size() <= 100)) &&
+              (!('expectedRentalIncome' in data) || (data.expectedRentalIncome is string && data.expectedRentalIncome.size() <= 150)) &&
+              (!('terrace' in data) || (data.terrace is string && data.terrace.size() <= 50)) &&
+              (!('garden' in data) || (data.garden is string && data.garden.size() <= 50)) &&
+              (!('projectWriteUps' in data) || (data.projectWriteUps is string && data.projectWriteUps.size() <= 5000)) &&
+              (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+              (!('unitsRemaining' in data) || data.unitsRemaining is number) &&
+              (!('isInventorySoldOut' in data) || data.isInventorySoldOut is bool) &&
+              (!('organicViews' in data) || data.organicViews is number);
+    }
+
+    // Enquiries: Publicly writable (create only), admin readable
+    match /enquiries/{enquiryId} {
+      allow create: if isValidId(enquiryId) && isValidEnquiry(incoming());
+      allow read, write: if isSignedIn();
+    }
+
+    function isValidEnquiry(data) {
+      return data.customerName is string &&
+             data.customerName.size() >= 2 &&
+             data.customerName.size() <= 100 &&
+             data.customerPhone is string &&
+             data.customerPhone.size() >= 8 &&
+             data.customerPhone.size() <= 20 &&
+             data.projectName is string &&
+             data.projectName.size() <= 200 &&
+             data.projectId is string &&
+             data.projectId.size() <= 128 &&
+             (!('interestedProjects' in data) || (data.interestedProjects is string && data.interestedProjects.size() <= 300)) &&
+             (!('preferredLocation' in data) || (data.preferredLocation is string && data.preferredLocation.size() <= 200)) &&
+             data.type in ['WhatsApp', 'Email', 'Form', 'AI Chat', 'Download Brochure', 'Site Visit'];
+     }
+
+    // Opportunities: Publicly writable (create only), admin readable
+    match /opportunities/{opportunityId} {
+      allow create: if isValidId(opportunityId) && isValidOpportunity(incoming());
+      allow read, write: if isSignedIn();
+    }
+
+    function isValidOpportunity(data) {
+      return data.name is string &&
+             data.name.size() >= 2 &&
+             data.name.size() <= 100 &&
+             data.mobile is string &&
+             data.mobile.size() >= 8 &&
+             data.mobile.size() <= 25 &&
+             (
+               // Property Opportunity
+               (
+                 data.propertyName is string &&
+                 data.propertyName.size() >= 2 &&
+                 data.propertyName.size() <= 200 &&
+                 data.propertyStatus in ['Ready to Move', 'Under Construction', 'On Going', 'Nearing Completion'] &&
+                 data.propertyType in ['Villa', 'Flat', 'Plot'] &&
+                 data.rooms in ['1BHK', '2BHK', '3BHK', '4BHK', '5BHK'] &&
+                 data.facing is string &&
+                 data.facing.size() >= 2 &&
+                 data.facing.size() <= 100 &&
+                 (!('tower' in data) || (data.tower is string && data.tower.size() <= 100)) &&
+                 data.floorNumber is string &&
+                 data.floorNumber.size() <= 50 &&
+                 data.willingTo in ['Rent', 'Sell'] &&
+                 (!('expectedRent' in data) || data.expectedRent is int || data.expectedRent is float) &&
+                 (!('expectedSell' in data) || data.expectedSell is int || data.expectedSell is float) &&
+                 (!('notes' in data) || (data.notes is string && data.notes.size() <= 1200))
+               ) ||
+               // Grow Business Opportunity
+               (
+                 (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+                 (!('interested' in data) || (data.interested is string && data.interested.size() <= 500)) &&
+                 (!('services' in data) || (data.services is list && data.services.size() <= 10)) &&
+                 (!('comment' in data) || (data.comment is string && data.comment.size() <= 1200)) &&
+                 (!('category' in data) || data.category in ['Opportunity', 'Business', 'Property'])
+               )
+             );
+    }
+
+    // Subscriptions: Public writable, admin readable/manageable
+    match /subscriptions/{subscriptionId} {
+      allow create: if isValidId(subscriptionId) && isValidSubscription(incoming());
+      allow read, write: if isSignedIn();
+    }
+
+    function isValidSubscription(data) {
+      return data.email is string &&
+             data.email.size() >= 5 &&
+             data.email.size() <= 100 &&
+             data.projectId is string &&
+             data.projectName is string &&
+             data.createdAt == request.time &&
+             exists(/databases/$(database)/documents/projects/$(data.projectId));
+    }
+
+    // Referrals: Publicly writable (create only), admin readable
+    match /referrals/{referralId} {
+      allow create: if isValidId(referralId) && isValidReferral(incoming());
+      allow read, write: if isSignedIn();
+    }
+
+    function isValidReferral(data) {
+      return data.name is string &&
+             data.name.size() >= 2 &&
+             data.name.size() <= 100 &&
+             data.mobileNumber is string &&
+             data.mobileNumber.size() >= 8 &&
+             data.mobileNumber.size() <= 20 &&
+             data.budget is string &&
+             data.location is string &&
+             data.propertyType in ['Villa', 'Flat', 'Plot', 'Stand Alone Building'] &&
+             data.unitType in ['1BHK', '2BHK', '3BHK', '4BHK', '5BHK'] &&
+             data.contactDateTime is string &&
+             data.whatsappNumber is string &&
+             data.lookingFor in ['New Building', 'Resale'] &&
+             (!('resaleAge' in data) || data.resaleAge is string) &&
+             (!('referrerName' in data) || data.referrerName is string) &&
+             (!('referrerContact' in data) || data.referrerContact is string) &&
+             (!('clientOpinion' in data) || data.clientOpinion is string);
+    }
+  }
+}
