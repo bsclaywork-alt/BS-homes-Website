@@ -1,0 +1,31 @@
+name: Website build verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [release/fix-build-reliability-2026-11]
+
+permissions:
+  contents: read
+
+jobs:
+  build-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build static website and SEO pages
+        run: npm run build:pages
+      - name: Verify generated production assets
+        run: |
+          test -s dist/index.html
+          test -s dist/sitemap.xml
+          test -s dist/robots.txt
+          test -s dist/CNAME || echo "CNAME is added by the production deployment workflow"
+          test -n "$(find dist/assets -type f -name '*.js' -size +0c -print -quit)"
+          test -n "$(find dist/assets -type f -name '*.css' -size +0c -print -quit)"
