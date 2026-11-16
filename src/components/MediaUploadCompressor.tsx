@@ -43,6 +43,8 @@ export interface CompressedImageResult {
   fileName: string;
 }
 
+const MAX_PROJECT_PHOTOS = 5;
+
 export const formatBytes = (bytes: number): string => {
   if (!bytes || bytes <= 0) return '0 B';
   if (bytes < 1024) return `${bytes} B`;
@@ -242,7 +244,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   uploadSessionId,
   variant = 'dark',
   accentColor = 'gold',
-  title = 'Photos & Video Walkthrough Upload',
+  title = 'Property Photos Upload',
   onBusyChange
 }) => {
   const isIvory = variant === 'ivory';
@@ -334,6 +336,13 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     const files: File[] = rawFiles ? Array.from(rawFiles) : [];
     if (files.length === 0) return;
 
+    const remainingSlots = Math.max(0, MAX_PROJECT_PHOTOS - Math.max(images.length, photoItems.length));
+    if (remainingSlots === 0) {
+      setPhotoErrorMsg(`A maximum of ${MAX_PROJECT_PHOTOS} photos is allowed per project. Remove a photo before adding another.`);
+      if (e.target) e.target.value = '';
+      return;
+    }
+
     setPhotoErrorMsg(null);
     setCompressionStats(null);
 
@@ -352,6 +361,10 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         photoItems.some((p) => p.sha256 === sig || (p.fileName === file.name && p.originalSize === file.size));
       if (alreadyExists) {
         skippedReasons.push(`"${file.name}" was skipped because it is already uploaded (duplicate detected).`);
+        continue;
+      }
+      if (validFiles.length >= remainingSlots) {
+        skippedReasons.push(`Only ${MAX_PROJECT_PHOTOS} photos are allowed per project. Extra selected photos were not added.`);
         continue;
       }
       (file as any).__sig = sig;
@@ -675,6 +688,10 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
   const handleAddManualImage = () => {
     if (!manualImageUrl.trim()) return;
+    if (Math.max(images.length, photoItems.length) >= MAX_PROJECT_PHOTOS) {
+      setPhotoErrorMsg(`A maximum of ${MAX_PROJECT_PHOTOS} photos is allowed per project. Remove a photo before adding another.`);
+      return;
+    }
     const cleanUrl = manualImageUrl.trim();
     onImagesChange([...images, cleanUrl]);
     if (onPhotoItemsChange) {
@@ -904,13 +921,13 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* 1. PHOTOS UPLOAD */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label className={cn('text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5', labelCls)}>
               <ImageIcon size={13} />
-              Property Photos ({images.length})
+              Property Photos ({images.length}/{MAX_PROJECT_PHOTOS})
             </label>
             {images.length > 1 && (
               <button
@@ -998,9 +1015,18 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
               onClick={async () => {
                 try {
                   const files = await fetchAuthorizedDriveProjects();
-                  const driveLinks = files
+                  const remainingSlots = Math.max(0, MAX_PROJECT_PHOTOS - Math.max(images.length, photoItems.length));
+                  if (remainingSlots === 0) {
+                    setPhotoErrorMsg(`A maximum of ${MAX_PROJECT_PHOTOS} photos is allowed per project. Remove a photo before importing more.`);
+                    return;
+                  }
+                  const allDriveLinks = files
                     .map((f: any) => f.thumbnailLink || f.webViewLink)
                     .filter(Boolean);
+                  const driveLinks = allDriveLinks.slice(0, remainingSlots);
+                  if (allDriveLinks.length > driveLinks.length) {
+                    setPhotoErrorMsg(`Only ${MAX_PROJECT_PHOTOS} photos are allowed per project. Additional Drive photos were not added.`);
+                  }
                   if (driveLinks.length > 0) {
                     onImagesChange([...images, ...driveLinks]);
                   }
@@ -1128,174 +1154,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
           )}
         </div>
 
-        {/* 2. VIDEO WALKTHROUGH UPLOAD */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className={cn('text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5', labelCls)}>
-              <Video size={13} />
-              Walkthrough Video (Max 3 Mins • Max 150 MB)
-            </label>
-            {videoPreviewUrl && (
-              <button
-                type="button"
-                onClick={handleRemoveVideo}
-                className={cn(
-                  'text-[9px] font-mono uppercase tracking-wider flex items-center gap-1 cursor-pointer px-2 py-0.5 rounded border',
-                  confirmDeleteVideo ? 'bg-red-600 text-white border-red-500 font-bold' : 'text-red-500 border-red-500/30 hover:bg-red-500/10'
-                )}
-              >
-                <Trash2 size={10} /> {confirmDeleteVideo ? 'Confirm Delete Video' : 'Delete Video'}
-              </button>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => fileInputVideoRef.current?.click()}
-            className={cn(
-              'w-full p-5 border-2 border-dashed rounded-sm flex flex-col items-center justify-center text-center cursor-pointer transition-all',
-              isIvory ? 'bg-lux-card border-lux-forest/30 hover:border-lux-forest text-lux-charcoal' : 'bg-white/[0.02] border-art-gold/40 hover:border-art-gold text-white'
-            )}
-          >
-            <input
-              ref={fileInputVideoRef}
-              type="file"
-              accept="video/mp4,video/webm,video/quicktime"
-              onChange={handleVideoFileSelected}
-              className="hidden"
-              data-testid="video-device-input"
-            />
-            <Film className={isIvory ? 'text-lux-forest mb-1.5' : 'text-art-gold mb-1.5'} size={20} />
-            <span className="text-xs font-bold">Upload Walkthrough Video</span>
-            <span className={cn('text-[9px] font-mono mt-0.5', mutedCls)}>
-              Maximum 3 minutes (180s) • Max 150 MB • MP4 / MOV / WEBM
-            </span>
-          </button>
-
-          {videoErrorMsg && (
-            <div className="p-2.5 bg-red-500/10 border border-red-500/40 rounded text-[11px] font-mono text-red-700 flex items-start gap-2" role="alert">
-              <AlertCircle size={14} className="shrink-0 mt-0.5 text-red-600" />
-              <span className={isIvory ? 'text-red-800' : 'text-red-300'}>{videoErrorMsg}</span>
-            </div>
-          )}
-
-          {/* SEPARATE PROGRESS BAR 1: VIDEO COMPRESSION */}
-          {(videoPhase === 'validating' || videoPhase === 'compressing' || (videoCompressionPct > 0 && videoCompressionPct < 100)) && (
-            <div className={cn('p-3 border rounded-sm space-y-2', isIvory ? 'bg-lux-card border-lux-gold/50' : 'bg-black/80 border-amber-500/40')} data-testid="video-compression-progress">
-              <div className="flex items-center justify-between text-[11px] font-mono">
-                <span className={cn('font-bold flex items-center gap-2', isIvory ? 'text-lux-forest' : 'text-amber-300')}>
-                  <Loader2 size={13} className="animate-spin" />
-                  <span>Compression: {videoCompressionMsg}</span>
-                </span>
-                <span className="font-black px-2 py-0.5 rounded bg-lux-gold/20 text-lux-charcoal">
-                  {videoCompressionPct}%
-                </span>
-              </div>
-              <div className="w-full h-2 rounded-full overflow-hidden bg-black/10">
-                <div className="h-full bg-lux-gold transition-all duration-300" style={{ width: `${videoCompressionPct}%` }} />
-              </div>
-            </div>
-          )}
-
-          {/* SEPARATE PROGRESS BAR 2: VIDEO UPLOAD + PAUSE / RESUME / RETRY */}
-          {(videoPhase === 'uploading' || videoPhase === 'paused' || videoPhase === 'error') && pendingCompressedVideoRef.current && (
-            <div className={cn('p-3 border rounded-sm space-y-2.5', isIvory ? 'bg-lux-card border-lux-forest/40' : 'bg-black/80 border-purple-500/40')} data-testid="video-upload-progress">
-              <div className="flex items-center justify-between text-[11px] font-mono">
-                <span className={cn('font-bold flex items-center gap-2', isIvory ? 'text-lux-forest' : 'text-purple-300')}>
-                  {videoPhase === 'uploading' && <Loader2 size={13} className="animate-spin" />}
-                  <span>Upload: {videoUploadMsg || 'Preparing upload...'}</span>
-                </span>
-                <span className="font-black px-2 py-0.5 rounded bg-lux-forest text-lux-card">
-                  {videoUploadPct}%
-                </span>
-              </div>
-              <div className="w-full h-2 rounded-full overflow-hidden bg-black/10">
-                <div className="h-full bg-lux-forest transition-all duration-300" style={{ width: `${videoUploadPct}%` }} />
-              </div>
-              <div className="flex items-center gap-2">
-                {(videoPhase === 'uploading' || videoPhase === 'paused') && (
-                  <button
-                    type="button"
-                    onClick={handlePauseResumeVideo}
-                    className="px-2.5 py-1 text-[10px] font-mono uppercase font-bold rounded border border-lux-border bg-lux-ivory text-lux-forest flex items-center gap-1 cursor-pointer"
-                  >
-                    {videoPhase === 'paused' ? <><Play size={11} /> Resume</> : <><Pause size={11} /> Pause</>}
-                  </button>
-                )}
-                {videoPhase === 'error' && (
-                  <button
-                    type="button"
-                    onClick={handleRetryVideoUpload}
-                    className="px-2.5 py-1 text-[10px] font-mono uppercase font-bold rounded bg-lux-forest text-lux-card flex items-center gap-1 cursor-pointer"
-                  >
-                    <RotateCcw size={11} /> Retry Upload
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {videoStats && videoPhase !== 'compressing' && videoPhase !== 'uploading' && (
-            <div className={cn('p-2 border rounded text-[10px] font-mono flex items-center justify-between', isIvory ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300')}>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={12} className="text-emerald-600" />
-                {videoStats.wasCompressed
-                  ? `Compressed ${formatBytes(videoStats.original)} -> ${formatBytes(videoStats.compressed)}`
-                  : `Uploaded (${formatBytes(videoStats.compressed)} — already optimal)`}
-              </span>
-              {videoStats.durationSec ? <span>{Math.round(videoStats.durationSec)}s</span> : null}
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <input
-              type="url"
-              value={manualVideoInput}
-              onChange={(e) => setManualVideoInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddManualVideo();
-                }
-              }}
-              placeholder="Or paste YouTube / Vimeo video link"
-              className={inputCls}
-            />
-            <button
-              type="button"
-              onClick={handleAddManualVideo}
-              className={cn('px-3 py-2 text-[10px] font-bold uppercase tracking-wider rounded-sm cursor-pointer', isIvory ? 'bg-lux-forest text-lux-card hover:bg-lux-forest-hover' : 'bg-white/10 hover:bg-white/20 text-white')}
-            >
-              Set Link
-            </button>
-          </div>
-
-          {videoPreviewUrl && (() => {
-            const parsed = parseVideoUrl(videoPreviewUrl);
-            return (
-              <div className="relative border border-lux-border rounded-sm overflow-hidden bg-black aspect-video max-h-56 shadow-md">
-                {parsed.isEmbeddable ? (
-                  <iframe
-                    src={parsed.embedUrl}
-                    title="Walkthrough Video Preview"
-                    className="w-full h-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <video
-                    ref={videoRef}
-                    src={videoPreviewUrl}
-                    poster={videoItem?.posterUrl}
-                    className="w-full h-full object-contain bg-black"
-                    controls
-                    playsInline
-                  />
-                )}
-              </div>
-            );
-          })()}
-        </div>
+        {/* Video upload and capture UI is intentionally hidden. Existing project video metadata is preserved elsewhere. */}
       </div>
 
       {previewModalUrl && (
