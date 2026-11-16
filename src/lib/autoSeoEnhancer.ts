@@ -44,7 +44,7 @@ export interface MultiPlatformSeoData {
 }
 
 const DEFAULT_BANNER = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85";
-const BASE_DOMAIN = "https://www.bshomez.in";
+const BASE_DOMAIN = "https://bshomez.in";
 
 /**
  * Calculates a comprehensive SEO Quality Score (0 - 100)
@@ -94,7 +94,13 @@ export function generateOptimizedSeoMetadata(
   baseUrl: string = BASE_DOMAIN
 ): MultiPlatformSeoData {
   const targetId = project.id || project.name;
-  const canonicalUrl = `${baseUrl}/?project=${encodeURIComponent(targetId)}`;
+  const projectSlug = (project.name || targetId)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+  const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+  const canonicalUrl = `${cleanBaseUrl}/projects/${projectSlug}/`;
   const coverImage = (project.imageUrls && project.imageUrls[0]) || project.mobileImageUrl || DEFAULT_BANNER;
 
   // 1. Title Generation: 50 - 60 chars target
