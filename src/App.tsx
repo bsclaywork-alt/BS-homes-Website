@@ -183,7 +183,7 @@ const Logo = ({ className = "", animate = true }: { className?: string; animate?
       <img
         src="/assets/aistudio/bs_homez_logo_glow.png"
         alt="BS HOMEZ - Turning Key Moments"
-        className="h-10 sm:h-12 md:h-14 w-auto object-contain block transition-all duration-300 group-hover:scale-[1.03] filter drop-shadow-[0_0_10px_rgba(30,136,229,0.65)] group-hover:drop-shadow-[0_0_18px_rgba(30,136,229,0.95)]"
+        className="h-10 sm:h-12 md:h-14 w-auto object-contain block transition-all duration-300 group-hover:scale-[1.03] drop-shadow-[0_2px_5px_rgba(0,0,0,0.18)]"
       />
     </div>
   );
