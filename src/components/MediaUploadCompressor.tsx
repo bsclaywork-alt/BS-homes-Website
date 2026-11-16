@@ -251,6 +251,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   );
   const [driveAuthorized, setDriveAuthorized] = useState(false);
 
+  const MAX_PROJECT_PHOTOS = 5;
   const [compressionQualityPreset, setCompressionQualityPreset] = useState<'compact' | 'balanced' | 'high'>('balanced');
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
   const [applyWatermark, setApplyWatermark] = useState<boolean>(true);
@@ -339,6 +340,12 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
     const validFiles: File[] = [];
     const skippedReasons: string[] = [];
+    const remainingSlots = Math.max(0, MAX_PROJECT_PHOTOS - images.length);
+    if (remainingSlots === 0) {
+      setPhotoErrorMsg(`A maximum of ${MAX_PROJECT_PHOTOS} photos is allowed for each project. Remove a photo before adding another.`);
+      if (e.target) e.target.value = '';
+      return;
+    }
 
     for (const file of files) {
       const check = validatePhotoFile(file);
@@ -353,6 +360,10 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
       if (alreadyExists) {
         skippedReasons.push(`"${file.name}" was skipped because it is already uploaded (duplicate detected).`);
         continue;
+      }
+      if (validFiles.length >= remainingSlots) {
+        skippedReasons.push(`Only ${MAX_PROJECT_PHOTOS} photos are allowed per project. Extra selected files were skipped.`);
+        break;
       }
       (file as any).__sig = sig;
       validFiles.push(file);
@@ -370,8 +381,9 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     setImageProgress(5);
     setImageStatusMsg(`Compressing & uploading ${validFiles.length} photo(s)...`);
 
-    const targetDim = compressionQualityPreset === 'compact' ? 850 : compressionQualityPreset === 'high' ? 1400 : 1200;
-    const targetQuality = compressionQualityPreset === 'compact' ? 0.62 : compressionQualityPreset === 'high' ? 0.78 : 0.72;
+    // Balanced default: sharp property photos with efficient WebP/JPEG output.
+    const targetDim = compressionQualityPreset === 'compact' ? 1000 : compressionQualityPreset === 'high' ? 1400 : 1280;
+    const targetQuality = compressionQualityPreset === 'compact' ? 0.68 : compressionQualityPreset === 'high' ? 0.80 : 0.76;
 
     let totalOriginal = 0;
     let totalCompressed = 0;
@@ -674,6 +686,10 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   };
 
   const handleAddManualImage = () => {
+    if (images.length >= MAX_PROJECT_PHOTOS) {
+      setPhotoErrorMsg(`A maximum of ${MAX_PROJECT_PHOTOS} photos is allowed for each project.`);
+      return;
+    }
     if (!manualImageUrl.trim()) return;
     const cleanUrl = manualImageUrl.trim();
     onImagesChange([...images, cleanUrl]);
@@ -904,13 +920,13 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* 1. PHOTOS UPLOAD */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label className={cn('text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5', labelCls)}>
               <ImageIcon size={13} />
-              Property Photos ({images.length})
+              Property Photos ({images.length}/{MAX_PROJECT_PHOTOS})
             </label>
             {images.length > 1 && (
               <button
@@ -948,6 +964,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             <button
               type="button"
               onClick={() => fileInputImagesRef.current?.click()}
+              disabled={images.length >= MAX_PROJECT_PHOTOS || isProcessingImages}
               className={cn(
                 'p-4 border-2 border-dashed rounded-sm flex flex-col items-center justify-center text-center cursor-pointer transition-all',
                 isIvory ? 'bg-lux-card border-lux-forest/30 hover:border-lux-forest text-lux-charcoal' : 'bg-white/[0.02] border-art-gold/40 hover:border-art-gold text-white'
@@ -955,12 +972,13 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             >
               <Upload className={isIvory ? 'text-lux-forest mb-1.5' : 'text-art-gold mb-1.5'} size={18} />
               <span className="text-xs font-bold">Choose Device Photos</span>
-              <span className={cn('text-[9px] font-mono mt-0.5', mutedCls)}>Multi-select JPG, PNG, WebP (Max 15MB)</span>
+              <span className={cn('text-[9px] font-mono mt-0.5', mutedCls)}>Up to {MAX_PROJECT_PHOTOS - images.length} more • JPG, PNG, WebP • Max 15MB each</span>
             </button>
 
             <button
               type="button"
               onClick={() => fileInputCameraRef.current?.click()}
+              disabled={images.length >= MAX_PROJECT_PHOTOS || isProcessingImages}
               className={cn(
                 'p-4 border-2 border-dashed rounded-sm flex flex-col items-center justify-center text-center cursor-pointer transition-all',
                 isIvory ? 'bg-lux-card border-lux-gold/50 hover:border-lux-forest text-lux-charcoal' : 'bg-white/[0.02] border-cyan-500/40 hover:border-cyan-400 text-white'
@@ -991,8 +1009,8 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             data-testid="photo-camera-input"
           />
 
-          {/* Only render Google Drive button if OAuth / Service Account is verified authorized */}
-          {driveAuthorized && (
+          {/* External imports are intentionally disabled so every saved project photo follows the compression pipeline. */}
+          {false && driveAuthorized && (
             <button
               type="button"
               onClick={async () => {
@@ -1053,8 +1071,8 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             </div>
           )}
 
-          {/* External Image URL Input */}
-          <div className="flex gap-2">
+          {/* External image URL input is intentionally hidden to enforce the five-photo, compressed-upload limit. */}
+          {false && <div className="flex gap-2">
             <input
               type="url"
               value={manualImageUrl}
@@ -1075,7 +1093,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             >
               Add URL
             </button>
-          </div>
+          </div>}
 
           {/* Photo Previews Grid */}
           {images.length > 0 && (
@@ -1128,7 +1146,8 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
           )}
         </div>
 
-        {/* 2. VIDEO WALKTHROUGH UPLOAD */}
+        {/* Video upload controls are intentionally hidden for the current storage-saving release. */}
+        {false && <div className="space-y-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label className={cn('text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5', labelCls)}>
@@ -1295,7 +1314,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
               </div>
             );
           })()}
-        </div>
+        </div>}
       </div>
 
       {previewModalUrl && (
