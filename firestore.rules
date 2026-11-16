@@ -18,7 +18,7 @@ service cloud.firestore {
     function incoming() {
       return request.resource.data;
     }
-    
+
     function existing() {
       return resource.data;
     }
@@ -37,10 +37,10 @@ service cloud.firestore {
       allow update: if isValidId(projectId) && isValidProject(incoming()) && (
         incoming().diff(existing()).affectedKeys().hasOnly([
           'id', 'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
-          'location', 'locationTarget', 
+          'location', 'locationTarget',
           'zone', 'type', 'propertyType', 'builderCategory', 'builderName',
           'approvalBody', 'floorPlan', 'floorPlanImageUrl',
-          'configuration', 'segment', 'imageUrls', 'videoUrl', 
+          'configuration', 'segment', 'imageUrls', 'videoUrl',
           'features', 'handoverStatus', 'reraNumber', 'handoverDate', 'projectSize',
           'noOfTowers', 'flatsPerFloor', 'floorsHeight', 'mapUrl',
           'paymentOffers', 'isPaused', 'isDeleted', 'sticker',
@@ -60,7 +60,7 @@ service cloud.firestore {
       );
       allow delete: if isValidId(projectId);
     }
-    
+
     function isValidProject(data) {
       return data.name is string && data.name.size() <= 200 &&
              data.location is string && data.location.size() <= 200 &&
@@ -162,9 +162,9 @@ service cloud.firestore {
       allow create: if isValidId(enquiryId) && isValidEnquiry(incoming());
       allow read, write: if isSignedIn();
     }
-    
+
     function isValidEnquiry(data) {
-      return data.customerName is string && 
+      return data.customerName is string &&
              data.customerName.size() >= 2 &&
              data.customerName.size() <= 100 &&
              data.customerPhone is string &&

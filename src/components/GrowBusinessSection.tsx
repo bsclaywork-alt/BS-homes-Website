@@ -73,11 +73,11 @@ const SubSectionImageHeader: React.FC<SubSectionImageHeaderProps> = ({
   const [hasError, setHasError] = useState(false);
 
   return (
-    <div className="relative overflow-hidden rounded-sm border border-white/10 aspect-[16/10] sm:aspect-[4/3] group-hover:border-art-gold/40 transition-all duration-500 bg-black/40">
+    <div className="relative overflow-hidden rounded-sm border border-lux-border aspect-[16/10] sm:aspect-[4/3] group-hover:border-lux-gold/60 transition-all duration-500 bg-lux-charcoal shadow-sm">
       {/* Loading Skeleton */}
       {isLoading && (
-        <div className="absolute inset-0 bg-white/5 animate-pulse flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-2 border-art-gold/30 border-t-art-gold animate-spin" />
+        <div className="absolute inset-0 bg-lux-ivory animate-pulse flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-lux-gold/30 border-t-lux-gold animate-spin" />
         </div>
       )}
 
@@ -95,22 +95,22 @@ const SubSectionImageHeader: React.FC<SubSectionImageHeaderProps> = ({
             setIsLoading(false);
           }
         }}
-        className={`w-full h-full object-cover transition-all duration-700 brightness-90 group-hover:scale-105 group-hover:brightness-100 ${
+        className={`w-full h-full object-cover transition-all duration-700 brightness-95 group-hover:scale-105 group-hover:brightness-100 ${
           isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
         }`}
       />
 
       {/* Luxury Cinematic Gradient Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/20 pointer-events-none" />
 
       {/* Top Gold Badge */}
       <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-        <div className="bg-gradient-to-r from-art-gold to-[#e4c07a] text-black text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-sm shadow-lg flex items-center gap-1.5">
-          <Sparkles size={11} className="text-black" />
+        <div className="bg-lux-gold text-lux-charcoal text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-sm shadow-md flex items-center gap-1.5">
+          <Sparkles size={11} className="text-lux-charcoal" />
           <span>{badgeLabel}</span>
         </div>
-        <div className="bg-black/60 backdrop-blur-md border border-white/15 text-white/90 text-[10px] font-mono px-2.5 py-1 rounded-sm hidden sm:block">
+        <div className="bg-lux-forest/90 backdrop-blur-md border border-lux-gold/30 text-lux-card text-[10px] font-mono px-2.5 py-1 rounded-sm hidden sm:block">
           {sectionNumber}
         </div>
       </div>
@@ -118,16 +118,16 @@ const SubSectionImageHeader: React.FC<SubSectionImageHeaderProps> = ({
       {/* Bottom Title & Metrics Overlay */}
       <div className="absolute bottom-4 left-4 right-4 z-10 space-y-1">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] uppercase tracking-widest text-art-gold font-mono font-bold block">
+          <span className="text-[10px] uppercase tracking-widest text-lux-gold font-mono font-bold block">
             {categoryTag}
           </span>
           {metricValue && (
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/60 border border-art-gold/30 text-art-gold font-bold">
-              {metricLabel}: <span className="text-white">{metricValue}</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-lux-forest/90 border border-lux-gold/40 text-lux-gold font-bold">
+              {metricLabel}: <span className="text-lux-card">{metricValue}</span>
             </span>
           )}
         </div>
-        <h4 className="text-base sm:text-lg font-serif italic text-white font-medium drop-shadow-md">
+        <h4 className="text-base sm:text-lg font-serif italic text-lux-card font-medium drop-shadow-md">
           {title}
         </h4>
       </div>
@@ -163,17 +163,17 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
 
   // Visual character counter dynamic styling
   const getCharCounterColor = () => {
-    if (commentLength >= 1000) return 'text-rose-400 font-black animate-pulse';
-    if (commentLength >= 950) return 'text-orange-400 font-bold';
-    if (commentLength >= 800) return 'text-amber-400 font-semibold';
-    return 'text-white/60';
+    if (commentLength >= 1000) return 'text-rose-600 font-black animate-pulse';
+    if (commentLength >= 950) return 'text-orange-600 font-bold';
+    if (commentLength >= 800) return 'text-amber-600 font-semibold';
+    return 'text-lux-muted';
   };
 
   const getProgressBarColor = () => {
-    if (commentLength >= 1000) return 'bg-rose-500';
+    if (commentLength >= 1000) return 'bg-rose-600';
     if (commentLength >= 950) return 'bg-orange-500';
-    if (commentLength >= 800) return 'bg-amber-400';
-    return 'bg-art-gold/60';
+    if (commentLength >= 800) return 'bg-amber-500';
+    return 'bg-lux-forest';
   };
 
   const handleToggleService = (serviceId: string) => {
@@ -321,17 +321,17 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
   };
 
   return (
-    <div className="min-h-screen bg-art-dark text-white py-10 sm:py-14 md:py-18 selection:bg-art-gold selection:text-black">
+    <div className="min-h-screen bg-lux-ivory text-lux-charcoal py-10 sm:py-14 md:py-18 selection:bg-lux-forest selection:text-lux-card">
       {/* Hero Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-art-gold/10 border border-art-gold/30 text-art-gold text-[10px] font-mono uppercase tracking-[0.25em] mb-4">
-          <Sparkles size={13} className="text-art-gold animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-lux-forest/10 border border-lux-forest/20 text-lux-forest text-[10px] font-mono uppercase tracking-[0.25em] font-bold mb-4">
+          <Sparkles size={13} className="text-lux-gold animate-pulse" />
           <span>BS Homez Business Acceleration &amp; Digital Suite</span>
         </div>
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif italic text-white tracking-tight mb-6">
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif italic text-lux-forest tracking-tight mb-6">
           Grow Your Business with Modern Digital Power
         </h1>
-        <p className="max-w-3xl mx-auto text-white/70 text-sm sm:text-base leading-relaxed font-light mb-8">
+        <p className="max-w-3xl mx-auto text-lux-muted text-sm sm:text-base leading-relaxed font-normal mb-8">
           From high-converting modern websites and secure e-commerce portals, to multi-channel marketplace scaling on Amazon, Flipkart, and Meesho — we engineer end-to-end solutions to drive sales, automate workflows, and multiply revenue.
         </p>
 
@@ -339,7 +339,7 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
           <button
             type="button"
             onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-6 py-3 bg-gradient-to-r from-art-gold to-[#e4c07a] text-black text-xs uppercase tracking-[0.2em] font-black rounded-sm hover:brightness-110 transition-all flex items-center gap-2 shadow-[0_4px_25px_rgba(197,160,89,0.35)] cursor-pointer"
+            className="px-6 py-3 bg-lux-forest hover:bg-lux-forest-hover text-lux-card text-xs uppercase tracking-[0.2em] font-black rounded-sm transition-all flex items-center gap-2 shadow-md cursor-pointer"
           >
             <span>Submit Business Enquiry</span>
             <ArrowRight size={14} />
@@ -351,10 +351,10 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                 const el = document.getElementById('crm-plans-table');
                 el?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-6 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs uppercase tracking-[0.2em] font-bold rounded-sm border border-amber-500/30 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-6 py-3 bg-lux-card hover:bg-lux-ivory text-lux-forest text-xs uppercase tracking-[0.2em] font-bold rounded-sm border border-lux-gold/60 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
               title="Admin Preview: Compare CRM Plans"
             >
-              <EyeOff size={13} className="text-amber-400" />
+              <EyeOff size={13} className="text-lux-gold" />
               <span>Compare CRM Plans (Admin View)</span>
             </button>
           )}
@@ -366,9 +366,9 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
         
         {/* 1. CRM - Hidden from online users, only admin can see it */}
         {isAdmin && (
-          <div className="bg-white/[0.02] border border-amber-500/30 rounded-sm p-6 sm:p-10 hover:border-art-gold/40 transition-all group space-y-8 relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-mono uppercase tracking-widest">
-              <EyeOff size={13} className="text-amber-400" />
+          <div className="bg-lux-card border border-lux-gold/50 rounded-sm p-6 sm:p-10 hover:border-lux-gold shadow-md transition-all group space-y-8 relative">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-lux-ivory border border-lux-gold/50 text-lux-forest text-[10px] font-mono uppercase tracking-widest font-bold">
+              <EyeOff size={13} className="text-lux-gold" />
               <span>Admin Preview Mode: CRM section is hidden from public online users</span>
             </div>
 
@@ -388,70 +388,70 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
               </div>
 
               <div className="lg:col-span-7 space-y-5">
-                <div className="flex items-center gap-2 text-art-gold">
-                  <div className="w-8 h-8 rounded-sm bg-art-gold/10 border border-art-gold/30 flex items-center justify-center font-bold text-art-gold text-sm font-mono">
+                <div className="flex items-center gap-2 text-lux-forest">
+                  <div className="w-8 h-8 rounded-sm bg-lux-forest/10 border border-lux-forest/25 flex items-center justify-center font-bold text-lux-forest text-sm font-mono">
                     01
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-serif italic text-white">
+                  <h2 className="text-2xl sm:text-3xl font-serif italic text-lux-forest">
                     1. CRM (Customer Relationship Management)
                   </h2>
                 </div>
-                <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+                <p className="text-lux-muted text-xs sm:text-sm leading-relaxed">
                   Tailor-made cloud architectures engineered around your exact industry workflow. Eliminate manual spreadsheets, centralize every customer interaction, and empower your sales managers with real-time conversion visibility.
                 </p>
 
                 {/* Exact Points Required */}
                 <div className="grid sm:grid-cols-2 gap-3.5 pt-2">
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+                  <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                     <div className="flex items-start gap-3">
-                      <div className="p-1.5 rounded bg-art-gold/15 text-art-gold shrink-0 mt-0.5">
+                      <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                         <CheckCircle2 size={15} />
                       </div>
                       <div>
-                        <h5 className="text-sm font-bold text-white mb-1">1. We build customized CRM For various field</h5>
-                        <p className="text-white/50 text-xs leading-relaxed">
+                        <h5 className="text-sm font-bold text-lux-charcoal mb-1">1. We build customized CRM For various field</h5>
+                        <p className="text-lux-muted text-xs leading-relaxed">
                           Custom architectures for real estate, retail, manufacturing, consulting, healthcare, and education tailored to your specific pipeline.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+                  <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                     <div className="flex items-start gap-3">
-                      <div className="p-1.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 mt-0.5">
+                      <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                         <TrendingUp size={15} />
                       </div>
                       <div>
-                        <h5 className="text-sm font-bold text-white mb-1">2. Trackeads and follow leads</h5>
-                        <p className="text-white/50 text-xs leading-relaxed">
+                        <h5 className="text-sm font-bold text-lux-charcoal mb-1">2. Trackeads and follow leads</h5>
+                        <p className="text-lux-muted text-xs leading-relaxed">
                           Instant lead capture from Meta, Google, property portals, and digital inbound channels with automated agent assignment and activity timelines.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+                  <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                     <div className="flex items-start gap-3">
-                      <div className="p-1.5 rounded bg-blue-500/15 text-blue-400 shrink-0 mt-0.5">
+                      <div className="p-1.5 rounded bg-lux-gold/20 text-lux-forest shrink-0 mt-0.5">
                         <CreditCard size={15} />
                       </div>
                       <div>
-                        <h5 className="text-sm font-bold text-white mb-1">3. Follow-up payments</h5>
-                        <p className="text-white/50 text-xs leading-relaxed">
+                        <h5 className="text-sm font-bold text-lux-charcoal mb-1">3. Follow-up payments</h5>
+                        <p className="text-lux-muted text-xs leading-relaxed">
                           Automated milestone alerts, payment schedules, overdue notifications, ledger syncing, and digital receipts.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+                  <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                     <div className="flex items-start gap-3">
-                      <div className="p-1.5 rounded bg-amber-500/15 text-amber-400 shrink-0 mt-0.5">
+                      <div className="p-1.5 rounded bg-lux-gold/20 text-lux-forest shrink-0 mt-0.5">
                         <Zap size={15} />
                       </div>
                       <div>
-                        <h5 className="text-sm font-bold text-white mb-1">4. Increase sales and Productivity</h5>
-                        <p className="text-white/50 text-xs leading-relaxed">
+                        <h5 className="text-sm font-bold text-lux-charcoal mb-1">4. Increase sales and Productivity</h5>
+                        <p className="text-lux-muted text-xs leading-relaxed">
                           Intelligent follow-up triggers, conversion analytics, team leaderboards, and zero lead leakage.
                         </p>
                       </div>
@@ -463,12 +463,12 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                   <button
                     type="button"
                     onClick={() => handleQuickInquire('CRM')}
-                    className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-art-gold hover:text-white transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-lux-forest hover:text-lux-gold transition-colors cursor-pointer"
                   >
                     <span>Request Custom CRM Quote</span>
                     <ArrowRight size={13} />
                   </button>
-                  <span className="text-[10px] font-mono text-white/40">Custom SLA · Cloud Hosted · Role-Based Access</span>
+                  <span className="text-[10px] font-mono text-lux-muted">Custom SLA · Cloud Hosted · Role-Based Access</span>
                 </div>
               </div>
             </div>
@@ -479,72 +479,72 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
         )}
 
         {/* 2. Build Website */}
-        <div className="grid lg:grid-cols-12 gap-8 items-center bg-white/[0.02] border border-white/10 rounded-sm p-6 sm:p-10 hover:border-art-gold/40 transition-all group">
+        <div className="grid lg:grid-cols-12 gap-8 items-center bg-lux-card border border-lux-border rounded-sm p-6 sm:p-10 hover:border-lux-gold/60 shadow-md transition-all group">
           <div className="lg:col-span-7 space-y-5 order-2 lg:order-1">
-            <div className="flex items-center gap-2 text-art-gold">
-              <div className="w-8 h-8 rounded-sm bg-art-gold/10 border border-art-gold/30 flex items-center justify-center font-bold text-art-gold text-sm font-mono">
+            <div className="flex items-center gap-2 text-lux-forest">
+              <div className="w-8 h-8 rounded-sm bg-lux-forest/10 border border-lux-forest/25 flex items-center justify-center font-bold text-lux-forest text-sm font-mono">
                 02
               </div>
-              <h2 className="text-2xl sm:text-3xl font-serif italic text-white">
+              <h2 className="text-2xl sm:text-3xl font-serif italic text-lux-forest">
                 2. Build Website
               </h2>
             </div>
-            <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+            <p className="text-lux-muted text-xs sm:text-sm leading-relaxed">
               Your website is your company’s foremost flagship asset. We craft ultra-premium, high-speed digital architectures that establish prestige, build unquestionable credibility, and turn passive visitors into qualified enquiries.
             </p>
 
             {/* Exact Points Required */}
             <div className="grid sm:grid-cols-2 gap-3.5 pt-2">
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-art-gold/15 text-art-gold shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                     <Layers size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">1. Modern &amp; Responsive design</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">1. Modern &amp; Responsive design</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Fluid typography, artisanal aesthetics, and smooth animations optimized for 4K desktop, laptops, and tablets.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                     <Smartphone size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">2. Mobile-Friendly</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">2. Mobile-Friendly</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Touch-first navigation, thumb-friendly CTAs, and instant tap-to-call direct enquiry interactions for on-the-go visitors.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-blue-500/15 text-blue-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-gold/20 text-lux-forest shrink-0 mt-0.5">
                     <Search size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">3. SEO Optimized</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">3. SEO Optimized</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Structured JSON-LD schema, dynamic XML sitemaps, OpenGraph tags, and search-engine friendly semantic markup.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-purple-500/15 text-purple-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-gold/20 text-lux-forest shrink-0 mt-0.5">
                     <ShieldCheck size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">4. Fast and Secure</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">4. Fast and Secure</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Sub-second loading speeds, modern caching, SSL encryption, DDoS mitigation, and 99.9% uptime cloud hosting.
                     </p>
                   </div>
@@ -556,12 +556,12 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
               <button
                 type="button"
                 onClick={() => handleQuickInquire('Website')}
-                className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-art-gold hover:text-white transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-lux-forest hover:text-lux-gold transition-colors cursor-pointer"
               >
                 <span>Inquire for Website Development</span>
                 <ArrowRight size={13} />
               </button>
-              <span className="text-[10px] font-mono text-white/40">React · Next.js · Vite · High-Converting UX</span>
+              <span className="text-[10px] font-mono text-lux-muted">React · Next.js · Vite · High-Converting UX</span>
             </div>
           </div>
 
@@ -581,7 +581,7 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
         </div>
 
         {/* 3. Build E-commerce sites */}
-        <div className="grid lg:grid-cols-12 gap-8 items-center bg-white/[0.02] border border-white/10 rounded-sm p-6 sm:p-10 hover:border-art-gold/40 transition-all group">
+        <div className="grid lg:grid-cols-12 gap-8 items-center bg-lux-card border border-lux-border rounded-sm p-6 sm:p-10 hover:border-lux-gold/60 shadow-md transition-all group">
           <div className="lg:col-span-5">
             <SubSectionImageHeader
               primarySrc="https://images.unsplash.com/photo-1556742049-0a67c5574f73?auto=format&fit=crop&w=1600&q=85"
@@ -597,84 +597,84 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
           </div>
 
           <div className="lg:col-span-7 space-y-5">
-            <div className="flex items-center gap-2 text-art-gold">
-              <div className="w-8 h-8 rounded-sm bg-art-gold/10 border border-art-gold/30 flex items-center justify-center font-bold text-art-gold text-sm font-mono">
+            <div className="flex items-center gap-2 text-lux-forest">
+              <div className="w-8 h-8 rounded-sm bg-lux-forest/10 border border-lux-forest/25 flex items-center justify-center font-bold text-lux-forest text-sm font-mono">
                 03
               </div>
-              <h2 className="text-2xl sm:text-3xl font-serif italic text-white">
+              <h2 className="text-2xl sm:text-3xl font-serif italic text-lux-forest">
                 3. Build E-commerce sites
               </h2>
             </div>
-            <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+            <p className="text-lux-muted text-xs sm:text-sm leading-relaxed">
               Scale your brand into a 24/7 revenue engine. We design and launch direct-to-consumer e-commerce portals equipped with high-conversion checkout flows, instant payment processing, and seamless order dispatch systems.
             </p>
 
             {/* Exact Points Required */}
             <div className="grid sm:grid-cols-2 gap-3.5 pt-2">
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                     <TrendingUp size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">1. Trun your products into sales</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">1. Trun your products into sales</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Persuasive product galleries, customer social proof, quick add-to-cart triggers, and cart abandonment recovery.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-art-gold/15 text-art-gold shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                     <Store size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">2. Online store setup</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">2. Online store setup</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Complete domain configuration, custom branding, shipping zone setups, coupon codes, and automated tax calculations.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-blue-500/15 text-blue-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-gold/20 text-lux-forest shrink-0 mt-0.5">
                     <CreditCard size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">3. Secure payment integration</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">3. Secure payment integration</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Seamless gateway integration: UPI (GPay, PhonePe, Paytm), Credit/Debit cards, Net Banking, EMI, and COD handling.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-purple-500/15 text-purple-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-gold/20 text-lux-forest shrink-0 mt-0.5">
                     <Package size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">4. Easy product management</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">4. Easy product management</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Simple dashboard to add products, adjust pricing, upload images, manage variants (sizes/colors), and monitor inventory.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors sm:col-span-2">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors sm:col-span-2">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-amber-500/15 text-amber-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                     <Smartphone size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">5. Mobile responsive</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">5. Mobile responsive</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Optimized for the 80%+ of Indian shoppers buying on smartphones with ultra-fast 1-click checkout flows.
                     </p>
                   </div>
@@ -686,97 +686,97 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
               <button
                 type="button"
                 onClick={() => handleQuickInquire('E-commerce sites')}
-                className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-art-gold hover:text-white transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-lux-forest hover:text-lux-gold transition-colors cursor-pointer"
               >
                 <span>Launch Your Online Store</span>
                 <ArrowRight size={13} />
               </button>
-              <span className="text-[10px] font-mono text-white/40">Shopify · WooCommerce · Custom Next.js Commerce</span>
+              <span className="text-[10px] font-mono text-lux-muted">Shopify · WooCommerce · Custom Next.js Commerce</span>
             </div>
           </div>
         </div>
 
         {/* 4. Helping How to sell your product on Meesho, Amazon and Flipkart */}
-        <div className="grid lg:grid-cols-12 gap-8 items-center bg-white/[0.02] border border-white/10 rounded-sm p-6 sm:p-10 hover:border-art-gold/40 transition-all group">
+        <div className="grid lg:grid-cols-12 gap-8 items-center bg-lux-card border border-lux-border rounded-sm p-6 sm:p-10 hover:border-lux-gold/60 shadow-md transition-all group">
           <div className="lg:col-span-7 space-y-5 order-2 lg:order-1">
-            <div className="flex items-center gap-2 text-art-gold">
-              <div className="w-8 h-8 rounded-sm bg-art-gold/10 border border-art-gold/30 flex items-center justify-center font-bold text-art-gold text-sm font-mono">
+            <div className="flex items-center gap-2 text-lux-forest">
+              <div className="w-8 h-8 rounded-sm bg-lux-forest/10 border border-lux-forest/25 flex items-center justify-center font-bold text-lux-forest text-sm font-mono">
                 04
               </div>
-              <h2 className="text-2xl sm:text-3xl font-serif italic text-white">
+              <h2 className="text-2xl sm:text-3xl font-serif italic text-lux-forest">
                 4. Helping How to sell your product on Meesho, Amazon and Flipkart
               </h2>
             </div>
-            <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+            <p className="text-lux-muted text-xs sm:text-sm leading-relaxed">
               Tap directly into hundreds of millions of active buyers across India’s top e-commerce marketplaces. We guide manufacturers, wholesalers, creators, and brands through end-to-end seller onboarding, algorithm optimization, and profitable scaling.
             </p>
 
             {/* Exact Points Required */}
             <div className="grid sm:grid-cols-2 gap-3.5 pt-2">
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-art-gold/15 text-art-gold shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                     <Store size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">1. Account Setup &amp; Store creation</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">1. Account Setup &amp; Store creation</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Complete seller registration, brand registry, GST validation, bank linking, and document approval on Amazon, Flipkart &amp; Meesho.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-blue-500/15 text-blue-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                     <Search size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">2. Product listing and optimization</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">2. Product listing and optimization</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       High-converting search keyword indexing, compelling bullet points, high-definition white-background imagery, and A+ brand content.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-gold/20 text-lux-forest shrink-0 mt-0.5">
                     <Tag size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">3. Pricing and offers Guidance</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">3. Pricing and offers Guidance</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Market competitor pricing analysis, marketplace commission calculations, discount strategy, and Buy Box winning formulas.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-purple-500/15 text-purple-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-gold/20 text-lux-forest shrink-0 mt-0.5">
                     <Package size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">4. Order and inventory management</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">4. Order and inventory management</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Dispatch SLA adherence, return minimization, packaging guidelines, FBA/Flipkart Plus fulfillment, and multi-channel stock sync.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-sm hover:border-art-gold/40 transition-colors sm:col-span-2">
+              <div className="p-4 bg-lux-ivory border border-lux-border rounded-sm hover:border-lux-gold/50 transition-colors sm:col-span-2">
                 <div className="flex items-start gap-3">
-                  <div className="p-1.5 rounded bg-amber-500/15 text-amber-400 shrink-0 mt-0.5">
+                  <div className="p-1.5 rounded bg-lux-forest/10 text-lux-forest shrink-0 mt-0.5">
                     <BarChart3 size={15} />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-white mb-1">5. Tips to increase sales</h5>
-                    <p className="text-white/50 text-xs leading-relaxed">
+                    <h5 className="text-sm font-bold text-lux-charcoal mb-1">5. Tips to increase sales</h5>
+                    <p className="text-lux-muted text-xs leading-relaxed">
                       Sponsored ads PPC setup, festive deals (Great Indian Festival, Big Billion Days), organic rating strategies, and seller badge upgrades.
                     </p>
                   </div>
@@ -788,12 +788,12 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
               <button
                 type="button"
                 onClick={() => handleQuickInquire('Sell products online')}
-                className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-art-gold hover:text-white transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-black text-lux-forest hover:text-lux-gold transition-colors cursor-pointer"
               >
                 <span>Start Selling on Marketplaces</span>
                 <ArrowRight size={13} />
               </button>
-              <span className="text-[10px] font-mono text-white/40">Amazon · Flipkart · Meesho Seller Central</span>
+              <span className="text-[10px] font-mono text-lux-muted">Amazon · Flipkart · Meesho Seller Central</span>
             </div>
           </div>
 
@@ -816,19 +816,19 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
 
       {/* Dedicated Enquiry Form (Exact Format Requested) */}
       <div ref={formRef} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-[#141414] border border-art-gold/30 rounded-sm p-6 sm:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.6)] relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-art-gold/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="bg-lux-card border border-lux-border rounded-sm p-6 sm:p-12 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-lux-gold/10 rounded-full blur-3xl pointer-events-none" />
           
-          <div className="relative z-10 mb-8 border-b border-white/10 pb-6 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-art-gold/15 text-art-gold text-[10px] font-mono uppercase tracking-widest mb-3">
-              <Sparkles size={12} />
+          <div className="relative z-10 mb-8 border-b border-lux-border pb-6 text-center sm:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lux-forest/10 border border-lux-forest/20 text-lux-forest text-[10px] font-mono uppercase tracking-widest font-bold mb-3">
+              <Sparkles size={12} className="text-lux-gold" />
               <span>Dedicated Business Intake</span>
             </div>
-            <h3 className="text-2xl sm:text-4xl font-serif italic text-white mb-2">
+            <h3 className="text-2xl sm:text-4xl font-serif italic text-lux-forest mb-2">
               Grow Business Enquiry Form
             </h3>
-            <p className="text-white/60 text-xs sm:text-sm font-light">
-              Submit your requirements below. Your enquiry will be securely stored in the Admin Vault as an <strong className="text-art-gold">Opportunity</strong> record, and our specialist team will contact you within 2 business hours.
+            <p className="text-lux-muted text-xs sm:text-sm font-normal">
+              Submit your requirements below. Your enquiry will be securely stored in the Admin Vault as an <strong className="text-lux-forest">Opportunity</strong> record, and our specialist team will contact you within 2 business hours.
             </p>
           </div>
 
@@ -839,9 +839,9 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="mb-6 p-3 bg-art-gold/20 border border-art-gold/40 rounded-sm text-art-gold text-xs font-mono flex items-center gap-2"
+                className="mb-6 p-3 bg-lux-ivory border border-lux-gold/50 rounded-sm text-lux-forest text-xs font-mono flex items-center gap-2"
               >
-                <CheckCircle2 size={14} className="text-art-gold shrink-0" />
+                <CheckCircle2 size={14} className="text-lux-forest shrink-0" />
                 <span>Form has been reset. All fields and selections have been completely cleared.</span>
               </motion.div>
             )}
@@ -851,20 +851,20 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-8 bg-emerald-500/10 border border-emerald-500/30 rounded-sm text-center space-y-4"
+              className="p-8 bg-lux-ivory border border-lux-forest/30 rounded-sm text-center space-y-4"
             >
-              <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/40">
+              <div className="w-14 h-14 bg-lux-forest/15 text-lux-forest rounded-full flex items-center justify-center mx-auto border border-lux-forest/30">
                 <CheckCircle2 size={32} />
               </div>
-              <h4 className="text-2xl font-serif italic text-white">Enquiry Saved Successfully!</h4>
-              <p className="text-white/70 text-sm max-w-lg mx-auto">
-                Thank you, <strong className="text-white">{formData.name}</strong>. Your enquiry for <strong className="text-art-gold">{selectedInterested.join(', ') || 'Business Solutions'}</strong> has been saved directly to the Firestore <strong className="text-art-gold">opportunities</strong> collection and will appear in the Admin Vault under the <strong className="text-art-gold">Opportunity</strong> tab.
+              <h4 className="text-2xl font-serif italic text-lux-forest">Enquiry Saved Successfully!</h4>
+              <p className="text-lux-muted text-sm max-w-lg mx-auto">
+                Thank you, <strong className="text-lux-charcoal">{formData.name}</strong>. Your enquiry for <strong className="text-lux-forest">{selectedInterested.join(', ') || 'Business Solutions'}</strong> has been saved directly to the Firestore <strong className="text-lux-forest">opportunities</strong> collection and will appear in the Admin Vault under the <strong className="text-lux-forest">Opportunity</strong> tab.
               </p>
               <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="px-6 py-2.5 bg-art-gold text-black text-xs uppercase tracking-widest font-black rounded-sm hover:bg-white transition-all cursor-pointer"
+                  className="px-6 py-2.5 bg-lux-forest hover:bg-lux-forest-hover text-lux-card text-xs uppercase tracking-widest font-black rounded-sm transition-all cursor-pointer shadow-sm"
                 >
                   Submit Another Enquiry
                 </button>
@@ -874,16 +874,16 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
             <form onSubmit={handleSave} className="space-y-6 relative z-10">
               
               {errorMessage && (
-                <div className="p-4 bg-red-500/15 border border-red-500/30 rounded-sm text-red-300 text-xs font-mono flex items-center gap-3">
-                  <AlertCircle size={16} className="text-red-400 shrink-0" />
+                <div className="p-4 bg-red-50 border border-red-300 rounded-sm text-red-700 text-xs font-mono flex items-center gap-3">
+                  <AlertCircle size={16} className="text-red-600 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
               )}
 
               {/* Name : */}
               <div>
-                <label className="block text-[11px] uppercase tracking-widest text-art-gold font-bold mb-2">
-                  Name <span className="text-red-400">*</span>
+                <label className="block text-[11px] uppercase tracking-widest text-lux-forest font-bold mb-2">
+                  Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -891,7 +891,7 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter your full name or business entity"
-                  className="w-full bg-black/50 border border-white/15 focus:border-art-gold px-4 py-3.5 rounded-sm text-sm text-white placeholder-white/30 outline-none transition-colors"
+                  className="w-full bg-lux-ivory border border-lux-border focus:border-lux-forest focus:bg-lux-card px-4 py-3.5 rounded-sm text-sm text-lux-charcoal placeholder-lux-muted/60 outline-none transition-colors"
                 />
               </div>
 
@@ -899,8 +899,8 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
               <div className="grid sm:grid-cols-2 gap-6">
                 {/* Number : */}
                 <div>
-                  <label className="block text-[11px] uppercase tracking-widest text-art-gold font-bold mb-2">
-                    Number <span className="text-red-400">*</span>
+                  <label className="block text-[11px] uppercase tracking-widest text-lux-forest font-bold mb-2">
+                    Number <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <input
@@ -909,17 +909,17 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                       value={formData.number}
                       onChange={(e) => setFormData({ ...formData, number: e.target.value })}
                       placeholder="+91 98765 43210"
-                      className="w-full bg-black/50 border border-white/15 focus:border-art-gold pl-10 pr-4 py-3.5 rounded-sm text-sm text-white placeholder-white/30 outline-none transition-colors font-mono"
+                      className="w-full bg-lux-ivory border border-lux-border focus:border-lux-forest focus:bg-lux-card pl-10 pr-4 py-3.5 rounded-sm text-sm text-lux-charcoal placeholder-lux-muted/60 outline-none transition-colors font-mono"
                     />
-                    <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+                    <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lux-muted" />
                   </div>
-                  <span className="text-[10px] text-white/40 font-mono mt-1 block">Direct mobile &amp; phone contact</span>
+                  <span className="text-[10px] text-lux-muted font-mono mt-1 block">Direct mobile &amp; phone contact</span>
                 </div>
 
                 {/* Email : */}
                 <div>
-                  <label className="block text-[11px] uppercase tracking-widest text-art-gold font-bold mb-2">
-                    Email <span className="text-red-400">*</span>
+                  <label className="block text-[11px] uppercase tracking-widest text-lux-forest font-bold mb-2">
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <input
@@ -928,21 +928,21 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="contact@yourbusiness.com"
-                      className="w-full bg-black/50 border border-white/15 focus:border-art-gold pl-10 pr-4 py-3.5 rounded-sm text-sm text-white placeholder-white/30 outline-none transition-colors"
+                      className="w-full bg-lux-ivory border border-lux-border focus:border-lux-forest focus:bg-lux-card pl-10 pr-4 py-3.5 rounded-sm text-sm text-lux-charcoal placeholder-lux-muted/60 outline-none transition-colors"
                     />
-                    <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+                    <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lux-muted" />
                   </div>
-                  <span className="text-[10px] text-white/40 font-mono mt-1 block">For detailed proposal &amp; pricing</span>
+                  <span className="text-[10px] text-lux-muted font-mono mt-1 block">For detailed proposal &amp; pricing</span>
                 </div>
               </div>
 
               {/* Intrested: CRM, Website, E-commerce sites, Sell products online. */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-[11px] uppercase tracking-widest text-art-gold font-bold">
-                    Intrested <span className="text-red-400">*</span>
+                  <label className="block text-[11px] uppercase tracking-widest text-lux-forest font-bold">
+                    Intrested <span className="text-red-500">*</span>
                   </label>
-                  <span className="text-white/40 text-[10px] font-mono">
+                  <span className="text-lux-muted text-[10px] font-mono">
                     {selectedInterested.length === 0 ? 'None selected' : `${selectedInterested.length} selected`}
                   </span>
                 </div>
@@ -958,21 +958,21 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                         onClick={() => handleToggleService(srv.id)}
                         className={`p-3.5 rounded-sm border text-left transition-all flex items-start gap-3 cursor-pointer ${
                           isSelected
-                            ? 'bg-art-gold/15 border-art-gold text-white shadow-md'
-                            : 'bg-black/30 border-white/10 text-white/70 hover:border-white/30 hover:text-white'
+                            ? 'bg-lux-forest/10 border-lux-forest text-lux-charcoal shadow-sm'
+                            : 'bg-lux-ivory border-lux-border text-lux-charcoal hover:border-lux-forest/40'
                         }`}
                       >
                         <div className={`w-5 h-5 rounded-sm border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                          isSelected ? 'bg-art-gold border-art-gold text-black' : 'border-white/30 bg-black/40'
+                          isSelected ? 'bg-lux-forest border-lux-forest text-lux-card' : 'border-lux-border bg-lux-card'
                         }`}>
                           {isSelected && <Check size={12} strokeWidth={3} />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <Icon size={14} className={isSelected ? 'text-art-gold' : 'text-white/50'} />
+                            <Icon size={14} className={isSelected ? 'text-lux-forest' : 'text-lux-muted'} />
                             <span className="text-xs font-bold uppercase tracking-wider">{srv.label}</span>
                           </div>
-                          <p className="text-[10px] text-white/50 mt-1 line-clamp-1">{srv.desc}</p>
+                          <p className="text-[10px] text-lux-muted mt-1 line-clamp-1">{srv.desc}</p>
                         </div>
                       </button>
                     );
@@ -983,15 +983,15 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
               {/* Comment: created a text box capacity of 1000 charters with validation & visual character counter */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-[11px] uppercase tracking-widest text-art-gold font-bold">
-                    Comment <span className="text-white/40 normal-case font-normal text-[10px]">(Capacity: 1000 characters)</span>
+                  <label className="block text-[11px] uppercase tracking-widest text-lux-forest font-bold">
+                    Comment <span className="text-lux-muted normal-case font-normal text-[10px]">(Capacity: 1000 characters)</span>
                   </label>
                   <div className="flex items-center gap-2 font-mono text-[10px]">
                     <span className={getCharCounterColor()}>
                       {commentLength} / {maxCommentLength} characters
                     </span>
-                    <span className="text-white/30">|</span>
-                    <span className={remainingChars === 0 ? 'text-rose-400 font-bold' : 'text-white/40'}>
+                    <span className="text-lux-border">|</span>
+                    <span className={remainingChars === 0 ? 'text-rose-600 font-bold' : 'text-lux-muted'}>
                       {remainingChars} left
                     </span>
                   </div>
@@ -1010,25 +1010,25 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                       }
                     }}
                     placeholder="Enter your detailed comment, business requirements, website URLs, products to sell, or timelines (capacity of 1000 characters)..."
-                    className={`w-full bg-black/50 border p-4 rounded-sm text-sm text-white placeholder-white/30 outline-none transition-colors resize-y leading-relaxed font-sans ${
+                    className={`w-full bg-lux-ivory focus:bg-lux-card border p-4 rounded-sm text-sm text-lux-charcoal placeholder-lux-muted/60 outline-none transition-colors resize-y leading-relaxed font-sans ${
                       commentLength >= 1000 
-                        ? 'border-rose-500/80 focus:border-rose-500' 
+                        ? 'border-rose-500 focus:border-rose-600'
                         : commentLength >= 950 
-                        ? 'border-orange-500/70 focus:border-orange-500' 
-                        : 'border-white/15 focus:border-art-gold'
+                        ? 'border-orange-500 focus:border-orange-600'
+                        : 'border-lux-border focus:border-lux-forest'
                     }`}
                   />
                   
                   {/* Subtle limit warning banner inside comment box when near limit */}
                   {commentLength >= 980 && (
-                    <div className="absolute right-3 bottom-3 px-2 py-0.5 rounded bg-black/80 border border-white/20 text-[9px] font-mono text-orange-400">
+                    <div className="absolute right-3 bottom-3 px-2 py-0.5 rounded bg-lux-card border border-orange-400 text-[9px] font-mono text-orange-600 shadow-sm">
                       {commentLength === 1000 ? 'Limit reached' : `${remainingChars} chars remaining`}
                     </div>
                   )}
                 </div>
 
                 {/* Visual Progress Bar for 1000 characters */}
-                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mt-1.5">
+                <div className="w-full h-1.5 bg-lux-ivory border border-lux-border/60 rounded-full overflow-hidden mt-1.5">
                   <div 
                     className={`h-full transition-all duration-150 ${getProgressBarColor()}`}
                     style={{ width: `${Math.min(100, (commentLength / maxCommentLength) * 100)}%` }}
@@ -1037,12 +1037,12 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
               </div>
 
               {/* Create a button Save or Reset */}
-              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="pt-4 border-t border-lux-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <button
                   type="button"
                   onClick={handleReset}
                   disabled={isSubmitting}
-                  className="px-6 py-3.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white text-xs uppercase tracking-[0.2em] font-extrabold rounded-sm border border-white/15 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-6 py-3.5 bg-lux-ivory hover:bg-lux-border/30 text-lux-charcoal text-xs uppercase tracking-[0.2em] font-extrabold rounded-sm border border-lux-border transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   title="Clear all fields, comments, and service selections"
                 >
                   <RotateCcw size={14} />
@@ -1052,11 +1052,11 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-8 py-3.5 bg-gradient-to-r from-art-gold to-[#e4c07a] text-black text-xs uppercase tracking-[0.2em] font-black rounded-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(197,160,89,0.4)] cursor-pointer disabled:opacity-60"
+                  className="px-8 py-3.5 bg-lux-forest hover:bg-lux-forest-hover text-lux-card text-xs uppercase tracking-[0.2em] font-black rounded-sm transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-60"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-lux-card border-t-transparent rounded-full animate-spin" />
                       <span>Saving to Opportunity...</span>
                     </>
                   ) : (
@@ -1069,8 +1069,8 @@ export const GrowBusinessSection: React.FC<GrowBusinessSectionProps> = ({ onSucc
               </div>
 
               <div className="text-center pt-2">
-                <span className="text-[10px] text-white/40 font-mono flex items-center justify-center gap-1.5">
-                  <ShieldCheck size={12} className="text-emerald-400" />
+                <span className="text-[10px] text-lux-muted font-mono flex items-center justify-center gap-1.5">
+                  <ShieldCheck size={12} className="text-lux-forest" />
                   <span>Direct Firestore Sync: Automatically registered in Admin Vault under Opportunity tab</span>
                 </span>
               </div>

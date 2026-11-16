@@ -75,7 +75,8 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
         <button
           type="button"
           onClick={() => openShare(whatsappUrl)}
-          className="p-1.5 rounded-sm bg-[#25D366]/15 hover:bg-[#25D366] text-[#25D366] hover:text-black border border-[#25D366]/30 transition-all cursor-pointer"
+          aria-label="Share on WhatsApp"
+          className="p-1.5 rounded-sm bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border hover:border-lux-forest transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
           title="Share on WhatsApp"
         >
           <MessageSquare size={13} />
@@ -84,7 +85,8 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
         <button
           type="button"
           onClick={() => openShare(linkedinUrl)}
-          className="p-1.5 rounded-sm bg-[#0077b5]/15 hover:bg-[#0077b5] text-[#0077b5] hover:text-white border border-[#0077b5]/30 transition-all cursor-pointer"
+          aria-label="Share on LinkedIn"
+          className="p-1.5 rounded-sm bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border hover:border-lux-forest transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
           title="Share on LinkedIn"
         >
           <Linkedin size={13} />
@@ -93,7 +95,8 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
         <button
           type="button"
           onClick={() => openShare(twitterUrl)}
-          className="p-1.5 rounded-sm bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 transition-all cursor-pointer"
+          aria-label="Share on X / Twitter"
+          className="p-1.5 rounded-sm bg-lux-ivory hover:bg-lux-forest text-lux-charcoal hover:text-lux-card border border-lux-border hover:border-lux-forest transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
           title="Share on X / Twitter"
         >
           <Twitter size={13} />
@@ -102,10 +105,11 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
         <button
           type="button"
           onClick={copyToClipboard}
-          className="p-1.5 rounded-sm bg-white/5 hover:bg-art-gold text-white/70 hover:text-black border border-white/10 transition-all cursor-pointer"
+          aria-label="Copy share link"
+          className="p-1.5 rounded-sm bg-lux-ivory hover:bg-lux-gold/20 text-lux-charcoal hover:text-lux-forest border border-lux-border hover:border-lux-gold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
           title="Copy share link"
         >
-          {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
+          {copied ? <Check size={13} className="text-lux-forest" /> : <Copy size={13} />}
         </button>
       </div>
     );
@@ -113,8 +117,8 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      <span className="text-[10px] uppercase font-mono tracking-wider text-white/50 flex items-center gap-1 mr-1">
-        <Share2 size={11} className="text-art-gold" />
+      <span className="text-[10px] uppercase font-mono tracking-wider text-lux-muted flex items-center gap-1 mr-1">
+        <Share2 size={11} className="text-lux-gold" />
         <span>Share:</span>
       </span>
 
@@ -122,7 +126,8 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
       <button
         type="button"
         onClick={() => openShare(whatsappUrl)}
-        className="flex items-center gap-1 px-2.5 py-1 bg-[#25D366]/15 hover:bg-[#25D366] text-[#25D366] hover:text-black border border-[#25D366]/35 rounded-sm text-xs font-semibold transition-all cursor-pointer shadow-sm"
+        aria-label="Share on WhatsApp"
+        className="flex items-center gap-1 px-2.5 py-1 bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border hover:border-lux-forest rounded-sm text-xs font-semibold transition-all cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
         title="Share on WhatsApp"
       >
         <MessageSquare size={12} />
@@ -133,7 +138,8 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
       <button
         type="button"
         onClick={() => openShare(linkedinUrl)}
-        className="flex items-center gap-1 px-2.5 py-1 bg-[#0077b5]/15 hover:bg-[#0077b5] text-[#0077b5] hover:text-white border border-[#0077b5]/35 rounded-sm text-xs font-semibold transition-all cursor-pointer shadow-sm"
+        aria-label="Share on LinkedIn"
+        className="flex items-center gap-1 px-2.5 py-1 bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border hover:border-lux-forest rounded-sm text-xs font-semibold transition-all cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
         title="Share on LinkedIn"
       >
         <Linkedin size={12} />
@@ -144,7 +150,8 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
       <button
         type="button"
         onClick={() => openShare(twitterUrl)}
-        className="flex items-center gap-1 px-2 py-1 bg-white/5 hover:bg-white text-white/80 hover:text-black border border-white/15 rounded-sm text-xs font-semibold transition-all cursor-pointer"
+        aria-label="Share on X / Twitter"
+        className="flex items-center gap-1 px-2 py-1 bg-lux-ivory hover:bg-lux-forest text-lux-charcoal hover:text-lux-card border border-lux-border hover:border-lux-forest rounded-sm text-xs font-semibold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
         title="Share on X / Twitter"
       >
         <Twitter size={12} />
@@ -155,7 +162,8 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
       <button
         type="button"
         onClick={() => openShare(facebookUrl)}
-        className="flex items-center gap-1 px-2 py-1 bg-[#1877F2]/15 hover:bg-[#1877F2] text-[#1877F2] hover:text-white border border-[#1877F2]/30 rounded-sm text-xs font-semibold transition-all cursor-pointer"
+        aria-label="Share on Facebook"
+        className="flex items-center gap-1 px-2 py-1 bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border hover:border-lux-forest rounded-sm text-xs font-semibold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
         title="Share on Facebook"
       >
         <Facebook size={12} />
@@ -165,7 +173,8 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
       <button
         type="button"
         onClick={() => openShare(telegramUrl)}
-        className="flex items-center gap-1 px-2 py-1 bg-[#0088cc]/15 hover:bg-[#0088cc] text-[#0088cc] hover:text-white border border-[#0088cc]/30 rounded-sm text-xs font-semibold transition-all cursor-pointer"
+        aria-label="Share on Telegram"
+        className="flex items-center gap-1 px-2 py-1 bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border hover:border-lux-forest rounded-sm text-xs font-semibold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
         title="Share on Telegram"
       >
         <Send size={12} />
@@ -175,10 +184,11 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
       <button
         type="button"
         onClick={copyToClipboard}
-        className="flex items-center gap-1 px-2.5 py-1 bg-white/[0.05] border border-white/[0.1] hover:border-art-gold/50 text-white/80 hover:text-art-gold rounded-sm text-xs font-medium transition-all cursor-pointer"
+        aria-label="Copy complete property details and URL"
+        className="flex items-center gap-1 px-2.5 py-1 bg-lux-card border border-lux-border hover:border-lux-gold text-lux-charcoal hover:text-lux-forest rounded-sm text-xs font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-forest/40"
         title="Copy complete property details and URL"
       >
-        {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+        {copied ? <Check size={12} className="text-lux-forest" /> : <Copy size={12} />}
         <span className="text-[10px]">{copied ? "Copied!" : "Copy"}</span>
       </button>
     </div>
