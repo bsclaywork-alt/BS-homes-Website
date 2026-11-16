@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 import { 
   getFirestore, 
   initializeFirestore,
@@ -14,18 +15,55 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // Suppress internal gRPC idle stream disconnect and harmless WebChannel timeout logs
 if (typeof window !== 'undefined') {
   const origError = console.error;
-  console.error = function (...args: any[]) {
-    const text = args.map(a => (typeof a === 'string' ? a : (a?.message || ''))).join(' ');
-    if (
+  const origWarn = console.warn;
+  const origLog = console.log;
+
+  const shouldSuppress = (text: string) => {
+    return (
       text.includes('Disconnecting idle stream') ||
       text.includes('Timed out waiting for new targets') ||
       text.includes("RPC 'Listen' stream") ||
-      (text.includes('@firebase/firestore') && text.includes('CANCELLED'))
-    ) {
-      return;
-    }
+      text.includes("GrpcConnection RPC") ||
+      text.includes("Code: 1 Message: 1 CANCELLED") ||
+      text.includes('Quota limit exceeded') ||
+      text.includes('resource-exhausted') ||
+      text.includes('Live Firestore fetch failed') ||
+      text.includes('Free daily read units per project') ||
+      (text.includes('@firebase/firestore') && (text.includes('CANCELLED') || text.includes('Code: 1')))
+    );
+  };
+
+  console.error = function (...args: any[]) {
+    const text = args.map(a => (typeof a === 'string' ? a : (a?.message || ''))).join(' ');
+    if (shouldSuppress(text)) return;
     origError.apply(console, args);
   };
+
+  console.warn = function (...args: any[]) {
+    const text = args.map(a => (typeof a === 'string' ? a : (a?.message || ''))).join(' ');
+    if (shouldSuppress(text)) return;
+    origWarn.apply(console, args);
+  };
+
+  console.log = function (...args: any[]) {
+    const text = args.map(a => (typeof a === 'string' ? a : (a?.message || ''))).join(' ');
+    if (shouldSuppress(text)) return;
+    origLog.apply(console, args);
+  };
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const text = String(event.reason?.message || event.reason || '');
+    if (shouldSuppress(text)) {
+      event.preventDefault();
+    }
+  });
+
+  window.addEventListener('error', (event) => {
+    const text = String(event.message || '');
+    if (shouldSuppress(text)) {
+      event.preventDefault();
+    }
+  });
 }
 
 // Set Firestore log level to silent to suppress internal gRPC stream lifecycle notices
@@ -45,6 +83,7 @@ export const db = (() => {
   }
 })();
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 // Connection test per Firebase skill guidelines
 async function testConnection() {

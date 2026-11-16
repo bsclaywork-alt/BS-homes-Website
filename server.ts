@@ -5,9 +5,9 @@ import { createServer as createViteServer } from "vite";
 import { google } from "googleapis";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
-import { 
-  generateSitemapXml, 
-  generatePropertyMetaTags, 
+import {
+  generateSitemapXml,
+  generatePropertyMetaTags,
   SITEMAP_PROJECTS,
   CORRIDOR_SLUGS,
   slugify
@@ -59,11 +59,11 @@ async function startServer() {
       if (!apiKey) {
         const tailoredSuggestion = generateSuggestion(lower);
         return res.json({
-          response: `Thank you for sharing your requirements with BS Homez! 
+          response: `Thank you for sharing your requirements with BS Homez!
 
-Based on your preferences, we highly recommend exploring ${tailoredSuggestion}. 
+Based on your preferences, we highly recommend exploring ${tailoredSuggestion}.
 
-Our BS Homez advisory team will review your requirements in detail and get back to you shortly with an ample of matched curated properties, floor plans, and priority viewing arrangements. 
+Our BS Homez advisory team will review your requirements in detail and get back to you shortly with an ample of matched curated properties, floor plans, and priority viewing arrangements.
 
 Please share your Name and Mobile Number so our relationship manager can connect directly with you!`
         });
@@ -110,8 +110,8 @@ Your responsibility:
       res.json({ response: response.text });
     } catch (error) {
       console.error("Gemini API Error in Server:", error);
-      res.json({ 
-        response: "Welcome to BS Homez! Based on your requirement, our advisory team will analyze your preferences and get back to you shortly with curated property options. Please share your Name and Contact Number." 
+      res.json({
+        response: "Welcome to BS Homez! Based on your requirement, our advisory team will analyze your preferences and get back to you shortly with curated property options. Please share your Name and Contact Number."
       });
     }
   });
@@ -312,7 +312,7 @@ Return a valid JSON array of objects strictly matching this shape:
         const propType = p.propertyType || "Apartment";
         const features = Array.isArray(p.features) ? p.features.slice(0, 3).join(', ') : 'modern amenities';
         const primaryAlt = `${name} - Luxury ${propType.toLowerCase()} architectural view in ${zone}, Bangalore featuring ${features}.`;
-        
+
         const imageAltTexts: Record<string, string> = {};
         (Array.isArray(p.imageUrls) ? p.imageUrls : []).forEach((u: string, idx: number) => {
           if (u && typeof u === 'string') {
@@ -1256,7 +1256,7 @@ Only output the JSON object, nothing else.`;
         `${cleanName} Brochure Download`,
         `${cleanName} RERA ${cleanRera}`,
         `${cleanBuilder} ${cleanName}`,
-        
+
         // Location & Corridor High-Volume Intent
         `${verb} ${cleanProp} in ${cleanZone}`,
         `${cleanZone} Bangalore Luxury Real Estate`,
@@ -1264,14 +1264,14 @@ Only output the JSON object, nothing else.`;
         `${cleanZone} properties near ${microLandmarks[1]}`,
         `Gated community ${cleanProp} in ${cleanZone}`,
         `${cleanZone} Outer Ring Road Connectivity`,
-        
+
         // Budget & Configuration Targeting
         `${budgetLabel}`,
         `${cleanProp} in ${cleanZone} with ${cleanPrice}`,
         `2 BHK 3 BHK 4 BHK in ${cleanZone}`,
         `Vaastu Compliant ${cleanProp} ${cleanZone}`,
         isRental ? `Luxury flats for rent in ${cleanZone} near ${microLandmarks[0]}` : `0% Brokerage on Primary Sale ${cleanZone}`,
-        
+
         // High ROI & Investment Searches (Google SERP Goldmine)
         `High ROI Real Estate in ${cleanZone}`,
         `${roiMetric}`,
@@ -1280,7 +1280,7 @@ Only output the JSON object, nothing else.`;
         `NRI Property Investment Bangalore 0% Tax Encumbrance`,
         `RERA Approved BBMP A Khata ${cleanProp} ${cleanZone}`,
         isResale ? `Verified clear resale title ${cleanZone}` : `Pre-launch and construction linked payment plan`,
-        
+
         // Corporate & Advisory Search Terms
         `BS Homez Verified Portfolio`,
         `BS Homez ${cleanZone} Property Advisory`,
@@ -1617,7 +1617,7 @@ Rules:
       html = html.replace(/<meta\s+property="og:title"\s+content="[\s\S]*?"\s*\/?>/i, `<meta property="og:title" content="${meta.ogTitle.replace(/"/g, '&quot;')}" />`);
       html = html.replace(/<meta\s+property="og:description"\s+content="[\s\S]*?"\s*\/?>/i, `<meta property="og:description" content="${meta.ogDescription.replace(/"/g, '&quot;')}" />`);
       html = html.replace(/<meta\s+property="og:url"\s+content="[\s\S]*?"\s*\/?>/i, `<meta property="og:url" content="${meta.ogUrl}" />`);
-      
+
       const propertyJsonLdSnippet = `
       <script type="application/ld+json" id="property-jsonld">
         ${meta.schemaJson}
@@ -1730,11 +1730,11 @@ Sitemap: ${baseUrl}/sitemap.xml
         const data = JSON.parse(fs.readFileSync(statusFile, "utf-8"));
         return res.json({ success: true, ...data });
       }
-      return res.json({ 
-        success: true, 
-        lastUpdated: new Date().toISOString(), 
-        totalProjects: SITEMAP_PROJECTS.length, 
-        status: "baseline" 
+      return res.json({
+        success: true,
+        lastUpdated: new Date().toISOString(),
+        totalProjects: SITEMAP_PROJECTS.length,
+        status: "baseline"
       });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err?.message || String(err) });
