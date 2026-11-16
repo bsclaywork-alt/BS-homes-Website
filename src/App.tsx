@@ -5584,10 +5584,10 @@ const ProjectForm = ({
                 />
               </div>
 
-              {/* Row 11: Photos / Videos (Media Upload & Compression) */}
+              {/* Row 11: Photos Only (Media Upload & Compression) */}
               <MediaUploadCompressor
                 accentColor="cyan"
-                title="Rental Photos & Video Walkthrough (Auto-Compressed HD)"
+                title="Rental Photos Only (Auto-Compressed HD)"
                 images={formData.imageUrls || []}
                 onImagesChange={(imgs) => setFormData(prev => ({
                   ...prev,
@@ -6113,10 +6113,10 @@ const ProjectForm = ({
                 />
               </div>
 
-              {/* Row 13: Photos / Videos (Media Upload & Compression) */}
+              {/* Row 13: Photos Only (Media Upload & Compression) */}
               <MediaUploadCompressor
                 accentColor="amber"
-                title="Resale Photos & Video Walkthrough (Auto-Compressed HD)"
+                title="Resale Photos Only (Auto-Compressed HD)"
                 images={formData.imageUrls || []}
                 onImagesChange={(imgs) => setFormData(prev => ({
                   ...prev,
@@ -6525,7 +6525,7 @@ const ProjectForm = ({
               {/* Row 11: Photos / Videos (Media Upload & Compression) */}
               <MediaUploadCompressor
                 accentColor="gold"
-                title="Primary Photos & Video Walkthrough (Auto-Compressed HD)"
+                title="Primary Photos Only (Auto-Compressed HD)"
                 images={formData.imageUrls || []}
                 onImagesChange={(imgs) => setFormData(prev => ({
                   ...prev,

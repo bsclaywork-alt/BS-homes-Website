@@ -177,8 +177,6 @@ export const AdminMediaManagerModal: React.FC<AdminMediaManagerModalProps> = ({
               </p>
               <div className="text-[10px] font-mono text-white/50 pt-1 flex items-center justify-center sm:justify-start gap-3 flex-wrap">
                 <span>Total Photos: <strong className="text-white">{images.length}</strong></span>
-                <span>•</span>
-                <span>Video Walkthrough: <strong className={videoUrl ? "text-emerald-400" : "text-white/40"}>{videoUrl ? "Attached" : "None"}</strong></span>
               </div>
             </div>
           </div>
@@ -186,7 +184,7 @@ export const AdminMediaManagerModal: React.FC<AdminMediaManagerModalProps> = ({
           {/* Core Upload Compressor & Manager with Real-Time Progress Bar */}
           <MediaUploadCompressor
             accentColor={accentColor}
-            title={`${project.name} • Media & Video Walkthrough Manager`}
+            title={`${project.name} • Project Photo Manager`}
             images={images}
             onImagesChange={(imgs) => setImages(imgs)}
             videoUrl={videoUrl}
