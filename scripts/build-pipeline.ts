@@ -17,7 +17,7 @@ import {
   slugify,
   generateProjectSlugMap
 } from '../src/data/projectsSitemapData';
-import { fetchActiveDbProjects, mergeProjects } from './update-sitemap';
+import { mergeProjects } from './update-sitemap';
 
 function escapeHtml(str: string): string {
   if (!str) return '';
@@ -44,22 +44,30 @@ async function runBuildPipeline() {
 
   const baseTemplate = fs.readFileSync(templatePath, 'utf-8');
 
-  // STEP 1: Fetch Firestore projects ONCE
-  let dbProjects: SitemapProjectItem[] = [];
-  let dbFetchSuccess = true;
-  try {
-    dbProjects = await fetchActiveDbProjects();
-  } catch (err) {
-    dbFetchSuccess = false;
-    console.warn('[Build Pipeline Warning] Firestore fetch failed; dynamic projects omitted, falling back to curated baseline data:', err);
+  // STEP 1: Load the committed Firestore snapshot only. Builds must be deterministic
+  // and must never depend on or access live Firestore credentials/network state.
+  const snapshotPath = path.resolve(process.cwd(), 'src/data/cachedFirestoreProjects.json');
+  const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf-8')) as {
+    lastSuccessfulFetch?: string;
+    projects?: SitemapProjectItem[];
+  };
+  const snapshotTime = snapshot.lastSuccessfulFetch ? Date.parse(snapshot.lastSuccessfulFetch) : NaN;
+  const snapshotAgeDays = (Date.now() - snapshotTime) / (1000 * 60 * 60 * 24);
+  if (!Number.isFinite(snapshotTime) || snapshotAgeDays < 0 || snapshotAgeDays > 14 ||
+      !Array.isArray(snapshot.projects) ||
+      snapshot.projects.some((item) => !item || typeof item.id !== 'string' || typeof item.name !== 'string')) {
+    throw new Error('Committed Firestore snapshot is missing, invalid, future-dated, or older than 14 days. Refresh and review it before building.');
   }
+  const dbProjects: SitemapProjectItem[] = snapshot.projects;
+  const dbFetchSuccess = true;
+  console.log(`[Build Pipeline] Using committed Firestore snapshot from ${snapshot.lastSuccessfulFetch} (${snapshotAgeDays.toFixed(1)} days old); no live Firestore request was made.`);
 
   // STEP 2: Merge datasets ONCE to produce the single master dataset
   const masterProjects = mergeProjects(SITEMAP_PROJECTS, dbProjects);
   const curatedCount = SITEMAP_PROJECTS.length;
   const dbCount = dbProjects.length;
 
-  console.log(`[Build Pipeline] Master dataset created: ${masterProjects.length} total projects (${curatedCount} curated, ${dbCount} from Firestore). Firestore status: ${dbFetchSuccess ? 'Success (Loaded)' : 'Fallback / Omitted'}`);
+  console.log(`[Build Pipeline] Master dataset created: ${masterProjects.length} total projects (${curatedCount} curated, ${dbCount} from Firestore). Firestore status: ${dbFetchSuccess ? 'Committed snapshot (offline)' : 'Unavailable'}`);
 
   const baseUrl = 'https://bshomez.in';
 
@@ -151,7 +159,7 @@ async function runBuildPipeline() {
   console.log(`- Total Unique Sitemap URLs: ${totalSitemapUrls}`);
   console.log(`- Total Generated Project HTML Pages: ${generatedCount}`);
   console.log(`- Curated Baseline Projects: ${curatedCount}`);
-  console.log(`- Firestore Active Projects: ${dbCount} (${dbFetchSuccess ? 'Successfully Loaded' : 'Omitted / Fallback Active'})`);
+  console.log(`- Snapshot Projects: ${dbCount} (${dbFetchSuccess ? 'Loaded offline' : 'Unavailable'})`);
   console.log(`- Dataset Consistency: 100% (Both sitemap and HTML pages share the identical master array)`);
   console.log(`- Unsupported Claims ("RERA Verified", "0% Brokerage"): Completely removed`);
   console.log(`- Slug Collisions Handled: ${collisionCount}`);
