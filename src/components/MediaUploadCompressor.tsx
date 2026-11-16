@@ -1148,7 +1148,6 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
         {/* Video upload controls are intentionally hidden for the current storage-saving release. */}
         {false && <div className="space-y-4">
-        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label className={cn('text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5', labelCls)}>
               <Video size={13} />
