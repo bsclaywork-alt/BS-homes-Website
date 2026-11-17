@@ -1515,7 +1515,8 @@ const ProjectCard: React.FC<{
 
   const displayType = project.type === 'Primary Sale' ? 'Primary' : project.type;
   const isPrimary = project.type === 'Primary' || project.type === 'Primary Sale' || (!project.type && project.type !== 'Rental' && project.type !== 'Resale');
-  const canViewProjectImages = !isPrimary || isAdmin;
+  // Existing projects retain their current visibility by default; admins can always preview their own media.
+  const canViewProjectImages = isAdmin || (project.showImagesOnline ?? !isPrimary);
   const displayZone = project.zone === 'Bangalore East' ? 'East Bangalore' : project.zone;
   const displayPropertyType = project.propertyType === 'Flat' ? 'Apartment' : project.propertyType;
   const formattedMainPrice = formatPriceWithCondition(project.price);
@@ -1983,6 +1984,20 @@ const ProjectCard: React.FC<{
             </span>
           </div>
 
+          <div className="sm:col-span-2 p-3 bg-lux-forest/20 border border-lux-gold/30 rounded-sm flex items-center gap-3">
+            <input
+              id={`show-project-photos-${project.id || project.name}`}
+              type="checkbox"
+              checked={editDraft.showImagesOnline ?? !(editDraft.type === 'Primary' || editDraft.type === 'Primary Sale')}
+              onChange={e => setEditDraft({ ...editDraft, showImagesOnline: e.target.checked })}
+              className="h-4 w-4 accent-art-gold cursor-pointer"
+            />
+            <label htmlFor={`show-project-photos-${project.id || project.name}`} className="cursor-pointer">
+              <span className="text-[9px] uppercase tracking-widest font-black text-art-gold block">Show project photos to online users</span>
+              <span className="text-[8px] text-white/55 font-mono">Unchecked keeps photos saved in Admin Vault but hides them on public project pages.</span>
+            </label>
+          </div>
+
           {saveSuccessMsg && (
             <div className="p-2.5 bg-emerald-500/20 border border-emerald-500/40 rounded-sm text-center text-emerald-300 text-xs font-mono font-bold flex items-center justify-center gap-2">
               <CheckCircle2 size={14} className="text-emerald-400" />
@@ -2015,8 +2030,8 @@ const ProjectCard: React.FC<{
         <>
           {/* Left Column: Property Visual & Media Showcase (Compact Ultra-Sleek Height) */}
           <div className="w-full md:w-44 lg:w-48 xl:w-52 shrink-0 relative overflow-hidden bg-lux-forest flex flex-col justify-between min-h-[110px] md:min-h-[135px] border-b md:border-b-0 md:border-r border-lux-border group/img">
-            {isPrimary ? (
-              /* Hide project images and display official BS Homez logo for Primary projects */
+            {isPrimary && !canViewProjectImages ? (
+              /* Keep the branded primary placeholder when public photo visibility is disabled */
               <div
                 onClick={() => onEnquire(project)}
                 className="w-full h-full absolute inset-0 bg-gradient-to-br from-lux-forest via-[#113128] to-lux-footer flex flex-col items-center justify-center p-2 text-center cursor-pointer select-none group/logo-card"
@@ -2148,7 +2163,7 @@ const ProjectCard: React.FC<{
 
               {/* Media Bar (Photos button hidden for online primary) */}
               <div className="flex items-center justify-between gap-1 flex-wrap">
-                {!isPrimary && canViewProjectImages && project.imageUrls && project.imageUrls.length > 0 && (
+                {canViewProjectImages && project.imageUrls && project.imageUrls.length > 0 && (
                   <button
                     type="button"
                     onClick={(e) => {
@@ -5023,7 +5038,7 @@ const ProjectForm = ({
         try {
           const compactProject = {
             ...savedProjectResult,
-            imageUrls: (savedProjectResult.imageUrls || []).slice(0, 4)
+            imageUrls: (savedProjectResult.imageUrls || []).slice(0, 5)
           };
           localStorage.setItem('bs_homez_custom_projects', JSON.stringify([compactProject]));
         } catch {}
@@ -5585,6 +5600,19 @@ const ProjectForm = ({
               </div>
 
               {/* Row 11: Photos / Videos (Media Upload & Compression) */}
+              <div className="p-3 bg-white/5 border border-white/15 rounded-sm flex items-center gap-3 mb-3">
+                <input
+                  id="show-project-photos-new"
+                  type="checkbox"
+                  checked={formData.showImagesOnline ?? inventoryMode !== 'Primary'}
+                  onChange={e => setFormData(prev => ({ ...prev, showImagesOnline: e.target.checked }))}
+                  className="h-4 w-4 accent-art-gold cursor-pointer"
+                />
+                <label htmlFor="show-project-photos-new" className="cursor-pointer">
+                  <span className="text-[9px] uppercase tracking-widest font-black text-white block">Show project photos to online users</span>
+                  <span className="text-[8px] text-white/55 font-mono">Unchecked keeps uploaded photos in Admin Vault but hides them from public visitors.</span>
+                </label>
+              </div>
               <MediaUploadCompressor
                 accentColor="cyan"
                 title="Rental Photos & Video Walkthrough (Auto-Compressed HD)"
@@ -6114,6 +6142,19 @@ const ProjectForm = ({
               </div>
 
               {/* Row 13: Photos / Videos (Media Upload & Compression) */}
+              <div className="p-3 bg-white/5 border border-white/15 rounded-sm flex items-center gap-3 mb-3">
+                <input
+                  id="show-project-photos-new"
+                  type="checkbox"
+                  checked={formData.showImagesOnline ?? inventoryMode !== 'Primary'}
+                  onChange={e => setFormData(prev => ({ ...prev, showImagesOnline: e.target.checked }))}
+                  className="h-4 w-4 accent-art-gold cursor-pointer"
+                />
+                <label htmlFor="show-project-photos-new" className="cursor-pointer">
+                  <span className="text-[9px] uppercase tracking-widest font-black text-white block">Show project photos to online users</span>
+                  <span className="text-[8px] text-white/55 font-mono">Unchecked keeps uploaded photos in Admin Vault but hides them from public visitors.</span>
+                </label>
+              </div>
               <MediaUploadCompressor
                 accentColor="amber"
                 title="Resale Photos & Video Walkthrough (Auto-Compressed HD)"
@@ -6523,6 +6564,19 @@ const ProjectForm = ({
               </div>
 
               {/* Row 11: Photos / Videos (Media Upload & Compression) */}
+              <div className="p-3 bg-white/5 border border-white/15 rounded-sm flex items-center gap-3 mb-3">
+                <input
+                  id="show-project-photos-new"
+                  type="checkbox"
+                  checked={formData.showImagesOnline ?? inventoryMode !== 'Primary'}
+                  onChange={e => setFormData(prev => ({ ...prev, showImagesOnline: e.target.checked }))}
+                  className="h-4 w-4 accent-art-gold cursor-pointer"
+                />
+                <label htmlFor="show-project-photos-new" className="cursor-pointer">
+                  <span className="text-[9px] uppercase tracking-widest font-black text-white block">Show project photos to online users</span>
+                  <span className="text-[8px] text-white/55 font-mono">Unchecked keeps uploaded photos in Admin Vault but hides them from public visitors.</span>
+                </label>
+              </div>
               <MediaUploadCompressor
                 accentColor="gold"
                 title="Primary Photos & Video Walkthrough (Auto-Compressed HD)"

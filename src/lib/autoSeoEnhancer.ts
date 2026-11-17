@@ -95,7 +95,11 @@ export function generateOptimizedSeoMetadata(
 ): MultiPlatformSeoData {
   const targetId = project.id || project.name;
   const canonicalUrl = `${baseUrl}/?project=${encodeURIComponent(targetId)}`;
-  const coverImage = (project.imageUrls && project.imageUrls[0]) || project.mobileImageUrl || DEFAULT_BANNER;
+  // Respect the per-project public photo setting in Open Graph, Twitter and structured data.
+  const photosArePublic = project.showImagesOnline ?? (project.type !== 'Primary' && project.type !== 'Primary Sale');
+  const coverImage = photosArePublic
+    ? ((project.imageUrls && project.imageUrls[0]) || project.mobileImageUrl || DEFAULT_BANNER)
+    : DEFAULT_BANNER;
 
   // 1. Title Generation: 50 - 60 chars target
   let metaTitle = project.metaTitle || project.seoTitle || '';

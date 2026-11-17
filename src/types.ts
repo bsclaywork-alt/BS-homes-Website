@@ -224,6 +224,8 @@ export interface Project {
   mapUrl?: string;
   paymentOffers?: string;
   imageUrls: string[];
+  /** Whether project photos may be displayed on public website pages. Undefined preserves legacy visibility by project type. */
+  showImagesOnline?: boolean;
   mobileImageUrl?: string;
   videoUrl?: string;
   mobileVideoUrl?: string;

@@ -331,6 +331,82 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
   const useStoragePipeline = Boolean(onPhotoItemsChange || onVideoItemChange);
 
+  // Remote URLs are downloaded and passed through the same image pipeline as device photos.
+  // If the source host blocks CORS, reject the import rather than silently storing an uncompressed URL.
+  const compressRemotePhoto = async (sourceUrl: string, fileName: string, index: number) => {
+    const response = await fetch(sourceUrl, { mode: 'cors', credentials: 'omit' });
+    if (!response.ok || response.type === 'opaque') {
+      throw new Error('This image host does not allow secure image download for compression. Download the photo and upload it from your device instead.');
+    }
+    const sourceBlob = await response.blob();
+    if (!sourceBlob.type.startsWith('image/')) {
+      throw new Error('The supplied URL did not return a readable image file.');
+    }
+
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_') || `external-photo-${Date.now()}.jpg`;
+    const sourceFile = new File([sourceBlob], safeFileName, { type: sourceBlob.type || 'image/jpeg' });
+    const validation = validatePhotoFile(sourceFile);
+    if (!validation.valid) throw new Error(validation.error || 'Invalid image file.');
+
+    const targetDim = compressionQualityPreset === 'compact' ? 850 : compressionQualityPreset === 'high' ? 1400 : 1200;
+    const targetQuality = compressionQualityPreset === 'compact' ? 0.62 : compressionQualityPreset === 'high' ? 0.78 : 0.72;
+    const asset = await compressPhotoAsset(sourceFile, {
+      maxDimension: targetDim,
+      quality: targetQuality,
+      applyWatermark
+    });
+    if (!asset.thumbnailBlob || !asset.previewDataUrl.startsWith('data:image/')) {
+      throw new Error('Image compression could not be completed. Please upload this photo from your device.');
+    }
+
+    let finalUrl = asset.previewDataUrl;
+    let thumbnailUrl = asset.thumbnailDataUrl || asset.previewDataUrl;
+    let storagePath = '';
+
+    if (useStoragePipeline) {
+      const uploadCtrl = startResumableMediaUpload({
+        blob: asset.blob,
+        sessionId,
+        subDir: 'photos',
+        fileName: safeFileName.replace(/\.[^.]+$/, asset.mimeType.includes('webp') ? '.webp' : '.jpg'),
+        onProgress: () => {}
+      });
+      const uploaded = await uploadCtrl.promise;
+      finalUrl = uploaded.url;
+      storagePath = uploaded.storagePath;
+      try {
+        const thumbCtrl = startResumableMediaUpload({
+          blob: asset.thumbnailBlob,
+          sessionId,
+          subDir: 'thumbnails',
+          fileName: `thumb_${safeFileName.replace(/\.[^.]+$/, '.jpg')}`,
+          onProgress: () => {}
+        });
+        const thumbRes = await thumbCtrl.promise;
+        thumbnailUrl = thumbRes.url;
+      } catch {
+        thumbnailUrl = uploaded.url;
+      }
+    }
+
+    const signature = await computeFileSignature(sourceFile);
+    const item = createUploadItemRecord({
+      id: `remote_photo_${Date.now()}_${index}`,
+      url: finalUrl,
+      thumbnailUrl,
+      storagePath,
+      kind: 'photo',
+      fileName: safeFileName,
+      mimeType: asset.mimeType,
+      originalSize: asset.originalSize,
+      compressedSize: asset.compressedSize,
+      wasCompressed: asset.wasCompressed,
+      sha256: signature
+    });
+
+    return { url: finalUrl, item, originalSize: asset.originalSize, compressedSize: asset.compressedSize };
+  };
+
   const handleImageFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawFiles = e.target.files;
     const files: File[] = rawFiles ? Array.from(rawFiles) : [];
@@ -686,32 +762,33 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     await executeVideoUpload(pendingCompressedVideoRef.current);
   };
 
-  const handleAddManualImage = () => {
-    if (!manualImageUrl.trim()) return;
+  const handleAddManualImage = async () => {
+    const cleanUrl = manualImageUrl.trim();
+    if (!cleanUrl) return;
     if (Math.max(images.length, photoItems.length) >= MAX_PROJECT_PHOTOS) {
       setPhotoErrorMsg(`A maximum of ${MAX_PROJECT_PHOTOS} photos is allowed per project. Remove a photo before adding another.`);
       return;
     }
-    const cleanUrl = manualImageUrl.trim();
-    onImagesChange([...images, cleanUrl]);
-    if (onPhotoItemsChange) {
-      onPhotoItemsChange([
-        ...photoItems,
-        createUploadItemRecord({
-          id: `url_photo_${Date.now()}`,
-          url: cleanUrl,
-          thumbnailUrl: cleanUrl,
-          storagePath: '',
-          kind: 'photo',
-          fileName: 'external-image',
-          mimeType: 'image/jpeg',
-          originalSize: 0,
-          compressedSize: 0,
-          wasCompressed: false
-        })
-      ]);
+
+    setIsProcessingImages(true);
+    setImageProgress(10);
+    setImageStatusMsg('Downloading and compressing external photo...');
+    setPhotoErrorMsg(null);
+    setCompressionStats(null);
+    try {
+      const result = await compressRemotePhoto(cleanUrl, `external-photo-${Date.now()}.jpg`, 0);
+      onImagesChange([...images, result.url]);
+      if (onPhotoItemsChange) onPhotoItemsChange([...photoItems, result.item]);
+      setCompressionStats(`Processed external photo: ${formatBytes(result.originalSize)} → ${formatBytes(result.compressedSize)}`);
+      setManualImageUrl('');
+      setImageProgress(100);
+      setImageStatusMsg('External photo compressed successfully.');
+    } catch (err: any) {
+      setPhotoErrorMsg(err?.message || 'Unable to download and compress this image URL.');
+    } finally {
+      setIsProcessingImages(false);
+      setImageProgress(0);
     }
-    setManualImageUrl('');
   };
 
   const handleAddManualVideo = () => {
@@ -1013,25 +1090,49 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             <button
               type="button"
               onClick={async () => {
+                const remainingSlots = Math.max(0, MAX_PROJECT_PHOTOS - Math.max(images.length, photoItems.length));
+                if (remainingSlots === 0) {
+                  setPhotoErrorMsg(`A maximum of ${MAX_PROJECT_PHOTOS} photos is allowed per project. Remove a photo before importing more.`);
+                  return;
+                }
+                setIsProcessingImages(true);
+                setImageProgress(5);
+                setPhotoErrorMsg(null);
+                setCompressionStats(null);
                 try {
                   const files = await fetchAuthorizedDriveProjects();
-                  const remainingSlots = Math.max(0, MAX_PROJECT_PHOTOS - Math.max(images.length, photoItems.length));
-                  if (remainingSlots === 0) {
-                    setPhotoErrorMsg(`A maximum of ${MAX_PROJECT_PHOTOS} photos is allowed per project. Remove a photo before importing more.`);
-                    return;
+                  const driveFiles = files.slice(0, remainingSlots);
+                  const added: Array<{ url: string; item: UploadedMediaItem; originalSize: number; compressedSize: number }> = [];
+                  const failures: string[] = [];
+                  for (let index = 0; index < driveFiles.length; index++) {
+                    const file = driveFiles[index];
+                    const sourceUrl = file.thumbnailLink || file.downloadUrl || file.webViewLink;
+                    if (!sourceUrl) continue;
+                    setImageProgress(Math.round(((index + 1) / Math.max(1, driveFiles.length)) * 90));
+                    setImageStatusMsg(`Compressing Google Drive photo ${index + 1} of ${driveFiles.length}...`);
+                    try {
+                      added.push(await compressRemotePhoto(sourceUrl, file.name || `drive-photo-${index + 1}.jpg`, index));
+                    } catch (err: any) {
+                      failures.push(err?.message || `Drive photo ${index + 1} could not be processed.`);
+                    }
                   }
-                  const allDriveLinks = files
-                    .map((f: any) => f.thumbnailLink || f.webViewLink)
-                    .filter(Boolean);
-                  const driveLinks = allDriveLinks.slice(0, remainingSlots);
-                  if (allDriveLinks.length > driveLinks.length) {
-                    setPhotoErrorMsg(`Only ${MAX_PROJECT_PHOTOS} photos are allowed per project. Additional Drive photos were not added.`);
+                  if (added.length > 0) {
+                    onImagesChange([...images, ...added.map(item => item.url)]);
+                    if (onPhotoItemsChange) onPhotoItemsChange([...photoItems, ...added.map(item => item.item)]);
+                    const originalTotal = added.reduce((sum, item) => sum + item.originalSize, 0);
+                    const compressedTotal = added.reduce((sum, item) => sum + item.compressedSize, 0);
+                    setCompressionStats(`Compressed ${added.length} Drive photo(s): ${formatBytes(originalTotal)} → ${formatBytes(compressedTotal)}`);
                   }
-                  if (driveLinks.length > 0) {
-                    onImagesChange([...images, ...driveLinks]);
+                  if (files.length > driveFiles.length) {
+                    failures.push(`Only ${MAX_PROJECT_PHOTOS} photos are allowed per project; extra Drive photos were not added.`);
                   }
+                  if (failures.length > 0) setPhotoErrorMsg(failures.join(' '));
+                  if (files.length === 0) setPhotoErrorMsg('No authorized Google Drive photos were available to import.');
                 } catch (err: any) {
                   setPhotoErrorMsg(err?.message || 'Google Drive import unavailable.');
+                } finally {
+                  setIsProcessingImages(false);
+                  setImageProgress(0);
                 }
               }}
               className={cn(
