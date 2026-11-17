@@ -19,6 +19,10 @@ const webpMap: Record<string, string> = {
   [imgLuxuryPlotEstate]: imgLuxuryPlotEstateWebp,
 };
 
+// Neutral branded placeholder is used only if both the optimized and original image fail.
+const IMAGE_UNAVAILABLE_PLACEHOLDER =
+  'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22500%22 viewBox=%220 0 800 500%22%3E%3Crect width=%22800%22 height=%22500%22 fill=%22%23102e26%22/%3E%3Cpath d=%22M0 390L210 210l125 110 130-160 335 230v110H0z%22 fill=%22%231b463b%22/%3E%3Ctext x=%22400%22 y=%22255%22 fill=%22%23d5b779%22 font-family=%22Arial,sans-serif%22 font-size=%2230%22 text-anchor=%22middle%22%3EBS Homez%3C/text%3E%3Ctext x=%22400%22 y=%22295%22 fill=%22%23ffffff%22 fill-opacity=%22.75%22 font-family=%22Arial,sans-serif%22 font-size=%2217%22 text-anchor=%22middle%22%3EImage temporarily unavailable%3C/text%3E%3C/svg%3E';
+
 interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   alt: string;
@@ -33,41 +37,44 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
   className = '',
-  containerClassName = '',
   priority = false,
   width = 1200,
   height = 750,
+  onError,
   ...props
 }) => {
   const webpSrc = webpMap[src];
 
-  if (webpSrc) {
-    return (
-      <picture className={containerClassName || 'block w-full h-full'}>
-        <source srcSet={webpSrc} type="image/webp" />
-        <img
-          src={src}
-          alt={alt}
-          className={className}
-          loading={priority ? 'eager' : 'lazy'}
-          {...(priority ? { fetchPriority: 'high' } : {})}
-          width={width}
-          height={height}
-          {...props}
-        />
-      </picture>
-    );
-  }
+  const handleImageError: React.ReactEventHandler<HTMLImageElement> = (event) => {
+    const image = event.currentTarget;
+    const stage = image.dataset.imageFallbackStage || 'optimized';
+
+    // Retry the original JPEG/PNG before showing the placeholder.
+    if (webpSrc && stage === 'optimized') {
+      image.dataset.imageFallbackStage = 'original';
+      image.src = src;
+      return;
+    }
+
+    if (stage !== 'placeholder') {
+      image.dataset.imageFallbackStage = 'placeholder';
+      image.src = IMAGE_UNAVAILABLE_PLACEHOLDER;
+      return;
+    }
+
+    onError?.(event);
+  };
 
   return (
     <img
-      src={src}
+      src={webpSrc || src}
       alt={alt}
       className={className}
       loading={priority ? 'eager' : 'lazy'}
-      {...(priority ? { fetchPriority: 'high' } : {})}
+      {...(priority ? { fetchPriority: 'high' as const } : {})}
       width={width}
       height={height}
+      onError={handleImageError}
       {...props}
     />
   );
