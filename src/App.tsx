@@ -5038,7 +5038,7 @@ const ProjectForm = ({
         try {
           const compactProject = {
             ...savedProjectResult,
-            imageUrls: (savedProjectResult.imageUrls || []).slice(0, 4)
+            imageUrls: (savedProjectResult.imageUrls || []).slice(0, 5)
           };
           localStorage.setItem('bs_homez_custom_projects', JSON.stringify([compactProject]));
         } catch {}
