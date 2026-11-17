@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Project } from '../types';
 import { parseVideoUrl } from './MediaUploadCompressor';
+import { OptimizedImage } from './OptimizedImage';
 
 interface MediaViewerModalProps {
   isOpen: boolean;
@@ -462,10 +463,12 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
                           transition: isPanning ? 'none' : 'transform 0.2s ease-out'
                         }}
                       >
-                        <img
+                        <OptimizedImage
                           src={images[currentImageIndex]}
                           alt={`${project.name} - Photo ${currentImageIndex + 1}`}
                           className="max-h-[48vh] max-w-full object-contain rounded select-none pointer-events-none"
+                          width={1200}
+                          height={900}
                           draggable={false}
                         />
 
@@ -548,7 +551,7 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
                         }`}
                         title={`View photo ${idx + 1}`}
                       >
-                        <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+                        <OptimizedImage src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" width={320} height={220} />
                         <span className="absolute bottom-0.5 right-1 text-[7.5px] font-mono bg-black/80 px-1 rounded text-white/90">
                           {idx + 1}
                         </span>
