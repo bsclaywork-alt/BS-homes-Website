@@ -21,6 +21,8 @@ export const HomepageShowcase: React.FC<HomepageShowcaseProps> = ({
   onOfferAsset,
   onReferAndEarn
 }) => {
+  return (
+    <div className="bg-lux-ivory text-lux-charcoal">
       {/* PROMINENT OFFER YOUR ASSET & REFER & EARN CALLOUT SECTIONS */}
       <section className="py-10 sm:py-14 px-4 sm:px-8 md:px-12 border-t border-lux-border bg-lux-ivory">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
