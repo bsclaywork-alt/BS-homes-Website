@@ -58,7 +58,7 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
     ? project.type === 'Primary' || project.type === 'Primary Sale' || (!project.type && project.type !== 'Rental' && project.type !== 'Resale')
     : false;
   const isRentalOrResale = project?.type === 'Rental' || project?.type === 'Resale';
-  const canViewImages = !isPrimary || isAdmin;
+  const canViewImages = isAdmin || (project?.showImagesOnline ?? !isPrimary);
   const rawImages = (project?.imageUrls || []).filter(Boolean);
   const images = canViewImages ? rawImages : [];
   const videoUrl = project?.videoUrl || project?.mobileVideoUrl;
