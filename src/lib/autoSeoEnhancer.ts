@@ -285,9 +285,10 @@ export function generateOptimizedSeoMetadata(
  */
 export function autoEnhanceAllProjects(projects: Project[]): Project[] {
   return projects.map(proj => {
-    // If project already has all SEO fields, keep it
+    // Respect photo visibility even when a project already has complete SEO fields.
+    const photosArePublic = proj.showImagesOnline ?? (proj.type !== 'Primary' && proj.type !== 'Primary Sale');
     if (proj.metaTitle && proj.metaDescription && proj.seoKeywords && proj.seoKeywords.length > 0) {
-      return proj;
+      return photosArePublic ? proj : { ...proj, ogImage: DEFAULT_BANNER };
     }
 
     const enhanced = generateOptimizedSeoMetadata(proj);
@@ -300,7 +301,8 @@ export function autoEnhanceAllProjects(projects: Project[]): Project[] {
       seoKeywords: (proj.seoKeywords && proj.seoKeywords.length > 0) ? proj.seoKeywords : enhanced.seoKeywords,
       imageAltText: (proj as any).imageAltText || enhanced.imageAltText,
       canonicalUrl: proj.canonicalUrl || enhanced.canonicalUrl,
-      ogImage: proj.ogImage || enhanced.ogImage,
+      // Never expose a hidden project photo through Open Graph / social previews.
+      ogImage: photosArePublic ? (proj.ogImage || enhanced.ogImage) : DEFAULT_BANNER,
       seoLastSyncedAt: proj.seoLastSyncedAt || new Date().toISOString(),
       seoSyncSource: proj.seoSyncSource || 'AutoSeoEngine'
     };
