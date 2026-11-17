@@ -37,7 +37,6 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
   className = '',
-  containerClassName = '',
   priority = false,
   width = 1200,
   height = 750,
