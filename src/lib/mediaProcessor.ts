@@ -266,16 +266,7 @@ export async function compressPhotoAsset(
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-          resolve({
-            blob: file,
-            thumbnailBlob: null,
-            previewDataUrl: (e.target?.result as string) || '',
-            thumbnailDataUrl: '',
-            mimeType: file.type || 'image/jpeg',
-            originalSize: file.size,
-            compressedSize: file.size,
-            wasCompressed: false
-          });
+          reject(new Error('This browser could not create an optimized photo. Please try another browser or upload a different image.'));
           return;
         }
 
@@ -316,12 +307,14 @@ export async function compressPhotoAsset(
           outputMime = 'image/jpeg';
         }
 
-        let finalBlob: Blob = outputBlob || file;
-        const wasCompressed = Boolean(outputBlob && outputBlob.size < file.size);
-        if (!wasCompressed && !applyWatermark && file.size > 0) {
-          finalBlob = file;
-          outputMime = file.type || 'image/jpeg';
+        if (!outputBlob || outputBlob.size === 0) {
+          reject(new Error(`Could not encode an optimized version of "${file.name}". The original photo was not saved.`));
+          return;
         }
+        // Always keep the re-encoded/resized image, even if a small source file does not
+        // become smaller in bytes. Never silently fall back to the unprocessed original.
+        const finalBlob: Blob = outputBlob;
+        const wasCompressed = finalBlob.size < file.size;
 
         const thumbW = Math.min(320, width);
         const thumbH = Math.max(120, Math.round((height * thumbW) / width));
@@ -343,7 +336,12 @@ export async function compressPhotoAsset(
         try {
           previewDataUrl = canvas.toDataURL(outputMime, quality);
         } catch {
-          previewDataUrl = (e.target?.result as string) || '';
+          reject(new Error(`Could not create a preview for "${file.name}". Please retry the upload.`));
+          return;
+        }
+        if (!previewDataUrl.startsWith('data:image/')) {
+          reject(new Error(`Could not create an optimized preview for "${file.name}".`));
+          return;
         }
 
         resolve({

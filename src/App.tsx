@@ -11118,6 +11118,30 @@ const AdminView = ({
                       )}
                     </div>
 
+                    {/* Per-project public photo visibility: saved to this project's record only */}
+                    <div className="flex items-start gap-2.5 p-2.5 mb-3 rounded-sm border border-art-gold/25 bg-art-gold/5">
+                      <input
+                        id={`vault-photo-visibility-${p.id || p.name}`}
+                        type="checkbox"
+                        checked={p.showImagesOnline ?? (p.type !== 'Primary' && p.type !== 'Primary Sale')}
+                        disabled={!onSaveProject}
+                        onChange={async (e) => {
+                          const showImagesOnline = e.target.checked;
+                          try {
+                            await onSaveProject?.({ ...p, showImagesOnline });
+                            setLeadActionToast(`${p.name}: project photos are now ${showImagesOnline ? 'visible' : 'hidden'} to online visitors.`);
+                          } catch {
+                            setLeadActionToast(`Could not update photo visibility for ${p.name}. Please try again.`);
+                          }
+                        }}
+                        className="h-4 w-4 mt-0.5 accent-art-gold shrink-0 cursor-pointer disabled:opacity-50"
+                      />
+                      <label htmlFor={`vault-photo-visibility-${p.id || p.name}`} className="cursor-pointer">
+                        <span className="block text-[9px] font-black uppercase tracking-wider text-art-gold">Show project photos to online users</span>
+                        <span className="block text-[8px] text-white/50 font-mono mt-0.5">Unchecked = photos stay in Admin Vault, hidden from public visitors.</span>
+                      </label>
+                    </div>
+
                     {/* Specific Fields Display */}
                     {isRental ? (
                       <div className="p-3 bg-white/[0.02] border border-cyan-500/20 rounded-sm space-y-1 mb-3 text-[9px] font-mono">
