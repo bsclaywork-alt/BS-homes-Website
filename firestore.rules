@@ -187,7 +187,7 @@ service cloud.firestore {
     // Opportunities: Publicly writable (create only), admin readable
     match /opportunities/{opportunityId} {
       allow create: if isValidId(opportunityId) && isValidOpportunity(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidOpportunity(data) {
@@ -231,7 +231,7 @@ service cloud.firestore {
     // Subscriptions: Public writable, admin readable/manageable
     match /subscriptions/{subscriptionId} {
       allow create: if isValidId(subscriptionId) && isValidSubscription(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidSubscription(data) {
@@ -247,7 +247,7 @@ service cloud.firestore {
     // Referrals: Publicly writable (create only), admin readable
     match /referrals/{referralId} {
       allow create: if isValidId(referralId) && isValidReferral(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidReferral(data) {
