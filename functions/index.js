@@ -26,9 +26,7 @@ const FIELD_ORDER = [
   ['Possession Date', ['possessionDate', 'handoverDate']],
   ['Configuration', ['configuration', 'rooms', 'residenceType']],
   ['Door Facing', ['doorFacing', 'mainDoorFacing', 'facing']],
-  ['Floor & Tower', ['floorAndTower']],
-  ['Floor', ['floorNumber', 'floor', 'floorAvailability']],
-  ['Tower', ['towerNumber', 'tower']],
+  ['Floor & Tower', ['floorAndTower', 'floorNumber', 'floor', 'towerNumber', 'tower']],
   ['Total Acres', ['totalAcres', 'projectSize']],
   ['Furnishing', ['furnishing', 'interiorStatus', 'furnishType']],
   ['Available From', ['availableFrom']],
@@ -57,11 +55,14 @@ function esc(value) {
 }
 function buildEmail(collectionName, id, data) {
   const personName = pick(data, ['ownerName', 'customerName', 'name', 'fullName', 'contactName']);
-  const mobile = pick(data, ['ownerMobile', 'customerPhone', 'mobile', 'phone', 'number', 'contactNumber']);
+  const rawMobile = pick(data, ['ownerMobile', 'customerPhone', 'mobile', 'phone', 'number', 'contactNumber']);
+  const countryCode = pick(data, ['ownerCountryCode', 'countryCode']);
+  const mobile = rawMobile && countryCode ? `${countryCode} ${rawMobile}` : rawMobile;
   const email = pick(data, ['ownerEmail', 'customerEmail', 'email']);
   const rera = pick(data, ['reraNumber', 'rera', 'RERANumber']);
+  const floorAndTower = pick(data, ['floorAndTower']) || [pick(data, ['floorNumber', 'floor', 'floorAvailability']), pick(data, ['towerNumber', 'tower'])].filter(Boolean).join(' / ');
   const propertyRows = FIELD_ORDER.map(([label, keys]) => {
-    const value = pick(data, keys);
+    const value = label === 'Floor & Tower' ? (floorAndTower || undefined) : pick(data, keys);
     const display = label === 'Expected Price/Rent' && data.willingTo === 'Rental' && data.rentPerMonth
       ? data.rentPerMonth
       : value;
