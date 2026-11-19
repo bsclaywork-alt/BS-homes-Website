@@ -422,46 +422,61 @@ export async function uploadCloudinaryPhoto(params: {
 }): Promise<{ url: string; publicId: string; bytes: number; format: string }> {
   const cloudName = 'bk9vq6rk';
   const uploadPreset = 'ml_default';
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90000);
-  const abortFromCaller = () => controller.abort();
-  params.signal?.addEventListener('abort', abortFromCaller, { once: true });
+  if (params.signal?.aborted) throw new DOMException('Upload cancelled', 'AbortError');
 
-  try {
-    const form = new FormData();
-    form.append('file', params.blob, params.fileName);
-    form.append('upload_preset', uploadPreset);
-    form.append('folder', `bshomez/property-submissions/${params.sessionId}`);
+  const form = new FormData();
+  form.append('file', params.blob, params.fileName);
+  form.append('upload_preset', uploadPreset);
+  form.append('folder', `bshomez/property-submissions/${params.sessionId}`);
 
-    params.onProgress?.(5);
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-      method: 'POST',
-      body: form,
-      signal: controller.signal
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`);
+    xhr.timeout = 90000;
+
+    const abortFromCaller = () => xhr.abort();
+    params.signal?.addEventListener('abort', abortFromCaller, { once: true });
+
+    const cleanup = () => params.signal?.removeEventListener('abort', abortFromCaller);
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        params.onProgress?.(Math.round((event.loaded / event.total) * 100));
+      }
     });
-    const payload = await response.json().catch(() => ({} as any));
-    if (!response.ok || !payload?.secure_url) {
-      const providerMessage = payload?.error?.message;
-      throw new Error(providerMessage
-        ? `Cloudinary photo upload failed: ${providerMessage}`
-        : `Cloudinary photo upload failed (HTTP ${response.status}). Check the unsigned upload preset and try again.`);
-    }
-    params.onProgress?.(100);
-    return {
-      url: String(payload.secure_url),
-      publicId: String(payload.public_id || ''),
-      bytes: Number(payload.bytes || params.blob.size),
-      format: String(payload.format || '')
+    xhr.onload = () => {
+      cleanup();
+      let payload: any = {};
+      try { payload = JSON.parse(xhr.responseText || '{}'); } catch {}
+      if (xhr.status < 200 || xhr.status >= 300 || !payload?.secure_url) {
+        const providerMessage = payload?.error?.message;
+        reject(new Error(providerMessage
+          ? `Cloudinary photo upload failed: ${providerMessage}`
+          : `Cloudinary photo upload failed (HTTP ${xhr.status}). Check the unsigned upload preset and try again.`));
+        return;
+      }
+      params.onProgress?.(100);
+      resolve({
+        url: String(payload.secure_url),
+        publicId: String(payload.public_id || ''),
+        bytes: Number(payload.bytes || params.blob.size),
+        format: String(payload.format || '')
+      });
     };
-  } catch (error: any) {
-    if (error?.name === 'AbortError') {
-      throw new Error('Cloud photo upload timed out after 90 seconds. Check your connection and retry.');
-    }
-    throw error instanceof Error ? error : new Error('Cloud photo upload failed. Please retry.');
-  } finally {
-    clearTimeout(timeout);
-    params.signal?.removeEventListener('abort', abortFromCaller);
-  }
+    xhr.onerror = () => {
+      cleanup();
+      reject(new Error('Cloudinary photo upload could not connect. Check your internet connection and retry.'));
+    };
+    xhr.ontimeout = () => {
+      cleanup();
+      reject(new Error('Cloud photo upload timed out after 90 seconds. Check your connection and retry.'));
+    };
+    xhr.onabort = () => {
+      cleanup();
+      reject(new Error('Cloud photo upload was cancelled. Please retry.'));
+    };
+    params.onProgress?.(0);
+    xhr.send(form);
+  });
 }
 
 export interface ResumableUploadController {
