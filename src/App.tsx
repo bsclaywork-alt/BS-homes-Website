@@ -135,6 +135,7 @@ import { MediaUploadCompressor } from './components/MediaUploadCompressor';
 import { MediaViewerModal } from './components/MediaViewerModal';
 import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
 import { OfferYourAssetForm } from './components/OfferYourAssetForm';
+import { AdminPropertySubmissions } from './components/AdminPropertySubmissions';
 import { HomepageShowcase } from './components/HomepageShowcase';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -7978,7 +7979,7 @@ const AdminView = ({
   onSaveProject?: (p: Project) => Promise<void> | void,
   onBatchUpdateProjects?: (updated: Project[]) => void
 }) => {
-  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility' | 'seo_audit'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'asset_intake' | 'opportunities' | 'referrals' | 'tab_visibility' | 'seo_audit'>('leads');
   const [tabVisibilityToast, setTabVisibilityToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
   const [isUpdatingTabVis, setIsUpdatingTabVis] = useState(false);
   const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
@@ -9483,6 +9484,24 @@ const AdminView = ({
            </button>
            <button
              type="button"
+             aria-pressed={activeTab === 'asset_intake'}
+             onClick={(event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               setActiveTab('asset_intake');
+             }}
+             className={cn(
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               activeTab === 'asset_intake'
+                 ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform"
+                 : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
+             )}
+           >
+             <Building2 size={15} />
+             <span>Asset Intake</span>
+           </button>
+           <button
+             type="button"
              aria-pressed={activeTab === 'tab_visibility'}
              onClick={(event) => {
                event.preventDefault();
@@ -10514,6 +10533,8 @@ const AdminView = ({
           </table>
         </div>
       </div>
+    ) : activeTab === 'asset_intake' ? (
+      <AdminPropertySubmissions />
     ) : activeTab === 'tab_visibility' ? (
       <div className="space-y-6 font-sans">
         {tabVisibilityToast && (
