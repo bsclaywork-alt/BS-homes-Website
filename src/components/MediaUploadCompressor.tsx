@@ -361,7 +361,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     }
 
     let finalUrl = asset.previewDataUrl;
-    let thumbnailUrl = asset.thumbnailDataUrl || asset.previewDataUrl;
+    const thumbnailUrl = asset.thumbnailDataUrl || asset.previewDataUrl;
     let storagePath = '';
 
     if (useStoragePipeline) {
@@ -375,19 +375,6 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
       const uploaded = await uploadCtrl.promise;
       finalUrl = uploaded.url;
       storagePath = uploaded.storagePath;
-      try {
-        const thumbCtrl = startResumableMediaUpload({
-          blob: asset.thumbnailBlob,
-          sessionId,
-          subDir: 'thumbnails',
-          fileName: `thumb_${safeFileName.replace(/\.[^.]+$/, '.jpg')}`,
-          onProgress: () => {}
-        });
-        const thumbRes = await thumbCtrl.promise;
-        thumbnailUrl = thumbRes.url;
-      } catch {
-        thumbnailUrl = uploaded.url;
-      }
     }
 
     const signature = await computeFileSignature(sourceFile);
@@ -499,22 +486,10 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
           });
           const uploaded = await uploadCtrl.promise;
 
-          let thumbnailUrl = uploaded.url;
-          if (asset.thumbnailBlob) {
-            try {
-              const thumbCtrl = startResumableMediaUpload({
-                blob: asset.thumbnailBlob,
-                sessionId,
-                subDir: 'thumbnails',
-                fileName: `thumb_${file.name.replace(/\.[^.]+$/, '.jpg')}`,
-                onProgress: () => {}
-              });
-              const thumbRes = await thumbCtrl.promise;
-              thumbnailUrl = thumbRes.url;
-            } catch {
-              thumbnailUrl = asset.thumbnailDataUrl || uploaded.url;
-            }
-          }
+          // Keep the lightweight thumbnail in the listing record instead of making
+          // a second Storage request for every photo. The full watermarked photo
+          // remains uploaded to Firebase Storage and is the authoritative media URL.
+          const thumbnailUrl = asset.thumbnailDataUrl || uploaded.url;
 
           addedUrls.push(uploaded.url);
           addedItems.push(

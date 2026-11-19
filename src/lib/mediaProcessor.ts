@@ -243,12 +243,15 @@ export async function compressPhotoAsset(
   const applyWatermark = options?.applyWatermark ?? true;
 
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error(`Failed to read image file "${file.name}"`));
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error(`Failed to decode image "${file.name}"`));
-      img.onload = async () => {
+    // Object URLs avoid expanding large phone photos into Base64 strings in memory.
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error(`Failed to decode image "${file.name}". Please use JPG, PNG, or WebP.`));
+    };
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl);
         let width = img.width || 1280;
         let height = img.height || 720;
         if (width > maxDimension || height > maxDimension) {
@@ -354,10 +357,8 @@ export async function compressPhotoAsset(
           compressedSize: finalBlob.size,
           wasCompressed: finalBlob.size < file.size
         });
-      };
-      img.src = (e.target?.result as string) || '';
     };
-    reader.readAsDataURL(file);
+    img.src = objectUrl;
   });
 }
 
