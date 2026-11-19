@@ -243,17 +243,29 @@ export async function compressPhotoAsset(
   const applyWatermark = options?.applyWatermark ?? true;
 
   return new Promise((resolve, reject) => {
-    // Object URLs avoid expanding large phone photos into Base64 strings in memory.
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
-    img.onerror = () => {
+    let settled = false;
+    const timeout = setTimeout(() => finish(new Error(`Timed out while decoding "${file.name}". Please retry with a JPG or smaller photo.`)), 30000);
+
+    const finish = (error?: Error, result?: CompressedPhotoAsset) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      img.onload = null;
+      img.onerror = null;
       URL.revokeObjectURL(objectUrl);
-      reject(new Error(`Failed to decode image "${file.name}". Please use JPG, PNG, or WebP.`));
+      if (error) reject(error);
+      else if (result) resolve(result);
+      else reject(new Error(`Could not process "${file.name}". Please retry.`));
     };
+
+    img.onerror = () => finish(new Error(`Failed to decode image "${file.name}". Please use JPG, PNG, or WebP.`));
     img.onload = async () => {
-      URL.revokeObjectURL(objectUrl);
-        let width = img.width || 1280;
-        let height = img.height || 720;
+      try {
+        let width = img.naturalWidth || img.width || 1280;
+        let height = img.naturalHeight || img.height || 720;
+        if (!width || !height) throw new Error(`Photo "${file.name}" has invalid image dimensions.`);
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
             height = Math.round((height * maxDimension) / width);
@@ -268,10 +280,7 @@ export async function compressPhotoAsset(
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('This browser could not create an optimized photo. Please try another browser or upload a different image.'));
-          return;
-        }
+        if (!ctx) throw new Error('This browser could not create an optimized photo. Please try another browser.');
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
@@ -282,8 +291,8 @@ export async function compressPhotoAsset(
           ctx.save();
           ctx.font = `bold ${fontSize}px ui-sans-serif, system-ui, sans-serif`;
           ctx.textBaseline = 'middle';
-          const text = 'BS Homez';
-          const metrics = ctx.measureText(text);
+          const watermark = 'BS Homez';
+          const metrics = ctx.measureText(watermark);
           const padX = Math.round(fontSize * 0.65);
           const padY = Math.round(fontSize * 0.38);
           const badgeW = metrics.width + padX * 2;
@@ -296,12 +305,12 @@ export async function compressPhotoAsset(
           ctx.fillRect(posX, posY, badgeW, badgeH);
           ctx.strokeRect(posX, posY, badgeW, badgeH);
           ctx.fillStyle = '#F7F5EF';
-          ctx.fillText(text, posX + padX, posY + badgeH / 2);
+          ctx.fillText(watermark, posX + padX, posY + badgeH / 2);
           ctx.restore();
         }
 
-        const canvasToBlob = (c: HTMLCanvasElement, mime: string, q: number): Promise<Blob | null> =>
-          new Promise((res) => c.toBlob((b) => res(b), mime, q));
+        const canvasToBlob = (source: HTMLCanvasElement, mime: string, q: number): Promise<Blob | null> =>
+          new Promise((res) => source.toBlob((blob) => res(blob), mime, q));
 
         let outputBlob = await canvasToBlob(canvas, 'image/webp', quality);
         let outputMime = 'image/webp';
@@ -309,15 +318,9 @@ export async function compressPhotoAsset(
           outputBlob = await canvasToBlob(canvas, 'image/jpeg', quality);
           outputMime = 'image/jpeg';
         }
-
         if (!outputBlob || outputBlob.size === 0) {
-          reject(new Error(`Could not encode an optimized version of "${file.name}". The original photo was not saved.`));
-          return;
+          throw new Error(`Could not encode "${file.name}". The original photo was not uploaded.`);
         }
-        // Always keep the re-encoded/resized image, even if a small source file does not
-        // become smaller in bytes. Never silently fall back to the unprocessed original.
-        const finalBlob: Blob = outputBlob;
-        const wasCompressed = finalBlob.size < file.size;
 
         const thumbW = Math.min(320, width);
         const thumbH = Math.max(120, Math.round((height * thumbW) / width));
@@ -330,33 +333,29 @@ export async function compressPhotoAsset(
         if (thumbCtx) {
           thumbCtx.drawImage(canvas, 0, 0, thumbW, thumbH);
           thumbnailBlob = await canvasToBlob(thumbCanvas, 'image/jpeg', 0.65);
-          try {
-            thumbnailDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.65);
-          } catch {}
+          try { thumbnailDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.65); } catch {}
         }
 
         let previewDataUrl = '';
-        try {
-          previewDataUrl = canvas.toDataURL(outputMime, quality);
-        } catch {
-          reject(new Error(`Could not create a preview for "${file.name}". Please retry the upload.`));
-          return;
-        }
+        try { previewDataUrl = canvas.toDataURL(outputMime, quality); }
+        catch { throw new Error(`Could not create a preview for "${file.name}". Please retry.`); }
         if (!previewDataUrl.startsWith('data:image/')) {
-          reject(new Error(`Could not create an optimized preview for "${file.name}".`));
-          return;
+          throw new Error(`Could not create an optimized preview for "${file.name}".`);
         }
 
-        resolve({
-          blob: finalBlob,
+        finish(undefined, {
+          blob: outputBlob,
           thumbnailBlob,
           previewDataUrl,
           thumbnailDataUrl: thumbnailDataUrl || previewDataUrl,
-          mimeType: finalBlob.type || outputMime,
+          mimeType: outputBlob.type || outputMime,
           originalSize: file.size,
-          compressedSize: finalBlob.size,
-          wasCompressed: finalBlob.size < file.size
+          compressedSize: outputBlob.size,
+          wasCompressed: outputBlob.size < file.size
         });
+      } catch (error: any) {
+        finish(error instanceof Error ? error : new Error(error?.message || `Failed to process "${file.name}".`));
+      }
     };
     img.src = objectUrl;
   });
