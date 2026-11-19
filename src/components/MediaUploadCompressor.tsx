@@ -501,7 +501,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             subDir: 'photos',
             fileName: file.name.replace(/\.[^.]+$/, asset.mimeType.includes('webp') ? '.webp' : '.jpg'),
             onProgress: (pct) => {
-              const overall = Math.round(((i + pct / 100) / validFiles.length) * 90) + 5;
+              const overall = Math.round(35 + ((i + pct / 100) / validFiles.length) * 55);
               setImageProgress(overall);
             }
           });
