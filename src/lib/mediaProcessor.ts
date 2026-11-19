@@ -310,7 +310,27 @@ export async function compressPhotoAsset(
         }
 
         const canvasToBlob = (source: HTMLCanvasElement, mime: string, q: number): Promise<Blob | null> =>
-          new Promise((res) => source.toBlob((blob) => res(blob), mime, q));
+          new Promise((res, rej) => {
+            let settled = false;
+            const timer = setTimeout(() => {
+              if (settled) return;
+              settled = true;
+              rej(new Error(`Photo encoding timed out for "${file.name}". Please try a smaller JPG or PNG image.`));
+            }, 12000);
+            try {
+              source.toBlob((blob) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                res(blob);
+              }, mime, q);
+            } catch (error: any) {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timer);
+              rej(error instanceof Error ? error : new Error('Photo encoding failed.'));
+            }
+          });
 
         let outputBlob = await canvasToBlob(canvas, 'image/webp', quality);
         let outputMime = 'image/webp';
