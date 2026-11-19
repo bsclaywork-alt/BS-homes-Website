@@ -120,9 +120,12 @@ describe('Offer Your Asset Firestore rules', () => {
 
   it('rejects owner contact fields in a public portfolio document', async () => {
     const db = testEnv.unauthenticatedContext().firestore();
+    const batch = writeBatch(db);
+    batch.set(doc(db, 'property_submissions/submission-2'), submissionData('submission-2', 'portfolio-2'));
     const publicRecord = publicData('submission-2', 'portfolio-2');
     publicRecord.ownerMobile = '9876543210';
-    await assertFails(setDoc(doc(db, 'public_portfolio/portfolio-2'), publicRecord));
+    batch.set(doc(db, 'public_portfolio/portfolio-2'), publicRecord);
+    await assertFails(batch.commit());
   });
 
   it('rejects anonymous reads of private owner submissions', async () => {
