@@ -83,6 +83,7 @@ export interface PropertySubmission {
   location: string;
   fullAddress: string;
   googleMapUrl: string;
+  reraNumber?: string;
 
   // Section B: Willing To
   willingTo: OfferWillingTo;
@@ -142,6 +143,7 @@ export interface PublicPortfolioItem {
   location: string;
   publicAddressHint?: string;
   googleMapUrl?: string;
+  reraNumber?: string;
   category: 'Primary' | 'Resale' | 'Rental';
   propertyType: OfferPropertyType;
   societyType: OfferSocietyType;
