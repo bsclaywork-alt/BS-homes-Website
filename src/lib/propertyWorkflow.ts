@@ -213,6 +213,7 @@ export function createPropertySubmissionRecord(
     dedupKey: buildSubmissionDedupKey(input),
     ownerName: input.ownerName.trim(),
     ownerMobile: input.ownerMobile.trim(),
+    ownerCountryCode: input.countryCode || '+91',
     propertyName: input.propertyName.trim(),
     location: input.location.trim(),
     fullAddress: input.fullAddress.trim(),
