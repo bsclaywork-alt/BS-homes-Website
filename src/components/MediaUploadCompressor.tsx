@@ -253,7 +253,9 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   );
   const [driveAuthorized, setDriveAuthorized] = useState(false);
 
-  const [compressionQualityPreset, setCompressionQualityPreset] = useState<'compact' | 'balanced' | 'high'>('balanced');
+  // One automatic photo profile; compression runs in the background and watermarking stays enabled.
+  const PHOTO_MAX_DIMENSION = 1200;
+  const PHOTO_COMPRESSION_QUALITY = 0.72;
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
   // Public uploads always receive the BS Homez watermark; the setting is intentionally not user-editable.
   const applyWatermark = true;
@@ -335,11 +337,33 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   // Remote URLs are downloaded and passed through the same image pipeline as device photos.
   // If the source host blocks CORS, reject the import rather than silently storing an uncompressed URL.
   const compressRemotePhoto = async (sourceUrl: string, fileName: string, index: number) => {
-    const response = await fetch(sourceUrl, { mode: 'cors', credentials: 'omit' });
-    if (!response.ok || response.type === 'opaque') {
-      throw new Error('This image host does not allow secure image download for compression. Download the photo and upload it from your device instead.');
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 20000);
+    let sourceBlob: Blob;
+    try {
+      const response = await fetch(sourceUrl, { mode: 'cors', credentials: 'omit', signal: controller.signal });
+      if (!response.ok || response.type === 'opaque') {
+        throw new Error('This image host does not allow secure image download for compression. Download the photo and upload it from your device instead.');
+      }
+      const contentLength = Number(response.headers.get('content-length') || 0);
+      if (contentLength > MAX_PHOTO_SIZE_BYTES) {
+        throw new Error('The external image exceeds the 15 MB photo limit.');
+      }
+      // Keep the timeout active while the response body is downloaded, not just until headers arrive.
+      sourceBlob = await response.blob();
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        throw new Error('External image download timed out after 20 seconds. Please download the image and upload it from your computer.');
+      }
+      throw error instanceof Error && error.message.startsWith('This image host')
+        ? error
+        : new Error('Could not access this external image. The image host may block cross-origin downloads; please upload the image from your computer.');
+    } finally {
+      window.clearTimeout(timeoutId);
     }
-    const sourceBlob = await response.blob();
+    if (sourceBlob.size > MAX_PHOTO_SIZE_BYTES) {
+      throw new Error('The external image exceeds the 15 MB photo limit.');
+    }
     if (!sourceBlob.type.startsWith('image/')) {
       throw new Error('The supplied URL did not return a readable image file.');
     }
@@ -349,14 +373,14 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     const validation = validatePhotoFile(sourceFile);
     if (!validation.valid) throw new Error(validation.error || 'Invalid image file.');
 
-    const targetDim = compressionQualityPreset === 'compact' ? 850 : compressionQualityPreset === 'high' ? 1400 : 1200;
-    const targetQuality = compressionQualityPreset === 'compact' ? 0.62 : compressionQualityPreset === 'high' ? 0.78 : 0.72;
+    const targetDim = PHOTO_MAX_DIMENSION;
+    const targetQuality = PHOTO_COMPRESSION_QUALITY;
     const asset = await compressPhotoAsset(sourceFile, {
       maxDimension: targetDim,
       quality: targetQuality,
       applyWatermark
     });
-    if (!asset.thumbnailBlob || !asset.previewDataUrl.startsWith('data:image/')) {
+    if (!asset.previewDataUrl.startsWith('data:image/')) {
       throw new Error('Image compression could not be completed. Please upload this photo from your device.');
     }
 
@@ -447,8 +471,8 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     setImageProgress(5);
     setImageStatusMsg(`Compressing & uploading ${validFiles.length} photo(s)...`);
 
-    const targetDim = compressionQualityPreset === 'compact' ? 850 : compressionQualityPreset === 'high' ? 1400 : 1200;
-    const targetQuality = compressionQualityPreset === 'compact' ? 0.62 : compressionQualityPreset === 'high' ? 0.78 : 0.72;
+    const targetDim = PHOTO_MAX_DIMENSION;
+    const targetQuality = PHOTO_COMPRESSION_QUALITY;
 
     let totalOriginal = 0;
     let totalCompressed = 0;
@@ -461,10 +485,11 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         const sig = (file as any).__sig as string;
         totalOriginal += file.size;
 
-        const basePct = Math.round((i / validFiles.length) * 85) + 5;
+        const basePct = Math.round((i / validFiles.length) * 30) + 5;
         setImageProgress(basePct);
         setImageStatusMsg(`Optimizing photo ${i + 1} of ${validFiles.length}: "${file.name}"...`);
 
+        setImageProgress(Math.round(5 + (i / validFiles.length) * 30));
         const asset = await compressPhotoAsset(file, {
           maxDimension: targetDim,
           quality: targetQuality,
@@ -473,6 +498,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         totalCompressed += asset.compressedSize;
 
         if (useStoragePipeline) {
+          setImageProgress(Math.round(((i / validFiles.length) * 55) + 35));
           setImageStatusMsg(`Uploading photo ${i + 1} of ${validFiles.length} (${formatBytes(asset.compressedSize)})...`);
           const uploadCtrl = startResumableMediaUpload({
             blob: asset.blob,
@@ -480,7 +506,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             subDir: 'photos',
             fileName: file.name.replace(/\.[^.]+$/, asset.mimeType.includes('webp') ? '.webp' : '.jpg'),
             onProgress: (pct) => {
-              const overall = Math.round(((i + pct / 100) / validFiles.length) * 90) + 5;
+              const overall = Math.round(35 + ((i + pct / 100) / validFiles.length) * 55);
               setImageProgress(overall);
             }
           });
@@ -920,30 +946,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className={cn('flex items-center border rounded p-0.5 text-[9px] font-mono', isIvory ? 'bg-lux-card border-lux-border' : 'bg-black/70 border-white/15')}>
-            <span className={cn('px-1.5 uppercase font-bold', mutedCls)}>Photo Quality:</span>
-            {[
-              { id: 'compact' as const, label: 'Light' },
-              { id: 'balanced' as const, label: 'Balanced HD' },
-              { id: 'high' as const, label: 'High HD' }
-            ].map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => setCompressionQualityPreset(preset.id)}
-                className={cn(
-                  'px-2 py-0.5 rounded transition-all cursor-pointer font-bold',
-                  compressionQualityPreset === preset.id
-                    ? isIvory
-                      ? 'bg-lux-forest text-lux-card shadow-sm'
-                      : 'bg-emerald-500 text-black shadow-sm'
-                    : isIvory
-                    ? 'text-lux-muted hover:text-lux-forest'
-                    : 'text-white/60 hover:text-white'
-                )}
-              >
-                {preset.label}
-              </button>
-            ))}
+
           </div>
 
           <span className={cn('text-[9px] font-mono px-2 py-0.5 rounded border font-bold uppercase tracking-wider flex items-center gap-1', isIvory ? 'text-lux-forest bg-lux-card border-lux-border' : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20')}>
