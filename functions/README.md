@@ -1,10 +1,12 @@
 # BS Homez Admin Email Alerts
 
 ## Scope
-Three Firestore create triggers send a private notification to `contact@bshomez.in` for new records in:
+Five Firestore create triggers send a private notification to `contact@bshomez.in` for new records in:
 - `enquiries/{enquiryId}`
 - `opportunities/{opportunityId}`
 - `property_submissions/{submissionId}`
+- `referrals/{referralId}`
+- `subscriptions/{subscriptionId}`
 
 The email includes Name, Mobile, Email, the requested property fields in a fixed order, a visually prominent RERA Number, and remaining inquiry-specific fields under Others. Missing values display as "Not provided".
 
