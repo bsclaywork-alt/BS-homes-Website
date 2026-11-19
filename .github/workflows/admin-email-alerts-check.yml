@@ -55,4 +55,5 @@ jobs:
         working-directory: tests/firestore
         run: |
           npm install --no-package-lock
+          cp ../../firestore.rules firestore.rules
           npx firebase emulators:exec --only firestore --project demo-bshomez-rules --config firebase.json "npm test"
