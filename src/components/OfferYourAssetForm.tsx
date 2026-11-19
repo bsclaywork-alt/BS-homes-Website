@@ -702,23 +702,23 @@ export const OfferYourAssetForm: React.FC<OfferYourAssetFormProps> = ({ onSubmis
             </div>
           </div>
 
-          {/* SECTION F: OTHERS (500 CHAR LIMIT) */}
+          {/* SECTION F: OTHERS (10,000 CHAR LIMIT) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label htmlFor="offer-others" className="text-sm uppercase tracking-widest font-black text-lux-forest">
                 Section F — Others
               </label>
               <span className="text-xs font-mono text-lux-muted" data-testid="others-char-counter">
-                {form.others.length} / 500
+                {form.others.length.toLocaleString()} / 10,000
               </span>
             </div>
             <textarea
               id="offer-others"
-              maxLength={500}
+              maxLength={10000}
               rows={3}
               value={form.others}
-              onChange={(e) => updateField('others', e.target.value.slice(0, 500))}
-              placeholder="Any additional highlights, corner unit advantage, tenant preferences, or key notes (max 500 characters)..."
+              onChange={(e) => updateField('others', e.target.value.slice(0, 10000))}
+              placeholder="Any additional highlights, corner unit advantage, tenant preferences, or key notes (max 10,000 characters)..."
               className="w-full bg-lux-ivory/60 border border-lux-border p-3 text-sm text-lux-charcoal rounded-sm outline-none focus:border-lux-forest"
             />
             {fieldErrors.others && <p className="text-xs text-red-600">{fieldErrors.others}</p>}
