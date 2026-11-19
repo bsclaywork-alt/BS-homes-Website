@@ -186,20 +186,7 @@ export const OfferYourAssetForm: React.FC<OfferYourAssetFormProps> = ({ onSubmis
         category: targetCategory
       });
 
-      // Dispatch alert notification non-blockingly (without exposing PII to public portfolio or response logs)
-      fetch('/api/enquiry/alert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          isPrivateAssetAlert: true,
-          customerName: form.ownerName,
-          customerPhone: `${form.countryCode || '+91'} ${form.ownerMobile}`,
-          projectName: form.propertyName,
-          enquiryCategory: `Offer Your Asset (${targetCategory})`,
-          preferredLocation: form.location,
-          message: `New ${form.willingTo} asset submitted (${form.propertyType}, ${form.configuration}, ${form.furnishing}). Pending Admin review.`
-        })
-      }).catch(() => {});
+      // Firestore onCreate Cloud Function sends the private Admin email alert.
 
       resetFormImmediately();
     } catch (err: any) {
@@ -351,6 +338,20 @@ export const OfferYourAssetForm: React.FC<OfferYourAssetFormProps> = ({ onSubmis
                   className="w-full bg-lux-ivory/60 border border-lux-border p-3 text-sm text-lux-charcoal rounded-sm outline-none focus:border-lux-forest font-mono"
                 />
                 {fieldErrors.googleMapUrl && <p className="text-xs text-red-600 mt-1">{fieldErrors.googleMapUrl}</p>}
+              </div>
+
+              <div className="md:col-span-2">
+                <label htmlFor="offer-rera-number" className="text-[10px] uppercase tracking-wider font-black text-lux-charcoal block mb-1.5">
+                  RERA Number <span className="text-lux-muted normal-case tracking-normal font-semibold">(Prominently displayed in Admin email)</span>
+                </label>
+                <input
+                  id="offer-rera-number"
+                  type="text"
+                  value={form.reraNumber}
+                  onChange={(e) => updateField('reraNumber', e.target.value)}
+                  placeholder="Enter Karnataka RERA registration number, if applicable"
+                  className="w-full bg-lux-ivory/60 border-2 border-lux-gold p-3 text-sm text-lux-charcoal rounded-sm outline-none focus:border-lux-forest font-mono"
+                />
               </div>
             </div>
           </div>
