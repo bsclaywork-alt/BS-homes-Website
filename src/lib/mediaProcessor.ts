@@ -409,6 +409,61 @@ export async function compressVideoViaServer(
   };
 }
 
+/**
+ * Uploads an already optimized and watermarked property photo to Cloudinary.
+ * The unsigned preset is intentionally public; never place an API secret in client code.
+ */
+export async function uploadCloudinaryPhoto(params: {
+  blob: Blob;
+  sessionId: string;
+  fileName: string;
+  onProgress?: (pct: number) => void;
+  signal?: AbortSignal;
+}): Promise<{ url: string; publicId: string; bytes: number; format: string }> {
+  const cloudName = 'bk9vq6rk';
+  const uploadPreset = 'ml_default';
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90000);
+  const abortFromCaller = () => controller.abort();
+  params.signal?.addEventListener('abort', abortFromCaller, { once: true });
+
+  try {
+    const form = new FormData();
+    form.append('file', params.blob, params.fileName);
+    form.append('upload_preset', uploadPreset);
+    form.append('folder', `bshomez/property-submissions/${params.sessionId}`);
+
+    params.onProgress?.(5);
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: 'POST',
+      body: form,
+      signal: controller.signal
+    });
+    const payload = await response.json().catch(() => ({} as any));
+    if (!response.ok || !payload?.secure_url) {
+      const providerMessage = payload?.error?.message;
+      throw new Error(providerMessage
+        ? `Cloudinary photo upload failed: ${providerMessage}`
+        : `Cloudinary photo upload failed (HTTP ${response.status}). Check the unsigned upload preset and try again.`);
+    }
+    params.onProgress?.(100);
+    return {
+      url: String(payload.secure_url),
+      publicId: String(payload.public_id || ''),
+      bytes: Number(payload.bytes || params.blob.size),
+      format: String(payload.format || '')
+    };
+  } catch (error: any) {
+    if (error?.name === 'AbortError') {
+      throw new Error('Cloud photo upload timed out after 90 seconds. Check your connection and retry.');
+    }
+    throw error instanceof Error ? error : new Error('Cloud photo upload failed. Please retry.');
+  } finally {
+    clearTimeout(timeout);
+    params.signal?.removeEventListener('abort', abortFromCaller);
+  }
+}
+
 export interface ResumableUploadController {
   pause: () => void;
   resume: () => void;
