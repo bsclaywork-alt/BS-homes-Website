@@ -45,3 +45,13 @@ jobs:
         run: |
           npm install --ignore-scripts
           npm run lint
+      - name: Set up Java for Firestore Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Run Firestore security rules tests
+        working-directory: tests/firestore
+        run: |
+          npm install --no-package-lock
+          npx firebase emulators:exec --only firestore --project demo-bshomez-rules --config firebase.json "npm test"
