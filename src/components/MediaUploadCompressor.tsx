@@ -32,6 +32,7 @@ import {
   readVideoDurationAndPoster,
   ResumableUploadController,
   startResumableMediaUpload,
+  uploadCloudinaryPhoto,
   validatePhotoFile,
   validateVideoFile
 } from '../lib/mediaProcessor';
@@ -386,19 +387,15 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
     let finalUrl = asset.previewDataUrl;
     const thumbnailUrl = asset.thumbnailDataUrl || asset.previewDataUrl;
-    let storagePath = '';
+    const storagePath = '';
 
     if (useStoragePipeline) {
-      const uploadCtrl = startResumableMediaUpload({
+      const uploaded = await uploadCloudinaryPhoto({
         blob: asset.blob,
         sessionId,
-        subDir: 'photos',
-        fileName: safeFileName.replace(/\.[^.]+$/, asset.mimeType.includes('webp') ? '.webp' : '.jpg'),
-        onProgress: () => {}
+        fileName: safeFileName.replace(/\.[^.]+$/, asset.mimeType.includes('webp') ? '.webp' : '.jpg')
       });
-      const uploaded = await uploadCtrl.promise;
       finalUrl = uploaded.url;
-      storagePath = uploaded.storagePath;
     }
 
     const signature = await computeFileSignature(sourceFile);
@@ -499,55 +496,28 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
         if (useStoragePipeline) {
           setImageProgress(Math.round(((i / validFiles.length) * 55) + 35));
-          setImageStatusMsg(`Uploading photo ${i + 1} of ${validFiles.length} (${formatBytes(asset.compressedSize)})...`);
-          const uploadCtrl = startResumableMediaUpload({
+          setImageStatusMsg(`Uploading optimized photo ${i + 1} of ${validFiles.length} to cloud storage...`);
+          const uploaded = await uploadCloudinaryPhoto({
             blob: asset.blob,
             sessionId,
-            subDir: 'photos',
             fileName: file.name.replace(/\.[^.]+$/, asset.mimeType.includes('webp') ? '.webp' : '.jpg'),
             onProgress: (pct) => {
               const overall = Math.round(35 + ((i + pct / 100) / validFiles.length) * 55);
               setImageProgress(overall);
               setImageStatusMsg(`Uploading photo ${i + 1} of ${validFiles.length} — ${pct}% transferred...`);
-            },
-            onStateChange: (state) => {
-              if (state === 'running') {
-                setImageStatusMsg(`Connecting/uploading photo ${i + 1} of ${validFiles.length} to secure storage...`);
-              } else if (state === 'paused') {
-                setImageStatusMsg(`Upload paused for photo ${i + 1}. Resume or retry the upload.`);
-              } else if (state === 'error') {
-                setImageStatusMsg(`Storage upload failed for photo ${i + 1}.`);
-              }
             }
           });
-          let uploadTimeout: ReturnType<typeof setTimeout> | undefined;
-          let uploaded: Awaited<typeof uploadCtrl.promise>;
-          try {
-            uploaded = await Promise.race([
-              uploadCtrl.promise,
-              new Promise<never>((_, reject) => {
-                uploadTimeout = setTimeout(() => {
-                  uploadCtrl.cancel();
-                  reject(new Error('Photo upload did not make progress within 90 seconds. Please check your internet connection and Firebase Storage access, then retry.'));
-                }, 90_000);
-              })
-            ]);
-          } finally {
-            if (uploadTimeout) clearTimeout(uploadTimeout);
-          }
 
-          // Keep the lightweight thumbnail in the listing record instead of making
-          // a second Storage request for every photo. The full watermarked photo
-          // remains uploaded to Firebase Storage and is the authoritative media URL.
-          const thumbnailUrl = asset.thumbnailDataUrl || uploaded.url;
-
+          // Cloudinary hosts the optimized, watermarked original; keep the small
+          // data-URL thumbnail in Firestore to avoid a second upload request.
+          const thumbnailUrl = asset.thumbnailDataUrl || asset.previewDataUrl;
           addedUrls.push(uploaded.url);
           addedItems.push(
             createUploadItemRecord({
               id: `photo_${Date.now()}_${i}`,
               url: uploaded.url,
               thumbnailUrl,
-              storagePath: uploaded.storagePath,
+              storagePath: '',
               kind: 'photo',
               fileName: file.name,
               mimeType: asset.mimeType,
