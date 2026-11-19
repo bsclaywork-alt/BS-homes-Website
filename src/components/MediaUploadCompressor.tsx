@@ -253,7 +253,9 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   );
   const [driveAuthorized, setDriveAuthorized] = useState(false);
 
-  const [compressionQualityPreset, setCompressionQualityPreset] = useState<'compact' | 'balanced' | 'high'>('balanced');
+  // One automatic photo profile; compression runs in the background and watermarking stays enabled.
+  const PHOTO_MAX_DIMENSION = 1200;
+  const PHOTO_COMPRESSION_QUALITY = 0.72;
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
   // Public uploads always receive the BS Homez watermark; the setting is intentionally not user-editable.
   const applyWatermark = true;
@@ -368,14 +370,14 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     const validation = validatePhotoFile(sourceFile);
     if (!validation.valid) throw new Error(validation.error || 'Invalid image file.');
 
-    const targetDim = compressionQualityPreset === 'compact' ? 850 : compressionQualityPreset === 'high' ? 1400 : 1200;
-    const targetQuality = compressionQualityPreset === 'compact' ? 0.62 : compressionQualityPreset === 'high' ? 0.78 : 0.72;
+    const targetDim = PHOTO_MAX_DIMENSION;
+    const targetQuality = PHOTO_COMPRESSION_QUALITY;
     const asset = await compressPhotoAsset(sourceFile, {
       maxDimension: targetDim,
       quality: targetQuality,
       applyWatermark
     });
-    if (!asset.thumbnailBlob || !asset.previewDataUrl.startsWith('data:image/')) {
+    if (!asset.previewDataUrl.startsWith('data:image/')) {
       throw new Error('Image compression could not be completed. Please upload this photo from your device.');
     }
 
@@ -466,8 +468,8 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
     setImageProgress(5);
     setImageStatusMsg(`Compressing & uploading ${validFiles.length} photo(s)...`);
 
-    const targetDim = compressionQualityPreset === 'compact' ? 850 : compressionQualityPreset === 'high' ? 1400 : 1200;
-    const targetQuality = compressionQualityPreset === 'compact' ? 0.62 : compressionQualityPreset === 'high' ? 0.78 : 0.72;
+    const targetDim = PHOTO_MAX_DIMENSION;
+    const targetQuality = PHOTO_COMPRESSION_QUALITY;
 
     let totalOriginal = 0;
     let totalCompressed = 0;
@@ -480,11 +482,11 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         const sig = (file as any).__sig as string;
         totalOriginal += file.size;
 
-        const basePct = Math.round((i / validFiles.length) * 85) + 5;
+        const basePct = Math.round((i / validFiles.length) * 30) + 5;
         setImageProgress(basePct);
         setImageStatusMsg(`Optimizing photo ${i + 1} of ${validFiles.length}: "${file.name}"...`);
 
-        setImageProgress(Math.round(((i / validFiles.length) * 25) + 5));
+        setImageProgress(Math.round(5 + (i / validFiles.length) * 30));
         const asset = await compressPhotoAsset(file, {
           maxDimension: targetDim,
           quality: targetQuality,
@@ -941,30 +943,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className={cn('flex items-center border rounded p-0.5 text-[9px] font-mono', isIvory ? 'bg-lux-card border-lux-border' : 'bg-black/70 border-white/15')}>
-            <span className={cn('px-1.5 uppercase font-bold', mutedCls)}>Photo Quality:</span>
-            {[
-              { id: 'compact' as const, label: 'Light' },
-              { id: 'balanced' as const, label: 'Balanced HD' },
-              { id: 'high' as const, label: 'High HD' }
-            ].map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => setCompressionQualityPreset(preset.id)}
-                className={cn(
-                  'px-2 py-0.5 rounded transition-all cursor-pointer font-bold',
-                  compressionQualityPreset === preset.id
-                    ? isIvory
-                      ? 'bg-lux-forest text-lux-card shadow-sm'
-                      : 'bg-emerald-500 text-black shadow-sm'
-                    : isIvory
-                    ? 'text-lux-muted hover:text-lux-forest'
-                    : 'text-white/60 hover:text-white'
-                )}
-              >
-                {preset.label}
-              </button>
-            ))}
+
           </div>
 
           <span className={cn('text-[9px] font-mono px-2 py-0.5 rounded border font-bold uppercase tracking-wider flex items-center gap-1', isIvory ? 'text-lux-forest bg-lux-card border-lux-border' : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20')}>
