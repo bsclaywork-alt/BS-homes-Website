@@ -225,7 +225,6 @@ export function readVideoDurationAndPoster(file: File): Promise<{
 
 export interface CompressedPhotoAsset {
   blob: Blob;
-  thumbnailBlob: Blob | null;
   previewDataUrl: string;
   thumbnailDataUrl: string;
   mimeType: string;
@@ -283,7 +282,7 @@ export async function compressPhotoAsset(
         if (!ctx) throw new Error('This browser could not create an optimized photo. Please try another browser.');
 
         ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+        ctx.imageSmoothingQuality = 'medium';
         ctx.drawImage(img, 0, 0, width, height);
 
         if (applyWatermark) {
@@ -348,11 +347,9 @@ export async function compressPhotoAsset(
         thumbCanvas.width = thumbW;
         thumbCanvas.height = thumbH;
         const thumbCtx = thumbCanvas.getContext('2d');
-        let thumbnailBlob: Blob | null = null;
         let thumbnailDataUrl = '';
         if (thumbCtx) {
           thumbCtx.drawImage(canvas, 0, 0, thumbW, thumbH);
-          thumbnailBlob = await canvasToBlob(thumbCanvas, 'image/jpeg', 0.65);
           try { thumbnailDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.65); } catch {}
         }
 
@@ -365,7 +362,6 @@ export async function compressPhotoAsset(
 
         finish(undefined, {
           blob: outputBlob,
-          thumbnailBlob,
           previewDataUrl,
           thumbnailDataUrl: thumbnailDataUrl || previewDataUrl,
           mimeType: outputBlob.type || outputMime,
