@@ -14911,7 +14911,19 @@ export default function App() {
   const handleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const credential = await signInWithPopup(auth, provider);
+      const tokenRes = await credential.user.getIdTokenResult(true);
+      const authorized = tokenRes?.claims?.admin === true;
+      setUser(credential.user);
+      setIsAdmin(authorized);
+      if (authorized) {
+        setActiveMainTab('admin');
+        window.history.replaceState({}, '', '/?tab=admin');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setActiveMainTab('admin');
+        window.history.replaceState({}, '', '/?tab=admin');
+      }
     } catch (error) {
       console.error("Login failed:", error);
     }
@@ -14922,15 +14934,17 @@ export default function App() {
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u);
-      if (!u) {
-        setIsAdmin(false);
-        return;
-      }
+      setIsAdmin(false);
+      if (!u) return;
       try {
-        const tokenRes = await u.getIdTokenResult();
-        setIsAdmin(tokenRes?.claims?.admin === true);
+        // Refresh the ID token so recently assigned or revoked admin claims are not
+        // hidden by a cached token. Access still requires the verified admin claim.
+        const tokenRes = await u.getIdTokenResult(true);
+        if (auth.currentUser?.uid === u.uid) {
+          setIsAdmin(tokenRes?.claims?.admin === true);
+        }
       } catch {
-        setIsAdmin(false);
+        if (auth.currentUser?.uid === u.uid) setIsAdmin(false);
       }
     });
     return () => unsubAuth();
@@ -15220,14 +15234,28 @@ export default function App() {
   };
 
   const handleSelectTab = (tab: MainAppTab) => {
-    setActiveMainTab(tab);
-    if (tab !== 'projects') {
-      setActivePropertyUrlId(null);
+    const applyTab = () => {
+      setActiveMainTab(tab);
+      if (tab !== 'projects') setActivePropertyUrlId(null);
+      try {
+        const url = tab === 'overview' ? '/' : `/?tab=${tab}`;
+        window.history.replaceState({}, '', url);
+      } catch {}
+    };
+
+    if (tab === 'admin' && auth.currentUser) {
+      // Re-check the current user's signed admin claim at the point of entry.
+      void auth.currentUser.getIdTokenResult(true).then((tokenRes) => {
+        const authorized = tokenRes?.claims?.admin === true;
+        setIsAdmin(authorized);
+        applyTab();
+      }).catch(() => {
+        setIsAdmin(false);
+        applyTab();
+      });
+      return;
     }
-    try {
-      const url = tab === 'overview' ? '/' : `/?tab=${tab}`;
-      window.history.replaceState({}, '', url);
-    } catch {}
+    applyTab();
   };
 
   return (
@@ -15703,8 +15731,9 @@ export default function App() {
                <div className="flex gap-4">
                  {isAdmin && (
                    <button
+                     type="button"
                      onClick={() => {
-                       setActiveMainTab(activeMainTab === 'admin' ? 'projects' : 'admin');
+                       handleSelectTab(activeMainTab === 'admin' ? 'projects' : 'admin');
                        window.scrollTo({ top: 0, behavior: 'smooth' });
                      }}
                      className="text-[10px] bg-lux-forest text-lux-card px-6 py-2 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 cursor-pointer hover:bg-lux-forest-hover shadow-sm"
