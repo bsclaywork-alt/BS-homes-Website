@@ -53,7 +53,16 @@ service cloud.firestore {
       data.googleMapUrl is string && data.googleMapUrl.size() <= 1000 &&
       data.reraNumber is string && data.reraNumber.size() <= 150 &&
       data.willingTo in ['Sell', 'Rental'] &&
-      data.targetCategory in ['Primary', 'Resale', 'Rental'] &&
+      ((data.willingTo == 'Sell' &&
+        data.sellerType in ['Resale', 'Builder', 'Landlord'] &&
+        data.expectedPrice is number && data.expectedPrice > 0 &&
+        data.targetCategory == (data.sellerType == 'Builder' ? 'Primary' : 'Resale')) ||
+       (data.willingTo == 'Rental' &&
+        data.rentPerMonth is number && data.rentPerMonth > 0 &&
+        data.maintenance is string && data.maintenance.size() <= 100 &&
+        data.advance is string && data.advance.size() <= 100 &&
+        data.availableFrom is string && data.availableFrom.size() <= 100 &&
+        data.targetCategory == 'Rental')) &&
       data.propertyType in ['Apartment', 'Villa', 'Plot', 'Commercial'] &&
       data.societyType in ['Gated', 'Individual'] &&
       data.propertyStatus in ['Ready to Move', 'Under Construction', 'EOI', 'Nearing Completion'] &&
