@@ -255,7 +255,8 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
 
   const [compressionQualityPreset, setCompressionQualityPreset] = useState<'compact' | 'balanced' | 'high'>('balanced');
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
-  const [applyWatermark, setApplyWatermark] = useState<boolean>(true);
+  // Public uploads always receive the BS Homez watermark; the setting is intentionally not user-editable.
+  const applyWatermark = true;
 
   // Photo processing + upload progress state
   const [isProcessingImages, setIsProcessingImages] = useState(false);
@@ -1020,22 +1021,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             )}
           </div>
 
-          <div className={cn('p-2.5 border rounded-sm flex items-center justify-between gap-3', isIvory ? 'bg-lux-card border-lux-border' : 'bg-black/60 border-art-gold/30')}>
-            <span className={cn('text-[10px] font-mono font-bold uppercase tracking-wider', isIvory ? 'text-lux-charcoal' : 'text-white')}>
-              BS Homez Watermark Stamp
-            </span>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={applyWatermark}
-                onChange={(e) => setApplyWatermark(e.target.checked)}
-                className="accent-lux-forest w-3.5 h-3.5 cursor-pointer"
-              />
-              <span className={cn('text-[10px] font-mono uppercase font-bold', isIvory ? 'text-lux-forest' : 'text-white/80')}>
-                {applyWatermark ? 'ON' : 'OFF'}
-              </span>
-            </label>
-          </div>
+
 
           {/* Device Upload + Camera Capture + Authorized Google Drive */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
