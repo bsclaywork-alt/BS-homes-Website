@@ -5607,7 +5607,7 @@ const ProjectForm = ({
                 <input
                   id="show-project-photos-new"
                   type="checkbox"
-                  checked={formData.showImagesOnline ?? inventoryMode !== 'Primary'}
+                  checked={formData.showImagesOnline ?? true}
                   onChange={e => setFormData(prev => ({ ...prev, showImagesOnline: e.target.checked }))}
                   className="h-4 w-4 accent-art-gold cursor-pointer"
                 />
@@ -6149,7 +6149,7 @@ const ProjectForm = ({
                 <input
                   id="show-project-photos-new"
                   type="checkbox"
-                  checked={formData.showImagesOnline ?? inventoryMode !== 'Primary'}
+                  checked={formData.showImagesOnline ?? true}
                   onChange={e => setFormData(prev => ({ ...prev, showImagesOnline: e.target.checked }))}
                   className="h-4 w-4 accent-art-gold cursor-pointer"
                 />
