@@ -170,8 +170,8 @@ export function validateOfferAssetInput(input: OfferAssetFormInput): {
     errors.willingTo = 'Please select Sell Property or Rental.';
   }
 
-  if (input.others && input.others.length > 500) {
-    errors.others = 'Additional info must not exceed 500 characters.';
+  if (input.others && input.others.length > 10000) {
+    errors.others = 'Additional info must not exceed 10,000 characters.';
   }
 
   if (input.video?.durationSec && input.video.durationSec > 180) {
