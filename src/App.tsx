@@ -15743,13 +15743,16 @@ export default function App() {
         {/* Admin Login / Vault Switcher Bar */}
         <div className="flex justify-center py-10 opacity-80 hover:opacity-100 transition-opacity flex-col items-center gap-4 border-t border-lux-border bg-lux-ivory">
            {!user ? (
-             <button
-               onClick={handleLogin}
-               className="text-[10px] bg-lux-card text-lux-forest border border-lux-border px-6 py-2.5 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 hover:bg-lux-forest hover:text-lux-card transition-all cursor-pointer shadow-sm"
-             >
-               <ShieldCheck size={14} /> Admin Relationship Login
-             </button>
-             {loginError && <p role="alert" className="max-w-md px-4 text-center text-xs text-red-700">{loginError}</p>}
+             <>
+               <button
+                 type="button"
+                 onClick={handleLogin}
+                 className="text-[10px] bg-lux-card text-lux-forest border border-lux-border px-6 py-2.5 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 hover:bg-lux-forest hover:text-lux-card transition-all cursor-pointer shadow-sm"
+               >
+                 <ShieldCheck size={14} /> Admin Relationship Login
+               </button>
+               {loginError && <p role="alert" className="max-w-md px-4 text-center text-xs text-red-700">{loginError}</p>}
+             </>
            ) : (
              <div className="flex flex-col items-center gap-2">
                <span className="text-[10px] uppercase tracking-widest text-lux-muted font-semibold">
