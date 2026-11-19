@@ -18,6 +18,8 @@ import {
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   signOut,
   User as FirebaseUser
@@ -13961,6 +13963,7 @@ export default function App() {
   const [dbTombstoneIds, setDbTombstoneIds] = useState<string[]>([]);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const [filters, setFilters] = useState({
     location: 'All',
     zone: 'All',
@@ -14909,25 +14912,48 @@ export default function App() {
   };
 
   const handleLogin = async () => {
+    setLoginError('');
+    const provider = new GoogleAuthProvider();
     try {
-      const provider = new GoogleAuthProvider();
+      // Mobile browsers commonly block or interrupt popup-based Google sign-in.
+      // Use Firebase's redirect flow on touch-first devices; auth state is then
+      // restored by the existing onAuthStateChanged listener after returning.
+      if (window.matchMedia('(pointer: coarse)').matches) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
       const credential = await signInWithPopup(auth, provider);
       const tokenRes = await credential.user.getIdTokenResult(true);
       const authorized = tokenRes?.claims?.admin === true;
       setUser(credential.user);
       setIsAdmin(authorized);
-      if (authorized) {
-        setActiveMainTab('admin');
-        window.history.replaceState({}, '', '/?tab=admin');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        setActiveMainTab('admin');
-        window.history.replaceState({}, '', '/?tab=admin');
-      }
-    } catch (error) {
-      console.error("Login failed:", error);
+      setActiveMainTab('admin');
+      window.history.replaceState({}, '', '/?tab=admin');
+      if (authorized) window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error: any) {
+      console.error('Admin login failed:', error);
+      const code = String(error?.code || '');
+      const message = code === 'auth/unauthorized-domain'
+        ? 'Google sign-in is blocked because this website domain is not authorized in Firebase Authentication.'
+        : code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment'
+          ? 'Your browser blocked the sign-in window. Please open this site in Chrome and try again.'
+          : code === 'auth/network-request-failed'
+            ? 'Network connection failed during Google sign-in. Please check your connection and retry.'
+            : `Google sign-in could not start (${code || 'unknown error'}). Please retry or contact the site administrator.`;
+      setLoginError(message);
     }
   };
+
+  useEffect(() => {
+    // Surface errors returned by Firebase after a mobile redirect sign-in attempt.
+    getRedirectResult(auth).catch((error: any) => {
+      console.error('Admin redirect sign-in failed:', error);
+      const code = String(error?.code || '');
+      setLoginError(code === 'auth/unauthorized-domain'
+        ? 'Google sign-in is blocked because bshomez.in is not authorized in Firebase Authentication.'
+        : `Google sign-in did not complete (${code || 'unknown error'}). Please retry or contact the site administrator.`);
+    });
+  }, []);
 
   const handleLogout = () => signOut(auth);
 
@@ -15723,6 +15749,7 @@ export default function App() {
              >
                <ShieldCheck size={14} /> Admin Relationship Login
              </button>
+             {loginError && <p role="alert" className="max-w-md px-4 text-center text-xs text-red-700">{loginError}</p>}
            ) : (
              <div className="flex flex-col items-center gap-2">
                <span className="text-[10px] uppercase tracking-widest text-lux-muted font-semibold">
