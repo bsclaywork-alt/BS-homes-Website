@@ -28,6 +28,7 @@ import {
   createUploadItemRecord,
   deleteUploadedMediaPath,
   fetchAuthorizedDriveProjects,
+  MAX_PHOTO_SIZE_BYTES,
   MAX_VIDEO_DURATION_SEC,
   readVideoDurationAndPoster,
   ResumableUploadController,
