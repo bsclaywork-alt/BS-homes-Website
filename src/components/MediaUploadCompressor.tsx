@@ -43,7 +43,7 @@ export interface CompressedImageResult {
   fileName: string;
 }
 
-const MAX_PROJECT_PHOTOS = 5;
+const MAX_PROJECT_PHOTOS = 7;
 
 export const formatBytes = (bytes: number): string => {
   if (!bytes || bytes <= 0) return '0 B';
