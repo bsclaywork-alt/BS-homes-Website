@@ -128,6 +128,38 @@ describe('Offer Your Asset Firestore rules', () => {
     await assertFails(batch.commit());
   });
 
+  it('rejects invalid sale pricing and unexpected private submission fields', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    const submission = submissionData('submission-invalid', 'portfolio-invalid');
+    submission.expectedPrice = -1;
+    submission.unexpectedAdminFlag = true;
+    const batch = writeBatch(db);
+    batch.set(doc(db, 'property_submissions/submission-invalid'), submission);
+    batch.set(doc(db, 'public_portfolio/portfolio-invalid'), publicData('submission-invalid', 'portfolio-invalid'));
+    await assertFails(batch.commit());
+  });
+
+  it('allows a valid rental submission with rent-specific fields', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    const submission = submissionData('submission-rental', 'portfolio-rental');
+    delete submission.sellerType;
+    delete submission.expectedPrice;
+    submission.willingTo = 'Rental';
+    submission.targetCategory = 'Rental';
+    submission.rentPerMonth = 45000;
+    submission.maintenance = '3000';
+    submission.advance = '180000';
+    submission.availableFrom = '2026-12-01';
+    const portfolio = publicData('submission-rental', 'portfolio-rental');
+    portfolio.category = 'Rental';
+    portfolio.formattedPrice = 'Rs. 45K/mo';
+    portfolio.publicationStatus = 'Pending Review';
+    const batch = writeBatch(db);
+    batch.set(doc(db, 'property_submissions/submission-rental'), submission);
+    batch.set(doc(db, 'public_portfolio/portfolio-rental'), portfolio);
+    await assertSucceeds(batch.commit());
+  });
+
   it('rejects anonymous reads of private owner submissions', async () => {
     const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
     const batch = writeBatch(adminDb);
