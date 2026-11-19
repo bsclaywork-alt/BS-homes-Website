@@ -55,10 +55,10 @@ service cloud.firestore {
       data.willingTo in ['Sell', 'Rental'] &&
       ((data.willingTo == 'Sell' &&
         data.sellerType in ['Resale', 'Builder', 'Landlord'] &&
-        data.expectedPrice is number && data.expectedPrice > 0 &&
+        (data.expectedPrice is int || data.expectedPrice is float) && data.expectedPrice > 0 &&
         data.targetCategory == (data.sellerType == 'Builder' ? 'Primary' : 'Resale')) ||
        (data.willingTo == 'Rental' &&
-        data.rentPerMonth is number && data.rentPerMonth > 0 &&
+        (data.rentPerMonth is int || data.rentPerMonth is float) && data.rentPerMonth > 0 &&
         data.maintenance is string && data.maintenance.size() <= 100 &&
         data.advance is string && data.advance.size() <= 100 &&
         data.availableFrom is string && data.availableFrom.size() <= 100 &&
