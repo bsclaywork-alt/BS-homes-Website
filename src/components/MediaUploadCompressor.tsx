@@ -508,9 +508,33 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
             onProgress: (pct) => {
               const overall = Math.round(35 + ((i + pct / 100) / validFiles.length) * 55);
               setImageProgress(overall);
+              setImageStatusMsg(`Uploading photo ${i + 1} of ${validFiles.length} — ${pct}% transferred...`);
+            },
+            onStateChange: (state) => {
+              if (state === 'running') {
+                setImageStatusMsg(`Connecting/uploading photo ${i + 1} of ${validFiles.length} to secure storage...`);
+              } else if (state === 'paused') {
+                setImageStatusMsg(`Upload paused for photo ${i + 1}. Resume or retry the upload.`);
+              } else if (state === 'error') {
+                setImageStatusMsg(`Storage upload failed for photo ${i + 1}.`);
+              }
             }
           });
-          const uploaded = await uploadCtrl.promise;
+          let uploadTimeout: ReturnType<typeof setTimeout> | undefined;
+          let uploaded: Awaited<typeof uploadCtrl.promise>;
+          try {
+            uploaded = await Promise.race([
+              uploadCtrl.promise,
+              new Promise<never>((_, reject) => {
+                uploadTimeout = setTimeout(() => {
+                  uploadCtrl.cancel();
+                  reject(new Error('Photo upload did not make progress within 90 seconds. Please check your internet connection and Firebase Storage access, then retry.'));
+                }, 90_000);
+              })
+            ]);
+          } finally {
+            if (uploadTimeout) clearTimeout(uploadTimeout);
+          }
 
           // Keep the lightweight thumbnail in the listing record instead of making
           // a second Storage request for every photo. The full watermarked photo
@@ -950,7 +974,7 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
           </div>
 
           <span className={cn('text-[9px] font-mono px-2 py-0.5 rounded border font-bold uppercase tracking-wider flex items-center gap-1', isIvory ? 'text-lux-forest bg-lux-card border-lux-border' : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20')}>
-            <FileCheck size={11} /> Real Compression
+            <FileCheck size={11} /> Auto-Optimized
           </span>
         </div>
       </div>
