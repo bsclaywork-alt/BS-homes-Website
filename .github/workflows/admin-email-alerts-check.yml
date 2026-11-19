@@ -19,6 +19,7 @@ on:
     branches: [feature/admin-vault-intake-email-20261120]
     paths:
       - 'functions/**'
+      - 'tests/firestore/**'
       - 'src/App.tsx'
       - 'src/components/AdminPropertySubmissions.tsx'
       - 'src/components/MediaUploadCompressor.tsx'
