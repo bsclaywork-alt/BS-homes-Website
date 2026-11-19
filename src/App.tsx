@@ -129,6 +129,7 @@ import { SocialShareButtons } from './components/SocialShareButtons';
 import { SEOPreviewModal } from './components/SEOPreviewModal';
 import { PropertyMetaDataModal } from './components/PropertyMetaDataModal';
 import { AdminSeoAuditPanel } from './components/AdminSeoAuditPanel';
+import { CloudinaryUsageMonitor } from './components/CloudinaryUsageMonitor';
 import { MediaUploadCompressor } from './components/MediaUploadCompressor';
 import { MediaViewerModal } from './components/MediaViewerModal';
 import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
@@ -7976,7 +7977,7 @@ const AdminView = ({
   onSaveProject?: (p: Project) => Promise<void> | void,
   onBatchUpdateProjects?: (updated: Project[]) => void
 }) => {
-  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility' | 'seo_audit'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility' | 'seo_audit' | 'media_usage'>('leads');
   const [tabVisibilityToast, setTabVisibilityToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
   const [isUpdatingTabVis, setIsUpdatingTabVis] = useState(false);
   const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
@@ -9478,6 +9479,18 @@ const AdminView = ({
              </div>
            </button>
            <button
+             onClick={() => setActiveTab('media_usage')}
+             className={cn(
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               activeTab === 'media_usage'
+                 ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform"
+                 : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
+             )}
+           >
+             <ImageIcon size={15} className={cn("transition-transform duration-300", activeTab === 'media_usage' ? "scale-110 stroke-[2.5]" : "opacity-60")} />
+             <span>Media Usage</span>
+           </button>
+           <button
              onClick={() => setActiveTab('seo_audit')}
              className={cn(
                "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
@@ -10704,6 +10717,8 @@ const AdminView = ({
           </div>
         </div>
       </div>
+    ) : activeTab === 'media_usage' ? (
+        <CloudinaryUsageMonitor projects={projects} />
     ) : activeTab === 'seo_audit' ? (
         <AdminSeoAuditPanel
           projects={validProjects}
