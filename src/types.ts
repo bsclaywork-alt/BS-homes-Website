@@ -79,6 +79,7 @@ export interface PropertySubmission {
   // Section A: Owner Information (STRICTLY PRIVATE - Admin Only)
   ownerName: string;
   ownerMobile: string;
+  ownerCountryCode?: string;
   propertyName: string;
   location: string;
   fullAddress: string;
