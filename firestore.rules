@@ -19,6 +19,93 @@ service cloud.firestore {
       return request.resource.data;
     }
 
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function isValidPropertySubmission(data, submissionId) {
+      return data.keys().hasAll([
+        'id', 'publicPortfolioId', 'ownerName', 'ownerMobile', 'ownerCountryCode',
+        'propertyName', 'location', 'fullAddress', 'googleMapUrl', 'reraNumber',
+        'willingTo', 'targetCategory', 'propertyType', 'societyType', 'propertyStatus',
+        'possessionDate', 'configuration', 'doorFacing', 'floorNumber', 'towerNumber',
+        'totalAcres', 'amenities', 'furnishing', 'others', 'photos', 'video',
+        'submissionStatus', 'isDeleted', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'publicPortfolioId', 'dedupKey', 'ownerName', 'ownerMobile', 'ownerCountryCode',
+        'propertyName', 'location', 'fullAddress', 'googleMapUrl', 'reraNumber',
+        'willingTo', 'sellerType', 'rentPerMonth', 'maintenance', 'advance', 'availableFrom',
+        'targetCategory', 'propertyType', 'societyType', 'expectedPrice', 'propertyStatus',
+        'possessionDate', 'configuration', 'doorFacing', 'floorNumber', 'towerNumber',
+        'totalAcres', 'amenities', 'furnishing', 'others', 'photos', 'video',
+        'submissionStatus', 'reviewNotes', 'reviewedBy', 'reviewedAt', 'isDeleted',
+        'deletedAt', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id == submissionId &&
+      data.publicPortfolioId is string && data.publicPortfolioId.size() <= 128 &&
+      data.ownerName is string && data.ownerName.size() >= 2 && data.ownerName.size() <= 120 &&
+      data.ownerMobile is string && data.ownerMobile.size() >= 8 && data.ownerMobile.size() <= 20 &&
+      data.ownerCountryCode is string && data.ownerCountryCode.size() <= 8 &&
+      data.propertyName is string && data.propertyName.size() >= 2 && data.propertyName.size() <= 200 &&
+      data.location is string && data.location.size() >= 2 && data.location.size() <= 200 &&
+      data.fullAddress is string && data.fullAddress.size() <= 1000 &&
+      data.googleMapUrl is string && data.googleMapUrl.size() <= 1000 &&
+      data.reraNumber is string && data.reraNumber.size() <= 150 &&
+      data.willingTo in ['Sell', 'Rental'] &&
+      data.targetCategory in ['Primary', 'Resale', 'Rental'] &&
+      data.propertyType in ['Apartment', 'Villa', 'Plot', 'Commercial'] &&
+      data.societyType in ['Gated', 'Individual'] &&
+      data.propertyStatus in ['Ready to Move', 'Under Construction', 'EOI', 'Nearing Completion'] &&
+      data.configuration in ['Studio', '1 BHK', '2 BHK', '3 BHK', '4 BHK', '5 BHK'] &&
+      data.doorFacing in ['East', 'North', 'West', 'South', 'South East', 'North East'] &&
+      data.furnishing in ['Semi Furnished', 'Furnished', 'Unfurnished'] &&
+      data.floorNumber is string && data.floorNumber.size() <= 100 &&
+      data.towerNumber is string && data.towerNumber.size() <= 100 &&
+      data.totalAcres is string && data.totalAcres.size() <= 100 &&
+      data.amenities is list && data.amenities.size() <= 23 &&
+      data.others is string && data.others.size() <= 10000 &&
+      data.photos is list && data.photos.size() <= 25 &&
+      (data.video == null || data.video is map) &&
+      data.submissionStatus == 'Pending Review' &&
+      data.isDeleted == false &&
+      data.createdAt == request.time &&
+      data.updatedAt == request.time &&
+      existsAfter(/databases/$(database)/documents/public_portfolio/$(data.publicPortfolioId)) &&
+      getAfter(/databases/$(database)/documents/public_portfolio/$(data.publicPortfolioId)).data.submissionId == submissionId;
+    }
+
+    function isSafePublicPortfolio(data, portfolioId) {
+      return data.keys().hasAll([
+        'id', 'submissionId', 'name', 'location', 'googleMapUrl', 'reraNumber',
+        'category', 'propertyType', 'societyType', 'formattedPrice', 'propertyStatus',
+        'possessionDate', 'configuration', 'doorFacing', 'floorNumber', 'towerNumber',
+        'totalAcres', 'amenities', 'furnishing', 'others', 'mainImageUrl', 'imageUrls',
+        'photoThumbnails', 'videoUrl', 'videoPosterUrl', 'storagePaths',
+        'publicationStatus', 'isPublished', 'isDeleted', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'submissionId', 'name', 'location', 'publicAddressHint', 'googleMapUrl',
+        'reraNumber', 'category', 'propertyType', 'societyType', 'sellerType',
+        'expectedPrice', 'formattedPrice', 'rentPerMonth', 'maintenance', 'advance',
+        'availableFrom', 'propertyStatus', 'possessionDate', 'configuration', 'doorFacing',
+        'floorNumber', 'towerNumber', 'totalAcres', 'amenities', 'furnishing', 'others',
+        'mainImageUrl', 'imageUrls', 'photoThumbnails', 'videoUrl', 'videoPosterUrl',
+        'storagePaths', 'publicationStatus', 'isPublished', 'isDeleted', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id == portfolioId &&
+      data.submissionId is string &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 200 &&
+      data.location is string && data.location.size() <= 200 &&
+      data.reraNumber is string && data.reraNumber.size() <= 150 &&
+      data.category in ['Primary', 'Resale', 'Rental'] &&
+      data.publicationStatus == 'Pending Review' &&
+      data.isPublished == false && data.isDeleted == false &&
+      data.createdAt == request.time && data.updatedAt == request.time &&
+      existsAfter(/databases/$(database)/documents/property_submissions/$(data.submissionId)) &&
+      getAfter(/databases/$(database)/documents/property_submissions/$(data.submissionId)).data.publicPortfolioId == portfolioId;
+    }
+
     function existing() {
       return resource.data;
     }
@@ -237,6 +324,43 @@ service cloud.firestore {
              data.projectName is string &&
              data.createdAt == request.time &&
              exists(/databases/$(database)/documents/projects/$(data.projectId));
+    }
+
+
+    // Private owner submissions: public create only; admin-only read and workflow updates.
+    match /property_submissions/{submissionId} {
+      allow create: if isValidId(submissionId) &&
+        isValidPropertySubmission(request.resource.data, submissionId);
+      allow read: if isAdmin();
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'submissionStatus', 'reviewedBy', 'reviewedAt', 'updatedAt'
+        ]) &&
+        request.resource.data.submissionStatus in ['Approved', 'Published', 'Rejected', 'Archived'] &&
+        request.resource.data.reviewedBy is string &&
+        request.resource.data.reviewedBy.size() <= 200 &&
+        request.resource.data.reviewedAt == request.time &&
+        request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    // Public-safe portfolio records: visitors can read published, non-deleted records only.
+    // The public submission batch may create a pending sanitized record, never update/delete it.
+    match /public_portfolio/{portfolioId} {
+      allow read: if isAdmin() ||
+        (resource.data.publicationStatus == 'Published' &&
+         resource.data.isPublished == true &&
+         resource.data.isDeleted == false);
+      allow create: if isValidId(portfolioId) &&
+        isSafePublicPortfolio(request.resource.data, portfolioId);
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'publicationStatus', 'isPublished', 'isDeleted', 'updatedAt'
+        ]) &&
+        request.resource.data.publicationStatus in ['Published', 'Rejected', 'Archived'] &&
+        request.resource.data.isPublished == (request.resource.data.publicationStatus == 'Published') &&
+        request.resource.data.updatedAt == request.time;
+      allow delete: if false;
     }
 
     // Referrals: Publicly writable (create only), admin readable
