@@ -9398,7 +9398,13 @@ const AdminView = ({
 
         <div className="flex items-center overflow-x-auto no-scrollbar w-full md:w-auto bg-[#121212]/90 border border-white/10 p-1.5 rounded-sm gap-2 md:gap-3 shadow-[0_15px_35px_rgba(0,0,0,0.6)]">
            <button
-             onClick={() => setActiveTab('leads')}
+             type="button"
+             aria-pressed={activeTab === 'leads'}
+             onClick={(event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               setActiveTab('leads');
+             }}
              className={cn(
                "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'leads'
@@ -9410,7 +9416,13 @@ const AdminView = ({
              <span>Customer Intelligence</span>
            </button>
            <button
-             onClick={() => setActiveTab('opportunities')}
+             type="button"
+             aria-pressed={activeTab === 'opportunities'}
+             onClick={(event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               setActiveTab('opportunities');
+             }}
              className={cn(
                "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'opportunities'
@@ -9432,7 +9444,13 @@ const AdminView = ({
              </div>
            </button>
            <button
-             onClick={() => setActiveTab('referrals')}
+             type="button"
+             aria-pressed={activeTab === 'referrals'}
+             onClick={(event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               setActiveTab('referrals');
+             }}
              className={cn(
                "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'referrals'
@@ -9444,7 +9462,13 @@ const AdminView = ({
              <span>Referral Registry</span>
            </button>
            <button
-             onClick={() => setActiveTab('portfolio')}
+             type="button"
+             aria-pressed={activeTab === 'portfolio'}
+             onClick={(event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               setActiveTab('portfolio');
+             }}
              className={cn(
                "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'portfolio'
@@ -9456,7 +9480,13 @@ const AdminView = ({
              <span>Portfolio Curator</span>
            </button>
            <button
-             onClick={() => setActiveTab('tab_visibility')}
+             type="button"
+             aria-pressed={activeTab === 'tab_visibility'}
+             onClick={(event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               setActiveTab('tab_visibility');
+             }}
              className={cn(
                "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'tab_visibility'
@@ -9478,7 +9508,13 @@ const AdminView = ({
              </div>
            </button>
            <button
-             onClick={() => setActiveTab('seo_audit')}
+             type="button"
+             aria-pressed={activeTab === 'seo_audit'}
+             onClick={(event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               setActiveTab('seo_audit');
+             }}
              className={cn(
                "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
                activeTab === 'seo_audit'
