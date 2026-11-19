@@ -171,3 +171,19 @@ exports.emailPropertySubmissionAlert = onDocumentCreated({
   secrets: [resendApiKey],
   timeoutSeconds: 120
 }, makeHandler('property_submissions'));
+
+exports.emailReferralAlert = onDocumentCreated({
+  document: 'referrals/{referralId}',
+  region: REGION,
+  retry: true,
+  secrets: [resendApiKey],
+  timeoutSeconds: 120
+}, makeHandler('referrals'));
+
+exports.emailSubscriptionAlert = onDocumentCreated({
+  document: 'subscriptions/{subscriptionId}',
+  region: REGION,
+  retry: true,
+  secrets: [resendApiKey],
+  timeoutSeconds: 120
+}, makeHandler('subscriptions'));
