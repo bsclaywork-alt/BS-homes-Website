@@ -1,0 +1,39 @@
+name: Admin Email Alerts Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'functions/**'
+      - 'src/components/OfferYourAssetForm.tsx'
+      - 'src/lib/propertyWorkflow.ts'
+      - 'src/types.ts'
+      - 'firebase.json'
+      - '.github/workflows/admin-email-alerts-check.yml'
+  push:
+    branches: [feature/admin-vault-intake-email-20261120]
+    paths:
+      - 'functions/**'
+      - 'src/components/OfferYourAssetForm.tsx'
+      - 'src/lib/propertyWorkflow.ts'
+      - 'src/types.ts'
+      - 'firebase.json'
+      - '.github/workflows/admin-email-alerts-check.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build:pages
+      - name: Validate Firebase Function syntax
+        working-directory: functions
+        run: |
+          npm install --ignore-scripts
+          npm run lint
