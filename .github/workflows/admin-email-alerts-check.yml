@@ -9,6 +9,7 @@ on:
       - 'src/components/AdminPropertySubmissions.tsx'
       - 'src/components/MediaUploadCompressor.tsx'
       - 'firestore.rules'
+      - 'tests/firestore/**'
       - 'src/components/OfferYourAssetForm.tsx'
       - 'src/lib/propertyWorkflow.ts'
       - 'src/types.ts'
