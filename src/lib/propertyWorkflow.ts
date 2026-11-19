@@ -170,8 +170,8 @@ export function validateOfferAssetInput(input: OfferAssetFormInput): {
     errors.willingTo = 'Please select Sell Property or Rental.';
   }
 
-  if (input.others && input.others.length > 500) {
-    errors.others = 'Additional info must not exceed 500 characters.';
+  if (input.others && input.others.length > 10000) {
+    errors.others = 'Additional info must not exceed 10,000 characters.';
   }
 
   if (input.video?.durationSec && input.video.durationSec > 180) {
@@ -228,7 +228,7 @@ export function createPropertySubmissionRecord(
     totalAcres: input.totalAcres.trim(),
     amenities: validAmenities,
     furnishing: input.furnishing,
-    others: input.others.trim().slice(0, 500),
+    others: input.others.trim().slice(0, 10000),
     photos: input.photos || [],
     video: input.video || null,
     submissionStatus: status,
@@ -298,7 +298,7 @@ export function buildSanitizedPublicPortfolioRecord(
     totalAcres: submission.totalAcres || '',
     amenities: [...(submission.amenities || [])],
     furnishing: submission.furnishing,
-    others: (submission.others || '').slice(0, 500),
+    others: (submission.others || '').slice(0, 10000),
     mainImageUrl: imageUrls[0] || '',
     imageUrls,
     photoThumbnails,
