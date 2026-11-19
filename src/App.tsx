@@ -14914,6 +14914,9 @@ export default function App() {
   const handleLogin = async () => {
     setLoginError('');
     const provider = new GoogleAuthProvider();
+    // Prefer the designated BS Homez administrator account in Google's account picker.
+    // This is only a sign-in hint; Firebase admin-claim verification remains mandatory.
+    provider.setCustomParameters({ login_hint: 'bsclaywork@gmail.com' });
     try {
       // Mobile browsers commonly block or interrupt popup-based Google sign-in.
       // Use Firebase's redirect flow on touch-first devices; auth state is then
