@@ -339,25 +339,28 @@ export const MediaUploadCompressor: React.FC<MediaUploadCompressorProps> = ({
   const compressRemotePhoto = async (sourceUrl: string, fileName: string, index: number) => {
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 20000);
-    let response: Response;
+    let sourceBlob: Blob;
     try {
-      response = await fetch(sourceUrl, { mode: 'cors', credentials: 'omit', signal: controller.signal });
+      const response = await fetch(sourceUrl, { mode: 'cors', credentials: 'omit', signal: controller.signal });
+      if (!response.ok || response.type === 'opaque') {
+        throw new Error('This image host does not allow secure image download for compression. Download the photo and upload it from your device instead.');
+      }
+      const contentLength = Number(response.headers.get('content-length') || 0);
+      if (contentLength > MAX_PHOTO_SIZE_BYTES) {
+        throw new Error('The external image exceeds the 15 MB photo limit.');
+      }
+      // Keep the timeout active while the response body is downloaded, not just until headers arrive.
+      sourceBlob = await response.blob();
     } catch (error: any) {
       if (error?.name === 'AbortError') {
         throw new Error('External image download timed out after 20 seconds. Please download the image and upload it from your computer.');
       }
-      throw new Error('Could not access this external image. The image host may block cross-origin downloads; please upload the image from your computer.');
+      throw error instanceof Error && error.message.startsWith('This image host')
+        ? error
+        : new Error('Could not access this external image. The image host may block cross-origin downloads; please upload the image from your computer.');
     } finally {
       window.clearTimeout(timeoutId);
     }
-    if (!response.ok || response.type === 'opaque') {
-      throw new Error('This image host does not allow secure image download for compression. Download the photo and upload it from your device instead.');
-    }
-    const contentLength = Number(response.headers.get('content-length') || 0);
-    if (contentLength > MAX_PHOTO_SIZE_BYTES) {
-      throw new Error('The external image exceeds the 15 MB photo limit.');
-    }
-    const sourceBlob = await response.blob();
     if (sourceBlob.size > MAX_PHOTO_SIZE_BYTES) {
       throw new Error('The external image exceeds the 15 MB photo limit.');
     }
