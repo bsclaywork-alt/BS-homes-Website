@@ -14924,17 +14924,27 @@ export default function App() {
   const handleLogin = async () => {
     setLoginError('');
     const provider = new GoogleAuthProvider();
-    // Suggest the BS Homez administrator account without granting or changing access.
-    provider.setCustomParameters({ login_hint: 'bsclaywork@gmail.com' });
+    // Ask Google to show the account chooser and suggest the BS Homez admin account.
+    // This is only a sign-in hint; authorization still depends on the server-issued admin claim.
+    provider.setCustomParameters({
+      login_hint: 'bsclaywork@gmail.com',
+      prompt: 'select_account'
+    });
     try {
-      // Mobile browsers commonly block or interrupt popup-based Google sign-in.
-      // Use Firebase's redirect flow on touch-first devices; auth state is then
-      // restored by the existing onAuthStateChanged listener after returning.
-      if (window.matchMedia('(pointer: coarse)').matches) {
+      // Start with a user-gesture popup so Android Chrome opens Google's account chooser.
+      // If the browser blocks popups, fall back to Firebase redirect sign-in.
+      let credential;
+      try {
+        credential = await signInWithPopup(auth, provider);
+      } catch (popupError: any) {
+        const popupCode = String(popupError?.code || '');
+        if (popupCode !== 'auth/popup-blocked' &&
+            popupCode !== 'auth/operation-not-supported-in-this-environment') {
+          throw popupError;
+        }
         await signInWithRedirect(auth, provider);
         return;
       }
-      const credential = await signInWithPopup(auth, provider);
       const tokenRes = await credential.user.getIdTokenResult(true);
       const authorized = tokenRes?.claims?.admin === true;
       setUser(credential.user);
