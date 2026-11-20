@@ -5165,6 +5165,36 @@ const ProjectForm = ({
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
+          {/* Offer Your Asset-aligned fields shared by Rental, Resale and Primary records */}
+          <section className="space-y-4 border border-art-gold/30 bg-art-gold/5 p-4 sm:p-5 rounded-sm">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.22em] font-bold text-art-gold">Offer Your Asset alignment</p>
+              <h4 className="text-base font-serif text-white mt-1">Core Property Details</h4>
+              <p className="text-[11px] text-white/50 mt-1">These fields map to the existing project record. Legacy fields below remain available and existing records are preserved.</p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Society Type</label>
+                <select className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={formData.societyType || 'Gated'} onChange={e => setFormData(prev => ({ ...prev, societyType: e.target.value, projectTypeCategory: e.target.value === 'Individual' ? 'Individual' : 'Gated' }))}>
+                  <option value="Gated">Gated</option><option value="Individual">Individual</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Total Acres</label>
+                <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={formData.totalAcres || ''} onChange={e => setFormData(prev => ({ ...prev, totalAcres: e.target.value, projectSize: e.target.value ? `${e.target.value} Acres` : prev.projectSize }))} placeholder="e.g. 5.5" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Possession Date</label>
+                <input type="date" className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={(formData.possessionDate || '').slice(0, 10)} onChange={e => setFormData(prev => ({ ...prev, possessionDate: e.target.value, handoverDate: e.target.value }))} />
+              </div>
+              <div className="sm:col-span-2 lg:col-span-3 space-y-1">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">RERA Number</label>
+                <input className="w-full bg-black/60 border border-art-gold/60 p-3.5 text-art-gold text-sm font-mono font-bold tracking-wide placeholder:text-white/30" value={formData.reraNumber || ''} onChange={e => setFormData(prev => ({ ...prev, reraNumber: e.target.value }))} placeholder="Enter verified RERA registration number" />
+                <p className="text-[10px] text-white/40">Leave blank if not provided. No placeholder or assumed RERA number will be saved.</p>
+              </div>
+            </div>
+          </section>
+
           {/* ======================================================== */}
           {/* RENTAL INVENTORY SPECIFIC FIELDS                        */}
           {/* ======================================================== */}
