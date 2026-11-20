@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';
+import * as assert from 'node:assert/strict';
 import { getProjectInventoryModeDefaults, resolveProjectInventoryMode, transitionProjectInventoryMode } from '../src/lib/projectInventoryMode';
 
 assert.equal(resolveProjectInventoryMode('Primary', 'Resale'), 'Primary');
