@@ -5191,6 +5191,54 @@ const ProjectForm = ({
                 <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">RERA Number</label>
                 <input className="w-full bg-black/60 border border-art-gold/60 p-3.5 text-art-gold text-sm font-mono font-bold tracking-wide placeholder:text-white/30" value={formData.reraNumber || ''} onChange={e => setFormData(prev => ({ ...prev, reraNumber: e.target.value }))} placeholder="Enter verified RERA registration number" />
                 <p className="text-[10px] text-white/40">Leave blank if not provided. No placeholder or assumed RERA number will be saved.</p>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Google Map URL</label>
+                  <input type="url" className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={formData.mapUrl || ''} onChange={e => setFormData(prev => ({ ...prev, mapUrl: e.target.value }))} placeholder="https://maps.google.com/..." />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Expected Price / Rent</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={inventoryMode === 'Rental' ? (formData.monthlyRental || '') : (formData.price || '')} onChange={e => setFormData(prev => inventoryMode === 'Rental' ? ({ ...prev, monthlyRental: e.target.value, price: e.target.value }) : ({ ...prev, price: e.target.value }))} placeholder={inventoryMode === 'Rental' ? 'Monthly rent' : 'Expected sale price'} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Seller Type</label>
+                  <select className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={formData.saleFrom || 'Resale'} onChange={e => setFormData(prev => ({ ...prev, saleFrom: e.target.value }))}>
+                    <option value="Resale">Resale</option><option value="Builder">Builder</option><option value="Landlord">Landlord</option><option value="Investor">Investor</option><option value="Individual">Individual</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Configuration</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={(formData.configuration || []).join(', ')} onChange={e => setFormData(prev => ({ ...prev, configuration: e.target.value.split(',').map(v => v.trim()).filter(Boolean), residenceType: e.target.value.split(',')[0]?.trim() || prev.residenceType }))} placeholder="e.g. 2 BHK, 3 BHK" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Door Facing</label>
+                  <select className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={formData.mainDoorFacing || 'East'} onChange={e => setFormData(prev => ({ ...prev, mainDoorFacing: e.target.value, facingAvailable: [e.target.value] }))}>
+                    {['East', 'North', 'West', 'South', 'South East', 'North East', 'South West'].map(value => <option key={value} value={value}>{value}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Floor</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={formData.floor || ''} onChange={e => setFormData(prev => ({ ...prev, floor: e.target.value, floorAvailability: e.target.value }))} placeholder="e.g. 8th Floor" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Tower</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={formData.tower || ''} onChange={e => setFormData(prev => ({ ...prev, tower: e.target.value }))} placeholder="e.g. Tower A" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Furnishing</label>
+                  <select className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={formData.furnishType || 'Semi Furnished'} onChange={e => setFormData(prev => ({ ...prev, furnishType: e.target.value, interiorStatus: e.target.value }))}>
+                    <option value="Unfurnished">Unfurnished</option><option value="Semi Furnished">Semi Furnished</option><option value="Furnished">Furnished</option><option value="Full Furnished">Full Furnished</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Available From</label>
+                  <input type="date" className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={(formData.availableFrom || '').slice(0, 10)} onChange={e => setFormData(prev => ({ ...prev, availableFrom: e.target.value }))} />
+                </div>
+                <div className="sm:col-span-2 lg:col-span-3 space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Amenities (comma separated)</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={amenitiesInput} onChange={e => setAmenitiesInput(e.target.value)} placeholder="Club House, Gym, Swimming Pool, Security..." />
+                </div>
+              </div>
               </div>
             </div>
           </section>
