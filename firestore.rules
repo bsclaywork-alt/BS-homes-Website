@@ -11,6 +11,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Privileged access is granted only by a server-assigned Firebase custom claim.
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -33,8 +38,8 @@ service cloud.firestore {
     // Projects: Publicly readable & editable for Artisanal Portraits inline curation
     match /projects/{projectId} {
       allow read: if true;
-      allow create: if isValidId(projectId) && isValidProject(incoming());
-      allow update: if isValidId(projectId) && isValidProject(incoming()) && (
+      allow create: if isAdmin() && isValidId(projectId) && isValidProject(incoming());
+      allow update: if isAdmin() && isValidId(projectId) && isValidProject(incoming()) && (
         incoming().diff(existing()).affectedKeys().hasOnly([
           'id', 'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
           'location', 'locationTarget',
@@ -58,7 +63,7 @@ service cloud.firestore {
           'organicViews', 'createdAt', 'updatedAt'
         ])
       );
-      allow delete: if isValidId(projectId);
+      allow delete: if isAdmin() && isValidId(projectId);
     }
 
     function isValidProject(data) {
@@ -160,7 +165,7 @@ service cloud.firestore {
     // Enquiries: Publicly writable (create only), admin readable
     match /enquiries/{enquiryId} {
       allow create: if isValidId(enquiryId) && isValidEnquiry(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidEnquiry(data) {
@@ -182,7 +187,7 @@ service cloud.firestore {
     // Opportunities: Publicly writable (create only), admin readable
     match /opportunities/{opportunityId} {
       allow create: if isValidId(opportunityId) && isValidOpportunity(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidOpportunity(data) {
@@ -226,7 +231,7 @@ service cloud.firestore {
     // Subscriptions: Public writable, admin readable/manageable
     match /subscriptions/{subscriptionId} {
       allow create: if isValidId(subscriptionId) && isValidSubscription(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidSubscription(data) {
@@ -242,7 +247,7 @@ service cloud.firestore {
     // Referrals: Publicly writable (create only), admin readable
     match /referrals/{referralId} {
       allow create: if isValidId(referralId) && isValidReferral(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidReferral(data) {
