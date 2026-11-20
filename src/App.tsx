@@ -4614,6 +4614,9 @@ const ProjectForm = ({
     approvedAuthority: project?.approvedAuthority || 'BDA',
     // Portfolio Curator Fields
     projectTypeCategory: project?.projectTypeCategory || 'Gated',
+    societyType: project?.societyType || (project?.projectTypeCategory === 'Individual' || project?.projectTypeCategory === 'Stand Alone' ? 'Individual' : 'Gated'),
+    totalAcres: project?.totalAcres || (project?.projectSize || '').replace(/\s*Acres?\s*/i, ''),
+    possessionDate: project?.possessionDate || project?.handoverDate || '',
     presentStatus: project?.presentStatus || (resolvedInitialType === 'Rental' ? 'Ready to Move-IN' : 'Under Construction'),
     vaastuCompliant: project?.vaastuCompliant || 'Yes',
     facingAvailable: project?.facingAvailable || ['East', 'North'],
@@ -4929,7 +4932,7 @@ const ProjectForm = ({
         builderName: (currentData.builderName || (inventoryMode === 'Rental' ? 'Private Landlord' : 'Verified Premier Builder')).trim(),
         approvalBody: (currentData.approvedAuthority || currentData.approvalBody || 'BBMP / BDA & Karnataka RERA Approved').trim(),
         floorPlan: (currentData.floorPlan || (currentData.suba ? `${currentData.residenceType || ''} (${currentData.suba})` : 'Vaastu Compliant Luxury Floor Plans')).trim(),
-        reraNumber: (currentData.reraNumber || 'PRM/KA/RERA/Verified').trim(),
+        reraNumber: (currentData.reraNumber || '').trim(),
         segment: (currentData.segment || (inventoryMode === 'Rental' ? 'Verified Rental' : inventoryMode === 'Resale' ? 'Prime Resale' : 'Luxury')).trim(),
         description: generatedDescription.trim(),
         imageUrls: (inventoryMode === 'Rental' || inventoryMode === 'Resale')
@@ -4965,6 +4968,9 @@ const ProjectForm = ({
         approvedAuthority: currentData.approvedAuthority || 'BDA',
         // Portfolio Curator Explicit Fields
         projectTypeCategory: currentData.projectTypeCategory || 'Gated',
+        societyType: currentData.societyType || (currentData.projectTypeCategory === 'Individual' || currentData.projectTypeCategory === 'Stand Alone' ? 'Individual' : 'Gated'),
+        totalAcres: currentData.totalAcres || '',
+        possessionDate: currentData.possessionDate || currentData.handoverDate || '',
         presentStatus: currentData.presentStatus || currentData.handoverStatus || 'Under Construction',
         vaastuCompliant: currentData.vaastuCompliant || 'Yes',
         facingAvailable: currentData.facingAvailable || (currentData.mainDoorFacing ? [currentData.mainDoorFacing] : ['East', 'North']),
