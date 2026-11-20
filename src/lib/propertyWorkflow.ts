@@ -24,6 +24,7 @@ export interface OfferAssetFormInput {
   location: string;
   fullAddress: string;
   googleMapUrl: string;
+  reraNumber: string;
   willingTo: OfferWillingTo;
   sellerType: OfferSellerType;
   rentPerMonth: string;
@@ -55,6 +56,7 @@ export const INITIAL_OFFER_ASSET_FORM: OfferAssetFormInput = {
   location: '',
   fullAddress: '',
   googleMapUrl: '',
+  reraNumber: '',
   willingTo: 'Sell',
   sellerType: 'Resale',
   rentPerMonth: '',
@@ -211,10 +213,12 @@ export function createPropertySubmissionRecord(
     dedupKey: buildSubmissionDedupKey(input),
     ownerName: input.ownerName.trim(),
     ownerMobile: input.ownerMobile.trim(),
+    ownerCountryCode: input.countryCode || '+91',
     propertyName: input.propertyName.trim(),
     location: input.location.trim(),
     fullAddress: input.fullAddress.trim(),
     googleMapUrl: input.googleMapUrl.trim(),
+    reraNumber: input.reraNumber.trim(),
     willingTo: input.willingTo,
     targetCategory: category,
     propertyType: input.propertyType,
@@ -285,6 +289,7 @@ export function buildSanitizedPublicPortfolioRecord(
     name: submission.propertyName.trim(),
     location: submission.location.trim(),
     googleMapUrl: submission.googleMapUrl?.trim() || '',
+    reraNumber: submission.reraNumber?.trim() || '',
     category,
     propertyType: submission.propertyType,
     societyType: submission.societyType,
@@ -371,6 +376,7 @@ export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
     configuration: [item.configuration],
     segment: item.category === 'Rental' ? 'Curated Rental' : 'Verified Owner Listing',
     handoverStatus,
+    reraNumber: item.reraNumber || '',
     handoverDate: item.possessionDate || item.availableFrom || 'Available',
     availableFrom: item.availableFrom || item.possessionDate || '',
     projectSize: item.totalAcres ? `${item.totalAcres} Acres` : '',

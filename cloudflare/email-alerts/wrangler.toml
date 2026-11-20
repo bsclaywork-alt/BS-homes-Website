@@ -1,0 +1,13 @@
+name = "bshomez-email-alerts"
+main = "src/index.js"
+compatibility_date = "2026-11-20"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://bshomez.in,https://www.bshomez.in"
+EMAIL_FROM = "BS Homez Alerts <alerts@bshomez.in>"
+EMAIL_TO = "contact@bshomez.in"
+
+[[kv_namespaces]]
+binding = "ALERT_LIMITS"
+id = "REPLACE_WITH_CLOUDFLARE_KV_NAMESPACE_ID"

@@ -37,6 +37,9 @@ jobs:
         run: npm install
 
       - name: Build application
+        env:
+          VITE_EMAIL_ALERT_WORKER_URL: ${{ vars.VITE_EMAIL_ALERT_WORKER_URL }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
         run: npm run build:pages
 
       - name: Verify production build

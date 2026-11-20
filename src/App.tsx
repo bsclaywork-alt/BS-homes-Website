@@ -135,6 +135,7 @@ import { MediaUploadCompressor } from './components/MediaUploadCompressor';
 import { MediaViewerModal } from './components/MediaViewerModal';
 import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
 import { OfferYourAssetForm } from './components/OfferYourAssetForm';
+import { AdminPropertySubmissions } from './components/AdminPropertySubmissions';
 import { HomepageShowcase } from './components/HomepageShowcase';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -1267,6 +1268,13 @@ const ProjectCard: React.FC<{
         projectName: project.name,
         email: subscribeEmail.trim().toLowerCase(),
         createdAt: serverTimestamp()
+      });
+      void dispatchEnquiryEmailAlert({
+        collectionName: 'subscriptions',
+        customerEmail: subscribeEmail.trim().toLowerCase(),
+        projectName: project.name,
+        type: 'Property subscription',
+        source: 'Website property updates subscription'
       });
       setSubscribeSuccess(true);
       setSubscribeEmail('');
@@ -4613,6 +4621,9 @@ const ProjectForm = ({
     approvedAuthority: project?.approvedAuthority || 'BDA',
     // Portfolio Curator Fields
     projectTypeCategory: project?.projectTypeCategory || 'Gated',
+    societyType: project?.societyType || (project?.projectTypeCategory === 'Individual' || project?.projectTypeCategory === 'Stand Alone' ? 'Individual' : 'Gated'),
+    totalAcres: project?.totalAcres || (project?.projectSize || '').replace(/\s*Acres?\s*/i, ''),
+    possessionDate: project?.possessionDate || project?.handoverDate || '',
     presentStatus: project?.presentStatus || (resolvedInitialType === 'Rental' ? 'Ready to Move-IN' : 'Under Construction'),
     vaastuCompliant: project?.vaastuCompliant || 'Yes',
     facingAvailable: project?.facingAvailable || ['East', 'North'],
@@ -4928,7 +4939,7 @@ const ProjectForm = ({
         builderName: (currentData.builderName || (inventoryMode === 'Rental' ? 'Private Landlord' : 'Verified Premier Builder')).trim(),
         approvalBody: (currentData.approvedAuthority || currentData.approvalBody || 'BBMP / BDA & Karnataka RERA Approved').trim(),
         floorPlan: (currentData.floorPlan || (currentData.suba ? `${currentData.residenceType || ''} (${currentData.suba})` : 'Vaastu Compliant Luxury Floor Plans')).trim(),
-        reraNumber: (currentData.reraNumber || 'PRM/KA/RERA/Verified').trim(),
+        reraNumber: (currentData.reraNumber || '').trim(),
         segment: (currentData.segment || (inventoryMode === 'Rental' ? 'Verified Rental' : inventoryMode === 'Resale' ? 'Prime Resale' : 'Luxury')).trim(),
         description: generatedDescription.trim(),
         imageUrls: (inventoryMode === 'Rental' || inventoryMode === 'Resale')
@@ -4964,6 +4975,9 @@ const ProjectForm = ({
         approvedAuthority: currentData.approvedAuthority || 'BDA',
         // Portfolio Curator Explicit Fields
         projectTypeCategory: currentData.projectTypeCategory || 'Gated',
+        societyType: currentData.societyType || (currentData.projectTypeCategory === 'Individual' || currentData.projectTypeCategory === 'Stand Alone' ? 'Individual' : 'Gated'),
+        totalAcres: currentData.totalAcres || '',
+        possessionDate: currentData.possessionDate || currentData.handoverDate || '',
         presentStatus: currentData.presentStatus || currentData.handoverStatus || 'Under Construction',
         vaastuCompliant: currentData.vaastuCompliant || 'Yes',
         facingAvailable: currentData.facingAvailable || (currentData.mainDoorFacing ? [currentData.mainDoorFacing] : ['East', 'North']),
@@ -5157,6 +5171,84 @@ const ProjectForm = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Offer Your Asset-aligned fields shared by Rental, Resale and Primary records */}
+          <section className="space-y-4 border border-art-gold/30 bg-art-gold/5 p-4 sm:p-5 rounded-sm">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.22em] font-bold text-art-gold">Offer Your Asset alignment</p>
+              <h4 className="text-base font-serif text-white mt-1">Core Property Details</h4>
+              <p className="text-[11px] text-white/50 mt-1">These fields map to the existing project record. Legacy fields below remain available and existing records are preserved.</p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Society Type</label>
+                <select className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={formData.societyType || 'Gated'} onChange={e => setFormData(prev => ({ ...prev, societyType: e.target.value, projectTypeCategory: e.target.value === 'Individual' ? 'Individual' : 'Gated' }))}>
+                  <option value="Gated">Gated</option><option value="Individual">Individual</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Total Acres</label>
+                <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={formData.totalAcres || ''} onChange={e => setFormData(prev => ({ ...prev, totalAcres: e.target.value, projectSize: e.target.value ? `${e.target.value} Acres` : prev.projectSize }))} placeholder="e.g. 5.5" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Possession Date</label>
+                <input type="date" className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={(formData.possessionDate || '').slice(0, 10)} onChange={e => setFormData(prev => ({ ...prev, possessionDate: e.target.value, handoverDate: e.target.value }))} />
+              </div>
+              <div className="sm:col-span-2 lg:col-span-3 space-y-1">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-art-gold">RERA Number</label>
+                <input className="w-full bg-black/60 border border-art-gold/60 p-3.5 text-art-gold text-sm font-mono font-bold tracking-wide placeholder:text-white/30" value={formData.reraNumber || ''} onChange={e => setFormData(prev => ({ ...prev, reraNumber: e.target.value }))} placeholder="Enter verified RERA registration number" />
+                <p className="text-[10px] text-white/40">Leave blank if not provided. No placeholder or assumed RERA number will be saved.</p>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Google Map URL</label>
+                  <input type="url" className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={formData.mapUrl || ''} onChange={e => setFormData(prev => ({ ...prev, mapUrl: e.target.value }))} placeholder="https://maps.google.com/..." />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Expected Price / Rent</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={inventoryMode === 'Rental' ? (formData.monthlyRental || '') : (formData.price || '')} onChange={e => setFormData(prev => inventoryMode === 'Rental' ? ({ ...prev, monthlyRental: e.target.value, price: e.target.value }) : ({ ...prev, price: e.target.value }))} placeholder={inventoryMode === 'Rental' ? 'Monthly rent' : 'Expected sale price'} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Seller Type</label>
+                  <select className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={formData.saleFrom || 'Resale'} onChange={e => setFormData(prev => ({ ...prev, saleFrom: e.target.value }))}>
+                    <option value="Resale">Resale</option><option value="Builder">Builder</option><option value="Landlord">Landlord</option><option value="Investor">Investor</option><option value="Individual">Individual</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Configuration</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={(formData.configuration || []).join(', ')} onChange={e => setFormData(prev => ({ ...prev, configuration: e.target.value.split(',').map(v => v.trim()).filter(Boolean), residenceType: e.target.value.split(',')[0]?.trim() || prev.residenceType }))} placeholder="e.g. 2 BHK, 3 BHK" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Door Facing</label>
+                  <select className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={formData.mainDoorFacing || 'East'} onChange={e => setFormData(prev => ({ ...prev, mainDoorFacing: e.target.value, facingAvailable: [e.target.value] }))}>
+                    {['East', 'North', 'West', 'South', 'South East', 'North East', 'South West'].map(value => <option key={value} value={value}>{value}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Floor</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={formData.floor || ''} onChange={e => setFormData(prev => ({ ...prev, floor: e.target.value, floorAvailability: e.target.value }))} placeholder="e.g. 8th Floor" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Tower</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={formData.tower || ''} onChange={e => setFormData(prev => ({ ...prev, tower: e.target.value }))} placeholder="e.g. Tower A" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Furnishing</label>
+                  <select className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={formData.furnishType || 'Semi Furnished'} onChange={e => setFormData(prev => ({ ...prev, furnishType: e.target.value, interiorStatus: e.target.value }))}>
+                    <option value="Unfurnished">Unfurnished</option><option value="Semi Furnished">Semi Furnished</option><option value="Furnished">Furnished</option><option value="Full Furnished">Full Furnished</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Available From</label>
+                  <input type="date" className="w-full bg-art-dark border border-white/15 p-3 text-white text-xs" value={(formData.availableFrom || '').slice(0, 10)} onChange={e => setFormData(prev => ({ ...prev, availableFrom: e.target.value }))} />
+                </div>
+                <div className="sm:col-span-2 lg:col-span-3 space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Amenities (comma separated)</label>
+                  <input className="w-full bg-black/50 border border-white/15 p-3 text-white text-xs" value={amenitiesInput} onChange={e => setAmenitiesInput(e.target.value)} placeholder="Club House, Gym, Swimming Pool, Security..." />
+                </div>
+              </div>
+              </div>
+            </div>
+          </section>
 
           {/* ======================================================== */}
           {/* RENTAL INVENTORY SPECIFIC FIELDS                        */}
@@ -5606,7 +5698,7 @@ const ProjectForm = ({
                 <input
                   id="show-project-photos-new"
                   type="checkbox"
-                  checked={formData.showImagesOnline ?? inventoryMode !== 'Primary'}
+                  checked={formData.showImagesOnline ?? true}
                   onChange={e => setFormData(prev => ({ ...prev, showImagesOnline: e.target.checked }))}
                   className="h-4 w-4 accent-art-gold cursor-pointer"
                 />
@@ -6148,7 +6240,7 @@ const ProjectForm = ({
                 <input
                   id="show-project-photos-new"
                   type="checkbox"
-                  checked={formData.showImagesOnline ?? inventoryMode !== 'Primary'}
+                  checked={formData.showImagesOnline ?? true}
                   onChange={e => setFormData(prev => ({ ...prev, showImagesOnline: e.target.checked }))}
                   className="h-4 w-4 accent-art-gold cursor-pointer"
                 />
@@ -7978,7 +8070,7 @@ const AdminView = ({
   onSaveProject?: (p: Project) => Promise<void> | void,
   onBatchUpdateProjects?: (updated: Project[]) => void
 }) => {
-  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility' | 'seo_audit'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'asset_intake' | 'opportunities' | 'referrals' | 'tab_visibility' | 'seo_audit'>('leads');
   const [tabVisibilityToast, setTabVisibilityToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
   const [isUpdatingTabVis, setIsUpdatingTabVis] = useState(false);
   const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
@@ -9483,6 +9575,24 @@ const AdminView = ({
            </button>
            <button
              type="button"
+             aria-pressed={activeTab === 'asset_intake'}
+             onClick={(event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               setActiveTab('asset_intake');
+             }}
+             className={cn(
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               activeTab === 'asset_intake'
+                 ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform"
+                 : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
+             )}
+           >
+             <Building2 size={15} />
+             <span>Asset Intake</span>
+           </button>
+           <button
+             type="button"
              aria-pressed={activeTab === 'tab_visibility'}
              onClick={(event) => {
                event.preventDefault();
@@ -10514,6 +10624,8 @@ const AdminView = ({
           </table>
         </div>
       </div>
+    ) : activeTab === 'asset_intake' ? (
+      <AdminPropertySubmissions />
     ) : activeTab === 'tab_visibility' ? (
       <div className="space-y-6 font-sans">
         {tabVisibilityToast && (

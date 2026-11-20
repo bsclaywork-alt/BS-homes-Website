@@ -79,10 +79,12 @@ export interface PropertySubmission {
   // Section A: Owner Information (STRICTLY PRIVATE - Admin Only)
   ownerName: string;
   ownerMobile: string;
+  ownerCountryCode?: string;
   propertyName: string;
   location: string;
   fullAddress: string;
   googleMapUrl: string;
+  reraNumber?: string;
 
   // Section B: Willing To
   willingTo: OfferWillingTo;
@@ -142,6 +144,7 @@ export interface PublicPortfolioItem {
   location: string;
   publicAddressHint?: string;
   googleMapUrl?: string;
+  reraNumber?: string;
   category: 'Primary' | 'Resale' | 'Rental';
   propertyType: OfferPropertyType;
   societyType: OfferSocietyType;
@@ -207,6 +210,10 @@ export interface Project {
     | 'All Zone';
   type: 'Primary' | 'Resale' | 'Rental' | 'Primary Sale';
   propertyType: 'Apartment' | 'Villa' | 'Plot' | 'Flat' | 'Commercial' | 'Stand Alone Building';
+  /** Offer Your Asset aligned curator fields; kept alongside legacy fields for backward compatibility. */
+  societyType?: 'Gated' | 'Individual' | string;
+  totalAcres?: string;
+  possessionDate?: string;
   builderCategory?: 'A+' | 'A' | 'B' | 'C';
   builderName?: string;
   approvalBody?: string;

@@ -1,0 +1,59 @@
+name: Admin Email Alerts Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cloudflare/email-alerts/**'
+      - 'src/App.tsx'
+      - 'src/components/AdminPropertySubmissions.tsx'
+      - 'src/components/MediaUploadCompressor.tsx'
+      - 'firestore.rules'
+      - 'tests/firestore/**'
+      - 'src/components/OfferYourAssetForm.tsx'
+      - 'src/lib/propertyWorkflow.ts'
+      - 'src/types.ts'
+      - 'src/lib/enquiryAlert.ts'
+      - '.github/workflows/deploy.yml'
+      - '.github/workflows/admin-email-alerts-check.yml'
+  push:
+    branches: [feature/admin-vault-intake-email-20261120]
+    paths:
+      - 'cloudflare/email-alerts/**'
+      - 'tests/firestore/**'
+      - 'src/App.tsx'
+      - 'src/components/AdminPropertySubmissions.tsx'
+      - 'src/components/MediaUploadCompressor.tsx'
+      - 'firestore.rules'
+      - 'src/components/OfferYourAssetForm.tsx'
+      - 'src/lib/propertyWorkflow.ts'
+      - 'src/types.ts'
+      - 'src/lib/enquiryAlert.ts'
+      - '.github/workflows/deploy.yml'
+      - '.github/workflows/admin-email-alerts-check.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build:pages
+      - name: Validate Cloudflare Worker syntax
+        run: node --check cloudflare/email-alerts/src/index.js
+      - name: Set up Java for Firestore Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Run Firestore security rules tests
+        working-directory: tests/firestore
+        run: |
+          npm install --no-package-lock
+          cp ../../firestore.rules firestore.rules
+          npx firebase emulators:exec --only firestore --project demo-bshomez-rules --config firebase.json "npm test"
