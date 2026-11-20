@@ -14924,6 +14924,8 @@ export default function App() {
   const handleLogin = async () => {
     setLoginError('');
     const provider = new GoogleAuthProvider();
+    // Suggest the BS Homez administrator account without granting or changing access.
+    provider.setCustomParameters({ login_hint: 'bsclaywork@gmail.com' });
     try {
       // Mobile browsers commonly block or interrupt popup-based Google sign-in.
       // Use Firebase's redirect flow on touch-first devices; auth state is then
@@ -14977,10 +14979,26 @@ export default function App() {
         // hidden by a cached token. Access still requires the verified admin claim.
         const tokenRes = await u.getIdTokenResult(true);
         if (auth.currentUser?.uid === u.uid) {
-          setIsAdmin(tokenRes?.claims?.admin === true);
+          const authorized = tokenRes?.claims?.admin === true;
+          setIsAdmin(authorized);
+          // A redirect sign-in returns to the page rather than resuming handleLogin().
+          // Open the Admin tab here for both authorized and unauthorized accounts so
+          // the user sees either the Vault or the explicit authorization-denied screen.
+          setActiveMainTab('admin');
+          window.history.replaceState({}, '', '/?tab=admin');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if (!authorized) {
+            setLoginError('You signed in successfully, but this Google account does not have the required BS Homez admin authorization.');
+          }
         }
-      } catch {
-        if (auth.currentUser?.uid === u.uid) setIsAdmin(false);
+      } catch (error) {
+        console.error('Could not verify BS Homez admin authorization:', error);
+        if (auth.currentUser?.uid === u.uid) {
+          setIsAdmin(false);
+          setActiveMainTab('admin');
+          window.history.replaceState({}, '', '/?tab=admin');
+          setLoginError('Google sign-in completed, but admin authorization could not be verified. Please retry.');
+        }
       }
     });
     return () => unsubAuth();
