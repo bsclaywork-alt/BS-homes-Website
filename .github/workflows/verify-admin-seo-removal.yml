@@ -1,0 +1,37 @@
+name: Admin Vault SEO Audit removal verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/App.tsx"
+      - ".github/scripts/verify-admin-seo-removal.sh"
+      - ".github/workflows/verify-admin-seo-removal.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: TypeScript validation
+        run: npm run lint
+      - name: Verify Admin Vault removal and SEO workflow preservation
+        run: bash .github/scripts/verify-admin-seo-removal.sh
+      - name: Build production static website and SEO pages
+        run: npm run build:pages
+      - name: Verify generated production assets
+        run: |
+          test -s dist/index.html
+          test -s dist/sitemap.xml
+          test -s dist/robots.txt
+          test -n "$(find dist/assets -type f -name '*.js' -size +0c -print -quit)"
+          test -n "$(find dist/assets -type f -name '*.css' -size +0c -print -quit)"
