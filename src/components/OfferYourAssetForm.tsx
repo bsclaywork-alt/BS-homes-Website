@@ -186,7 +186,38 @@ export const OfferYourAssetForm: React.FC<OfferYourAssetFormProps> = ({ onSubmis
         category: targetCategory
       });
 
-      // Firestore onCreate Cloud Function sends the private Admin email alert.
+      // Send the private Admin email alert only after the Firestore batch has committed.
+      void dispatchEnquiryEmailAlert({
+        collectionName: 'property_submissions',
+        type: 'Offer Your Asset',
+        ownerName: submissionRecord.ownerName,
+        ownerMobile: submissionRecord.ownerMobile,
+        ownerCountryCode: submissionRecord.ownerCountryCode,
+        propertyName: submissionRecord.propertyName,
+        location: submissionRecord.location,
+        fullAddress: submissionRecord.fullAddress,
+        googleMapUrl: submissionRecord.googleMapUrl,
+        reraNumber: submissionRecord.reraNumber,
+        willingTo: submissionRecord.willingTo,
+        sellerType: submissionRecord.sellerType,
+        expectedPrice: submissionRecord.expectedPrice,
+        rentPerMonth: submissionRecord.rentPerMonth,
+        maintenance: submissionRecord.maintenance,
+        advance: submissionRecord.advance,
+        propertyType: submissionRecord.propertyType,
+        societyType: submissionRecord.societyType,
+        propertyStatus: submissionRecord.propertyStatus,
+        possessionDate: submissionRecord.possessionDate,
+        configuration: submissionRecord.configuration,
+        doorFacing: submissionRecord.doorFacing,
+        floorNumber: submissionRecord.floorNumber,
+        towerNumber: submissionRecord.towerNumber,
+        totalAcres: submissionRecord.totalAcres,
+        furnishing: submissionRecord.furnishing,
+        availableFrom: submissionRecord.availableFrom,
+        amenities: submissionRecord.amenities,
+        others: submissionRecord.others
+      });
 
       resetFormImmediately();
     } catch (err: any) {
