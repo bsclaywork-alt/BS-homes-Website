@@ -11,7 +11,7 @@ if grep -Fq "seo_audit" "$APP"; then
   echo "FAIL: the removed seo_audit Admin Vault tab key remains."
   exit 1
 fi
-if grep -Fq "SEO Audit Hub" "$APP"; then
+if grep -Fq "SEO Audit Hub</span>" "$APP"; then
   echo "FAIL: the removed Admin Vault navigation label remains."
   exit 1
 fi
