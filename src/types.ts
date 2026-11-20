@@ -210,6 +210,10 @@ export interface Project {
     | 'All Zone';
   type: 'Primary' | 'Resale' | 'Rental' | 'Primary Sale';
   propertyType: 'Apartment' | 'Villa' | 'Plot' | 'Flat' | 'Commercial' | 'Stand Alone Building';
+  /** Offer Your Asset aligned curator fields; kept alongside legacy fields for backward compatibility. */
+  societyType?: 'Gated' | 'Individual' | string;
+  totalAcres?: string;
+  possessionDate?: string;
   builderCategory?: 'A+' | 'A' | 'B' | 'C';
   builderName?: string;
   approvalBody?: string;
