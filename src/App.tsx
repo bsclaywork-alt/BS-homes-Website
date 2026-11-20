@@ -134,6 +134,7 @@ import { MediaUploadCompressor } from './components/MediaUploadCompressor';
 import { MediaViewerModal } from './components/MediaViewerModal';
 import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
 import { OfferYourAssetForm } from './components/OfferYourAssetForm';
+import { AdminPrimaryResaleForm } from './components/AdminPrimaryResaleForm';
 import { HomepageShowcase } from './components/HomepageShowcase';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -15848,53 +15849,67 @@ export default function App() {
 
       <AnimatePresence>
         {showProjectModal && Boolean(user && isAdmin) && (
-          <ProjectForm
-            project={editingProject}
-            initialInventoryType={projectModalMode}
-            onClose={() => {
-              setShowProjectModal(false);
-              setEditingProject(null);
-            }}
-            onOpenEnquiry={(proj) => {
-              setSelectedProject(proj);
-              setEnquiryType('Acquire');
-            }}
-            onProjectSaved={(savedProject) => {
-              const key = savedProject.id || savedProject.name;
-              setDeletedProjectIds(prev => {
-                const next = prev.filter(item => item !== key && item !== savedProject.name);
-                try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
-                return next;
-              });
-              setHiddenProjectIds(prev => {
-                const next = prev.filter(item => item !== key && item !== savedProject.name);
-                try { localStorage.setItem('bs_homez_hidden_projects', JSON.stringify(next)); } catch {}
-                return next;
-              });
-
-              setFilters({
-                location: 'All',
-                zone: 'All',
-                price: 'All',
-                propertyType: 'All',
-                handoverStatus: 'All'
-              });
-
-              const enriched = autoEnrichProjectData(savedProject);
-              setProjects(prev => {
-                const filtered = prev.filter(p =>
-                  (p.id && p.id === enriched.id) || p.name.toLowerCase() === enriched.name.toLowerCase()
-                    ? false
-                    : true
-                );
-                const updatedList = deduplicateProjects([enriched, ...filtered]);
-                try {
-                  localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(updatedList));
-                } catch {}
-                return updatedList;
-              });
-            }}
-          />
+          (editingProject ? resolveProjectInventoryMode(editingProject.type, 'Primary') : projectModalMode) === 'Rental' ? (
+            <ProjectForm
+              project={editingProject}
+              initialInventoryType="Rental"
+              onClose={() => {
+                setShowProjectModal(false);
+                setEditingProject(null);
+              }}
+              onOpenEnquiry={(proj) => {
+                setSelectedProject(proj);
+                setEnquiryType('Acquire');
+              }}
+              onProjectSaved={(savedProject) => {
+                const key = savedProject.id || savedProject.name;
+                setDeletedProjectIds(prev => {
+                  const next = prev.filter(item => item !== key && item !== savedProject.name);
+                  try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
+                  return next;
+                });
+                setHiddenProjectIds(prev => {
+                  const next = prev.filter(item => item !== key && item !== savedProject.name);
+                  try { localStorage.setItem('bs_homez_hidden_projects', JSON.stringify(next)); } catch {}
+                  return next;
+                });
+                setFilters({ location: 'All', zone: 'All', price: 'All', propertyType: 'All', handoverStatus: 'All' });
+                const enriched = autoEnrichProjectData(savedProject);
+                setProjects(prev => {
+                  const filtered = prev.filter(p =>
+                    (p.id && p.id === enriched.id) || p.name.toLowerCase() === enriched.name.toLowerCase() ? false : true
+                  );
+                  const updatedList = deduplicateProjects([enriched, ...filtered]);
+                  try { localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(updatedList)); } catch {}
+                  return updatedList;
+                });
+              }}
+            />
+          ) : (
+            <AdminPrimaryResaleForm
+              mode={editingProject ? resolveProjectInventoryMode(editingProject.type, 'Primary') as 'Primary' | 'Resale' : projectModalMode as 'Primary' | 'Resale'}
+              project={editingProject}
+              onSave={async (savedProject) => {
+                await handleSaveProject(savedProject);
+                const key = savedProject.id || savedProject.name;
+                setDeletedProjectIds(prev => {
+                  const next = prev.filter(item => item !== key && item !== savedProject.name);
+                  try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
+                  return next;
+                });
+                setHiddenProjectIds(prev => {
+                  const next = prev.filter(item => item !== key && item !== savedProject.name);
+                  try { localStorage.setItem('bs_homez_hidden_projects', JSON.stringify(next)); } catch {}
+                  return next;
+                });
+                setFilters({ location: 'All', zone: 'All', price: 'All', propertyType: 'All', handoverStatus: 'All' });
+              }}
+              onClose={() => {
+                setShowProjectModal(false);
+                setEditingProject(null);
+              }}
+            />
+          )
         )}
       </AnimatePresence>
 
