@@ -4551,11 +4551,6 @@ const ProjectForm = ({
   const [inventoryMode, setInventoryMode] = useState<ProjectInventoryMode>(resolvedInitialType);
   const initialModeDefaults = getProjectInventoryModeDefaults(resolvedInitialType);
 
-  const handleInventoryModeChange = (nextMode: ProjectInventoryMode) => {
-    if (nextMode === inventoryMode) return;
-    setFormData(prev => transitionProjectInventoryMode(prev, inventoryMode, nextMode));
-    setInventoryMode(nextMode);
-  };
 
   const [formData, setFormData] = useState<Partial<Project>>({
     name: project?.name || '',
@@ -4640,6 +4635,13 @@ const ProjectForm = ({
     unitsRemaining: project?.unitsRemaining !== undefined ? project.unitsRemaining : undefined,
     isInventorySoldOut: Boolean(project?.isInventorySoldOut || project?.sticker === 'Sold Out')
   });
+
+  const handleInventoryModeChange = (nextMode: ProjectInventoryMode) => {
+    if (nextMode === inventoryMode) return;
+    setFormData(prev => transitionProjectInventoryMode(prev, inventoryMode, nextMode));
+    setInventoryMode(nextMode);
+  };
+
 
   const [keywordsInput, setKeywordsInput] = useState<string>(
     project?.seoKeywords && project.seoKeywords.length > 0
