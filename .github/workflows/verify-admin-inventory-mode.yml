@@ -1,0 +1,27 @@
+name: Admin Vault inventory mode verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [fix/admin-vault-primary-resale-fields-2026-11]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install
+      - name: TypeScript validation
+        run: npm run lint
+      - name: Inventory mode regression tests
+        run: npm run test:inventory-mode
+      - name: GitHub Pages build
+        run: npm run build:pages
