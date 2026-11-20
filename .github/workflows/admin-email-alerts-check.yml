@@ -28,7 +28,8 @@ on:
       - 'src/components/OfferYourAssetForm.tsx'
       - 'src/lib/propertyWorkflow.ts'
       - 'src/types.ts'
-      - 'firebase.json'
+      - 'src/lib/enquiryAlert.ts'
+      - '.github/workflows/deploy.yml'
       - '.github/workflows/admin-email-alerts-check.yml'
 
 jobs:
