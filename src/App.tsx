@@ -147,6 +147,7 @@ import { publicPortfolioToProject } from './lib/propertyWorkflow';
 import { ProjectDetailView } from './components/ProjectDetailView';
 import { OptimizedImage } from './components/OptimizedImage';
 import { slugify } from './data/projectsSitemapData';
+import { getProjectInventoryModeDefaults, resolveProjectInventoryMode, transitionProjectInventoryMode, type ProjectInventoryMode } from './lib/projectInventoryMode';
 
 import imgEastEoi from './assets/images/east_bangalore_eoi_towers_1791731720202.jpg';
 import imgSouthEastConst from './assets/images/southeast_bangalore_construction_1791731732392.jpg';
@@ -4542,14 +4543,19 @@ const ProjectForm = ({
   onProjectSaved?: (savedProject: Project) => void;
   onOpenEnquiry?: (p: Project) => void;
 }) => {
-  const resolvedInitialType: 'Primary' | 'Rental' | 'Resale' =
-    project?.type === 'Rental'
-      ? 'Rental'
-      : project?.type === 'Resale'
-      ? 'Resale'
-      : initialInventoryType || 'Primary';
+  // Saved project type always wins over a stale tab left from the previous form.
+  const resolvedInitialType: ProjectInventoryMode = project
+    ? resolveProjectInventoryMode(project.type, 'Primary')
+    : initialInventoryType || 'Primary';
 
-  const [inventoryMode, setInventoryMode] = useState<'Primary' | 'Rental' | 'Resale'>(resolvedInitialType);
+  const [inventoryMode, setInventoryMode] = useState<ProjectInventoryMode>(resolvedInitialType);
+  const initialModeDefaults = getProjectInventoryModeDefaults(resolvedInitialType);
+
+  const handleInventoryModeChange = (nextMode: ProjectInventoryMode) => {
+    if (nextMode === inventoryMode) return;
+    setFormData(prev => transitionProjectInventoryMode(prev, inventoryMode, nextMode));
+    setInventoryMode(nextMode);
+  };
 
   const [formData, setFormData] = useState<Partial<Project>>({
     name: project?.name || '',
@@ -4570,8 +4576,8 @@ const ProjectForm = ({
     approvalBody: project?.approvalBody || 'BBMP / BDA & RERA Approved',
     floorPlan: project?.floorPlan || '',
     configuration: project?.configuration && project.configuration.length > 0 ? project.configuration : ['2 BHK', '3 BHK'],
-    segment: project?.segment || (resolvedInitialType === 'Rental' ? 'Verified Rental' : 'Luxury'),
-    handoverStatus: project?.handoverStatus || (resolvedInitialType === 'Rental' ? 'Ready to Move' : 'Under Construction'),
+    segment: project?.segment || initialModeDefaults.segment,
+    handoverStatus: project?.handoverStatus || initialModeDefaults.handoverStatus,
     reraNumber: project?.reraNumber || '',
     handoverDate: project?.handoverDate || '',
     projectSize: project?.projectSize || '',
@@ -4613,7 +4619,7 @@ const ProjectForm = ({
     approvedAuthority: project?.approvedAuthority || 'BDA',
     // Portfolio Curator Fields
     projectTypeCategory: project?.projectTypeCategory || 'Gated',
-    presentStatus: project?.presentStatus || (resolvedInitialType === 'Rental' ? 'Ready to Move-IN' : 'Under Construction'),
+    presentStatus: project?.presentStatus || initialModeDefaults.presentStatus,
     vaastuCompliant: project?.vaastuCompliant || 'Yes',
     facingAvailable: project?.facingAvailable || ['East', 'North'],
     floorRise: project?.floorRise || 'Standard Floor Rise',
@@ -5105,8 +5111,7 @@ const ProjectForm = ({
           <button
             type="button"
             onClick={() => {
-              setInventoryMode('Primary');
-              setFormData(prev => ({ ...prev, type: 'Primary' }));
+              handleInventoryModeChange('Primary');
             }}
             className={cn(
               "flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-sm transition-all cursor-pointer text-center",
@@ -5120,8 +5125,7 @@ const ProjectForm = ({
           <button
             type="button"
             onClick={() => {
-              setInventoryMode('Rental');
-              setFormData(prev => ({ ...prev, type: 'Rental', propertyType: prev.propertyType || 'Apartment' }));
+              handleInventoryModeChange('Rental');
             }}
             className={cn(
               "flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-sm transition-all cursor-pointer text-center",
@@ -5135,8 +5139,7 @@ const ProjectForm = ({
           <button
             type="button"
             onClick={() => {
-              setInventoryMode('Resale');
-              setFormData(prev => ({ ...prev, type: 'Resale', propertyType: prev.propertyType || 'Apartment' }));
+              handleInventoryModeChange('Resale');
             }}
             className={cn(
               "flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-sm transition-all cursor-pointer text-center",
@@ -5162,7 +5165,7 @@ const ProjectForm = ({
           {/* RENTAL INVENTORY SPECIFIC FIELDS                        */}
           {/* ======================================================== */}
           {inventoryMode === 'Rental' && (
-            <div className="space-y-6 text-left">
+            <div key="rental-inventory-fields" className="space-y-6 text-left">
               <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-sm text-xs text-cyan-300 font-mono flex items-center justify-between">
                 <span>Rental Inventory Entry • Direct Lease &amp; Tenant Verification Desk</span>
                 <span className="font-bold uppercase tracking-wider text-[10px]">Rental Vault Active</span>
@@ -5641,7 +5644,7 @@ const ProjectForm = ({
           {/* RESALE INVENTORY SPECIFIC FIELDS                         */}
           {/* ======================================================== */}
           {inventoryMode === 'Resale' && (
-            <div className="space-y-6 text-left">
+            <div key="resale-inventory-fields" className="space-y-6 text-left">
               <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-sm text-xs text-amber-300 font-mono flex items-center justify-between">
                 <span>Resale Inventory Entry • Title Verification &amp; Approved Authority Registry</span>
                 <span className="font-bold uppercase tracking-wider text-[10px]">Resale Vault Active</span>
@@ -6183,7 +6186,7 @@ const ProjectForm = ({
           {/* PRIMARY PORTFOLIO SPECIFIC FIELDS                        */}
           {/* ======================================================== */}
           {inventoryMode === 'Primary' && (
-            <div className="space-y-6 text-left">
+            <div key="primary-inventory-fields" className="space-y-6 text-left">
               <div className="p-3 bg-art-gold/10 border border-art-gold/30 rounded-sm text-xs text-art-gold font-mono flex items-center justify-between">
                 <span>Primary Portfolio Entry • Direct Developer &amp; 0% Brokerage Desk</span>
                 <span className="font-bold uppercase tracking-wider text-[10px]">Primary Vault Active</span>
@@ -7970,7 +7973,7 @@ const AdminView = ({
   editingProject: Project | null,
   setEditingProject: (p: Project | null) => void,
   onOpenSeoPreview?: () => void,
-  onOpenNewProjectWithMode?: (mode: 'Primary' | 'Rental' | 'Resale') => void,
+  onOpenNewProjectWithMode?: (mode: ProjectInventoryMode, project?: Project | null) => void,
   onOpenEnquiry?: (p: Project) => void,
   onDeleteProject?: (p: Project) => Promise<void> | void,
   onDeleteAllProjects?: (projects: Project[]) => Promise<void> | void,
@@ -11295,7 +11298,11 @@ const AdminView = ({
                     {p.id && (
                       <div className="flex gap-2">
                          <button
-                           onClick={() => { setEditingProject(p); setShowProjectModal(true); }}
+                           onClick={() => {
+                             const mode = resolveProjectInventoryMode(p.type, 'Primary');
+                             if (onOpenNewProjectWithMode) onOpenNewProjectWithMode(mode, p);
+                             else { setEditingProject(p); setShowProjectModal(true); }
+                           }}
                            className="flex-1 bg-white/10 hover:bg-white/20 p-2.5 flex justify-center text-white transition-all rounded-sm cursor-pointer"
                            title="Edit project"
                          >
@@ -11308,8 +11315,9 @@ const AdminView = ({
                                id: undefined as any,
                                name: `${p.name} (Copy)`
                              };
-                             setEditingProject(cloned);
-                             setShowProjectModal(true);
+                             const mode = resolveProjectInventoryMode(cloned.type, 'Primary');
+                             if (onOpenNewProjectWithMode) onOpenNewProjectWithMode(mode, cloned);
+                             else { setEditingProject(cloned); setShowProjectModal(true); }
                            }}
                            className="flex-1 bg-white/10 hover:bg-art-gold/20 p-2.5 flex justify-center text-art-gold transition-all rounded-sm cursor-pointer"
                            title="Clone / Duplicate this project into new inventory"
@@ -15698,9 +15706,9 @@ export default function App() {
             editingProject={editingProject}
             setEditingProject={setEditingProject}
             onOpenSeoPreview={() => setIsSeoModalOpen(true)}
-            onOpenNewProjectWithMode={(mode) => {
+            onOpenNewProjectWithMode={(mode, projectToOpen = null) => {
               setProjectModalMode(mode);
-              setEditingProject(null);
+              setEditingProject(projectToOpen);
               setShowProjectModal(true);
             }}
             onOpenEnquiry={(proj) => {
