@@ -1269,6 +1269,13 @@ const ProjectCard: React.FC<{
         email: subscribeEmail.trim().toLowerCase(),
         createdAt: serverTimestamp()
       });
+      void dispatchEnquiryEmailAlert({
+        collectionName: 'subscriptions',
+        customerEmail: subscribeEmail.trim().toLowerCase(),
+        projectName: project.name,
+        type: 'Property subscription',
+        source: 'Website property updates subscription'
+      });
       setSubscribeSuccess(true);
       setSubscribeEmail('');
       setTimeout(() => {
