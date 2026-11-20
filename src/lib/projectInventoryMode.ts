@@ -37,7 +37,7 @@ export function transitionProjectInventoryMode(draft: Partial<Project>, currentM
     type: nextMode,
     segment: replaceDefault(draft.segment, before.segment, after.segment),
     presentStatus: replaceDefault(draft.presentStatus, before.presentStatus, after.presentStatus),
-    handoverStatus: replaceDefault(draft.handoverStatus, before.handoverStatus, after.handoverStatus)
+    handoverStatus: replaceDefault(draft.handoverStatus, before.handoverStatus, after.handoverStatus) as Project['handoverStatus']
   };
   // Monthly rent and sale price share form fields; don't carry rent into resale or primary.
   if ((currentMode === 'Rental') !== (nextMode === 'Rental')) {
