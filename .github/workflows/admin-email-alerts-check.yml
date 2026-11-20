@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'functions/**'
+      - 'cloudflare/email-alerts/**'
       - 'src/App.tsx'
       - 'src/components/AdminPropertySubmissions.tsx'
       - 'src/components/MediaUploadCompressor.tsx'
@@ -18,7 +18,7 @@ on:
   push:
     branches: [feature/admin-vault-intake-email-20261120]
     paths:
-      - 'functions/**'
+      - 'cloudflare/email-alerts/**'
       - 'tests/firestore/**'
       - 'src/App.tsx'
       - 'src/components/AdminPropertySubmissions.tsx'
@@ -42,11 +42,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build:pages
-      - name: Validate Firebase Function syntax
-        working-directory: functions
-        run: |
-          npm install --ignore-scripts
-          npm run lint
+      - name: Validate Cloudflare Worker syntax
+        run: node --check cloudflare/email-alerts/src/index.js
       - name: Set up Java for Firestore Emulator
         uses: actions/setup-java@v4
         with:
