@@ -387,6 +387,21 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Minimal deletion tombstones keep built-in curated listings hidden across devices.
+    // Only admins may write them; public reads expose only non-sensitive id/name metadata.
+    match /deleted_projects/{projectId} {
+      allow read: if true;
+      allow create, update: if isAdmin() &&
+        isValidId(projectId) &&
+        request.resource.data.keys().hasAll(['id', 'name', 'deletedAt']) &&
+        request.resource.data.keys().hasOnly(['id', 'name', 'deletedAt']) &&
+        request.resource.data.id is string && request.resource.data.id.size() <= 128 &&
+        request.resource.data.name is string && request.resource.data.name.size() >= 1 &&
+        request.resource.data.name.size() <= 200 &&
+        request.resource.data.deletedAt == request.time;
+      allow delete: if false;
+    }
+
     // Referrals: Publicly writable (create only), admin readable
     match /referrals/{referralId} {
       allow create: if isValidId(referralId) && isValidReferral(incoming());
