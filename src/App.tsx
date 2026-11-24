@@ -11560,6 +11560,7 @@ const AdminView = ({
                       ? 'Firestore denied the write. The live Firestore rules or admin authorization need to be checked.'
                       : (err?.message || err?.code || 'Unknown error. Please retry.');
                     setDeleteProjectError(reason);
+                    setLeadActionToast(`Delete failed: ${reason}`);
                   } finally {
                     setIsDeletingProject(false);
                     setTimeout(() => setLeadActionToast(null), 6000);
