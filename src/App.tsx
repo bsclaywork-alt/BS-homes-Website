@@ -11508,14 +11508,14 @@ const AdminView = ({
                 <Trash2 size={20} className="text-red-400" />
               </div>
               <div>
-                <h4 className="text-white font-serif text-lg font-bold">Archive Inventory Listing</h4>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold">Move to Archive · Reversible by Admin</p>
+                <h4 className="text-white font-serif text-lg font-bold">Delete Inventory Listing</h4>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold">Remove from BS Homez · Persistent deletion</p>
               </div>
             </div>
 
             <p className="text-xs text-white/70 leading-relaxed font-sans">
               Are you sure you want to archive <strong className="text-white font-serif">{deleteConfirmProject.name}</strong> ({deleteConfirmProject.type || 'Primary'} &bull; {deleteConfirmProject.location})?
-              This removes it from public listings while retaining the database record for recovery and audit.
+              This removes the listing from the active BS Homez portfolio. A permanent deletion record prevents it from returning after refresh or on another device.
             </p>
 
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -11540,7 +11540,7 @@ const AdminView = ({
                       await deleteDoc(doc(db, 'projects', toDelete.id));
                     }
                     setDeleteConfirmProject(null);
-                    setLeadActionToast(`Archived "${toDelete.name}" and removed it from the active portfolio.`);
+                    setLeadActionToast(`Deleted "${toDelete.name}" from the active portfolio. The removal is saved.`);
                   } catch (err: any) {
                     console.error("Portfolio listing archive failed:", err);
                     setLeadActionToast(`Could not delete "${deleteConfirmProject?.name || 'listing'}": ${err?.code === 'permission-denied' ? 'Firestore permission denied. Admin delete/archive permission must be deployed.' : (err?.message || 'Please retry.')}`);
@@ -11605,7 +11605,7 @@ const AdminView = ({
                         await onDeleteProject(p);
                       }
                     }
-                    setBatchSyncToast(`Successfully deleted ${toDelete.length} projects from inventory!`);
+                    setBatchSyncToast(`Successfully removed ${toDelete.length} projects from inventory!`);
                     setTimeout(() => setBatchSyncToast(null), 4000);
                   } catch (err: any) {
                     console.error("Batch delete failed:", err);
