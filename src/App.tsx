@@ -7994,6 +7994,7 @@ const AdminView = ({
   const [showDeleteAllConfirmModal, setShowDeleteAllConfirmModal] = useState<boolean>(false);
   const [isDeletingAllProjects, setIsDeletingAllProjects] = useState<boolean>(false);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
+  const [deleteProjectError, setDeleteProjectError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [leadActionToast, setLeadActionToast] = useState<string | null>(null);
   const [enquiryCategoryFilter, setEnquiryCategoryFilter] = useState<'all' | 'Primary' | 'Rental' | 'Resale' | 'Home Loan'>('all');
@@ -11408,7 +11409,10 @@ const AdminView = ({
                            {p.isPaused ? <Play size={13} /> : <Pause size={13} />}
                          </button>
                          <button
-                           onClick={() => setDeleteConfirmProject(p)}
+                           onClick={() => {
+                           setDeleteProjectError(null);
+                           setDeleteConfirmProject(p);
+                         }}
                            className="bg-red-500/10 hover:bg-red-500/20 p-2.5 flex justify-center text-red-500 transition-all rounded-sm cursor-pointer"
                            title="Delete project"
                          >
@@ -11518,10 +11522,19 @@ const AdminView = ({
               This removes the listing from the active BS Homez portfolio. A permanent deletion record prevents it from returning after refresh or on another device.
             </p>
 
+            {deleteProjectError && (
+              <div role="alert" className="rounded-sm border border-red-500/50 bg-red-500/10 px-3 py-2.5 text-[11px] leading-relaxed text-red-200 font-mono">
+                Delete failed: {deleteProjectError}
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setDeleteConfirmProject(null)}
+                onClick={() => {
+                  setDeleteProjectError(null);
+                  setDeleteConfirmProject(null);
+                }}
                 disabled={isDeletingProject}
                 className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-sm text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer"
               >
@@ -11543,7 +11556,10 @@ const AdminView = ({
                     setLeadActionToast(`Deleted "${toDelete.name}" from the active portfolio. The removal is saved.`);
                   } catch (err: any) {
                     console.error("Portfolio listing archive failed:", err);
-                    setLeadActionToast(`Could not delete "${deleteConfirmProject?.name || 'listing'}": ${err?.code === 'permission-denied' ? 'Firestore permission denied. Admin delete/archive permission must be deployed.' : (err?.message || 'Please retry.')}`);
+                    const reason = err?.code === 'permission-denied'
+                      ? 'Firestore denied the write. The live Firestore rules or admin authorization need to be checked.'
+                      : (err?.message || err?.code || 'Unknown error. Please retry.');
+                    setDeleteProjectError(reason);
                   } finally {
                     setIsDeletingProject(false);
                     setTimeout(() => setLeadActionToast(null), 6000);
@@ -14943,10 +14959,11 @@ export default function App() {
         isDeleted: true,
         updatedAt: serverTimestamp()
       }, { merge: true });
-    } else {
-      // Always create a complete, rules-valid projects tombstone. Previously this
-      // was skipped whenever a matching public_portfolio record existed, allowing
-      // the hard-coded curated entry to return after a refresh or on another device.
+    } else if (!publicSnapshot.exists()) {
+      // Curated/static and local-only inventory must receive a projects tombstone.
+      // A record that already exists in public_portfolio is archived in that
+      // authoritative collection; creating a second projects record for it can
+      // fail the projects schema rules and reject the entire atomic batch.
       const rawType = String(project.type || 'Primary');
       const safeType: Project['type'] = ['Primary', 'Resale', 'Rental', 'Primary Sale'].includes(rawType) ? rawType as Project['type'] : 'Primary';
       const rawPrice = project.price == null ? '' : String(project.price);
