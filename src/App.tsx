@@ -14948,7 +14948,7 @@ export default function App() {
       // was skipped whenever a matching public_portfolio record existed, allowing
       // the hard-coded curated entry to return after a refresh or on another device.
       const rawType = String(project.type || 'Primary');
-      const safeType = ['Primary', 'Resale', 'Rental', 'Primary Sale'].includes(rawType) ? rawType : 'Primary';
+      const safeType: Project['type'] = ['Primary', 'Resale', 'Rental', 'Primary Sale'].includes(rawType) ? rawType as Project['type'] : 'Primary';
       const rawPrice = project.price == null ? '' : String(project.price);
       const tombstoneProject = autoEnrichProjectData({
         ...project,
