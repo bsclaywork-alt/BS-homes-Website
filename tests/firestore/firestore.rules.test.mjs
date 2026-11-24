@@ -173,6 +173,40 @@ describe('Offer Your Asset Firestore rules', () => {
     await assertFails(getDoc(doc(ordinaryUserDb, 'property_submissions/submission-3')));
   });
 
+  it('allows admin curator actions on legacy public records missing isDeleted', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      const legacy = publicData('legacy-submission', 'legacy-portfolio');
+      delete legacy.isDeleted;
+      await setDoc(doc(context.firestore(), 'public_portfolio/legacy-portfolio'), legacy);
+    });
+
+    const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
+    const ref = doc(adminDb, 'public_portfolio/legacy-portfolio');
+
+    // Hide must backfill isDeleted=false so the current rules can validate the state.
+    await assertSucceeds(updateDoc(ref, {
+      publicationStatus: 'Approved',
+      isPublished: false,
+      isDeleted: false,
+      updatedAt: serverTimestamp()
+    }));
+
+    // Edit while hidden, then restore publication. All three workflow flags stay consistent.
+    await assertSucceeds(updateDoc(ref, {
+      name: 'Legacy Property Updated',
+      publicationStatus: 'Approved',
+      isPublished: false,
+      isDeleted: false,
+      updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(updateDoc(ref, {
+      publicationStatus: 'Published',
+      isPublished: true,
+      isDeleted: false,
+      updatedAt: serverTimestamp()
+    }));
+  });
+
   it('allows admin curator edits, hide and archive while rejecting non-admin and private-field updates', async () => {
     const publicDb = testEnv.unauthenticatedContext().firestore();
     const batch = writeBatch(publicDb);

@@ -359,7 +359,14 @@ export function buildPublicPortfolioCuratorUpdate(
     ? rawNumericPrice * (/\b(cr|crore|crores)\b/.test(normalizedPrice) ? 10000000
       : /\b(lakh|lakhs|lac|lacs)\b/.test(normalizedPrice) ? 100000 : 1)
     : NaN;
+  // Normalize legacy public portfolio records before writing. Older documents may
+  // not have all three workflow flags, but Firestore rules require a consistent state
+  // on every curator update.
+  const publicationStatus = existing.publicationStatus || (existing.isPublished === false ? 'Approved' : 'Published');
   const update: Partial<PublicPortfolioItem> = {
+    publicationStatus,
+    isPublished: publicationStatus === 'Published',
+    isDeleted: Boolean(existing.isDeleted),
     name: String(project.name || existing.name).trim().slice(0, 200),
     location: String(project.location || existing.location).trim().slice(0, 200),
     category,
