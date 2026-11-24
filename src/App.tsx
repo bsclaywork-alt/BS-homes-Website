@@ -14917,10 +14917,12 @@ export default function App() {
     const tombstoneId = (projectId || slugify(project.name)).replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 128);
     if (!tombstoneId) throw new Error('This listing has no valid ID and could not be deleted safely.');
 
-    // Keep durable tombstones in the existing projects collection so the current
-    // production Firestore rules remain sufficient (no new collection/rules deployment).
+    // Public portfolio IDs can be different from a project's internal ID. Use a
+    // rules-safe projects document ID and always persist a durable tombstone,
+    // including when the listing exists only in the curated/static catalogue.
+    const projectDocId = /^[a-zA-Z0-9_-]{1,128}$/.test(projectId) ? projectId : tombstoneId;
     const publicRef = doc(db, 'public_portfolio', projectId || tombstoneId);
-    const projectsRef = doc(db, 'projects', projectId || tombstoneId);
+    const projectsRef = doc(db, 'projects', projectDocId);
     const [publicSnapshot, projectSnapshot] = await Promise.all([
       getDoc(publicRef),
       getDoc(projectsRef)
@@ -14941,12 +14943,20 @@ export default function App() {
         isDeleted: true,
         updatedAt: serverTimestamp()
       }, { merge: true });
-    } else if (!publicSnapshot.exists()) {
-      // Curated/static and local-only items have no backing record yet. Create a
-      // complete, rules-valid tombstone instead of a partial { isDeleted: true } doc.
+    } else {
+      // Always create a complete, rules-valid projects tombstone. Previously this
+      // was skipped whenever a matching public_portfolio record existed, allowing
+      // the hard-coded curated entry to return after a refresh or on another device.
+      const rawType = String(project.type || 'Primary');
+      const safeType: Project['type'] = ['Primary', 'Resale', 'Rental', 'Primary Sale'].includes(rawType) ? rawType as Project['type'] : 'Primary';
+      const rawPrice = project.price == null ? '' : String(project.price);
       const tombstoneProject = autoEnrichProjectData({
         ...project,
-        id: projectId || tombstoneId,
+        id: projectDocId,
+        name: String(project.name || 'Deleted listing'),
+        location: String(project.location || 'Bangalore'),
+        type: safeType,
+        price: rawPrice.trim() || 'Contact for price',
         isDeleted: true,
         isPaused: true
       });
@@ -15190,6 +15200,10 @@ export default function App() {
         }
       }
 
+      // Reuse the already-readable projects collection as the durable tombstone
+      // source for public_portfolio and static catalogue filtering.
+      setDbTombstoneIds(Array.from(deletedFromDb));
+
       dbDocs.sort((a, b) => {
         const tB = getTimestampMs(b.createdAt) || getTimestampMs(b.updatedAt);
         const tA = getTimestampMs(a.createdAt) || getTimestampMs(a.updatedAt);
@@ -15286,24 +15300,6 @@ export default function App() {
 
     return () => unsubReferrals();
   }, [user, isAdmin]);
-
-  // Listen to persisted property tombstones (`deleted_projects`) so deleted curated/custom/portfolio records never resurrect
-  useEffect(() => {
-    const unsubTombstones = onSnapshot(
-      collection(db, 'deleted_projects'),
-      (snap) => {
-        const ids: string[] = [];
-        for (const d of snap.docs) {
-          ids.push(d.id);
-          const data = d.data();
-          if (data?.name) ids.push(String(data.name));
-        }
-        setDbTombstoneIds(ids);
-      },
-      () => {}
-    );
-    return () => unsubTombstones();
-  }, []);
 
   // Listen to sanitized public_portfolio (Published items only on public website)
   useEffect(() => {
