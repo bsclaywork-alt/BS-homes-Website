@@ -23,6 +23,15 @@ jobs:
       - run: npm install
       - name: TypeScript validation
         run: npm run lint
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Firestore security and curator workflow tests
+        run: |
+          cd tests/firestore
+          npm install
+          npx firebase emulators:exec --only firestore --project bshomez-rules-test "npm test"
       - name: Build static website and SEO pages
         run: npm run build:pages
       - name: Verify generated production assets
