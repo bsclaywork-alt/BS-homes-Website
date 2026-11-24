@@ -358,6 +358,19 @@ export function buildPublicPortfolioCuratorUpdate(
     location: String(project.location || existing.location).trim().slice(0, 200),
     category,
     formattedPrice,
+    propertyStatus: (['Ready to Move', 'Under Construction', 'EOI', 'Nearing Completion'].includes(project.handoverStatus || '')
+      ? project.handoverStatus
+      : project.presentStatus === 'Ready to Move-IN' ? 'Ready to Move' : existing.propertyStatus) as PublicPortfolioItem['propertyStatus'],
+    doorFacing: (['East', 'North', 'West', 'South', 'South East', 'North East'].includes(project.mainDoorFacing || '')
+      ? project.mainDoorFacing
+      : existing.doorFacing) as PublicPortfolioItem['doorFacing'],
+    furnishing: (project.furnishType === 'Full Furnished' || project.furnishType === 'Fully Furnished'
+      ? 'Furnished'
+      : project.furnishType === 'Un Furnished' ? 'Unfurnished'
+      : project.furnishType === 'Semi Furnished' ? 'Semi Furnished' : existing.furnishing) as PublicPortfolioItem['furnishing'],
+    societyType: (project.projectTypeCategory === 'Gated' ? 'Gated'
+      : project.projectTypeCategory === 'Individual' || project.projectTypeCategory === 'Stand Alone' ? 'Individual'
+      : existing.societyType) as PublicPortfolioItem['societyType'],
     configuration: (project.configuration?.[0] || existing.configuration) as PublicPortfolioItem['configuration'],
     amenities: Array.isArray(project.features) ? project.features.filter(Boolean).slice(0, 50) : existing.amenities,
     imageUrls: Array.isArray(project.imageUrls) ? project.imageUrls.filter(Boolean).slice(0, 25) : existing.imageUrls,
