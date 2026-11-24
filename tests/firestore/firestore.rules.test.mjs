@@ -207,6 +207,44 @@ describe('Offer Your Asset Firestore rules', () => {
     }));
   });
 
+  it('allows admin visibility-only changes on legacy records with incomplete display fields', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'projects/legacy-project-minimal'), {
+        name: 'Legacy Project',
+        isPaused: false
+      });
+      await setDoc(doc(db, 'public_portfolio/legacy-public-minimal'), {
+        publicationStatus: 'Published',
+        isPublished: true
+      });
+    });
+
+    const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
+    await assertSucceeds(updateDoc(doc(adminDb, 'projects/legacy-project-minimal'), {
+      isPaused: true,
+      updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(updateDoc(doc(adminDb, 'public_portfolio/legacy-public-minimal'), {
+      publicationStatus: 'Approved',
+      isPublished: false,
+      isDeleted: false,
+      updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(updateDoc(doc(adminDb, 'public_portfolio/legacy-public-minimal'), {
+      publicationStatus: 'Published',
+      isPublished: true,
+      isDeleted: false,
+      updatedAt: serverTimestamp()
+    }));
+
+    const ordinaryDb = testEnv.authenticatedContext('ordinary-user').firestore();
+    await assertFails(updateDoc(doc(ordinaryDb, 'projects/legacy-project-minimal'), {
+      isPaused: false,
+      updatedAt: serverTimestamp()
+    }));
+  });
+
   it('allows admin curator edits, hide and archive while rejecting non-admin and private-field updates', async () => {
     const publicDb = testEnv.unauthenticatedContext().firestore();
     const batch = writeBatch(publicDb);
