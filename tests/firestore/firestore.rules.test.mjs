@@ -173,6 +173,52 @@ describe('Offer Your Asset Firestore rules', () => {
     await assertFails(getDoc(doc(ordinaryUserDb, 'property_submissions/submission-3')));
   });
 
+  it('allows admin curator edits, hide and archive while rejecting non-admin and private-field updates', async () => {
+    const publicDb = testEnv.unauthenticatedContext().firestore();
+    const batch = writeBatch(publicDb);
+    batch.set(doc(publicDb, 'property_submissions/curator-submission'), submissionData('curator-submission', 'curator-portfolio'));
+    batch.set(doc(publicDb, 'public_portfolio/curator-portfolio'), publicData('curator-submission', 'curator-portfolio'));
+    await assertSucceeds(batch.commit());
+
+    const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
+    const portfolioRef = doc(adminDb, 'public_portfolio/curator-portfolio');
+    await assertSucceeds(updateDoc(portfolioRef, {
+      name: 'Curated Property Name',
+      location: 'Sarjapur Road',
+      category: 'Primary',
+      formattedPrice: 'Rs. 1.40 Cr*',
+      expectedPrice: 14000000,
+      projectWriteUps: 'Admin-approved public description',
+      updatedAt: serverTimestamp()
+    }));
+
+    const ordinaryDb = testEnv.authenticatedContext('ordinary-user').firestore();
+    await assertFails(updateDoc(doc(ordinaryDb, 'public_portfolio/curator-portfolio'), {
+      name: 'Unauthorized Edit',
+      updatedAt: serverTimestamp()
+    }));
+    await assertFails(updateDoc(portfolioRef, {
+      ownerMobile: '9876543210',
+      updatedAt: serverTimestamp()
+    }));
+
+    await assertSucceeds(updateDoc(portfolioRef, {
+      publicationStatus: 'Approved',
+      isPublished: false,
+      isDeleted: false,
+      updatedAt: serverTimestamp()
+    }));
+    await assertSucceeds(updateDoc(portfolioRef, {
+      publicationStatus: 'Archived',
+      isPublished: false,
+      isDeleted: true,
+      updatedAt: serverTimestamp()
+    }));
+
+    const visitorDb = testEnv.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(visitorDb, 'public_portfolio/curator-portfolio')));
+  });
+
   it('allows only an admin to publish and then exposes only the sanitized public record', async () => {
     const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
     const batch = writeBatch(adminDb);
