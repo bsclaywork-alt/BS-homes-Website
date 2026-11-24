@@ -7961,6 +7961,7 @@ const AdminView = ({
   onDeleteAllProjects,
   onInspectProjectSeo,
   onSaveProject,
+  onTogglePauseProject,
   onBatchUpdateProjects
 }: {
   enquiries: Enquiry[],
@@ -7981,9 +7982,10 @@ const AdminView = ({
   onDeleteAllProjects?: (projects: Project[]) => Promise<void> | void,
   onInspectProjectSeo?: (p: Project) => void,
   onSaveProject?: (p: Project) => Promise<void> | void,
+  onTogglePauseProject?: (p: Project) => Promise<void>,
   onBatchUpdateProjects?: (updated: Project[]) => void
 }) => {
-  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility' | 'submissions'>('leads');
   const [tabVisibilityToast, setTabVisibilityToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
   const [isUpdatingTabVis, setIsUpdatingTabVis] = useState(false);
   const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
@@ -7999,6 +8001,9 @@ const AdminView = ({
   const [inventoryTab, setInventoryTab] = useState<'all' | 'Primary' | 'Rental' | 'Resale'>('all');
   const [portfolioSearch, setPortfolioSearch] = useState<string>('');
   const [opportunityCategoryFilter, setOpportunityCategoryFilter] = useState<'all' | 'business' | 'property'>('all');
+  const [assetSubmissions, setAssetSubmissions] = useState<any[]>([]);
+  const [assetSubmissionsLoading, setAssetSubmissionsLoading] = useState(false);
+  const [assetSubmissionsError, setAssetSubmissionsError] = useState('');
 
   // Column Sorting State for CRM Lead Management (Opportunities & Enquiries)
   const [oppSortField, setOppSortField] = useState<'date' | 'name' | 'score'>('date');
@@ -8006,6 +8011,40 @@ const AdminView = ({
 
   const [leadSortField, setLeadSortField] = useState<'date' | 'name' | 'score'>('date');
   const [leadSortDirection, setLeadSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  useEffect(() => {
+    setAssetSubmissionsLoading(true);
+    const unsubscribe = onSnapshot(collection(db, 'property_submissions'), snapshot => {
+      setAssetSubmissions(snapshot.docs.map(item => ({ id: item.id, ...item.data() })));
+      setAssetSubmissionsLoading(false);
+      setAssetSubmissionsError('');
+    }, error => {
+      console.error('Asset submissions listener failed:', error);
+      setAssetSubmissionsError('Unable to load asset submissions. Check admin claims and Firestore rules.');
+      setAssetSubmissionsLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleReviewAssetSubmission = async (submission: any, status: 'Approved' | 'Published' | 'Rejected' | 'Archived') => {
+    if (!submission?.id) return;
+    setActionLoadingId(submission.id);
+    setAssetSubmissionsError('');
+    try {
+      await updateDoc(doc(db, 'property_submissions', submission.id), {
+        submissionStatus: status,
+        reviewedBy: auth.currentUser?.email || auth.currentUser?.uid || 'admin',
+        reviewedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      setLeadActionToast(`Asset submission ${status.toLowerCase()} successfully.`);
+    } catch (error) {
+      console.error('Asset submission review failed:', error);
+      setAssetSubmissionsError('Could not update this submission. Please refresh and retry.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   const handleToggleTabVisibility = async (key: PublicTabKey) => {
     const currentVal = tabVisibility[key] !== false;
@@ -9470,6 +9509,18 @@ const AdminView = ({
            </button>
            <button
              type="button"
+             aria-pressed={activeTab === 'submissions'}
+             onClick={(event) => { event.preventDefault(); event.stopPropagation(); setActiveTab('submissions'); }}
+             className={cn(
+               "flex-1 flex items-center justify-center gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3.5 text-[10px] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.2em] font-extrabold transition-all duration-300 whitespace-nowrap cursor-pointer rounded-sm outline-none border",
+               activeTab === 'submissions' ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold shadow-[0_4px_20px_rgba(197,160,89,0.4)]" : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
+             )}
+           >
+             <FileText size={15} />
+             <span>Asset Submissions ({assetSubmissions.filter(item => item.submissionStatus === 'Pending Review').length})</span>
+           </button>
+           <button
+             type="button"
              aria-pressed={activeTab === 'portfolio'}
              onClick={(event) => {
                event.preventDefault();
@@ -9517,7 +9568,35 @@ const AdminView = ({
         </div>
       </div>
 
-      {activeTab === 'leads' ? (
+      {activeTab === 'submissions' ? (
+        <section className="space-y-4">
+          <div className="bg-white/5 border border-white/10 p-5 rounded-sm">
+            <h3 className="text-lg text-white font-serif">Offer Your Asset — Review Queue</h3>
+            <p className="text-xs text-white/55 mt-1">Owner contact information is visible only inside this admin workspace. Publishing is a separate review action.</p>
+          </div>
+          {assetSubmissionsError && <div role="alert" className="border border-red-500/40 bg-red-500/10 text-red-300 p-3 text-xs">{assetSubmissionsError}</div>}
+          {assetSubmissionsLoading ? <p className="text-sm text-white/60 p-4">Loading submissions…</p> : assetSubmissions.length === 0 ? <p className="text-sm text-white/60 p-4">No asset submissions found.</p> : (
+            <div className="space-y-3">
+              {assetSubmissions.slice().sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).map(item => (
+                <article key={item.id} className="bg-[#141414] border border-white/10 p-4 rounded-sm space-y-3">
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <div><h4 className="text-white font-semibold">{item.propertyName || 'Untitled property'}</h4><p className="text-xs text-white/55">{item.location || 'Location not provided'} · {item.targetCategory || 'Uncategorised'}</p></div>
+                    <span className="text-[10px] uppercase tracking-wider text-art-gold">{item.submissionStatus || 'Pending Review'}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-white/70">
+                    <p>Owner: {item.ownerName || '—'}</p><p>Mobile: {item.ownerMobile || '—'}</p>
+                    <p>Price: {item.expectedPrice ? `₹${Number(item.expectedPrice).toLocaleString('en-IN')}` : '—'}</p><p>Rent: {item.rentPerMonth ? `₹${Number(item.rentPerMonth).toLocaleString('en-IN')}/month` : '—'}</p>
+                    <p>Property: {item.propertyType || '—'} · {item.configuration || '—'}</p><p>RERA: {item.reraNumber || '—'}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(['Approved','Published','Rejected','Archived'] as const).map(status => <button key={status} type="button" disabled={actionLoadingId === item.id || item.submissionStatus === status} onClick={() => void handleReviewAssetSubmission(item,status)} className="px-3 py-2 text-[10px] uppercase font-bold border border-white/15 text-white/75 hover:bg-white/10 disabled:opacity-40">{actionLoadingId === item.id ? 'Saving…' : status}</button>)}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : activeTab === 'leads' ? (
         <div className="space-y-4">
           {leadActionToast && (
             <div className="bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 px-4 py-3 rounded-sm flex items-center justify-between text-xs font-mono">
@@ -11303,13 +11382,9 @@ const AdminView = ({
                          </button>
                          <button
                            onClick={async () => {
-                             if (p.id && !p.id.startsWith('curated_') && !p.id.startsWith('local_')) {
-                               try {
-                                 await updateDoc(doc(db, 'projects', p.id), { isPaused: !p.isPaused });
-                               } catch (err) {
-                                 console.warn(err);
-                               }
-                             }
+                             if (!onTogglePauseProject) return;
+                             try { await onTogglePauseProject(p); }
+                             catch (err) { console.error('Portfolio visibility update failed:', err); window.alert('Could not update listing visibility. Please refresh and retry.'); }
                            }}
                            className={cn(
                              "p-2.5 flex justify-center transition-all rounded-sm cursor-pointer",
@@ -11422,14 +11497,14 @@ const AdminView = ({
                 <Trash2 size={20} className="text-red-400" />
               </div>
               <div>
-                <h4 className="text-white font-serif text-lg font-bold">Delete Inventory Listing</h4>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-red-400 font-bold">Permanent Removal</p>
+                <h4 className="text-white font-serif text-lg font-bold">Archive Inventory Listing</h4>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold">Move to Archive · Reversible by Admin</p>
               </div>
             </div>
 
             <p className="text-xs text-white/70 leading-relaxed font-sans">
-              Are you sure you want to permanently delete <strong className="text-white font-serif">{deleteConfirmProject.name}</strong> ({deleteConfirmProject.type || 'Primary'} &bull; {deleteConfirmProject.location})?
-              This will remove it from all live listings, offline cache, and database records.
+              Are you sure you want to archive <strong className="text-white font-serif">{deleteConfirmProject.name}</strong> ({deleteConfirmProject.type || 'Primary'} &bull; {deleteConfirmProject.location})?
+              This removes it from public listings while retaining the database record for recovery and audit.
             </p>
 
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -15650,6 +15725,7 @@ export default function App() {
               setIsSeoModalOpen(true);
             }}
             onSaveProject={handleSaveProject}
+            onTogglePauseProject={handleTogglePauseProject}
             onBatchUpdateProjects={(updatedList) => {
               setProjects(prev => prev.map(p => {
                 const match = updatedList.find(u => (u.id && u.id === p.id) || u.name.toLowerCase() === p.name.toLowerCase());
