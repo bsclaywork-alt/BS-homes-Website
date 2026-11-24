@@ -14925,52 +14925,19 @@ export default function App() {
   };
 
   const handleDeleteAllProjects = async (projectsToDelete: Project[]) => {
-    if (!projectsToDelete || projectsToDelete.length === 0) return;
-    if (!user || !isAdmin) {
-      throw new Error('Unauthorized: Verified admin authorization is required for batch deletion.');
-    }
-
-    const idsToDelete = projectsToDelete.map(p => p.id || p.name);
-    const namesToDelete = projectsToDelete.map(p => p.name.toLowerCase());
-
-    setDeletedProjectIds(prev => {
-      const next = Array.from(new Set([...prev, ...idsToDelete, ...projectsToDelete.map(p => p.name)]));
+    if (!projectsToDelete?.length) return;
+    if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
+    const failures: string[] = [];
+    for (const project of projectsToDelete) {
       try {
-        localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-
-    try {
-      const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
-      const filteredLocal = existingLocal.filter(
-        item => !namesToDelete.includes(item.name.toLowerCase()) && !(item.id && idsToDelete.includes(item.id))
-      );
-      localStorage.setItem('bs_homez_custom_projects', JSON.stringify(filteredLocal));
-    } catch {}
-
-    setProjects(prev => {
-      const next = prev.filter(
-        p => !namesToDelete.includes(p.name.toLowerCase()) && !(p.id && idsToDelete.includes(p.id))
-      );
-      try {
-        localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-
-    // Batch soft-delete in Firestore
-    try {
-      for (const p of projectsToDelete) {
-        if (p.id && !p.id.startsWith('local_')) {
-          await setDoc(doc(db, 'projects', p.id), {
-            isDeleted: true,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        }
+        await handleDeleteProject(project);
+      } catch (error) {
+        console.error('Portfolio item archive failed:', project.id || project.name, error);
+        failures.push(project.name);
       }
-    } catch (err) {
-      console.warn('Batch delete projects notice:', err);
+    }
+    if (failures.length) {
+      throw new Error(`Could not archive ${failures.length} item(s): ${failures.join(', ')}. Successful archives were saved.`);
     }
   };
 
