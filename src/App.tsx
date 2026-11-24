@@ -11534,16 +11534,15 @@ const AdminView = ({
                   setIsDeletingProject(true);
                   try {
                     const toDelete = deleteConfirmProject;
-                    setDeleteConfirmProject(null);
                     if (onDeleteProject) {
                       await onDeleteProject(toDelete);
                     } else if (toDelete.id && !toDelete.id.startsWith('curated_') && !toDelete.id.startsWith('local_')) {
-                      try {
-                        await deleteDoc(doc(db, 'projects', toDelete.id));
-                      } catch (err) {
-                        console.warn(err);
-                      }
+                      await deleteDoc(doc(db, 'projects', toDelete.id));
                     }
+                    setDeleteConfirmProject(null);
+                  } catch (err) {
+                    console.error('Project deletion failed:', err);
+                    window.alert(err instanceof Error ? `Unable to delete this listing: ${err.message}` : 'Unable to delete this listing. Please check admin permissions and try again.');
                   } finally {
                     setIsDeletingProject(false);
                   }
@@ -14885,6 +14884,12 @@ export default function App() {
   const handleDeleteProject = async (project: Project) => {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
     const key = project.id || project.name;
+    const isSameProject = (item: Project) => project.id
+      ? item.id === project.id
+      : item.name.toLowerCase() === project.name.toLowerCase();
+
+    // public_portfolio intentionally disallows hard deletes in Firestore rules.
+    // Archive it instead; regular projects can be permanently removed by an admin.
     if (project.id && !project.id.startsWith('local_')) {
       if (project.sourceCollection === 'public_portfolio') {
         await setDoc(doc(db, 'public_portfolio', project.id), {
@@ -14893,21 +14898,18 @@ export default function App() {
           isDeleted: true,
           updatedAt: serverTimestamp()
         }, { merge: true });
+        setPublicPortfolioItems(prev => prev.filter(item => item.id !== project.id));
       } else {
-        await setDoc(doc(db, 'projects', project.id), {
-          isDeleted: true,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+        await deleteDoc(doc(db, 'projects', project.id));
       }
     }
+
+    // Update the UI only after Firestore confirms the operation.
     setDeletedProjectIds(prev => {
       const next = Array.from(new Set([...prev, key, project.name]));
       try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
       return next;
     });
-    const isSameProject = (item: Project) => project.id
-      ? item.id === project.id
-      : item.name.toLowerCase() === project.name.toLowerCase();
     setProjects(prev => prev.filter(item => !isSameProject(item)));
     try {
       const local: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
