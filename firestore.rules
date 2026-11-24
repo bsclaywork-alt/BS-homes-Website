@@ -366,6 +366,7 @@ service cloud.firestore {
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'publicationStatus', 'isPublished', 'isDeleted', 'updatedAt',
           'name', 'location', 'category', 'formattedPrice', 'expectedPrice', 'rentPerMonth',
+          'propertyStatus', 'doorFacing', 'furnishing', 'societyType', 'sellerType', 'others',
           'configuration', 'amenities', 'imageUrls', 'mainImageUrl', 'videoUrl', 'googleMapUrl',
           'reraNumber', 'totalAcres', 'floorNumber', 'towerNumber', 'maintenance', 'advance',
           'availableFrom', 'projectTypeCategory', 'presentStatus', 'vaastuCompliant',
