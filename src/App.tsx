@@ -8031,13 +8031,24 @@ const AdminView = ({
     setActionLoadingId(submission.id);
     setAssetSubmissionsError('');
     try {
-      await updateDoc(doc(db, 'property_submissions', submission.id), {
+      const batch = writeBatch(db);
+      const reviewedAt = serverTimestamp();
+      batch.update(doc(db, 'property_submissions', submission.id), {
         submissionStatus: status,
         reviewedBy: auth.currentUser?.email || auth.currentUser?.uid || 'admin',
-        reviewedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        reviewedAt,
+        updatedAt: reviewedAt
       });
-      setLeadActionToast(`Asset submission ${status.toLowerCase()} successfully.`);
+      if (submission.publicPortfolioId) {
+        batch.set(doc(db, 'public_portfolio', submission.publicPortfolioId), {
+          publicationStatus: status,
+          isPublished: status === 'Published',
+          isDeleted: status === 'Archived' || status === 'Rejected',
+          updatedAt: reviewedAt
+        }, { merge: true });
+      }
+      await batch.commit();
+      setLeadActionToast(status === 'Published' ? 'Asset approved and published to the live portfolio.' : `Asset submission marked ${status.toLowerCase()}.`);
     } catch (error) {
       console.error('Asset submission review failed:', error);
       setAssetSubmissionsError('Could not update this submission. Please refresh and retry.');
