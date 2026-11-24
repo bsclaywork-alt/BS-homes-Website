@@ -5018,17 +5018,6 @@ const ProjectForm = ({
         ? project.id
         : (data.name ? `${data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 45)}-${inventoryMode.toLowerCase()}-${nowMs.toString().slice(-4)}` : `proj_${nowMs}`);
 
-      // Strip all undefined values so Firestore setDoc never throws an invalid data error
-      const firestoreData: Record<string, any> = {};
-      for (const [k, v] of Object.entries(data)) {
-        if (v !== undefined) {
-          firestoreData[k] = v;
-        }
-      }
-      firestoreData.id = targetId;
-      firestoreData.createdAt = project?.createdAt || serverTimestamp();
-      firestoreData.updatedAt = serverTimestamp();
-
       let savedProjectResult: Project = {
         ...data,
         id: targetId,
@@ -11550,11 +11539,10 @@ const AdminView = ({
                   setIsDeletingProject(true);
                   try {
                     const toDelete = deleteConfirmProject;
-                    if (onDeleteProject) {
-                      await onDeleteProject(toDelete);
-                    } else if (toDelete.id && !toDelete.id.startsWith('curated_') && !toDelete.id.startsWith('local_')) {
-                      await deleteDoc(doc(db, 'projects', toDelete.id));
+                    if (!onDeleteProject) {
+                      throw new Error('Project archive handler is unavailable. No deletion was attempted.');
                     }
+                    await onDeleteProject(toDelete);
                     setDeleteConfirmProject(null);
                     setLeadActionToast(`Deleted "${toDelete.name}" from the active portfolio. The removal is saved.`);
                   } catch (err: any) {
