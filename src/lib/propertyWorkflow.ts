@@ -393,7 +393,9 @@ export function buildPublicPortfolioCuratorUpdate(
     if (category === 'Rental') update.rentPerMonth = numericPrice;
     else update.expectedPrice = numericPrice;
   }
-  return update;
+  return Object.fromEntries(
+    Object.entries(update).filter(([, value]) => value !== undefined)
+  ) as Partial<PublicPortfolioItem>;
 }
 
 export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
