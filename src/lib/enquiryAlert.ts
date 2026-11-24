@@ -35,7 +35,7 @@ let turnstileScriptPromise: Promise<void> | null = null;
 async function loadTurnstile(): Promise<void> {
   if (window.turnstile) return;
   if (!turnstileScriptPromise) {
-    turnstileScriptPromise = new Promise((resolve, reject) => {
+    turnstileScriptPromise = new Promise<void>((resolve, reject) => {
       const existing = document.querySelector<HTMLScriptElement>('script[data-bshomez-turnstile]');
       if (existing) {
         existing.addEventListener('load', () => resolve(), { once: true });
@@ -61,7 +61,7 @@ async function loadTurnstile(): Promise<void> {
 
 async function getTurnstileToken(siteKey: string): Promise<string> {
   await loadTurnstile();
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.left = '-10000px';
