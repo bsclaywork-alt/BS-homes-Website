@@ -176,7 +176,7 @@ export interface PublicPortfolioItem {
   isDeleted: boolean;
   createdAt: any;
   updatedAt?: any;
-  // Admin-only curation fields; public-safe and never contain owner contact details.
+  // Additional public-safe curation fields; owner contact details are intentionally excluded.
   projectTypeCategory?: string;
   presentStatus?: string;
   vaastuCompliant?: string;
