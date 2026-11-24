@@ -11534,18 +11534,19 @@ const AdminView = ({
                   setIsDeletingProject(true);
                   try {
                     const toDelete = deleteConfirmProject;
-                    setDeleteConfirmProject(null);
                     if (onDeleteProject) {
                       await onDeleteProject(toDelete);
                     } else if (toDelete.id && !toDelete.id.startsWith('curated_') && !toDelete.id.startsWith('local_')) {
-                      try {
-                        await deleteDoc(doc(db, 'projects', toDelete.id));
-                      } catch (err) {
-                        console.warn(err);
-                      }
+                      await deleteDoc(doc(db, 'projects', toDelete.id));
                     }
+                    setDeleteConfirmProject(null);
+                    setLeadActionToast(`Archived "${toDelete.name}" and removed it from the active portfolio.`);
+                  } catch (err: any) {
+                    console.error("Portfolio listing archive failed:", err);
+                    setLeadActionToast(`Could not delete "${deleteConfirmProject?.name || 'listing'}": ${err?.code === 'permission-denied' ? 'Firestore permission denied. Admin delete/archive permission must be deployed.' : (err?.message || 'Please retry.')}`);
                   } finally {
                     setIsDeletingProject(false);
+                    setTimeout(() => setLeadActionToast(null), 6000);
                   }
                 }}
                 disabled={isDeletingProject}
@@ -14908,6 +14909,12 @@ export default function App() {
     const isSameProject = (item: Project) => project.id
       ? item.id === project.id
       : item.name.toLowerCase() === project.name.toLowerCase();
+    // Remove the archived listing from every in-memory source immediately.
+    // Public portfolio listings are loaded separately from the legacy projects collection.
+    setPublicPortfolioItems(prev => prev.filter(item => !(
+      (project.id && item.id === project.id) ||
+      item.name.trim().toLowerCase() === project.name.trim().toLowerCase()
+    )));
     setProjects(prev => prev.filter(item => !isSameProject(item)));
     try {
       const local: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
