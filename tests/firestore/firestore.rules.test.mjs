@@ -8,7 +8,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import { doc, getDoc, serverTimestamp, setDoc, writeBatch, updateDoc, deleteDoc } from 'firebase/firestore';
 
-const projectId = 'bshomez-rules-test';
+const projectId = 'demo-bshomez-rules-test';
 let testEnv;
 
 const submissionData = (submissionId, portfolioId) => ({
