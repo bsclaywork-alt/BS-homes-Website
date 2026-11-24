@@ -1153,6 +1153,7 @@ const ProjectCard: React.FC<{
   const [editDraft, setEditDraft] = useState<Project>({ ...project });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
+  const [saveErrorMsg, setSaveErrorMsg] = useState('');
   const [isFetchingOnlineCard, setIsFetchingOnlineCard] = useState(false);
   const [isGeneratingCardAiSeo, setIsGeneratingCardAiSeo] = useState(false);
   const [uploadingImageCard, setUploadingImageCard] = useState(false);
@@ -1433,6 +1434,8 @@ const ProjectCard: React.FC<{
 
   const handleSaveInlineEdit = async () => {
     setIsSavingEdit(true);
+    setSaveErrorMsg('');
+    setSaveSuccessMsg(false);
     try {
       let updatedDraft = { ...editDraft };
 
@@ -1487,8 +1490,9 @@ const ProjectCard: React.FC<{
         setSaveSuccessMsg(false);
         setIsEditingCard(false);
       }, 1000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Save project error:", err);
+      setSaveErrorMsg(err?.message || err?.code || 'Unable to save this listing. Please retry.');
     } finally {
       setIsSavingEdit(false);
     }
@@ -2005,6 +2009,11 @@ const ProjectCard: React.FC<{
             <div className="p-2.5 bg-emerald-500/20 border border-emerald-500/40 rounded-sm text-center text-emerald-300 text-xs font-mono font-bold flex items-center justify-center gap-2">
               <CheckCircle2 size={14} className="text-emerald-400" />
               <span>✓ Project details &amp; SEO saved successfully!</span>
+            </div>
+          )}
+          {saveErrorMsg && (
+            <div role="alert" className="p-2.5 bg-red-500/10 border border-red-500/40 rounded-sm text-red-200 text-xs font-mono">
+              Save failed: {saveErrorMsg}
             </div>
           )}
 
@@ -14318,15 +14327,20 @@ export default function App() {
     imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85"
   });
 
-  // Merge local hidden/deleted preferences, DB tombstones, and published public_portfolio listings
+  // Merge local hidden/deleted preferences, DB tombstones, and public portfolio listings.
+  // Admins also receive Approved (hidden) records so they can unhide and edit them.
   const effectiveProjects = useMemo(() => {
     const tombstoneSet = new Set(
       [...deletedProjectIds, ...dbTombstoneIds].map((id) => id.trim().toLowerCase())
     );
     const portfolioProjects = publicPortfolioItems
       .filter((item) => {
-        if (item.isDeleted) return false;
-        if (!item.isPublished || item.publicationStatus !== 'Published') return false;
+        if (item.isDeleted || item.publicationStatus === 'Archived' || item.publicationStatus === 'Rejected') return false;
+        if (isAdmin) {
+          if (!['Published', 'Approved'].includes(item.publicationStatus)) return false;
+        } else if (!item.isPublished || item.publicationStatus !== 'Published') {
+          return false;
+        }
         const idLow = (item.id || '').toLowerCase();
         const nameLow = (item.name || '').trim().toLowerCase();
         if (idLow && tombstoneSet.has(idLow)) return false;
@@ -14351,7 +14365,7 @@ export default function App() {
     });
     const enhanced = autoEnhanceAllProjects(list);
     return deduplicateProjects(enhanced);
-  }, [projects, publicPortfolioItems, hiddenProjectIds, deletedProjectIds, dbTombstoneIds]);
+  }, [projects, publicPortfolioItems, hiddenProjectIds, deletedProjectIds, dbTombstoneIds, isAdmin]);
 
   const comparedProjects = useMemo(() => {
     return effectiveProjects.filter(
@@ -14822,9 +14836,17 @@ export default function App() {
       lastPrice: formatPriceWithCondition(updated.lastPrice || updated.price)
     });
     const targetDocId = formattedUpdated.id || `custom_${Date.now()}`;
-    const projectWithId: Project = { ...formattedUpdated, id: targetDocId };
+    // Forms and older cached records may omit sourceCollection. Resolve the authoritative
+    // source by document ID before choosing which Firestore collection to update.
+    const isPublicPortfolioRecord = formattedUpdated.sourceCollection === 'public_portfolio' ||
+      publicPortfolioItems.some(item => item.id === targetDocId);
+    const projectWithId: Project = {
+      ...formattedUpdated,
+      id: targetDocId,
+      sourceCollection: isPublicPortfolioRecord ? 'public_portfolio' : 'projects'
+    };
 
-    if (projectWithId.sourceCollection === 'public_portfolio') {
+    if (isPublicPortfolioRecord) {
       const publicRef = doc(db, 'public_portfolio', targetDocId);
       const snapshot = await getDoc(publicRef);
       if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and try again.');
@@ -15321,19 +15343,22 @@ export default function App() {
     return () => unsubReferrals();
   }, [user, isAdmin]);
 
-  // Listen to sanitized public_portfolio (Published items only on public website)
+  // Public visitors read only published records. Verified admins read all public-safe
+  // portfolio records, including Approved/hidden records, so the curator can restore them.
   useEffect(() => {
-    const q = query(collection(db, 'public_portfolio'), where('publicationStatus', '==', 'Published'));
+    const portfolioQuery = isAdmin
+      ? collection(db, 'public_portfolio')
+      : query(collection(db, 'public_portfolio'), where('publicationStatus', '==', 'Published'));
     const unsubPublicPortfolio = onSnapshot(
-      q,
+      portfolioQuery,
       (snap) => {
         const items = snap.docs.map((d) => ({ ...(d.data() as PublicPortfolioItem), id: d.id }));
         setPublicPortfolioItems(items);
       },
-      () => {}
+      (error) => console.warn('Public portfolio listener could not refresh:', error)
     );
     return () => unsubPublicPortfolio();
-  }, []);
+  }, [user, isAdmin]);
 
   const handleEnquireProject = (project: Project) => {
     setEnquiryType('Acquire');
