@@ -14942,7 +14942,7 @@ export default function App() {
         ? { ...item, isPaused: nextPaused, isPublished: !nextPaused } as Project
         : item
     ));
-    if (project.sourceCollection === 'public_portfolio' && project.id) {
+    if (isPublicPortfolioRecord && project.id) {
       setPublicPortfolioItems(prev => prev.map(item => item.id === project.id ? {
         ...item,
         publicationStatus: nextPaused ? 'Approved' : 'Published',
