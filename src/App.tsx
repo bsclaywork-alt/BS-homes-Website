@@ -4549,7 +4549,7 @@ const ProjectForm = ({
   project?: Project | null;
   initialInventoryType?: 'Primary' | 'Rental' | 'Resale';
   onClose: () => void;
-  onProjectSaved?: (savedProject: Project) => void;
+  onProjectSaved?: (savedProject: Project) => Promise<void> | void;
   onOpenEnquiry?: (p: Project) => void;
 }) => {
   // Saved project type always wins over a stale tab left from the previous form.
@@ -5032,40 +5032,18 @@ const ProjectForm = ({
       let savedProjectResult: Project = {
         ...data,
         id: targetId,
+        sourceCollection: project?.sourceCollection || data.sourceCollection,
         createdAt: project?.createdAt || nowMs,
         updatedAt: nowMs
       };
 
-      try {
-        await setDoc(doc(db, 'projects', targetId), firestoreData, { merge: true });
-        // Automatically trigger server-side sitemap.xml refresh so Google & Bing crawlers have latest listings immediately
-        fetch('/api/sitemap/refresh', { method: 'POST' }).catch(() => {});
-      } catch (dbErr) {
-        console.warn('Firestore write fallback: saving project locally', dbErr);
+      // The parent owns the authoritative Firestore write for every inventory type.
+      // Never report success, write a local-only fallback, or close the editor when that write fails.
+      if (!onProjectSaved) {
+        throw new Error('Project save handler is unavailable. Please refresh and try again.');
       }
-
-      // Always persist to custom projects local storage with quota protection
-      try {
-        const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
-        const filteredLocal = existingLocal.filter(
-          item => item.id !== savedProjectResult.id && item.name.toLowerCase() !== savedProjectResult.name.toLowerCase()
-        );
-        const nextLocal = deduplicateProjects([savedProjectResult, ...filteredLocal]);
-        localStorage.setItem('bs_homez_custom_projects', JSON.stringify(nextLocal));
-      } catch (storageErr) {
-        console.warn('Local storage quota warning, applying compact storage:', storageErr);
-        try {
-          const compactProject = {
-            ...savedProjectResult,
-            imageUrls: (savedProjectResult.imageUrls || []).slice(0, 5)
-          };
-          localStorage.setItem('bs_homez_custom_projects', JSON.stringify([compactProject]));
-        } catch {}
-      }
-
-      if (onProjectSaved) {
-        onProjectSaved(savedProjectResult);
-      }
+      await onProjectSaved(savedProjectResult);
+      fetch('/api/sitemap/refresh', { method: 'POST' }).catch(() => {});
       onClose();
     } catch (err: any) {
       console.error('Error saving project:', err);
@@ -11403,16 +11381,25 @@ const AdminView = ({
                          </button>
                          <button
                            onClick={async () => {
-                             if (!onTogglePauseProject) return;
-                             try { await onTogglePauseProject(p); }
-                             catch (err: any) {
+                             if (!onTogglePauseProject || actionLoadingId) return;
+                             const actionId = p.id || p.name;
+                             setActionLoadingId(actionId);
+                             setLeadActionToast(null);
+                             try {
+                               await onTogglePauseProject(p);
+                               setLeadActionToast(`${p.name}: ${p.isPaused ? 'resumed and visible' : 'paused and hidden'} successfully.`);
+                             } catch (err: any) {
                                console.error('Portfolio visibility update failed:', err);
                                const detail = [err?.code, err?.message].filter(Boolean).join(': ');
-                               window.alert(detail
-                                 ? `Could not update listing visibility (${detail}). Please copy this error for support.`
-                                 : 'Could not update listing visibility. Please refresh and retry.');
+                               setLeadActionToast(detail
+                                 ? `Could not update ${p.name}: ${detail}`
+                                 : `Could not update ${p.name}. Please refresh and retry.`);
+                             } finally {
+                               setActionLoadingId(null);
+                               window.setTimeout(() => setLeadActionToast(null), 6000);
                              }
                            }}
+                           disabled={actionLoadingId === (p.id || p.name) || isDeletingProject}
                            className={cn(
                              "p-2.5 flex justify-center transition-all rounded-sm cursor-pointer",
                              p.isPaused
@@ -11421,9 +11408,10 @@ const AdminView = ({
                            )}
                            title={p.isPaused ? "Resume project (mark active)" : "Pause project (hide from main page)"}
                          >
-                           {p.isPaused ? <Play size={13} /> : <Pause size={13} />}
+                           {actionLoadingId === (p.id || p.name) ? <Loader2 size={13} className="animate-spin" /> : p.isPaused ? <Play size={13} /> : <Pause size={13} />}
                          </button>
                          <button
+                           disabled={isDeletingProject || Boolean(actionLoadingId)}
                            onClick={() => {
                            setDeleteProjectError(null);
                            setDeleteConfirmProject(p);
@@ -16041,7 +16029,9 @@ export default function App() {
                 setSelectedProject(proj);
                 setEnquiryType('Acquire');
               }}
-              onProjectSaved={(savedProject) => {
+              onProjectSaved={async (savedProject) => {
+                // Route Rental saves through the same authoritative handler as Primary/Resale.
+                await handleSaveProject(savedProject);
                 const key = savedProject.id || savedProject.name;
                 setDeletedProjectIds(prev => {
                   const next = prev.filter(item => item !== key && item !== savedProject.name);
