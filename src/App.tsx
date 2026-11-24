@@ -14900,11 +14900,10 @@ export default function App() {
     const tombstoneId = (projectId || slugify(project.name)).replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 128);
     if (!tombstoneId) throw new Error('This listing has no valid ID and could not be deleted safely.');
 
-    // Commit the durable tombstone and source-record removal together. This prevents
-    // static catalogue, offline cache, or a second collection from resurrecting it.
+    // Keep durable tombstones in the existing projects collection so the current
+    // production Firestore rules remain sufficient (no new collection/rules deployment).
     const publicRef = doc(db, 'public_portfolio', projectId || tombstoneId);
     const projectsRef = doc(db, 'projects', projectId || tombstoneId);
-    const tombstoneRef = doc(db, 'deleted_projects', tombstoneId);
     const [publicSnapshot, projectSnapshot] = await Promise.all([
       getDoc(publicRef),
       getDoc(projectsRef)
@@ -14919,16 +14918,33 @@ export default function App() {
         updatedAt: serverTimestamp()
       }, { merge: true });
     }
+
     if (projectSnapshot.exists()) {
-      batch.delete(projectsRef);
+      batch.set(projectsRef, {
+        isDeleted: true,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } else if (!publicSnapshot.exists()) {
+      // Curated/static and local-only items have no backing record yet. Create a
+      // complete, rules-valid tombstone instead of a partial { isDeleted: true } doc.
+      const tombstoneProject = autoEnrichProjectData({
+        ...project,
+        id: projectId || tombstoneId,
+        isDeleted: true,
+        isPaused: true
+      });
+      const rawPayload: Record<string, any> = {
+        ...tombstoneProject,
+        isDeleted: true,
+        updatedAt: serverTimestamp()
+      };
+      const payload: Record<string, any> = {};
+      Object.entries(rawPayload).forEach(([field, value]) => {
+        if (value !== undefined && field !== 'sourceCollection') payload[field] = value;
+      });
+      batch.set(projectsRef, payload);
     }
-    batch.set(tombstoneRef, {
-      id: tombstoneId,
-      name: project.name.trim().slice(0, 200),
-      sourceCollection: project.sourceCollection || (publicSnapshot.exists() ? 'public_portfolio' : 'projects'),
-      deletedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    }, { merge: true });
+
     await batch.commit();
 
     const keys = [projectId, tombstoneId, project.name].filter(Boolean);
