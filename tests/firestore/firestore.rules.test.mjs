@@ -284,7 +284,29 @@ describe('Offer Your Asset Firestore rules', () => {
     await assertFails(deleteDoc(doc(ordinaryDb, 'projects/security-project')));
 
     await assertSucceeds(updateDoc(projectRef, { price: 'Rs. 1.1 Cr' }));
+    await assertSucceeds(updateDoc(projectRef, {
+      isDeleted: true,
+      updatedAt: serverTimestamp()
+    }));
+    const archivedProject = await assertSucceeds(getDoc(projectRef));
+    assert.equal(archivedProject.data().isDeleted, true);
     await assertFails(deleteDoc(projectRef));
+
+    // Public-portfolio archives also write a minimal, durable projects tombstone.
+    // This shape must pass create validation without relying on legacy display fields.
+    const tombstoneRef = doc(adminDb, 'projects/public-portfolio-archive-marker');
+    await assertSucceeds(setDoc(tombstoneRef, {
+      id: 'public-portfolio-archive-marker',
+      name: 'Archived Public Listing',
+      location: 'Whitefield',
+      type: 'Primary',
+      price: 'Contact for price',
+      isDeleted: true,
+      isPaused: true,
+      updatedAt: serverTimestamp()
+    }));
+    const tombstone = await assertSucceeds(getDoc(tombstoneRef));
+    assert.equal(tombstone.data().isDeleted, true);
   });
 
   it('allows public lead creation but restricts lead reads and management to admins', async () => {
