@@ -24,6 +24,7 @@ export interface OfferAssetFormInput {
   location: string;
   fullAddress: string;
   googleMapUrl: string;
+  reraNumber: string;
   willingTo: OfferWillingTo;
   sellerType: OfferSellerType;
   rentPerMonth: string;
@@ -55,6 +56,7 @@ export const INITIAL_OFFER_ASSET_FORM: OfferAssetFormInput = {
   location: '',
   fullAddress: '',
   googleMapUrl: '',
+  reraNumber: '',
   willingTo: 'Sell',
   sellerType: 'Resale',
   rentPerMonth: '',
@@ -211,10 +213,12 @@ export function createPropertySubmissionRecord(
     dedupKey: buildSubmissionDedupKey(input),
     ownerName: input.ownerName.trim(),
     ownerMobile: input.ownerMobile.trim(),
+    ownerCountryCode: input.countryCode || '+91',
     propertyName: input.propertyName.trim(),
     location: input.location.trim(),
     fullAddress: input.fullAddress.trim(),
     googleMapUrl: input.googleMapUrl.trim(),
+    reraNumber: input.reraNumber.trim(),
     willingTo: input.willingTo,
     targetCategory: category,
     propertyType: input.propertyType,
@@ -285,6 +289,7 @@ export function buildSanitizedPublicPortfolioRecord(
     name: submission.propertyName.trim(),
     location: submission.location.trim(),
     googleMapUrl: submission.googleMapUrl?.trim() || '',
+    reraNumber: submission.reraNumber?.trim() || '',
     category,
     propertyType: submission.propertyType,
     societyType: submission.societyType,
@@ -336,6 +341,84 @@ export function buildSanitizedPublicPortfolioRecord(
   return sanitized as PublicPortfolioItem;
 }
 
+/**
+ * Explicitly allowlists curator-editable fields for public_portfolio.
+ * Never spreads a Project object, which may contain private/internal fields.
+ */
+export function buildPublicPortfolioCuratorUpdate(
+  project: Project,
+  existing: PublicPortfolioItem
+): Partial<PublicPortfolioItem> {
+  const formattedPrice = String(project.price || existing.formattedPrice).trim().slice(0, 150);
+  const category = (['Primary', 'Resale', 'Rental'].includes(project.type)
+    ? project.type : existing.category) as PublicPortfolioItem['category'];
+  const normalizedPrice = formattedPrice.toLowerCase().replace(/,/g, '');
+  const numericMatch = normalizedPrice.match(/[0-9]+(?:\.[0-9]+)?/);
+  const rawNumericPrice = numericMatch ? Number(numericMatch[0]) : NaN;
+  const numericPrice = Number.isFinite(rawNumericPrice)
+    ? rawNumericPrice * (/\b(cr|crore|crores)\b/.test(normalizedPrice) ? 10000000
+      : /\b(lakh|lakhs|lac|lacs)\b/.test(normalizedPrice) ? 100000 : 1)
+    : NaN;
+  const update: Partial<PublicPortfolioItem> = {
+    name: String(project.name || existing.name).trim().slice(0, 200),
+    location: String(project.location || existing.location).trim().slice(0, 200),
+    category,
+    formattedPrice,
+    propertyStatus: (['Ready to Move', 'Under Construction', 'EOI', 'Nearing Completion'].includes(project.presentStatus || '')
+      ? project.presentStatus
+      : project.presentStatus === 'Ready to Move-IN' ? 'Ready to Move'
+      : ['Ready to Move', 'Under Construction', 'EOI', 'Nearing Completion'].includes(project.handoverStatus || '')
+        ? project.handoverStatus : existing.propertyStatus) as PublicPortfolioItem['propertyStatus'],
+    doorFacing: (['East', 'North', 'West', 'South', 'South East', 'North East'].includes(project.mainDoorFacing || '')
+      ? project.mainDoorFacing
+      : existing.doorFacing) as PublicPortfolioItem['doorFacing'],
+    furnishing: (project.furnishType === 'Full Furnished' || project.furnishType === 'Fully Furnished'
+      ? 'Furnished'
+      : project.furnishType === 'Un Furnished' ? 'Unfurnished'
+      : project.furnishType === 'Semi Furnished' ? 'Semi Furnished' : existing.furnishing) as PublicPortfolioItem['furnishing'],
+    societyType: (project.projectTypeCategory === 'Gated' ? 'Gated'
+      : project.projectTypeCategory === 'Individual' || project.projectTypeCategory === 'Stand Alone' ? 'Individual'
+      : existing.societyType) as PublicPortfolioItem['societyType'],
+    configuration: (project.configuration?.[0] || existing.configuration) as PublicPortfolioItem['configuration'],
+    amenities: Array.isArray(project.features) ? project.features.filter(Boolean).slice(0, 50) : existing.amenities,
+    imageUrls: Array.isArray(project.imageUrls) ? project.imageUrls.filter(Boolean).slice(0, 25) : existing.imageUrls,
+    mainImageUrl: String(project.mobileImageUrl || project.imageUrls?.[0] || existing.mainImageUrl || ''),
+    videoUrl: String(project.videoUrl || existing.videoUrl || ''),
+    googleMapUrl: String(project.mapUrl || existing.googleMapUrl || '').slice(0, 1000),
+    reraNumber: String(project.reraNumber || existing.reraNumber || '').slice(0, 150),
+    totalAcres: String(project.totalAcres || existing.totalAcres || '').slice(0, 100),
+    floorNumber: String(project.floor || existing.floorNumber || '').slice(0, 100),
+    towerNumber: String(project.tower || existing.towerNumber || '').slice(0, 100),
+    maintenance: String(project.maintenance || existing.maintenance || '').slice(0, 100),
+    advance: String(project.advance || existing.advance || '').slice(0, 100),
+    availableFrom: String(project.availableFrom || existing.availableFrom || '').slice(0, 100),
+    projectTypeCategory: String(project.projectTypeCategory || existing.projectTypeCategory || '').slice(0, 100),
+    presentStatus: String(project.presentStatus || project.handoverStatus || existing.presentStatus || existing.propertyStatus || '').slice(0, 100),
+    vaastuCompliant: String(project.vaastuCompliant || existing.vaastuCompliant || '').slice(0, 20),
+    facingAvailable: Array.isArray(project.facingAvailable) ? project.facingAvailable.filter(Boolean).slice(0, 16) : existing.facingAvailable,
+    floorRise: String(project.floorRise || existing.floorRise || '').slice(0, 100),
+    totalUnits: String(project.totalUnits || existing.totalUnits || '').slice(0, 100),
+    floorPlanSize: String(project.floorPlanSize || existing.floorPlanSize || '').slice(0, 150),
+    bookingAmount: String(project.bookingAmount || existing.bookingAmount || '').slice(0, 100),
+    interiorStatus: String(project.interiorStatus || project.furnishType || existing.interiorStatus || existing.furnishing || '').slice(0, 100),
+    availability: String(project.availability || existing.availability || '').slice(0, 20),
+    floorAvailability: String(project.floorAvailability || existing.floorAvailability || '').slice(0, 150),
+    saleFrom: String(project.saleFrom || existing.saleFrom || existing.sellerType || '').slice(0, 100),
+    aop: String(project.aop || existing.aop || '').slice(0, 50),
+    expectedRentalIncome: String(project.expectedRentalIncome || existing.expectedRentalIncome || '').slice(0, 100),
+    terrace: String(project.terrace || existing.terrace || '').slice(0, 20),
+    garden: String(project.garden || existing.garden || '').slice(0, 20),
+    projectWriteUps: String(project.projectWriteUps || project.description || existing.projectWriteUps || existing.others || '').slice(0, 5000)
+  };
+  if (Number.isFinite(numericPrice) && numericPrice > 0) {
+    if (category === 'Rental') update.rentPerMonth = numericPrice;
+    else update.expectedPrice = numericPrice;
+  }
+  return Object.fromEntries(
+    Object.entries(update).filter(([, value]) => value !== undefined)
+  ) as Partial<PublicPortfolioItem>;
+}
+
 export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
   const handoverStatus: Project['handoverStatus'] =
     item.propertyStatus === 'EOI'
@@ -359,7 +442,7 @@ export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
     publicationStatus: item.publicationStatus,
     name: item.name,
     description:
-      item.others ||
+      item.projectWriteUps || item.others ||
       `${item.configuration} ${item.propertyType} in ${item.location} (${item.societyType} community, ${item.furnishing}).`,
     price: item.formattedPrice,
     lastPrice: item.formattedPrice,
@@ -371,6 +454,7 @@ export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
     configuration: [item.configuration],
     segment: item.category === 'Rental' ? 'Curated Rental' : 'Verified Owner Listing',
     handoverStatus,
+    reraNumber: item.reraNumber || '',
     handoverDate: item.possessionDate || item.availableFrom || 'Available',
     availableFrom: item.availableFrom || item.possessionDate || '',
     projectSize: item.totalAcres ? `${item.totalAcres} Acres` : '',
@@ -387,8 +471,8 @@ export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
     tower: item.towerNumber || '',
     residenceType: item.configuration.replace(/\s+/g, ''),
     furnishType: furnishMap[item.furnishing] || 'Semi Furnished',
-    interiorStatus: item.furnishing,
-    projectTypeCategory: item.societyType === 'Gated' ? 'Gated' : 'Individual',
+    interiorStatus: item.interiorStatus || item.furnishing,
+    projectTypeCategory: item.projectTypeCategory || (item.societyType === 'Gated' ? 'Gated' : 'Individual'),
     saleFrom: item.sellerType || undefined,
     monthlyRental: item.rentPerMonth ? `Rs. ${item.rentPerMonth.toLocaleString('en-IN')}/mo` : '',
     maintenance: item.maintenance || '',
@@ -396,6 +480,20 @@ export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
     isPaused: !item.isPublished,
     isDeleted: Boolean(item.isDeleted),
     createdAt: item.createdAt,
+    presentStatus: item.presentStatus || item.propertyStatus,
+    vaastuCompliant: item.vaastuCompliant,
+    facingAvailable: item.facingAvailable,
+    floorRise: item.floorRise,
+    totalUnits: item.totalUnits,
+    floorPlanSize: item.floorPlanSize,
+    bookingAmount: item.bookingAmount,
+    availability: item.availability,
+    floorAvailability: item.floorAvailability,
+    aop: item.aop,
+    expectedRentalIncome: item.expectedRentalIncome,
+    terrace: item.terrace,
+    garden: item.garden,
+    projectWriteUps: item.projectWriteUps || item.others,
     updatedAt: item.updatedAt
   };
 }
