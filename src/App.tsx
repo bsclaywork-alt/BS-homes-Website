@@ -14906,7 +14906,9 @@ export default function App() {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
     const key = project.id || project.name;
     const nextPaused = !project.isPaused;
-    if (project.sourceCollection === 'public_portfolio' && project.id) {
+    const isPublicPortfolioRecord = project.sourceCollection === 'public_portfolio' ||
+      Boolean(project.id && publicPortfolioItems.some(item => item.id === project.id));
+    if (isPublicPortfolioRecord && project.id) {
       const ref = doc(db, 'public_portfolio', project.id);
       const snapshot = await getDoc(ref);
       if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and retry.');
