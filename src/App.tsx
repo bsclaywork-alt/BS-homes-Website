@@ -13961,6 +13961,28 @@ const autoEnrichProjectData = (p: Project): Project => {
   };
 };
 
+
+const buildProjectFirestorePayload = (project: Project, updatedAt: any = serverTimestamp()): Record<string, any> => {
+  const normalized: Record<string, any> = { ...project };
+  const allowedZones = [
+    'Whitefield', 'Hoskote', 'Varthur', 'Gunjur', 'Hosa Road', 'Kasavanahalli',
+    'East Bangalore', 'Off Sarjapur Road', 'Sarjapur', 'Electronic City',
+    'Marathalli', 'Bellandur', 'South East Bangalore', 'Bangalore East',
+    'Bangalore North', 'Bangalore West', 'Bangalore South', 'Bangalore Central', 'All Zone'
+  ];
+  const normalizedZone = String(normalized.zone || '').replace(/[-_]+/g, ' ').replace(/\\s+/g, ' ').trim();
+  if (allowedZones.includes(normalizedZone)) normalized.zone = normalizedZone;
+  else delete normalized.zone;
+  // This marker belongs only to the in-memory adapter, not the projects schema.
+  delete normalized.sourceCollection;
+
+  const payload: Record<string, any> = {};
+  Object.entries({ ...normalized, updatedAt }).forEach(([field, value]) => {
+    if (value !== undefined) payload[field] = value;
+  });
+  return payload;
+};
+
 export const deduplicateProjects = (list: Project[]): Project[] => {
   const seenIds = new Set<string>();
   const seenNameTypes = new Set<string>();
@@ -14795,9 +14817,7 @@ export default function App() {
     } else {
       // Persist every inventory item, including formerly browser-only local_ drafts.
       // The Firestore document becomes the authoritative source after this save.
-      const rawPayload: Record<string, any> = { ...projectWithId, updatedAt: serverTimestamp() };
-      const payload: Record<string, any> = {};
-      Object.entries(rawPayload).forEach(([key, value]) => { if (value !== undefined) payload[key] = value; });
+      const payload = buildProjectFirestorePayload(projectWithId);
       await setDoc(doc(db, 'projects', targetDocId), payload, { merge: true });
     }
 
@@ -14863,12 +14883,9 @@ export default function App() {
       if (snapshot.exists()) {
         await setDoc(ref, { isPaused: nextPaused, updatedAt: serverTimestamp() }, { merge: true });
       } else {
-        const rawPayload: Record<string, any> = {
-          ...autoEnrichProjectData({ ...project, id: projectId, isPaused: nextPaused }),
-          updatedAt: serverTimestamp()
-        };
-        const payload: Record<string, any> = {};
-        Object.entries(rawPayload).forEach(([field, value]) => { if (value !== undefined) payload[field] = value; });
+        const payload = buildProjectFirestorePayload(
+          autoEnrichProjectData({ ...project, id: projectId, isPaused: nextPaused })
+        );
         await setDoc(ref, payload);
       }
     }
@@ -14933,16 +14950,10 @@ export default function App() {
         isDeleted: true,
         isPaused: true
       });
-      const rawPayload: Record<string, any> = {
+      batch.set(projectsRef, buildProjectFirestorePayload({
         ...tombstoneProject,
-        isDeleted: true,
-        updatedAt: serverTimestamp()
-      };
-      const payload: Record<string, any> = {};
-      Object.entries(rawPayload).forEach(([field, value]) => {
-        if (value !== undefined && field !== 'sourceCollection') payload[field] = value;
-      });
-      batch.set(projectsRef, payload);
+        isDeleted: true
+      }));
     }
 
     await batch.commit();
