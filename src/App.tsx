@@ -11405,7 +11405,13 @@ const AdminView = ({
                            onClick={async () => {
                              if (!onTogglePauseProject) return;
                              try { await onTogglePauseProject(p); }
-                             catch (err) { console.error('Portfolio visibility update failed:', err); window.alert('Could not update listing visibility. Please refresh and retry.'); }
+                             catch (err: any) {
+                               console.error('Portfolio visibility update failed:', err);
+                               const detail = [err?.code, err?.message].filter(Boolean).join(': ');
+                               window.alert(detail
+                                 ? `Could not update listing visibility (${detail}). Please copy this error for support.`
+                                 : 'Could not update listing visibility. Please refresh and retry.');
+                             }
                            }}
                            className={cn(
                              "p-2.5 flex justify-center transition-all rounded-sm cursor-pointer",
@@ -14906,10 +14912,14 @@ export default function App() {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
     const key = project.id || project.name;
     const nextPaused = !project.isPaused;
-    const isPublicPortfolioRecord = project.sourceCollection === 'public_portfolio' ||
-      Boolean(project.id && publicPortfolioItems.some(item => item.id === project.id));
-    if (isPublicPortfolioRecord && project.id) {
-      const ref = doc(db, 'public_portfolio', project.id);
+    const matchedPublicPortfolioItem = publicPortfolioItems.find(item =>
+      (project.id && item.id === project.id) ||
+      item.name.trim().toLowerCase() === project.name.trim().toLowerCase()
+    );
+    const isPublicPortfolioRecord = project.sourceCollection === 'public_portfolio' || Boolean(matchedPublicPortfolioItem);
+    if (isPublicPortfolioRecord && (matchedPublicPortfolioItem?.id || project.id)) {
+      const publicPortfolioDocId = matchedPublicPortfolioItem?.id || project.id!;
+      const ref = doc(db, 'public_portfolio', publicPortfolioDocId);
       const snapshot = await getDoc(ref);
       if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and retry.');
       await setDoc(ref, {
@@ -14945,8 +14955,9 @@ export default function App() {
         ? { ...item, isPaused: nextPaused, isPublished: !nextPaused } as Project
         : item
     ));
-    if (isPublicPortfolioRecord && project.id) {
-      setPublicPortfolioItems(prev => prev.map(item => item.id === project.id ? {
+    if (isPublicPortfolioRecord && (matchedPublicPortfolioItem?.id || project.id)) {
+      const publicPortfolioDocId = matchedPublicPortfolioItem?.id || project.id!;
+      setPublicPortfolioItems(prev => prev.map(item => item.id === publicPortfolioDocId ? {
         ...item,
         publicationStatus: nextPaused ? 'Approved' : 'Published',
         isPublished: !nextPaused
@@ -14964,16 +14975,25 @@ export default function App() {
     // Public portfolio IDs can be different from a project's internal ID. Use a
     // rules-safe projects document ID and always persist a durable tombstone,
     // including when the listing exists only in the curated/static catalogue.
+    const matchedPublicPortfolioItem = publicPortfolioItems.find(item =>
+      (projectId && item.id === projectId) ||
+      item.name.trim().toLowerCase() === project.name.trim().toLowerCase()
+    );
+    // The two collections do not always share document IDs. Archive the actual
+    // public_portfolio document ID, while keeping a separate rules-safe projects
+    // tombstone ID so one collection's key is never incorrectly reused for the other.
+    const publicPortfolioDocId = matchedPublicPortfolioItem?.id ||
+      (project.sourceCollection === 'public_portfolio' ? projectId : '');
     const projectDocId = /^[a-zA-Z0-9_-]{1,128}$/.test(projectId) ? projectId : tombstoneId;
-    const publicRef = doc(db, 'public_portfolio', projectDocId);
+    const publicRef = publicPortfolioDocId ? doc(db, 'public_portfolio', publicPortfolioDocId) : null;
     const projectsRef = doc(db, 'projects', projectDocId);
     const [publicSnapshot, projectSnapshot] = await Promise.all([
-      getDoc(publicRef),
+      publicRef ? getDoc(publicRef) : Promise.resolve(null),
       getDoc(projectsRef)
     ]);
 
     const batch = writeBatch(db);
-    if (publicSnapshot.exists()) {
+    if (publicRef && publicSnapshot?.exists()) {
       batch.set(publicRef, {
         publicationStatus: 'Archived',
         isPublished: false,

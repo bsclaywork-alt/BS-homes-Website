@@ -138,6 +138,15 @@ service cloud.firestore {
           incoming().updatedAt == request.time
         ) ||
         (
+          // Visibility-only changes must remain possible for legacy inventory
+          // documents that predate the current full project schema.
+          isAdmin() &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['isPaused', 'updatedAt']) &&
+          incoming().isPaused is bool &&
+          incoming().updatedAt == request.time &&
+          (!('isDeleted' in existing()) || existing().isDeleted == false)
+        ) ||
+        (
           isValidProject(incoming()) &&
           incoming().diff(existing()).affectedKeys().hasOnly([
             'id', 'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
@@ -382,6 +391,17 @@ service cloud.firestore {
           request.resource.data.publicationStatus == 'Archived' &&
           request.resource.data.isPublished == false &&
           request.resource.data.isDeleted == true &&
+          request.resource.data.updatedAt == request.time
+        ) ||
+        (
+          // Hide/unhide is a narrow workflow transition. Permit it on legacy
+          // records even when unrelated display fields are incomplete.
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'publicationStatus', 'isPublished', 'isDeleted', 'updatedAt'
+          ]) &&
+          request.resource.data.publicationStatus in ['Approved', 'Published'] &&
+          request.resource.data.isPublished == (request.resource.data.publicationStatus == 'Published') &&
+          request.resource.data.isDeleted == false &&
           request.resource.data.updatedAt == request.time
         ) ||
         (
