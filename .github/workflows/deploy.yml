@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
+  actions: write
   contents: read
   pages: write
   id-token: write
@@ -52,12 +52,27 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # Keep build and deploy in the same fresh run. Re-running only the failed
-      # deploy job after a successful upload can leave duplicate github-pages artifacts.
+      # Remove prior same-run artifacts before upload so workflow reruns cannot
+      # leave duplicate github-pages artifacts for deploy-pages to discover.
+      - name: Remove stale Pages artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ids="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" --jq '.artifacts[] | select(.name == "github-pages") | .id')"
+          if [ -n "$ids" ]; then
+            while IFS= read -r id; do
+              [ -z "$id" ] || gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/$id"
+            done <<< "$ids"
+          fi
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
+
+      # Give the artifact metadata API time to expose the newly uploaded artifact.
+      - name: Wait for Pages artifact indexing
+        run: sleep 15
 
       - name: Deploy to GitHub Pages
         id: deployment
