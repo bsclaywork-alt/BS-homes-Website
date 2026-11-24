@@ -408,7 +408,7 @@ export function buildPublicPortfolioCuratorUpdate(
     expectedRentalIncome: String(project.expectedRentalIncome || existing.expectedRentalIncome || '').slice(0, 100),
     terrace: String(project.terrace || existing.terrace || '').slice(0, 20),
     garden: String(project.garden || existing.garden || '').slice(0, 20),
-    projectWriteUps: String(project.projectWriteUps || project.description || existing.projectWriteUps || existing.others || '').slice(0, 10000)
+    projectWriteUps: String(project.projectWriteUps || project.description || existing.projectWriteUps || existing.others || '').slice(0, 5000)
   };
   if (Number.isFinite(numericPrice) && numericPrice > 0) {
     if (category === 'Rental') update.rentPerMonth = numericPrice;
