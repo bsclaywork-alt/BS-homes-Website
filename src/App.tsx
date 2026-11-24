@@ -14885,22 +14885,44 @@ export default function App() {
 
   const handleDeleteProject = async (project: Project) => {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
+
     const key = project.id || project.name;
-    if (project.id && !project.id.startsWith('local_')) {
-      if (project.sourceCollection === 'public_portfolio') {
-        await setDoc(doc(db, 'public_portfolio', project.id), {
+    const projectId = project.id || '';
+    if (projectId && !projectId.startsWith('local_')) {
+      // Resolve the real Firestore source by document existence. Curated/static projects
+      // can appear in the curator without a matching projects document; blindly setDoc-ing
+      // a partial tombstone there fails isValidProject and prevents the delete action.
+      const publicRef = doc(db, 'public_portfolio', projectId);
+      const projectsRef = doc(db, 'projects', projectId);
+      const [publicSnapshot, projectSnapshot] = await Promise.all([
+        getDoc(publicRef),
+        getDoc(projectsRef)
+      ]);
+
+      if (project.sourceCollection === 'public_portfolio' && publicSnapshot.exists()) {
+        await setDoc(publicRef, {
           publicationStatus: 'Archived',
           isPublished: false,
           isDeleted: true,
           updatedAt: serverTimestamp()
         }, { merge: true });
-      } else {
-        await setDoc(doc(db, 'projects', project.id), {
+      } else if (projectSnapshot.exists()) {
+        await setDoc(projectsRef, {
+          isDeleted: true,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } else if (publicSnapshot.exists()) {
+        await setDoc(publicRef, {
+          publicationStatus: 'Archived',
+          isPublished: false,
           isDeleted: true,
           updatedAt: serverTimestamp()
         }, { merge: true });
       }
+      // No backing Firestore document means this is a curated/static entry.
+      // Record its removal locally instead of attempting to create an invalid partial doc.
     }
+
     setDeletedProjectIds(prev => {
       const next = Array.from(new Set([...prev, key, project.name]));
       try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
@@ -14909,8 +14931,7 @@ export default function App() {
     const isSameProject = (item: Project) => project.id
       ? item.id === project.id
       : item.name.toLowerCase() === project.name.toLowerCase();
-    // Remove the archived listing from every in-memory source immediately.
-    // Public portfolio listings are loaded separately from the legacy projects collection.
+
     setPublicPortfolioItems(prev => prev.filter(item => !(
       (project.id && item.id === project.id) ||
       item.name.trim().toLowerCase() === project.name.trim().toLowerCase()
