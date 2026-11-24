@@ -14810,7 +14810,7 @@ export default function App() {
         formattedPrice: projectWithId.price,
         category: projectWithId.type === 'Rental' ? 'Rental' : projectWithId.type === 'Resale' ? 'Resale' : 'Primary',
         propertyStatus: (projectWithId.handoverStatus || item.propertyStatus) as PublicPortfolioItem['propertyStatus'],
-        doorFacing: projectWithId.mainDoorFacing || item.doorFacing,
+        doorFacing: (projectWithId.mainDoorFacing || item.doorFacing) as PublicPortfolioItem['doorFacing'],
         furnishing: (projectWithId.furnishType || item.furnishing) as PublicPortfolioItem['furnishing'],
         configuration: (projectWithId.configuration?.[0] || item.configuration) as PublicPortfolioItem['configuration'],
         amenities: projectWithId.features || item.amenities,
