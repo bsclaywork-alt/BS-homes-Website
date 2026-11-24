@@ -353,11 +353,11 @@ export function buildPublicPortfolioCuratorUpdate(
   const category = (['Primary', 'Resale', 'Rental'].includes(project.type)
     ? project.type : existing.category) as PublicPortfolioItem['category'];
   const normalizedPrice = formattedPrice.toLowerCase().replace(/,/g, '');
-  const numericMatch = normalizedPrice.match(/[0-9]+(?:\\.[0-9]+)?/);
+  const numericMatch = normalizedPrice.match(/[0-9]+(?:\.[0-9]+)?/);
   const rawNumericPrice = numericMatch ? Number(numericMatch[0]) : NaN;
   const numericPrice = Number.isFinite(rawNumericPrice)
-    ? rawNumericPrice * (/\\b(cr|crore|crores)\\b/.test(normalizedPrice) ? 10000000
-      : /\\b(lakh|lakhs|lac|lacs)\\b/.test(normalizedPrice) ? 100000 : 1)
+    ? rawNumericPrice * (/\b(cr|crore|crores)\b/.test(normalizedPrice) ? 10000000
+      : /\b(lakh|lakhs|lac|lacs)\b/.test(normalizedPrice) ? 100000 : 1)
     : NaN;
   const update: Partial<PublicPortfolioItem> = {
     name: String(project.name || existing.name).trim().slice(0, 200),
