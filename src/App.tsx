@@ -14886,20 +14886,60 @@ export default function App() {
   const handleDeleteProject = async (project: Project) => {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
     const key = project.id || project.name;
+    const tombstoneId = String(key).toLowerCase().replace(/[^a-z0-9_-]/g, '-').slice(0, 128);
+    if (!tombstoneId) throw new Error('This project has no valid identifier and cannot be archived.');
+
+    // Resolve the real backing collection instead of assuming every curated card is
+    // a Firestore projects document. Built-in curated cards may exist only in source code.
+    let primaryWriteError: unknown = null;
     if (project.id && !project.id.startsWith('local_')) {
-      if (project.sourceCollection === 'public_portfolio') {
-        await setDoc(doc(db, 'public_portfolio', project.id), {
-          publicationStatus: 'Archived',
-          isPublished: false,
-          isDeleted: true,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      } else {
-        await setDoc(doc(db, 'projects', project.id), {
-          isDeleted: true,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+      try {
+        const publicRef = doc(db, 'public_portfolio', project.id);
+        const projectRef = doc(db, 'projects', project.id);
+        const [publicSnapshot, projectSnapshot] = await Promise.all([
+          getDoc(publicRef),
+          getDoc(projectRef)
+        ]);
+
+        const usePublicPortfolio = project.sourceCollection === 'public_portfolio'
+          ? publicSnapshot.exists()
+          : publicSnapshot.exists() && !projectSnapshot.exists();
+
+        if (usePublicPortfolio && publicSnapshot.exists()) {
+          await setDoc(publicRef, {
+            publicationStatus: 'Archived',
+            isPublished: false,
+            isDeleted: true,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } else if (projectSnapshot.exists()) {
+          await setDoc(projectRef, {
+            isDeleted: true,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        }
+        // If neither document exists, this is a built-in/local curated item.
+        // Its durable deletion is represented by the admin-created tombstone below.
+      } catch (error) {
+        primaryWriteError = error;
       }
+    }
+
+    // Always persist a minimal tombstone. The public site reads only id/name from
+    // this collection so built-in listings stay hidden after refresh and on other devices.
+    try {
+      await setDoc(doc(db, 'deleted_projects', tombstoneId), {
+        id: String(key).slice(0, 128),
+        name: String(project.name || key).trim().slice(0, 200),
+        deletedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (tombstoneError) {
+      console.error('Project archive failed:', { primaryWriteError, tombstoneError });
+      throw tombstoneError;
+    }
+
+    if (primaryWriteError) {
+      console.warn('Primary project archive failed; durable tombstone was saved:', primaryWriteError);
     }
     setDeletedProjectIds(prev => {
       const next = Array.from(new Set([...prev, key, project.name]));
@@ -14909,8 +14949,6 @@ export default function App() {
     const isSameProject = (item: Project) => project.id
       ? item.id === project.id
       : item.name.toLowerCase() === project.name.toLowerCase();
-    // Remove the archived listing from every in-memory source immediately.
-    // Public portfolio listings are loaded separately from the legacy projects collection.
     setPublicPortfolioItems(prev => prev.filter(item => !(
       (project.id && item.id === project.id) ||
       item.name.trim().toLowerCase() === project.name.trim().toLowerCase()
