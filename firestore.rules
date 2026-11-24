@@ -376,6 +376,8 @@ service cloud.firestore {
         request.resource.data.publicationStatus in ['Pending Review', 'Approved', 'Published', 'Rejected', 'Archived'] &&
         request.resource.data.isPublished == (request.resource.data.publicationStatus == 'Published') &&
         request.resource.data.isDeleted is bool &&
+        (!request.resource.data.isDeleted ||
+          (request.resource.data.publicationStatus == 'Archived' && request.resource.data.isPublished == false)) &&
         request.resource.data.name is string && request.resource.data.name.size() <= 200 &&
         request.resource.data.location is string && request.resource.data.location.size() <= 200 &&
         request.resource.data.formattedPrice is string && request.resource.data.formattedPrice.size() <= 150 &&
