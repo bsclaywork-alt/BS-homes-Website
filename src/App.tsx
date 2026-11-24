@@ -14888,7 +14888,9 @@ export default function App() {
       return next;
     });
     setProjects(prev => prev.map(item =>
-      item.id === project.id ? { ...item, isPaused: nextPaused, isPublished: !nextPaused } as Project : item
+      (project.id ? item.id === project.id : item.name.toLowerCase() === project.name.toLowerCase())
+        ? { ...item, isPaused: nextPaused, isPublished: !nextPaused } as Project
+        : item
     ));
   };
 
@@ -14915,12 +14917,15 @@ export default function App() {
       try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
       return next;
     });
-    setProjects(prev => prev.filter(item => item.id !== project.id));
+    const isSameProject = (item: Project) => project.id
+      ? item.id === project.id
+      : item.name.toLowerCase() === project.name.toLowerCase();
+    setProjects(prev => prev.filter(item => !isSameProject(item)));
     try {
       const local: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
-      localStorage.setItem('bs_homez_custom_projects', JSON.stringify(local.filter(item => item.id !== project.id)));
+      localStorage.setItem('bs_homez_custom_projects', JSON.stringify(local.filter(item => !isSameProject(item))));
       const cache: Project[] = JSON.parse(localStorage.getItem('bs_homez_portfolio_offline_cache') || '[]');
-      localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(cache.filter(item => item.id !== project.id)));
+      localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(cache.filter(item => !isSameProject(item))));
     } catch {}
   };
 
