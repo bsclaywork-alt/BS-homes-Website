@@ -11508,14 +11508,14 @@ const AdminView = ({
                 <Trash2 size={20} className="text-red-400" />
               </div>
               <div>
-                <h4 className="text-white font-serif text-lg font-bold">Archive Inventory Listing</h4>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold">Move to Archive · Reversible by Admin</p>
+                <h4 className="text-white font-serif text-lg font-bold">Delete Inventory Listing</h4>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold">Remove from BS Homez · Persistent deletion</p>
               </div>
             </div>
 
             <p className="text-xs text-white/70 leading-relaxed font-sans">
               Are you sure you want to archive <strong className="text-white font-serif">{deleteConfirmProject.name}</strong> ({deleteConfirmProject.type || 'Primary'} &bull; {deleteConfirmProject.location})?
-              This removes it from public listings while retaining the database record for recovery and audit.
+              This removes the listing from the active BS Homez portfolio. A permanent deletion record prevents it from returning after refresh or on another device.
             </p>
 
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -11540,7 +11540,7 @@ const AdminView = ({
                       await deleteDoc(doc(db, 'projects', toDelete.id));
                     }
                     setDeleteConfirmProject(null);
-                    setLeadActionToast(`Archived "${toDelete.name}" and removed it from the active portfolio.`);
+                    setLeadActionToast(`Deleted "${toDelete.name}" from the active portfolio. The removal is saved.`);
                   } catch (err: any) {
                     console.error("Portfolio listing archive failed:", err);
                     setLeadActionToast(`Could not delete "${deleteConfirmProject?.name || 'listing'}": ${err?.code === 'permission-denied' ? 'Firestore permission denied. Admin delete/archive permission must be deployed.' : (err?.message || 'Please retry.')}`);
@@ -11605,7 +11605,7 @@ const AdminView = ({
                         await onDeleteProject(p);
                       }
                     }
-                    setBatchSyncToast(`Successfully deleted ${toDelete.length} projects from inventory!`);
+                    setBatchSyncToast(`Successfully removed ${toDelete.length} projects from inventory!`);
                     setTimeout(() => setBatchSyncToast(null), 4000);
                   } catch (err: any) {
                     console.error("Batch delete failed:", err);
@@ -13961,6 +13961,28 @@ const autoEnrichProjectData = (p: Project): Project => {
   };
 };
 
+
+const buildProjectFirestorePayload = (project: Project, updatedAt: any = serverTimestamp()): Record<string, any> => {
+  const normalized: Record<string, any> = { ...project };
+  const allowedZones = [
+    'Whitefield', 'Hoskote', 'Varthur', 'Gunjur', 'Hosa Road', 'Kasavanahalli',
+    'East Bangalore', 'Off Sarjapur Road', 'Sarjapur', 'Electronic City',
+    'Marathalli', 'Bellandur', 'South East Bangalore', 'Bangalore East',
+    'Bangalore North', 'Bangalore West', 'Bangalore South', 'Bangalore Central', 'All Zone'
+  ];
+  const normalizedZone = String(normalized.zone || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (allowedZones.includes(normalizedZone)) normalized.zone = normalizedZone;
+  else delete normalized.zone;
+  // This marker belongs only to the in-memory adapter, not the projects schema.
+  delete normalized.sourceCollection;
+
+  const payload: Record<string, any> = {};
+  Object.entries({ ...normalized, updatedAt }).forEach(([field, value]) => {
+    if (value !== undefined) payload[field] = value;
+  });
+  return payload;
+};
+
 export const deduplicateProjects = (list: Project[]): Project[] => {
   const seenIds = new Set<string>();
   const seenNameTypes = new Set<string>();
@@ -14792,10 +14814,10 @@ export default function App() {
       const existing = { ...snapshot.data(), id: targetDocId } as PublicPortfolioItem;
       const safeUpdate = buildPublicPortfolioCuratorUpdate(projectWithId, existing);
       await setDoc(publicRef, { ...safeUpdate, updatedAt: serverTimestamp() }, { merge: true });
-    } else if (!targetDocId.startsWith('local_')) {
-      const rawPayload: Record<string, any> = { ...projectWithId, updatedAt: serverTimestamp() };
-      const payload: Record<string, any> = {};
-      Object.entries(rawPayload).forEach(([key, value]) => { if (value !== undefined) payload[key] = value; });
+    } else {
+      // Persist every inventory item, including formerly browser-only local_ drafts.
+      // The Firestore document becomes the authoritative source after this save.
+      const payload = buildProjectFirestorePayload(projectWithId);
       await setDoc(doc(db, 'projects', targetDocId), payload, { merge: true });
     }
 
@@ -14845,21 +14867,26 @@ export default function App() {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
     const key = project.id || project.name;
     const nextPaused = !project.isPaused;
-    if (project.id && !project.id.startsWith('local_')) {
-      if (project.sourceCollection === 'public_portfolio') {
-        const ref = doc(db, 'public_portfolio', project.id);
-        const snapshot = await getDoc(ref);
-        if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and retry.');
-        await setDoc(ref, {
-          publicationStatus: nextPaused ? 'Approved' : 'Published',
-          isPublished: !nextPaused,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+    if (project.sourceCollection === 'public_portfolio' && project.id) {
+      const ref = doc(db, 'public_portfolio', project.id);
+      const snapshot = await getDoc(ref);
+      if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and retry.');
+      await setDoc(ref, {
+        publicationStatus: nextPaused ? 'Approved' : 'Published',
+        isPublished: !nextPaused,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } else {
+      const projectId = project.id || `custom_${Date.now()}`;
+      const ref = doc(db, 'projects', projectId);
+      const snapshot = await getDoc(ref);
+      if (snapshot.exists()) {
+        await setDoc(ref, { isPaused: nextPaused, updatedAt: serverTimestamp() }, { merge: true });
       } else {
-        await setDoc(doc(db, 'projects', project.id), {
-          isPaused: nextPaused,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+        const payload = buildProjectFirestorePayload(
+          autoEnrichProjectData({ ...project, id: projectId, isPaused: nextPaused })
+        );
+        await setDoc(ref, payload);
       }
     }
     setHiddenProjectIds(prev => {
@@ -14886,57 +14913,67 @@ export default function App() {
   const handleDeleteProject = async (project: Project) => {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
 
-    const key = project.id || project.name;
     const projectId = project.id || '';
-    if (projectId && !projectId.startsWith('local_')) {
-      // Resolve the real Firestore source by document existence. Curated/static projects
-      // can appear in the curator without a matching projects document; blindly setDoc-ing
-      // a partial tombstone there fails isValidProject and prevents the delete action.
-      const publicRef = doc(db, 'public_portfolio', projectId);
-      const projectsRef = doc(db, 'projects', projectId);
-      const [publicSnapshot, projectSnapshot] = await Promise.all([
-        getDoc(publicRef),
-        getDoc(projectsRef)
-      ]);
+    const tombstoneId = (projectId || slugify(project.name)).replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 128);
+    if (!tombstoneId) throw new Error('This listing has no valid ID and could not be deleted safely.');
 
-      if (project.sourceCollection === 'public_portfolio' && publicSnapshot.exists()) {
-        await setDoc(publicRef, {
-          publicationStatus: 'Archived',
-          isPublished: false,
-          isDeleted: true,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      } else if (projectSnapshot.exists()) {
-        await setDoc(projectsRef, {
-          isDeleted: true,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      } else if (publicSnapshot.exists()) {
-        await setDoc(publicRef, {
-          publicationStatus: 'Archived',
-          isPublished: false,
-          isDeleted: true,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      }
-      // No backing Firestore document means this is a curated/static entry.
-      // Record its removal locally instead of attempting to create an invalid partial doc.
+    // Keep durable tombstones in the existing projects collection so the current
+    // production Firestore rules remain sufficient (no new collection/rules deployment).
+    const publicRef = doc(db, 'public_portfolio', projectId || tombstoneId);
+    const projectsRef = doc(db, 'projects', projectId || tombstoneId);
+    const [publicSnapshot, projectSnapshot] = await Promise.all([
+      getDoc(publicRef),
+      getDoc(projectsRef)
+    ]);
+
+    const batch = writeBatch(db);
+    if (publicSnapshot.exists()) {
+      batch.set(publicRef, {
+        publicationStatus: 'Archived',
+        isPublished: false,
+        isDeleted: true,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
     }
 
+    if (projectSnapshot.exists()) {
+      batch.set(projectsRef, {
+        isDeleted: true,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } else if (!publicSnapshot.exists()) {
+      // Curated/static and local-only items have no backing record yet. Create a
+      // complete, rules-valid tombstone instead of a partial { isDeleted: true } doc.
+      const tombstoneProject = autoEnrichProjectData({
+        ...project,
+        id: projectId || tombstoneId,
+        isDeleted: true,
+        isPaused: true
+      });
+      batch.set(projectsRef, buildProjectFirestorePayload({
+        ...tombstoneProject,
+        isDeleted: true
+      }));
+    }
+
+    await batch.commit();
+
+    const keys = [projectId, tombstoneId, project.name].filter(Boolean);
     setDeletedProjectIds(prev => {
-      const next = Array.from(new Set([...prev, key, project.name]));
+      const next = Array.from(new Set([...prev, ...keys]));
       try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
       return next;
     });
-    const isSameProject = (item: Project) => project.id
-      ? item.id === project.id
-      : item.name.toLowerCase() === project.name.toLowerCase();
+    const isSameProject = (item: Project) => projectId
+      ? item.id === projectId || item.name.trim().toLowerCase() === project.name.trim().toLowerCase()
+      : item.name.trim().toLowerCase() === project.name.trim().toLowerCase();
 
     setPublicPortfolioItems(prev => prev.filter(item => !(
-      (project.id && item.id === project.id) ||
+      (projectId && item.id === projectId) ||
       item.name.trim().toLowerCase() === project.name.trim().toLowerCase()
     )));
     setProjects(prev => prev.filter(item => !isSameProject(item)));
+
     try {
       const local: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
       localStorage.setItem('bs_homez_custom_projects', JSON.stringify(local.filter(item => !isSameProject(item))));
@@ -15068,19 +15105,29 @@ export default function App() {
 
     const getMergedWithLocal = (dbDocs: Project[] = [], deletedFromDb: Set<string> = new Set()) => {
       let localCustom: Project[] = [];
+      let localDeleted = new Set<string>();
       try {
         localCustom = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
+        const storedDeleted: string[] = JSON.parse(localStorage.getItem('bs_homez_deleted_projects') || '[]');
+        localDeleted = new Set(storedDeleted.map(value => String(value).trim().toLowerCase()).filter(Boolean));
       } catch {}
 
-      const dbDocIds = new Set(dbDocs.map(d => d.id?.toLowerCase()).filter(Boolean));
-      const dbDocNames = new Set(dbDocs.map(d => `${d.name?.trim().toLowerCase()}_${(d.type || 'Primary').toLowerCase()}`));
+      const allDeleted = new Set([...deletedFromDb, ...localDeleted].map(value => String(value).trim().toLowerCase()));
+      const activeDbDocs = dbDocs.filter(item =>
+        !allDeleted.has(String(item.id || '').trim().toLowerCase()) &&
+        !allDeleted.has(String(item.name || '').trim().toLowerCase()) &&
+        !item.isDeleted
+      );
+      const dbDocIds = new Set(activeDbDocs.map(d => d.id?.toLowerCase()).filter(Boolean));
+      const dbDocNames = new Set(activeDbDocs.map(d => `${d.name?.trim().toLowerCase()}_${(d.type || 'Primary').toLowerCase()}`));
 
-      // Only retain local custom projects that have not yet synced to Firestore and are not deleted
+      // Only retain local custom projects that have not yet synced to Firestore and are not deleted.
       const unsyncedLocal = localCustom.filter(item => {
         const idLower = item.id ? item.id.toLowerCase() : '';
         const nameLower = item.name ? item.name.trim().toLowerCase() : '';
-        if (idLower && (dbDocIds.has(idLower) || deletedFromDb.has(idLower))) return false;
-        if (nameLower && (dbDocNames.has(`${nameLower}_${(item.type || 'Primary').toLowerCase()}`) || deletedFromDb.has(nameLower))) return false;
+        if ((idLower && allDeleted.has(idLower)) || (nameLower && allDeleted.has(nameLower))) return false;
+        if (idLower && dbDocIds.has(idLower)) return false;
+        if (nameLower && dbDocNames.has(`${nameLower}_${(item.type || 'Primary').toLowerCase()}`)) return false;
         return true;
       });
 
@@ -15093,7 +15140,7 @@ export default function App() {
 
       // Combine live Firestore documents (authoritative) with unsynced local drafts
       const combinedCustom = deduplicateProjects([
-        ...dbDocs.map(autoEnrichProjectData),
+        ...activeDbDocs.map(autoEnrichProjectData),
         ...unsyncedLocal.map(autoEnrichProjectData)
       ]);
 
@@ -15113,8 +15160,8 @@ export default function App() {
       const uneditedCurated = CURATED_ARTISANAL_PROJECTS.filter(cp => {
         const idLower = cp.id ? cp.id.toLowerCase() : '';
         const nameLower = cp.name ? cp.name.trim().toLowerCase() : '';
-        if (idLower && (customKeys.has(idLower) || deletedFromDb.has(idLower))) return false;
-        if (nameLower && (customKeys.has(nameLower) || deletedFromDb.has(nameLower))) return false;
+        if (idLower && (customKeys.has(idLower) || allDeleted.has(idLower))) return false;
+        if (nameLower && (customKeys.has(nameLower) || allDeleted.has(nameLower))) return false;
         return true;
       });
 
