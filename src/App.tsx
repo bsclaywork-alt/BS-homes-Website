@@ -14915,6 +14915,9 @@ export default function App() {
       await setDoc(ref, {
         publicationStatus: nextPaused ? 'Approved' : 'Published',
         isPublished: !nextPaused,
+        // Backfill this required workflow flag for older public_portfolio records.
+        // It remains false for ordinary hide/unhide; only Delete sets it true.
+        isDeleted: false,
         updatedAt: serverTimestamp()
       }, { merge: true });
     } else {
