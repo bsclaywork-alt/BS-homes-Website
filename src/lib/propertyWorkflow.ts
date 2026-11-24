@@ -442,7 +442,7 @@ export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
     publicationStatus: item.publicationStatus,
     name: item.name,
     description:
-      item.others ||
+      item.projectWriteUps || item.others ||
       `${item.configuration} ${item.propertyType} in ${item.location} (${item.societyType} community, ${item.furnishing}).`,
     price: item.formattedPrice,
     lastPrice: item.formattedPrice,
