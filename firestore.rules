@@ -7,10 +7,6 @@ service cloud.firestore {
     }
 
     // --- Helpers ---
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -126,15 +122,15 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // Projects: Publicly readable & editable for Artisanal Portraits inline curation
+    // Projects: public read; all inventory writes are restricted to verified admins.
     match /projects/{projectId} {
       allow read: if true;
-      allow create: if isValidId(projectId) && isValidProject(incoming());
+      allow create: if isAdmin() && isValidId(projectId) && isValidProject(incoming());
       // Allow verified admins to archive legacy inventory records even when
       // older documents no longer satisfy today's full project schema. This
       // exception is deliberately limited to a one-way soft-delete flag and
       // server timestamp; it cannot edit listing content or unarchive records.
-      allow update: if isValidId(projectId) && (
+      allow update: if isAdmin() && isValidId(projectId) && (
         (
           isAdmin() &&
           incoming().diff(existing()).affectedKeys().hasOnly(['isDeleted', 'updatedAt']) &&
@@ -167,7 +163,8 @@ service cloud.firestore {
           ])
         )
       );
-      allow delete: if isValidId(projectId);
+      // Inventory removal must use the audited soft-archive workflow.
+      allow delete: if false;
     }
 
     function isValidProject(data) {
@@ -269,7 +266,7 @@ service cloud.firestore {
     // Enquiries: Publicly writable (create only), admin readable
     match /enquiries/{enquiryId} {
       allow create: if isValidId(enquiryId) && isValidEnquiry(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidEnquiry(data) {
@@ -291,7 +288,7 @@ service cloud.firestore {
     // Opportunities: Publicly writable (create only), admin readable
     match /opportunities/{opportunityId} {
       allow create: if isValidId(opportunityId) && isValidOpportunity(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidOpportunity(data) {
@@ -335,7 +332,7 @@ service cloud.firestore {
     // Subscriptions: Public writable, admin readable/manageable
     match /subscriptions/{subscriptionId} {
       allow create: if isValidId(subscriptionId) && isValidSubscription(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidSubscription(data) {
@@ -417,7 +414,7 @@ service cloud.firestore {
     // Referrals: Publicly writable (create only), admin readable
     match /referrals/{referralId} {
       allow create: if isValidId(referralId) && isValidReferral(incoming());
-      allow read, write: if isSignedIn();
+      allow read, update, delete: if isAdmin();
     }
 
     function isValidReferral(data) {

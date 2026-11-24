@@ -6,9 +6,9 @@ import {
   assertSucceeds,
   assertFails
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, serverTimestamp, setDoc, writeBatch, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc, writeBatch, updateDoc, deleteDoc } from 'firebase/firestore';
 
-const projectId = 'bshomez-rules-test';
+const projectId = 'demo-bshomez-rules-test';
 let testEnv;
 
 const submissionData = (submissionId, portfolioId) => ({
@@ -254,4 +254,108 @@ describe('Offer Your Asset Firestore rules', () => {
     assert.equal(visible.data().publicationStatus, 'Published');
     assert.equal('ownerName' in visible.data(), false);
   });
+
+  it('restricts project inventory creation and mutation to admins and denies hard deletes', async () => {
+    const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
+    const projectRef = doc(adminDb, 'projects/security-project');
+    await assertSucceeds(setDoc(projectRef, {
+      name: 'Security Test Project',
+      location: 'Whitefield',
+      type: 'Primary',
+      price: 'Rs. 1 Cr'
+    }));
+
+    const visitorDb = testEnv.unauthenticatedContext().firestore();
+    await assertFails(setDoc(doc(visitorDb, 'projects/visitor-project'), {
+      name: 'Visitor Project',
+      location: 'Whitefield',
+      type: 'Primary',
+      price: 'Rs. 1 Cr'
+    }));
+    await assertFails(updateDoc(doc(visitorDb, 'projects/security-project'), {
+      price: 'Rs. 2 Cr'
+    }));
+    await assertFails(deleteDoc(doc(visitorDb, 'projects/security-project')));
+
+    const ordinaryDb = testEnv.authenticatedContext('ordinary-user').firestore();
+    await assertFails(updateDoc(doc(ordinaryDb, 'projects/security-project'), {
+      price: 'Rs. 2 Cr'
+    }));
+    await assertFails(deleteDoc(doc(ordinaryDb, 'projects/security-project')));
+
+    await assertSucceeds(updateDoc(projectRef, { price: 'Rs. 1.1 Cr' }));
+    await assertFails(deleteDoc(projectRef));
+  });
+
+  it('allows public lead creation but restricts lead reads and management to admins', async () => {
+    const visitorDb = testEnv.unauthenticatedContext().firestore();
+    const enquiryRef = doc(visitorDb, 'enquiries/security-enquiry');
+    const opportunityRef = doc(visitorDb, 'opportunities/security-opportunity');
+    const subscriptionRef = doc(visitorDb, 'subscriptions/security-subscription');
+    const referralRef = doc(visitorDb, 'referrals/security-referral');
+
+    const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
+    await assertSucceeds(setDoc(doc(adminDb, 'projects/security-subscription-project'), {
+      name: 'Subscription Test Project',
+      location: 'Whitefield',
+      type: 'Primary',
+      price: 'Rs. 1 Cr'
+    }));
+
+    await assertSucceeds(setDoc(enquiryRef, {
+      customerName: 'Test Customer',
+      customerPhone: '9876543210',
+      projectName: 'Security Test Project',
+      projectId: 'security-project',
+      type: 'Form'
+    }));
+    await assertSucceeds(setDoc(opportunityRef, {
+      name: 'Test Business',
+      mobile: '9876543210',
+      category: 'Business'
+    }));
+    await assertSucceeds(setDoc(subscriptionRef, {
+      email: 'test@example.com',
+      projectId: 'security-subscription-project',
+      projectName: 'Subscription Test Project',
+      createdAt: serverTimestamp()
+    }));
+    await assertSucceeds(setDoc(referralRef, {
+      name: 'Test Referrer',
+      mobileNumber: '9876543210',
+      budget: '1 Cr',
+      location: 'Whitefield',
+      propertyType: 'Villa',
+      unitType: '3BHK',
+      contactDateTime: '2026-11-24',
+      whatsappNumber: '9876543210',
+      lookingFor: 'New Building'
+    }));
+
+    const ordinaryDb = testEnv.authenticatedContext('ordinary-user').firestore();
+    const visitorRefs = [
+      doc(ordinaryDb, 'enquiries/security-enquiry'),
+      doc(ordinaryDb, 'opportunities/security-opportunity'),
+      doc(ordinaryDb, 'subscriptions/security-subscription'),
+      doc(ordinaryDb, 'referrals/security-referral')
+    ];
+    for (const ref of visitorRefs) {
+      await assertFails(getDoc(ref));
+      await assertFails(updateDoc(ref, { unauthorizedChange: true }));
+      await assertFails(deleteDoc(ref));
+    }
+
+    const adminRefs = [
+      doc(adminDb, 'enquiries/security-enquiry'),
+      doc(adminDb, 'opportunities/security-opportunity'),
+      doc(adminDb, 'subscriptions/security-subscription'),
+      doc(adminDb, 'referrals/security-referral')
+    ];
+    for (const ref of adminRefs) {
+      await assertSucceeds(getDoc(ref));
+      await assertSucceeds(updateDoc(ref, { adminReviewed: true }));
+      await assertSucceeds(deleteDoc(ref));
+    }
+  });
+
 });
