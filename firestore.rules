@@ -375,28 +375,42 @@ service cloud.firestore {
          resource.data.isDeleted == false);
       allow create: if isValidId(portfolioId) &&
         isSafePublicPortfolio(request.resource.data, portfolioId);
-      allow update: if isAdmin() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'publicationStatus', 'isPublished', 'isDeleted', 'updatedAt',
-          'name', 'location', 'category', 'formattedPrice', 'expectedPrice', 'rentPerMonth',
-          'propertyStatus', 'doorFacing', 'furnishing', 'societyType', 'sellerType', 'others',
-          'configuration', 'amenities', 'imageUrls', 'mainImageUrl', 'videoUrl', 'googleMapUrl',
-          'reraNumber', 'totalAcres', 'floorNumber', 'towerNumber', 'maintenance', 'advance',
-          'availableFrom', 'projectTypeCategory', 'presentStatus', 'vaastuCompliant',
-          'facingAvailable', 'floorRise', 'totalUnits', 'floorPlanSize', 'bookingAmount',
-          'interiorStatus', 'availability', 'floorAvailability', 'saleFrom', 'aop',
-          'expectedRentalIncome', 'terrace', 'garden', 'projectWriteUps'
-        ]) &&
-        request.resource.data.publicationStatus in ['Pending Review', 'Approved', 'Published', 'Rejected', 'Archived'] &&
-        request.resource.data.isPublished == (request.resource.data.publicationStatus == 'Published') &&
-        request.resource.data.isDeleted is bool &&
-        (!request.resource.data.isDeleted ||
-          (request.resource.data.publicationStatus == 'Archived' && request.resource.data.isPublished == false)) &&
-        request.resource.data.name is string && request.resource.data.name.size() <= 200 &&
-        request.resource.data.location is string && request.resource.data.location.size() <= 200 &&
-        request.resource.data.formattedPrice is string && request.resource.data.formattedPrice.size() <= 150 &&
-        request.resource.data.category in ['Primary', 'Resale', 'Rental'] &&
-        request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin() && (
+        (
+          // Legacy public portfolio records may not contain today's required
+          // display fields. Permit only the irreversible archive transition.
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'publicationStatus', 'isPublished', 'isDeleted', 'updatedAt'
+          ]) &&
+          request.resource.data.publicationStatus == 'Archived' &&
+          request.resource.data.isPublished == false &&
+          request.resource.data.isDeleted == true &&
+          request.resource.data.updatedAt == request.time
+        ) ||
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'publicationStatus', 'isPublished', 'isDeleted', 'updatedAt',
+            'name', 'location', 'category', 'formattedPrice', 'expectedPrice', 'rentPerMonth',
+            'propertyStatus', 'doorFacing', 'furnishing', 'societyType', 'sellerType', 'others',
+            'configuration', 'amenities', 'imageUrls', 'mainImageUrl', 'videoUrl', 'googleMapUrl',
+            'reraNumber', 'totalAcres', 'floorNumber', 'towerNumber', 'maintenance', 'advance',
+            'availableFrom', 'projectTypeCategory', 'presentStatus', 'vaastuCompliant',
+            'facingAvailable', 'floorRise', 'totalUnits', 'floorPlanSize', 'bookingAmount',
+            'interiorStatus', 'availability', 'floorAvailability', 'saleFrom', 'aop',
+            'expectedRentalIncome', 'terrace', 'garden', 'projectWriteUps'
+          ]) &&
+          request.resource.data.publicationStatus in ['Pending Review', 'Approved', 'Published', 'Rejected', 'Archived'] &&
+          request.resource.data.isPublished == (request.resource.data.publicationStatus == 'Published') &&
+          request.resource.data.isDeleted is bool &&
+          (!request.resource.data.isDeleted ||
+            (request.resource.data.publicationStatus == 'Archived' && request.resource.data.isPublished == false)) &&
+          request.resource.data.name is string && request.resource.data.name.size() <= 200 &&
+          request.resource.data.location is string && request.resource.data.location.size() <= 200 &&
+          request.resource.data.formattedPrice is string && request.resource.data.formattedPrice.size() <= 150 &&
+          request.resource.data.category in ['Primary', 'Resale', 'Rental'] &&
+          request.resource.data.updatedAt == request.time
+        )
+      );
       allow delete: if false;
     }
 
