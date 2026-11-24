@@ -40,6 +40,10 @@ jobs:
         working-directory: tests/firestore
         run: npm install --no-audit --no-fund
 
+      - name: Copy production rules into emulator project
+        working-directory: tests/firestore
+        run: cp ../../firestore.rules firestore.rules
+
       - name: Run Firestore rules tests in emulator
         working-directory: tests/firestore
         run: npx firebase emulators:exec --only firestore --project demo-bshomez-rules-test "npm test"
