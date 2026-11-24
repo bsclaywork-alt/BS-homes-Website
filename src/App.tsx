@@ -14938,7 +14938,7 @@ export default function App() {
     // rules-safe projects document ID and always persist a durable tombstone,
     // including when the listing exists only in the curated/static catalogue.
     const projectDocId = /^[a-zA-Z0-9_-]{1,128}$/.test(projectId) ? projectId : tombstoneId;
-    const publicRef = doc(db, 'public_portfolio', projectId || tombstoneId);
+    const publicRef = doc(db, 'public_portfolio', projectDocId);
     const projectsRef = doc(db, 'projects', projectDocId);
     const [publicSnapshot, projectSnapshot] = await Promise.all([
       getDoc(publicRef),
@@ -14960,28 +14960,29 @@ export default function App() {
         isDeleted: true,
         updatedAt: serverTimestamp()
       }, { merge: true });
-    } else if (!publicSnapshot.exists()) {
-      // Curated/static and local-only inventory must receive a projects tombstone.
-      // A record that already exists in public_portfolio is archived in that
-      // authoritative collection; creating a second projects record for it can
-      // fail the projects schema rules and reject the entire atomic batch.
+    } else {
+      // Always write a durable projects tombstone, including for public_portfolio
+      // records. The public catalogue and static curated catalogue both consult
+      // this marker, so the listing cannot reappear after refresh or on another device.
+      // Keep the create payload deliberately minimal so legacy/malformed display
+      // fields cannot cause Firestore's full project validator to reject the batch.
       const rawType = String(project.type || 'Primary');
-      const safeType: Project['type'] = ['Primary', 'Resale', 'Rental', 'Primary Sale'].includes(rawType) ? rawType as Project['type'] : 'Primary';
-      const rawPrice = project.price == null ? '' : String(project.price);
-      const tombstoneProject = autoEnrichProjectData({
-        ...project,
+      const safeType: Project['type'] = ['Primary', 'Resale', 'Rental', 'Primary Sale'].includes(rawType)
+        ? rawType as Project['type']
+        : 'Primary';
+      const tombstoneName = String(project.name || 'Deleted listing').trim().slice(0, 200) || 'Deleted listing';
+      const tombstoneLocation = String(project.location || 'Bangalore').trim().slice(0, 200) || 'Bangalore';
+      const tombstonePrice = String(project.price || 'Contact for price').trim().slice(0, 150) || 'Contact for price';
+      batch.set(projectsRef, {
         id: projectDocId,
-        name: String(project.name || 'Deleted listing'),
-        location: String(project.location || 'Bangalore'),
+        name: tombstoneName,
+        location: tombstoneLocation,
         type: safeType,
-        price: rawPrice.trim() || 'Contact for price',
+        price: tombstonePrice,
         isDeleted: true,
-        isPaused: true
+        isPaused: true,
+        updatedAt: serverTimestamp()
       });
-      batch.set(projectsRef, buildProjectFirestorePayload({
-        ...tombstoneProject,
-        isDeleted: true
-      }));
     }
 
     await batch.commit();
@@ -15214,7 +15215,8 @@ export default function App() {
           if (id) deletedFromDb.add(id.toLowerCase());
           if (data.name) deletedFromDb.add(data.name.trim().toLowerCase());
         } else if (!LEGACY_PROJECT_NAMES.includes(data.name)) {
-          dbDocs.push({ id, ...data });
+          // The Firestore document path is authoritative; never let a stale stored `id` field override it.
+          dbDocs.push({ ...data, id, sourceCollection: 'projects' });
         }
       }
 
