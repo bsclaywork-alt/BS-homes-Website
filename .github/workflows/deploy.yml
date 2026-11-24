@@ -52,6 +52,8 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # Keep build and deploy in the same fresh run. Re-running only the failed
+      # deploy job after a successful upload can leave duplicate github-pages artifacts.
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
@@ -60,4 +62,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-        
