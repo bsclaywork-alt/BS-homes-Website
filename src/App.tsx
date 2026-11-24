@@ -144,7 +144,7 @@ import { GrowBusinessSection } from './components/GrowBusinessSection';
 import { dispatchEnquiryEmailAlert } from './lib/enquiryAlert';
 import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from './lib/seoAuditReport';
 import { autoEnhanceAllProjects, generateOptimizedSeoMetadata } from './lib/autoSeoEnhancer';
-import { publicPortfolioToProject } from './lib/propertyWorkflow';
+import { publicPortfolioToProject, buildPublicPortfolioCuratorUpdate } from './lib/propertyWorkflow';
 import { ProjectDetailView } from './components/ProjectDetailView';
 import { OptimizedImage } from './components/OptimizedImage';
 import { slugify } from './data/projectsSitemapData';
@@ -14816,161 +14816,112 @@ export default function App() {
   }, [activePropertyUrlId, effectiveProjects]);
 
   const handleSaveProject = async (updated: Project) => {
-    if (!user || !isAdmin) {
-      throw new Error('Unauthorized: Verified admin authorization is required to save projects.');
-    }
-    const formattedUpdated: Project = autoEnrichProjectData({
+    if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
+    const formattedUpdated = autoEnrichProjectData({
       ...updated,
       price: formatPriceWithCondition(updated.price),
       lastPrice: formatPriceWithCondition(updated.lastPrice || updated.price)
     });
-
     const targetDocId = formattedUpdated.id || `custom_${Date.now()}`;
-    const projectWithId: Project = {
-      ...formattedUpdated,
-      id: targetDocId
-    };
+    const projectWithId: Project = { ...formattedUpdated, id: targetDocId };
 
-    // 1. Immediately update localStorage custom projects
-    try {
-      const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
-      const filteredLocal = existingLocal.filter(
-        item => item.id !== targetDocId && item.name.toLowerCase() !== projectWithId.name.toLowerCase()
-      );
-      localStorage.setItem('bs_homez_custom_projects', JSON.stringify([projectWithId, ...filteredLocal]));
-    } catch {}
+    if (projectWithId.sourceCollection === 'public_portfolio') {
+      const publicRef = doc(db, 'public_portfolio', targetDocId);
+      const snapshot = await getDoc(publicRef);
+      if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and try again.');
+      const existing = { ...snapshot.data(), id: targetDocId } as PublicPortfolioItem;
+      const safeUpdate = buildPublicPortfolioCuratorUpdate(projectWithId, existing);
+      await setDoc(publicRef, { ...safeUpdate, updatedAt: serverTimestamp() }, { merge: true });
+    } else if (!targetDocId.startsWith('local_')) {
+      const rawPayload: Record<string, any> = { ...projectWithId, updatedAt: serverTimestamp() };
+      const payload: Record<string, any> = {};
+      Object.entries(rawPayload).forEach(([key, value]) => { if (value !== undefined) payload[key] = value; });
+      await setDoc(doc(db, 'projects', targetDocId), payload, { merge: true });
+    }
 
-    // 2. Immediately update offline cache
+    // Update local cache and UI only after the persistent write succeeds.
+    setProjects(prev => prev.some(item => item.id === targetDocId)
+      ? prev.map(item => item.id === targetDocId ? projectWithId : item)
+      : [projectWithId, ...prev]);
     try {
       const cached: Project[] = JSON.parse(localStorage.getItem('bs_homez_portfolio_offline_cache') || '[]');
-      const updatedCache = cached.map(p =>
-        (p.id && p.id === targetDocId) || p.name.toLowerCase() === projectWithId.name.toLowerCase()
-          ? { ...p, ...projectWithId }
-          : p
-      );
-      if (!updatedCache.some(p => (p.id && p.id === targetDocId) || p.name.toLowerCase() === projectWithId.name.toLowerCase())) {
-        updatedCache.unshift(projectWithId);
+      const next = cached.some(item => item.id === targetDocId)
+        ? cached.map(item => item.id === targetDocId ? projectWithId : item)
+        : [projectWithId, ...cached];
+      localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(deduplicateProjects(next)));
+      if (projectWithId.sourceCollection !== 'public_portfolio') {
+        const local: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
+        localStorage.setItem('bs_homez_custom_projects', JSON.stringify([projectWithId, ...local.filter(item => item.id !== targetDocId)]));
       }
-      localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(deduplicateProjects(updatedCache)));
-    } catch {}
-
-    // 3. Update React optimistic state immediately
-    setProjects(prev => {
-      const exists = prev.some(item => (item.id && item.id === targetDocId) || item.name.toLowerCase() === projectWithId.name.toLowerCase());
-      if (exists) {
-        return prev.map(item =>
-          (item.id && item.id === targetDocId) || item.name.toLowerCase() === projectWithId.name.toLowerCase()
-            ? { ...item, ...projectWithId }
-            : item
-        );
-      }
-      return [projectWithId, ...prev];
-    });
-
-    // 4. Persist to Firestore using setDoc with merge: true so it never throws "No document to update"
-    try {
-      const rawPayload: any = {
-        ...projectWithId,
-        price: projectWithId.price,
-        lastPrice: projectWithId.lastPrice || projectWithId.price,
-        handoverDate: projectWithId.handoverDate || 'December 2027',
-        updatedAt: serverTimestamp()
-      };
-
-      // Strip all undefined values so Firestore setDoc never throws an invalid data error
-      const payload: Record<string, any> = {};
-      for (const [k, v] of Object.entries(rawPayload)) {
-        if (v !== undefined) {
-          payload[k] = v;
-        }
-      }
-
-      await setDoc(doc(db, 'projects', targetDocId), payload, { merge: true });
-
-      // Automatically trigger server-side sitemap.xml refresh so Google & Bing crawlers have latest listings immediately
-      fetch('/api/sitemap/refresh', { method: 'POST' }).catch((sitemapErr) => {
-        console.warn('Background sitemap automated refresh notice:', sitemapErr);
-      });
-    } catch (err) {
-      console.warn('Saved project locally & Firestore sync notice:', err);
+    } catch (cacheError) {
+      console.warn('Portfolio saved; local cache refresh skipped:', cacheError);
     }
+    fetch('/api/sitemap/refresh', { method: 'POST' }).catch(() => undefined);
   };
 
   const handleTogglePauseProject = async (project: Project) => {
-    if (!user || !isAdmin) return;
+    if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
     const key = project.id || project.name;
     const nextPaused = !project.isPaused;
-
-    setHiddenProjectIds(prev => {
-      const next = nextPaused
-        ? Array.from(new Set([...prev, key, project.name]))
-        : prev.filter(item => item !== key && item !== project.name);
-      try {
-        localStorage.setItem('bs_homez_hidden_projects', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-
-    setProjects(prev =>
-      prev.map(p =>
-        (p.id && p.id === project.id) || p.name === project.name
-          ? { ...p, isPaused: nextPaused }
-          : p
-      )
-    );
-
     if (project.id && !project.id.startsWith('local_')) {
-      try {
+      if (project.sourceCollection === 'public_portfolio') {
+        const ref = doc(db, 'public_portfolio', project.id);
+        const snapshot = await getDoc(ref);
+        if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and retry.');
+        await setDoc(ref, {
+          publicationStatus: nextPaused ? 'Approved' : 'Published',
+          isPublished: !nextPaused,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } else {
         await setDoc(doc(db, 'projects', project.id), {
           isPaused: nextPaused,
           updatedAt: serverTimestamp()
         }, { merge: true });
-      } catch (err) {
-        console.warn('Updated project visibility in Firestore notice:', err);
       }
     }
+    setHiddenProjectIds(prev => {
+      const next = nextPaused
+        ? Array.from(new Set([...prev, key, project.name]))
+        : prev.filter(item => item !== key && item !== project.name);
+      try { localStorage.setItem('bs_homez_hidden_projects', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setProjects(prev => prev.map(item =>
+      item.id === project.id ? { ...item, isPaused: nextPaused, isPublished: !nextPaused } as Project : item
+    ));
   };
 
   const handleDeleteProject = async (project: Project) => {
-    if (!user || !isAdmin) {
-      throw new Error('Unauthorized: Verified admin authorization is required to delete projects.');
-    }
+    if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
     const key = project.id || project.name;
-
-    setDeletedProjectIds(prev => {
-      const next = Array.from(new Set([...prev, key, project.name]));
-      try {
-        localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-
-    try {
-      const existingLocal: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
-      const filteredLocal = existingLocal.filter(
-        item => item.id !== project.id && item.name.toLowerCase() !== project.name.toLowerCase()
-      );
-      localStorage.setItem('bs_homez_custom_projects', JSON.stringify(filteredLocal));
-    } catch {}
-
-    setProjects(prev => {
-      const next = prev.filter(p => !((p.id && p.id === project.id) || p.name.toLowerCase() === project.name.toLowerCase()));
-      try {
-        localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-
     if (project.id && !project.id.startsWith('local_')) {
-      try {
+      if (project.sourceCollection === 'public_portfolio') {
+        await setDoc(doc(db, 'public_portfolio', project.id), {
+          publicationStatus: 'Archived',
+          isPublished: false,
+          isDeleted: true,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } else {
         await setDoc(doc(db, 'projects', project.id), {
           isDeleted: true,
           updatedAt: serverTimestamp()
         }, { merge: true });
-      } catch (err) {
-        console.warn('Deleted project from Firestore notice:', err);
       }
     }
+    setDeletedProjectIds(prev => {
+      const next = Array.from(new Set([...prev, key, project.name]));
+      try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setProjects(prev => prev.filter(item => item.id !== project.id));
+    try {
+      const local: Project[] = JSON.parse(localStorage.getItem('bs_homez_custom_projects') || '[]');
+      localStorage.setItem('bs_homez_custom_projects', JSON.stringify(local.filter(item => item.id !== project.id)));
+      const cache: Project[] = JSON.parse(localStorage.getItem('bs_homez_portfolio_offline_cache') || '[]');
+      localStorage.setItem('bs_homez_portfolio_offline_cache', JSON.stringify(cache.filter(item => item.id !== project.id)));
+    } catch {}
   };
 
   const handleDeleteAllProjects = async (projectsToDelete: Project[]) => {
