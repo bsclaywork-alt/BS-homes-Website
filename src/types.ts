@@ -176,6 +176,24 @@ export interface PublicPortfolioItem {
   isDeleted: boolean;
   createdAt: any;
   updatedAt?: any;
+  // Admin-only curation fields; public-safe and never contain owner contact details.
+  projectTypeCategory?: string;
+  presentStatus?: string;
+  vaastuCompliant?: string;
+  facingAvailable?: string[];
+  floorRise?: string;
+  totalUnits?: string;
+  floorPlanSize?: string;
+  bookingAmount?: string;
+  interiorStatus?: string;
+  availability?: string;
+  floorAvailability?: string;
+  saleFrom?: string;
+  aop?: string;
+  expectedRentalIncome?: string;
+  terrace?: string;
+  garden?: string;
+  projectWriteUps?: string;
 }
 
 export interface Project {
