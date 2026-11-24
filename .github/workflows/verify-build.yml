@@ -31,6 +31,7 @@ jobs:
         run: |
           cd tests/firestore
           npm install
+          cp ../../firestore.rules ./firestore.rules
           npx firebase emulators:exec --only firestore --project bshomez-rules-test "npm test"
       - name: Build static website and SEO pages
         run: npm run build:pages
