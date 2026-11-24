@@ -14802,6 +14802,28 @@ export default function App() {
     setProjects(prev => prev.some(item => item.id === targetDocId)
       ? prev.map(item => item.id === targetDocId ? projectWithId : item)
       : [projectWithId, ...prev]);
+    if (projectWithId.sourceCollection === 'public_portfolio') {
+      setPublicPortfolioItems(prev => prev.map(item => item.id === targetDocId ? {
+        ...item,
+        name: projectWithId.name,
+        location: projectWithId.location,
+        formattedPrice: projectWithId.price,
+        category: projectWithId.type === 'Rental' ? 'Rental' : projectWithId.type === 'Resale' ? 'Resale' : 'Primary',
+        propertyStatus: (projectWithId.handoverStatus || item.propertyStatus) as PublicPortfolioItem['propertyStatus'],
+        doorFacing: projectWithId.mainDoorFacing || item.doorFacing,
+        furnishing: (projectWithId.furnishType || item.furnishing) as PublicPortfolioItem['furnishing'],
+        configuration: (projectWithId.configuration?.[0] || item.configuration) as PublicPortfolioItem['configuration'],
+        amenities: projectWithId.features || item.amenities,
+        imageUrls: projectWithId.imageUrls || item.imageUrls,
+        mainImageUrl: projectWithId.imageUrls?.[0] || item.mainImageUrl,
+        videoUrl: projectWithId.videoUrl || item.videoUrl,
+        googleMapUrl: projectWithId.mapUrl || item.googleMapUrl,
+        reraNumber: projectWithId.reraNumber || item.reraNumber,
+        totalAcres: projectWithId.totalAcres || projectWithId.projectSize || item.totalAcres,
+        floorNumber: projectWithId.floor || item.floorNumber,
+        towerNumber: projectWithId.tower || item.towerNumber
+      } : item));
+    }
     try {
       const cached: Project[] = JSON.parse(localStorage.getItem('bs_homez_portfolio_offline_cache') || '[]');
       const next = cached.some(item => item.id === targetDocId)
@@ -14851,6 +14873,13 @@ export default function App() {
         ? { ...item, isPaused: nextPaused, isPublished: !nextPaused } as Project
         : item
     ));
+    if (project.sourceCollection === 'public_portfolio' && project.id) {
+      setPublicPortfolioItems(prev => prev.map(item => item.id === project.id ? {
+        ...item,
+        publicationStatus: nextPaused ? 'Approved' : 'Published',
+        isPublished: !nextPaused
+      } : item));
+    }
   };
 
   const handleDeleteProject = async (project: Project) => {
