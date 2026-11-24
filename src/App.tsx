@@ -7994,6 +7994,7 @@ const AdminView = ({
   const [showDeleteAllConfirmModal, setShowDeleteAllConfirmModal] = useState<boolean>(false);
   const [isDeletingAllProjects, setIsDeletingAllProjects] = useState<boolean>(false);
   const [isDeletingProject, setIsDeletingProject] = useState(false);
+  const [deleteProjectError, setDeleteProjectError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [leadActionToast, setLeadActionToast] = useState<string | null>(null);
   const [enquiryCategoryFilter, setEnquiryCategoryFilter] = useState<'all' | 'Primary' | 'Rental' | 'Resale' | 'Home Loan'>('all');
@@ -10087,7 +10088,14 @@ const AdminView = ({
                   <div><strong>Notes:</strong> {deleteConfirmEnquiry.message || 'None'}</div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-2">
+                {deleteProjectError && (
+              <div role="alert" className="rounded-sm border border-red-500/60 bg-red-950/60 px-4 py-3 text-xs text-red-200 break-words">
+                <strong className="block mb-1 text-red-100">Delete failed</strong>
+                {deleteProjectError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmEnquiry(null)}
@@ -11543,7 +11551,11 @@ const AdminView = ({
                     setLeadActionToast(`Deleted "${toDelete.name}" from the active portfolio. The removal is saved.`);
                   } catch (err: any) {
                     console.error("Portfolio listing archive failed:", err);
-                    setLeadActionToast(`Could not delete "${deleteConfirmProject?.name || 'listing'}": ${err?.code === 'permission-denied' ? 'Firestore permission denied. Admin delete/archive permission must be deployed.' : (err?.message || 'Please retry.')}`);
+                    const message = err?.code === 'permission-denied'
+                      ? 'Firestore permission denied. The live database rules or admin authorization rejected this delete.'
+                      : (err?.message || err?.code || 'Unknown delete failure. Please retry.');
+                    setDeleteProjectError(message);
+                    setLeadActionToast(`Could not delete "${deleteConfirmProject?.name || 'listing'}": ${message}`);
                   } finally {
                     setIsDeletingProject(false);
                     setTimeout(() => setLeadActionToast(null), 6000);
