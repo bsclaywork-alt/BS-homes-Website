@@ -2,9 +2,11 @@ name: Website build verification
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feature/admin-vault-intake-email-20261120]
   push:
-    branches: [release/fix-build-reliability-2026-11]
+    branches:
+      - release/fix-build-reliability-2026-11
+      - fix/portfolio-curator-persistence-2026-11-24
 
 permissions:
   contents: read
@@ -19,6 +21,18 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm install
+      - name: TypeScript validation
+        run: npm run lint
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Firestore security and curator workflow tests
+        run: |
+          cd tests/firestore
+          npm install
+          cp ../../firestore.rules ./firestore.rules
+          npx firebase emulators:exec --only firestore --project bshomez-rules-test "npm test"
       - name: Build static website and SEO pages
         run: npm run build:pages
       - name: Verify generated production assets
