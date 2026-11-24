@@ -14,6 +14,7 @@ import {
   User
 } from 'lucide-react';
 import { db } from '../lib/firebase';
+import { dispatchEnquiryEmailAlert } from '../lib/enquiryAlert';
 import {
   OFFER_AMENITIES,
   OfferConfiguration,
