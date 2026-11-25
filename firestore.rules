@@ -147,7 +147,7 @@ service cloud.firestore {
           (!('isDeleted' in existing()) || existing().isDeleted == false)
         ) ||
         (
-          isValidProject(incoming()) &&
+          isValidProjectUpdate(incoming(), incoming().diff(existing()).affectedKeys()) &&
           incoming().diff(existing()).affectedKeys().hasOnly([
             'id', 'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
             'location', 'locationTarget',
@@ -309,6 +309,175 @@ service cloud.firestore {
              (!('terrace' in data) || (data.terrace is string && data.terrace.size() <= 50)) &&
              (!('garden' in data) || (data.garden is string && data.garden.size() <= 50)) &&
              (!('projectWriteUps' in data) || (data.projectWriteUps is string && data.projectWriteUps.size() <= 5000));
+    }
+
+    // Updates validate only the fields changed by the curator. This avoids
+    // evaluating the full project schema on every small edit, while create
+    // operations continue to validate the complete document via isValidProject.
+    function validChangedString(data, changed, field, maxLength) {
+      return !changed.hasAny([field]) ||
+             (field in data && data[field] is string && data[field].size() <= maxLength);
+    }
+
+    function validChangedBool(data, changed, field) {
+      return !changed.hasAny([field]) || (field in data && data[field] is bool);
+    }
+
+    function validChangedNumber(data, changed, field) {
+      return !changed.hasAny([field]) || (field in data && data[field] is number);
+    }
+
+    function validChangedList(data, changed, field, maxSize) {
+      return !changed.hasAny([field]) ||
+             (field in data && data[field] is list && data[field].size() <= maxSize);
+    }
+
+    function validChangedMap(data, changed, field) {
+      return !changed.hasAny([field]) || (field in data && data[field] is map);
+    }
+
+    function validChangedEnum(data, changed, field, allowedValues) {
+      return !changed.hasAny([field]) || (field in data && data[field] in allowedValues);
+    }
+
+    function validChangedFacing(data, changed) {
+      return !changed.hasAny(['facingAvailable']) ||
+             (('facingAvailable' in data) &&
+              (data.facingAvailable is list ||
+               (data.facingAvailable is string && data.facingAvailable.size() <= 200)));
+    }
+
+    function isValidProjectUpdate(data, changed) {
+      return isValidProjectIdentityUpdate(data, changed) &&
+             isValidProjectPricingUpdate(data, changed) &&
+             isValidProjectDetailsUpdate(data, changed) &&
+             isValidProjectRentalUpdate(data, changed) &&
+             isValidProjectSeoUpdate(data, changed) &&
+             isValidProjectMediaUpdate(data, changed) &&
+             isValidProjectCuratorUpdate(data, changed);
+    }
+
+    function isValidProjectIdentityUpdate(data, changed) {
+      return validChangedString(data, changed, 'name', 200) &&
+             validChangedString(data, changed, 'location', 200) &&
+             validChangedString(data, changed, 'locationTarget', 300) &&
+             validChangedEnum(data, changed, 'zone', [
+               'Whitefield', 'Hoskote', 'Varthur', 'Gunjur', 'Hosa Road', 'Kasavanahalli',
+               'East Bangalore', 'Off Sarjapur Road', 'Sarjapur', 'Electronic City',
+               'Marathalli', 'Bellandur', 'South East Bangalore', 'Bangalore East',
+               'Bangalore North', 'Bangalore West', 'Bangalore South', 'Bangalore Central', 'All Zone'
+             ]) &&
+             validChangedEnum(data, changed, 'type', ['Primary', 'Resale', 'Rental', 'Primary Sale']) &&
+             validChangedEnum(data, changed, 'propertyType', ['Apartment', 'Villa', 'Plot', 'Flat', 'Commercial', 'Stand Alone Building']) &&
+             validChangedEnum(data, changed, 'builderCategory', ['A+', 'A', 'B', 'C']) &&
+             validChangedString(data, changed, 'builderName', 150) &&
+             validChangedString(data, changed, 'approvalBody', 150) &&
+             validChangedString(data, changed, 'floorPlan', 1000) &&
+             validChangedString(data, changed, 'floorPlanImageUrl', 900000) &&
+             validChangedList(data, changed, 'configuration', 20) &&
+             validChangedString(data, changed, 'id', 128) &&
+             validChangedString(data, changed, 'submissionId', 128) &&
+             validChangedEnum(data, changed, 'publicationStatus', ['Pending Review', 'Approved', 'Published', 'Rejected', 'Archived']);
+    }
+
+    function isValidProjectPricingUpdate(data, changed) {
+      return validChangedString(data, changed, 'price', 150) &&
+             validChangedString(data, changed, 'lastPrice', 150) &&
+             validChangedString(data, changed, 'lastCheckedPrice', 150) &&
+             validChangedBool(data, changed, 'priceChanged') &&
+             validChangedList(data, changed, 'priceHistory', 20) &&
+             validChangedString(data, changed, 'segment', 100) &&
+             validChangedString(data, changed, 'paymentOffers', 500) &&
+             validChangedBool(data, changed, 'isPaused') &&
+             validChangedBool(data, changed, 'isDeleted') &&
+             validChangedEnum(data, changed, 'sticker', ['Sold Out', 'Rented Out', 'None']) &&
+             validChangedNumber(data, changed, 'unitsRemaining') &&
+             validChangedBool(data, changed, 'isInventorySoldOut') &&
+             validChangedNumber(data, changed, 'organicViews');
+    }
+
+    function isValidProjectDetailsUpdate(data, changed) {
+      return validChangedString(data, changed, 'handoverStatus', 100) &&
+             validChangedString(data, changed, 'reraNumber', 150) &&
+             validChangedString(data, changed, 'handoverDate', 100) &&
+             validChangedString(data, changed, 'projectSize', 150) &&
+             validChangedString(data, changed, 'noOfTowers', 100) &&
+             validChangedString(data, changed, 'flatsPerFloor', 100) &&
+             validChangedString(data, changed, 'floorsHeight', 100) &&
+             validChangedString(data, changed, 'mapUrl', 1000) &&
+             validChangedString(data, changed, 'societyType', 100) &&
+             validChangedString(data, changed, 'totalAcres', 100) &&
+             validChangedString(data, changed, 'possessionDate', 100) &&
+             validChangedString(data, changed, 'availableFrom', 100) &&
+             validChangedString(data, changed, 'mainDoorFacing', 100) &&
+             validChangedString(data, changed, 'tower', 100) &&
+             validChangedString(data, changed, 'floor', 100) &&
+             validChangedString(data, changed, 'residenceType', 100);
+    }
+
+    function isValidProjectRentalUpdate(data, changed) {
+      return validChangedString(data, changed, 'tenantType', 100) &&
+             validChangedString(data, changed, 'amenitiesAvailability', 100) &&
+             validChangedString(data, changed, 'petFriendly', 100) &&
+             validChangedString(data, changed, 'furnishType', 100) &&
+             validChangedString(data, changed, 'advance', 100) &&
+             validChangedString(data, changed, 'monthlyRental', 100) &&
+             validChangedString(data, changed, 'maintenance', 100) &&
+             validChangedString(data, changed, 'suba', 100) &&
+             validChangedString(data, changed, 'carpetArea', 100) &&
+             validChangedString(data, changed, 'carCloseParking', 100) &&
+             validChangedString(data, changed, 'balcony', 100) &&
+             validChangedString(data, changed, 'comments', 2000) &&
+             validChangedString(data, changed, 'handedOverDate', 100) &&
+             validChangedString(data, changed, 'registrationStatus', 100) &&
+             validChangedString(data, changed, 'approvedAuthority', 100);
+    }
+
+    function isValidProjectSeoUpdate(data, changed) {
+      return validChangedList(data, changed, 'seoKeywords', 30) &&
+             validChangedString(data, changed, 'metaTitle', 300) &&
+             validChangedString(data, changed, 'metaDescription', 1000) &&
+             validChangedString(data, changed, 'canonicalUrl', 500) &&
+             validChangedString(data, changed, 'ogImage', 900000) &&
+             validChangedString(data, changed, 'imageAltText', 1000) &&
+             validChangedMap(data, changed, 'imageAltTexts') &&
+             validChangedString(data, changed, 'seoTitle', 300) &&
+             validChangedString(data, changed, 'seoDescription', 1000) &&
+             validChangedString(data, changed, 'seoLastSyncedAt', 100) &&
+             validChangedString(data, changed, 'seoSyncSource', 100) &&
+             validChangedString(data, changed, 'seoLastEdited', 100) &&
+             validChangedList(data, changed, 'seoRevisions', 50);
+    }
+
+    function isValidProjectMediaUpdate(data, changed) {
+      return validChangedList(data, changed, 'imageUrls', 25) &&
+             validChangedList(data, changed, 'features', 50) &&
+             validChangedString(data, changed, 'mobileImageUrl', 900000) &&
+             validChangedString(data, changed, 'videoUrl', 900000) &&
+             validChangedString(data, changed, 'mobileVideoUrl', 900000) &&
+             validChangedString(data, changed, 'videoPosterUrl', 900000) &&
+             validChangedList(data, changed, 'storagePaths', 50) &&
+             validChangedBool(data, changed, 'showImagesOnline');
+    }
+
+    function isValidProjectCuratorUpdate(data, changed) {
+      return validChangedString(data, changed, 'projectTypeCategory', 100) &&
+             validChangedString(data, changed, 'presentStatus', 100) &&
+             validChangedString(data, changed, 'vaastuCompliant', 50) &&
+             validChangedFacing(data, changed) &&
+             validChangedString(data, changed, 'floorRise', 150) &&
+             validChangedString(data, changed, 'totalUnits', 150) &&
+             validChangedString(data, changed, 'floorPlanSize', 500) &&
+             validChangedString(data, changed, 'bookingAmount', 150) &&
+             validChangedString(data, changed, 'interiorStatus', 100) &&
+             validChangedString(data, changed, 'availability', 50) &&
+             validChangedString(data, changed, 'floorAvailability', 100) &&
+             validChangedString(data, changed, 'saleFrom', 100) &&
+             validChangedString(data, changed, 'aop', 100) &&
+             validChangedString(data, changed, 'expectedRentalIncome', 150) &&
+             validChangedString(data, changed, 'terrace', 50) &&
+             validChangedString(data, changed, 'garden', 50) &&
+             validChangedString(data, changed, 'projectWriteUps', 5000);
     }
 
     // Enquiries: Publicly writable (create only), admin readable
