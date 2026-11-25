@@ -184,9 +184,9 @@ const Logo = ({ className = "", animate = true }: { className?: string; animate?
   const content = (
     <div className={cn("inline-flex items-center group select-none bg-transparent relative", className)}>
       <img
-        src="/assets/aistudio/bs_homez_logo_glow.png"
+        src="/assets/aistudio/BS_Homez_20261107_111927_0000_3461d1aa.png"
         alt="BS HOMEZ - Turning Key Moments"
-        className="h-10 sm:h-12 md:h-14 w-auto object-contain block transition-all duration-300 group-hover:scale-[1.03] drop-shadow-[0_2px_5px_rgba(0,0,0,0.18)]"
+        className="h-8 sm:h-10 md:h-12 w-auto max-w-[clamp(7rem,24vw,13rem)] object-contain block transition-all duration-300 group-hover:scale-[1.02]"
       />
     </div>
   );
@@ -399,7 +399,7 @@ const Navbar = ({
   return (
     <>
       <nav className={cn(
-        "fixed top-0 w-full z-50 px-3 sm:px-6 md:px-8 transition-all duration-300 flex flex-col gap-1 sm:gap-1.5 max-w-[100vw]",
+        "fixed top-0 w-full max-w-full z-50 px-2.5 sm:px-6 md:px-8 transition-all duration-300 flex flex-col gap-1 sm:gap-1.5 overflow-x-clip",
         scrolled
           ? "py-1 sm:py-1.5 bg-lux-forest/95 backdrop-blur-md border-b border-lux-gold/30 shadow-xl"
           : "py-1 sm:py-1.5 bg-lux-forest backdrop-blur-md border-b border-lux-gold/20 shadow-md"
@@ -434,8 +434,8 @@ const Navbar = ({
         </div>
 
         {/* Dedicated Multi-Tab Navigation Bar - Visible on desktop, removed on mobile */}
-        <div className="w-full overflow-x-auto no-scrollbar border-t border-white/15 pt-1 hidden md:block">
-          <div className="flex items-center gap-1 min-w-max pb-0.5">
+        <div className="w-full min-w-0 border-t border-white/15 pt-1">
+          <div className="flex flex-wrap items-center justify-center gap-1 pb-0.5">
             {visibleLinks.map(link => {
               const isActive = activeMainTab === link.id;
               const isTabHiddenFromPublic = isAdminUser && link.id !== 'admin' && tabVisibility && tabVisibility[link.id as PublicTabKey] === false;
@@ -446,7 +446,7 @@ const Navbar = ({
                   onClick={() => handleTabClick(link.id)}
                   title={isTabHiddenFromPublic ? `${link.name} (Hidden from online users)` : link.name}
                   className={cn(
-                    "px-2.5 py-1 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5",
+                    "min-w-0 max-w-full px-1.5 sm:px-2 md:px-2.5 py-1 rounded-sm text-[8px] sm:text-[9px] md:text-[9.5px] uppercase tracking-normal md:tracking-wide font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1",
                     isActive
                       ? "bg-lux-gold text-lux-charcoal border-lux-gold shadow-sm"
                       : link.isSpecial
