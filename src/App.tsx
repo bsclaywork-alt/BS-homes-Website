@@ -184,7 +184,7 @@ const Logo = ({ className = "", animate = true }: { className?: string; animate?
   const content = (
     <div className={cn("inline-flex items-center group select-none bg-transparent relative", className)}>
       <img
-        src="/assets/aistudio/bs_homez_logo_white_border_preview.png"
+        src="/assets/aistudio/BS_Homez_20261107_111927_0000_3461d1aa.png"
         alt="BS HOMEZ - Turning Key Moments"
         className="h-8 sm:h-10 md:h-12 w-auto max-w-[clamp(7rem,24vw,13rem)] object-contain block transition-all duration-300 group-hover:scale-[1.02]"
       />
