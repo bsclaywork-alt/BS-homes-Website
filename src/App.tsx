@@ -13988,8 +13988,12 @@ const buildProjectFirestorePayload = (project: Project, updatedAt: any = serverT
   const normalizedZone = String(normalized.zone || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
   if (allowedZones.includes(normalizedZone)) normalized.zone = normalizedZone;
   else delete normalized.zone;
-  // This marker belongs only to the in-memory adapter, not the projects schema.
+  // These markers/derived SEO fields are not part of the projects update allowlist.
+  // In particular, firestore.rules validates ogImage on create but does not permit
+  // changing it on update. autoEnrichProjectData derives it from mobileImageUrl,
+  // so writing it back here causes PERMISSION_DENIED for legacy projects without it.
   delete normalized.sourceCollection;
+  delete normalized.ogImage;
 
   const payload: Record<string, any> = {};
   Object.entries({ ...normalized, updatedAt }).forEach(([field, value]) => {
