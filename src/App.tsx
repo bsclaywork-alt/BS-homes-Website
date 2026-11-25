@@ -13985,19 +13985,35 @@ const buildProjectFirestorePayload = (project: Project, updatedAt: any = serverT
     'Marathalli', 'Bellandur', 'South East Bangalore', 'Bangalore East',
     'Bangalore North', 'Bangalore West', 'Bangalore South', 'Bangalore Central', 'All Zone'
   ];
-  const normalizedZone = String(normalized.zone || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const normalizedZone = String(normalized.zone || '').replace(/[-_]+/g, ' ').replace(/\\s+/g, ' ').trim();
   if (allowedZones.includes(normalizedZone)) normalized.zone = normalizedZone;
   else delete normalized.zone;
-  // These markers/derived SEO fields are not part of the projects update allowlist.
-  // In particular, firestore.rules validates ogImage on create but does not permit
-  // changing it on update. autoEnrichProjectData derives it from mobileImageUrl,
-  // so writing it back here causes PERMISSION_DENIED for legacy projects without it.
-  delete normalized.sourceCollection;
-  delete normalized.ogImage;
+
+  // Keep client-only, private and derived metadata out of Firestore writes.
+  // This list mirrors the projects update allowlist in firestore.rules.
+  // Merge writes preserve legacy fields that are not part of this editor.
+  const allowedFields = new Set([
+    'id', 'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
+    'location', 'locationTarget', 'zone', 'type', 'propertyType', 'builderCategory', 'builderName',
+    'approvalBody', 'floorPlan', 'floorPlanImageUrl', 'configuration', 'segment', 'imageUrls', 'videoUrl',
+    'features', 'handoverStatus', 'reraNumber', 'handoverDate', 'projectSize', 'noOfTowers', 'flatsPerFloor',
+    'floorsHeight', 'mapUrl', 'paymentOffers', 'isPaused', 'isDeleted', 'sticker', 'availableFrom',
+    'mainDoorFacing', 'tower', 'floor', 'residenceType', 'tenantType', 'amenitiesAvailability', 'petFriendly',
+    'furnishType', 'advance', 'monthlyRental', 'maintenance', 'suba', 'carpetArea', 'carCloseParking',
+    'balcony', 'comments', 'handedOverDate', 'registrationStatus', 'approvedAuthority', 'seoKeywords',
+    'ogImage', 'metaTitle', 'metaDescription', 'canonicalUrl', 'imageAltText', 'imageAltTexts',
+    'seoTitle', 'seoDescription', 'seoLastSyncedAt', 'seoLastEdited', 'seoRevisions', 'mobileImageUrl',
+    'mobileVideoUrl', 'unitsRemaining', 'isInventorySoldOut', 'projectTypeCategory', 'presentStatus',
+    'vaastuCompliant', 'facingAvailable', 'floorRise', 'totalUnits', 'floorPlanSize', 'bookingAmount',
+    'interiorStatus', 'availability', 'floorAvailability', 'saleFrom', 'aop', 'expectedRentalIncome',
+    'terrace', 'garden', 'projectWriteUps', 'organicViews', 'createdAt', 'updatedAt', 'societyType',
+    'totalAcres', 'possessionDate', 'showImagesOnline', 'videoPosterUrl', 'storagePaths', 'seoSyncSource',
+    'submissionId', 'publicationStatus'
+  ]);
 
   const payload: Record<string, any> = {};
   Object.entries({ ...normalized, updatedAt }).forEach(([field, value]) => {
-    if (value !== undefined) payload[field] = value;
+    if (allowedFields.has(field) && value !== undefined) payload[field] = value;
   });
   return payload;
 };
