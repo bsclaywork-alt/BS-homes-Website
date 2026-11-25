@@ -381,12 +381,19 @@ const Navbar = ({
     { id: 'testimonials', name: 'Client Voices' },
     { id: 'faq', name: 'FAQ' },
     { id: 'about', name: 'About' },
-    { id: 'admin', name: 'Admin', isSpecial: true }
+    { id: 'admin', name: 'Admin Login', isSpecial: true }
   ];
 
+  // Keep Admin Login out of the public header tabs; expose it only in the three-dot drawer.
   const visibleLinks = links.filter(link => {
+    if (link.id === 'admin') return false;
+    if (isAdminUser) return true; // Admins see all public tabs, with visual badge if hidden
+    return tabVisibility ? tabVisibility[link.id as PublicTabKey] !== false : true;
+  });
+
+  const menuLinks = links.filter(link => {
     if (link.id === 'admin') return true;
-    if (isAdminUser) return true; // Admins see all tabs, with visual badge if hidden
+    if (isAdminUser) return true;
     return tabVisibility ? tabVisibility[link.id as PublicTabKey] !== false : true;
   });
 
@@ -495,7 +502,7 @@ const Navbar = ({
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-12">
-              {visibleLinks.map((link) => {
+              {menuLinks.map((link) => {
                 const isActive = activeMainTab === link.id;
                 const isTabHiddenFromPublic = isAdminUser && link.id !== 'admin' && tabVisibility && tabVisibility[link.id as PublicTabKey] === false;
                 return (
@@ -15917,47 +15924,36 @@ export default function App() {
           </div>
         )}
 
-        {/* Admin Login / Vault Switcher Bar */}
-        <div className="flex justify-center py-10 opacity-80 hover:opacity-100 transition-opacity flex-col items-center gap-4 border-t border-lux-border bg-lux-ivory">
-           {!user ? (
-             <>
-               <button
-                 type="button"
-                 onClick={handleLogin}
-                 className="text-[10px] bg-lux-card text-lux-forest border border-lux-border px-6 py-2.5 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 hover:bg-lux-forest hover:text-lux-card transition-all cursor-pointer shadow-sm"
-               >
-                 <ShieldCheck size={14} /> Google Login
-               </button>
-               {loginError && <p role="alert" className="max-w-md px-4 text-center text-xs text-red-700">{loginError}</p>}
-             </>
-           ) : (
-             <div className="flex flex-col items-center gap-2">
-               <span className="text-[10px] uppercase tracking-widest text-lux-muted font-semibold">
-                 Google account connected {isAdmin ? '• Verified Admin' : '• Admin access not granted'}
-               </span>
-               <div className="flex gap-4">
-                 {isAdmin && (
-                   <button
-                     type="button"
-                     onClick={() => {
-                       handleSelectTab(activeMainTab === 'admin' ? 'projects' : 'admin');
-                       window.scrollTo({ top: 0, behavior: 'smooth' });
-                     }}
-                     className="text-[10px] bg-lux-forest text-lux-card px-6 py-2 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 cursor-pointer hover:bg-lux-forest-hover shadow-sm"
-                   >
-                     {activeMainTab === 'admin' ? 'Return to Portfolios Tab' : 'Open Admin Vault Tab'}
-                   </button>
-                 )}
-                 <button
-                   onClick={handleLogout}
-                   className="text-[10px] bg-red-500/10 text-red-700 border border-red-500/30 px-6 py-2 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                 >
-                   Logout
-                 </button>
-               </div>
-             </div>
-           )}
-        </div>
+        {/* Authenticated account controls only; unauthenticated Admin Login is in the three-dot menu. */}
+        {user && (
+          <div className="flex justify-center py-10 opacity-80 hover:opacity-100 transition-opacity flex-col items-center gap-4 border-t border-lux-border bg-lux-ivory">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[10px] uppercase tracking-widest text-lux-muted font-semibold">
+                Google account connected {isAdmin ? '• Verified Admin' : '• Admin access not granted'}
+              </span>
+              <div className="flex gap-4">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleSelectTab(activeMainTab === 'admin' ? 'projects' : 'admin');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-[10px] bg-lux-forest text-lux-card px-6 py-2 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 cursor-pointer hover:bg-lux-forest-hover shadow-sm"
+                  >
+                    {activeMainTab === 'admin' ? 'Return to Portfolios Tab' : 'Open Admin Vault Tab'}
+                  </button>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="text-[10px] bg-red-500/10 text-red-700 border border-red-500/30 px-6 py-2 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       <footer className="bg-lux-footer text-lux-ivory py-16 px-8 border-t border-lux-gold/25">
