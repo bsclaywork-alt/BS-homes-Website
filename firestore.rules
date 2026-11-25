@@ -143,9 +143,15 @@ service cloud.firestore {
       allow update: if isAdmin() && isValidId(projectId) && (
         (
           isAdmin() &&
-          incoming().diff(existing()).affectedKeys().hasOnly(['isDeleted', 'isPaused', 'updatedAt']) &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'id', 'name', 'location', 'type', 'price', 'isDeleted', 'isPaused', 'updatedAt'
+          ]) &&
           incoming().isDeleted == true &&
           incoming().isPaused == true &&
+          incoming().name is string && incoming().name.size() <= 200 &&
+          incoming().location is string && incoming().location.size() <= 200 &&
+          incoming().type in ['Primary', 'Resale', 'Rental', 'Primary Sale'] &&
+          incoming().price is string && incoming().price.size() <= 150 &&
           incoming().updatedAt == request.time
         ) ||
         (
