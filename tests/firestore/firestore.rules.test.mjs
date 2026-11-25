@@ -357,6 +357,18 @@ describe('Offer Your Asset Firestore rules', () => {
 
     await assertSucceeds(updateDoc(projectRef, { price: 'Rs. 1.1 Cr' }));
     await assertSucceeds(updateDoc(projectRef, {
+      societyType: 'Gated',
+      totalAcres: '2.5',
+      possessionDate: 'December 2027',
+      showImagesOnline: false,
+      videoPosterUrl: 'https://example.test/video-poster.jpg',
+      storagePaths: ['projects/security-project/images/cover.jpg'],
+      seoSyncSource: 'admin-curator',
+      submissionId: 'submission-security-project',
+      publicationStatus: 'Approved'
+    }));
+    await assertFails(updateDoc(projectRef, { showImagesOnline: 'false' }));
+    await assertSucceeds(updateDoc(projectRef, {
       isDeleted: true,
       updatedAt: serverTimestamp()
     }));
