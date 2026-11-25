@@ -6,13 +6,11 @@ import { MediaUploadCompressor } from './MediaUploadCompressor';
 type InventoryMode = 'Primary' | 'Resale';
 type FormValues = Partial<Project> & {
   saleType: string;
-  fullAddress: string;
   societyType: 'Gated' | 'Individual';
   propertyStatus: 'Ready to Move' | 'EOI' | 'Under Construction' | 'Nearing Completion';
   possessionDate: string;
   doorFacing: string;
   floorNumber: string;
-  doorNumber: string;
   totalUnits: string;
   totalAcres: string;
   furnishing: 'Unfurnished' | 'Semi Furnished' | 'Furnished';
@@ -20,10 +18,10 @@ type FormValues = Partial<Project> & {
 };
 
 const INITIAL: FormValues = {
-  name: '', location: '', price: '', mapUrl: '', fullAddress: '',
+  name: '', location: '', price: '', mapUrl: '',
   propertyType: 'Apartment', societyType: 'Gated', propertyStatus: 'Ready to Move',
   reraNumber: '', possessionDate: '', configuration: ['2 BHK'], doorFacing: 'East',
-  vaastuCompliant: 'Yes', floorNumber: '', doorNumber: '', totalUnits: '',
+  vaastuCompliant: 'Yes', floorNumber: '', totalUnits: '',
   noOfTowers: '', totalAcres: '', features: [], furnishing: 'Unfurnished',
   others: '', imageUrls: [], showImagesOnline: false, saleType: 'Owner',
   type: 'Primary', description: '', locationTarget: '', zone: 'Whitefield',
@@ -50,13 +48,11 @@ export const AdminPrimaryResaleForm: React.FC<AdminPrimaryResaleFormProps> = ({ 
     ...(project as FormValues | null || {}),
     type: mode,
     saleType: (project as any)?.saleType || (mode === 'Primary' ? 'Builder' : 'Owner'),
-    fullAddress: (project as any)?.fullAddress || '',
     societyType: (project as any)?.societyType || 'Gated',
     propertyStatus: (project as any)?.propertyStatus || project?.handoverStatus || 'Ready to Move',
     possessionDate: (project as any)?.possessionDate || project?.handoverDate || '',
     doorFacing: (project as any)?.doorFacing || project?.mainDoorFacing || 'East',
     floorNumber: (project as any)?.floorNumber || project?.floor || '',
-    doorNumber: (project as any)?.doorNumber || '',
     totalUnits: (project as any)?.totalUnits || '',
     totalAcres: (project as any)?.totalAcres || project?.projectSize || '',
     furnishing: (project as any)?.furnishing || project?.furnishType || 'Unfurnished',
@@ -92,20 +88,34 @@ export const AdminPrimaryResaleForm: React.FC<AdminPrimaryResaleFormProps> = ({ 
     setSaving(true);
     setError('');
     try {
+      // The form has presentation-only fields. Never spread those directly into Firestore:
+      // Firestore rules intentionally reject private address/door data and duplicate UI keys.
+      const persistableForm = { ...form } as Record<string, any>;
+      const projectFields: Record<string, any> = { ...(project || {}), ...persistableForm };
+      [
+        'fullAddress', 'doorNumber', 'ownerName', 'ownerMobile', 'ownerPhone',
+        'ownerEmail', 'ownerContact', 'privateNotes', 'mobile', 'phone', 'email',
+        'saleType', 'propertyStatus', 'doorFacing', 'floorNumber', 'furnishing', 'others'
+      ].forEach(field => delete projectFields[field]);
+
       const saved = {
-        ...(project || {}),
-        ...form,
+        ...projectFields,
         id: project?.id,
+        sourceCollection: project?.sourceCollection,
         name: form.name!.trim(),
         location: form.location!.trim(),
         locationTarget: form.locationTarget || form.location!.trim(),
         price: form.price!.trim(),
         type: mode,
+        saleFrom: form.saleType || project?.saleFrom || (mode === 'Primary' ? 'Builder' : 'Investor'),
+        societyType: form.societyType,
+        possessionDate: form.possessionDate || '',
         handoverStatus: form.propertyStatus,
         handoverDate: form.possessionDate || '',
         mainDoorFacing: form.doorFacing,
         floor: form.floorNumber,
         projectSize: form.totalAcres,
+        totalAcres: form.totalAcres,
         furnishType: form.furnishing,
         comments: form.others,
         description: form.others || form.description || '',
@@ -116,12 +126,13 @@ export const AdminPrimaryResaleForm: React.FC<AdminPrimaryResaleFormProps> = ({ 
         mobileImageUrl: form.imageUrls?.[0] || '',
         mobileVideoUrl: form.videoUrl || form.mobileVideoUrl || '',
         isPaused: Boolean(project?.isPaused),
-        isDeleted: false
+        isDeleted: Boolean(project?.isDeleted)
       } as Project;
       await onSave(saved);
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Unable to save this property. Your entered details are still here; please retry.');
+      const detail = [err?.code, err?.message].filter(Boolean).join(': ');
+      setError(detail || 'Unable to save this property. Your entered details are still here; please retry.');
     } finally {
       setSaving(false);
     }
@@ -155,7 +166,6 @@ export const AdminPrimaryResaleForm: React.FC<AdminPrimaryResaleFormProps> = ({ 
               <div><label className={labelClass}>Project Location *</label><input required className={inputClass} value={form.location || ''} onChange={e => update('location', e.target.value)} placeholder="Area, locality, city" /></div>
               <div><label className={labelClass}>Price (INR) *</label><input required className={inputClass} value={form.price || ''} onChange={e => update('price', e.target.value)} placeholder="e.g. ₹1.25 Cr" /></div>
               <div className="md:col-span-2"><label className={labelClass}>Google Map Location URL</label><input type="url" className={inputClass} value={form.mapUrl || ''} onChange={e => update('mapUrl', e.target.value)} placeholder="https://maps.google.com/..." /></div>
-              <div className="md:col-span-2"><label className={labelClass}>Full Address</label><textarea rows={2} className={inputClass} value={form.fullAddress} onChange={e => update('fullAddress', e.target.value)} placeholder="Building, street, landmark, postal code" /></div>
             </div>
           </section>
 
@@ -171,7 +181,6 @@ export const AdminPrimaryResaleForm: React.FC<AdminPrimaryResaleFormProps> = ({ 
               <div><label className={labelClass}>Door Facing</label><select className={inputClass} value={form.doorFacing} onChange={e => update('doorFacing', e.target.value)}>{FACINGS.map(v => <option key={v}>{v}</option>)}</select></div>
               <div><label className={labelClass}>Vaastu Compliant</label><select className={inputClass} value={String(form.vaastuCompliant || 'Yes')} onChange={e => update('vaastuCompliant', e.target.value)}><option>Yes</option><option>No</option></select></div>
               <div><label className={labelClass}>Floor Number</label><input className={inputClass} value={form.floorNumber} onChange={e => update('floorNumber', e.target.value)} /></div>
-              {mode === 'Resale' && <div><label className={labelClass}>Door Number (Optional)</label><input className={inputClass} value={form.doorNumber} onChange={e => update('doorNumber', e.target.value)} /></div>}
               <div><label className={labelClass}>Total Units</label><input className={inputClass} value={form.totalUnits} onChange={e => update('totalUnits', e.target.value)} /></div>
               <div><label className={labelClass}>Total Towers</label><input className={inputClass} value={form.noOfTowers || ''} onChange={e => update('noOfTowers', e.target.value)} /></div>
               <div><label className={labelClass}>Project Size (Acres)</label><input className={inputClass} value={form.totalAcres} onChange={e => { update('totalAcres', e.target.value); update('projectSize', e.target.value); }} /></div>
