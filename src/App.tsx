@@ -14963,13 +14963,11 @@ export default function App() {
     const projectDocId = /^[a-zA-Z0-9_-]{1,128}$/.test(projectId) ? projectId : tombstoneId;
     const publicRef = publicPortfolioDocId ? doc(db, 'public_portfolio', publicPortfolioDocId) : null;
     const projectsRef = doc(db, 'projects', projectDocId);
-    const [publicSnapshot, projectSnapshot] = await Promise.all([
-      publicRef ? getDoc(publicRef) : Promise.resolve(null),
-      getDoc(projectsRef)
-    ]);
-
+    // Do not read either document before archiving. The previous getDoc() calls
+    // consumed two Firestore reads per deletion and caused the action to fail
+    // completely when the project's free daily read quota was exhausted.
     const batch = writeBatch(db);
-    if (publicRef && publicSnapshot?.exists()) {
+    if (publicRef && matchedPublicPortfolioItem) {
       batch.set(publicRef, {
         publicationStatus: 'Archived',
         isPublished: false,
@@ -14978,35 +14976,25 @@ export default function App() {
       }, { merge: true });
     }
 
-    if (projectSnapshot.exists()) {
-      batch.set(projectsRef, {
-        isDeleted: true,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-    } else {
-      // Always write a durable projects tombstone, including for public_portfolio
-      // records. The public catalogue and static curated catalogue both consult
-      // this marker, so the listing cannot reappear after refresh or on another device.
-      // Keep the create payload deliberately minimal so legacy/malformed display
-      // fields cannot cause Firestore's full project validator to reject the batch.
-      const rawType = String(project.type || 'Primary');
-      const safeType: Project['type'] = ['Primary', 'Resale', 'Rental', 'Primary Sale'].includes(rawType)
-        ? rawType as Project['type']
-        : 'Primary';
-      const tombstoneName = String(project.name || 'Deleted listing').trim().slice(0, 200) || 'Deleted listing';
-      const tombstoneLocation = String(project.location || 'Bangalore').trim().slice(0, 200) || 'Bangalore';
-      const tombstonePrice = String(project.price || 'Contact for price').trim().slice(0, 150) || 'Contact for price';
-      batch.set(projectsRef, {
-        id: projectDocId,
-        name: tombstoneName,
-        location: tombstoneLocation,
-        type: safeType,
-        price: tombstonePrice,
-        isDeleted: true,
-        isPaused: true,
-        updatedAt: serverTimestamp()
-      });
-    }
+    // A merge write handles both existing inventory and a missing durable
+    // tombstone. Firestore rules explicitly permit this minimal tombstone shape.
+    const rawType = String(project.type || 'Primary');
+    const safeType: Project['type'] = ['Primary', 'Resale', 'Rental', 'Primary Sale'].includes(rawType)
+      ? rawType as Project['type']
+      : 'Primary';
+    const tombstoneName = String(project.name || 'Deleted listing').trim().slice(0, 200) || 'Deleted listing';
+    const tombstoneLocation = String(project.location || 'Bangalore').trim().slice(0, 200) || 'Bangalore';
+    const tombstonePrice = String(project.price || 'Contact for price').trim().slice(0, 150) || 'Contact for price';
+    batch.set(projectsRef, {
+      id: projectDocId,
+      name: tombstoneName,
+      location: tombstoneLocation,
+      type: safeType,
+      price: tombstonePrice,
+      isDeleted: true,
+      isPaused: true,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
 
     await batch.commit();
 
