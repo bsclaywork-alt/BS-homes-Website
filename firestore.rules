@@ -150,7 +150,8 @@ service cloud.firestore {
           isValidProject(incoming()) &&
           incoming().diff(existing()).affectedKeys().hasOnly([
             'id', 'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
-            'location', 'locationTarget',
+            'location', 'locationTarget', 'societyType', 'totalAcres', 'possessionDate', 'showImagesOnline',
+            'videoPosterUrl', 'storagePaths', 'seoSyncSource',
             'zone', 'type', 'propertyType', 'builderCategory', 'builderName',
             'approvalBody', 'floorPlan', 'floorPlanImageUrl',
             'configuration', 'segment', 'imageUrls', 'videoUrl',
@@ -180,6 +181,13 @@ service cloud.firestore {
       return data.name is string && data.name.size() <= 200 &&
              data.location is string && data.location.size() <= 200 &&
              (!('locationTarget' in data) || (data.locationTarget is string && data.locationTarget.size() <= 300)) &&
+             (!('societyType' in data) || (data.societyType is string && data.societyType.size() <= 100)) &&
+             (!('totalAcres' in data) || (data.totalAcres is string && data.totalAcres.size() <= 100)) &&
+             (!('possessionDate' in data) || (data.possessionDate is string && data.possessionDate.size() <= 100)) &&
+             (!('showImagesOnline' in data) || data.showImagesOnline is bool) &&
+             (!('videoPosterUrl' in data) || (data.videoPosterUrl is string && data.videoPosterUrl.size() <= 900000)) &&
+             (!('storagePaths' in data) || (data.storagePaths is list && data.storagePaths.size() <= 50)) &&
+             (!('seoSyncSource' in data) || (data.seoSyncSource is string && data.seoSyncSource.size() <= 100)) &&
              (!('zone' in data) || data.zone in [
                'Whitefield', 'Hoskote', 'Varthur', 'Gunjur', 'Hosa Road', 'Kasavanahalli',
                'East Bangalore', 'Off Sarjapur Road', 'Sarjapur', 'Electronic City',
