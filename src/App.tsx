@@ -15911,14 +15911,17 @@ export default function App() {
             <p className="text-xs text-lux-muted">
               Sign in with your authorized Google account to access the BS Homez Admin Vault.
             </p>
-            {!user && (
-              <button
-                type="button"
-                onClick={handleLogin}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-lux-forest text-lux-card rounded-sm text-[10px] uppercase tracking-widest font-bold hover:bg-lux-forest-hover transition-colors cursor-pointer"
-              >
-                <ShieldCheck size={14} /> Continue with Google
-              </button>
+            <button
+              type="button"
+              onClick={handleLogin}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-lux-forest text-lux-card rounded-sm text-[10px] uppercase tracking-widest font-bold hover:bg-lux-forest-hover transition-colors cursor-pointer"
+            >
+              <ShieldCheck size={14} /> {user ? 'Switch Google Account / Sign In Again' : 'Continue with Google'}
+            </button>
+            {user && (
+              <p className="text-[11px] text-lux-muted">
+                Signed in with {user.email || 'a Google account'}. Choose your authorized BS Homez admin account to retry.
+              </p>
             )}
             {loginError && <p role="alert" className="text-xs text-red-700">{loginError}</p>}
           </div>
