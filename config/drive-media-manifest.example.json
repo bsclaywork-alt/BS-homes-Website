@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-17T00:00:00.000Z",
+  "projects": [
+    {
+      "projectId": "stable-firestore-project-id",
+      "showPhotos": true,
+      "photos": [
+        {
+          "driveFileId": "GOOGLE_DRIVE_FILE_ID_1",
+          "fileName": "01-cover.webp"
+        },
+        {
+          "driveFileId": "GOOGLE_DRIVE_FILE_ID_2",
+          "fileName": "02-gallery.webp"
+        }
+      ],
+      "video": {
+        "show": false,
+        "url": ""
+      }
+    }
+  ]
+}
