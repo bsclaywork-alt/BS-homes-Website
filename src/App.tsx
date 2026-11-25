@@ -184,9 +184,9 @@ const Logo = ({ className = "", animate = true }: { className?: string; animate?
   const content = (
     <div className={cn("inline-flex items-center group select-none bg-transparent relative", className)}>
       <img
-        src="/assets/aistudio/bs_homez_logo_glow.png"
+        src="/assets/aistudio/bs_homez_logo_white_border_preview.png"
         alt="BS HOMEZ - Turning Key Moments"
-        className="h-10 sm:h-12 md:h-14 w-auto object-contain block transition-all duration-300 group-hover:scale-[1.03] drop-shadow-[0_2px_5px_rgba(0,0,0,0.18)]"
+        className="h-8 sm:h-10 md:h-12 w-auto max-w-[clamp(7rem,24vw,13rem)] object-contain block transition-all duration-300 group-hover:scale-[1.02]"
       />
     </div>
   );
@@ -381,11 +381,11 @@ const Navbar = ({
     { id: 'testimonials', name: 'Client Voices' },
     { id: 'faq', name: 'FAQ' },
     { id: 'about', name: 'About' },
-    ...(isAdminUser ? [{ id: 'admin' as MainAppTab, name: 'Admin Vault', isSpecial: true }] : [])
+    { id: 'admin', name: 'Admin', isSpecial: true }
   ];
 
   const visibleLinks = links.filter(link => {
-    if (link.id === 'admin') return Boolean(isAdminUser);
+    if (link.id === 'admin') return true;
     if (isAdminUser) return true; // Admins see all tabs, with visual badge if hidden
     return tabVisibility ? tabVisibility[link.id as PublicTabKey] !== false : true;
   });
@@ -399,7 +399,7 @@ const Navbar = ({
   return (
     <>
       <nav className={cn(
-        "fixed top-0 w-full z-50 px-3 sm:px-6 md:px-8 transition-all duration-300 flex flex-col gap-1 sm:gap-1.5 max-w-[100vw]",
+        "fixed top-0 w-full max-w-full z-50 px-2.5 sm:px-6 md:px-8 transition-all duration-300 flex flex-col gap-1 sm:gap-1.5 overflow-x-clip",
         scrolled
           ? "py-1 sm:py-1.5 bg-lux-forest/95 backdrop-blur-md border-b border-lux-gold/30 shadow-xl"
           : "py-1 sm:py-1.5 bg-lux-forest backdrop-blur-md border-b border-lux-gold/20 shadow-md"
@@ -434,8 +434,8 @@ const Navbar = ({
         </div>
 
         {/* Dedicated Multi-Tab Navigation Bar - Visible on desktop, removed on mobile */}
-        <div className="w-full overflow-x-auto no-scrollbar border-t border-white/15 pt-1 hidden md:block">
-          <div className="flex items-center gap-1 min-w-max pb-0.5">
+        <div className="w-full min-w-0 border-t border-white/15 pt-1">
+          <div className="flex flex-wrap items-center justify-center gap-1 pb-0.5">
             {visibleLinks.map(link => {
               const isActive = activeMainTab === link.id;
               const isTabHiddenFromPublic = isAdminUser && link.id !== 'admin' && tabVisibility && tabVisibility[link.id as PublicTabKey] === false;
@@ -446,7 +446,7 @@ const Navbar = ({
                   onClick={() => handleTabClick(link.id)}
                   title={isTabHiddenFromPublic ? `${link.name} (Hidden from online users)` : link.name}
                   className={cn(
-                    "px-2.5 py-1 rounded-sm text-[9.5px] sm:text-[10px] uppercase tracking-wider font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5",
+                    "min-w-0 max-w-full px-1.5 sm:px-2 md:px-2.5 py-1 rounded-sm text-[8px] sm:text-[9px] md:text-[9.5px] uppercase tracking-normal md:tracking-wide font-extrabold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1",
                     isActive
                       ? "bg-lux-gold text-lux-charcoal border-lux-gold shadow-sm"
                       : link.isSpecial
@@ -15057,7 +15057,6 @@ export default function App() {
     // Ask Google to show the account chooser and suggest the BS Homez admin account.
     // This is only a sign-in hint; authorization still depends on the server-issued admin claim.
     provider.setCustomParameters({
-      login_hint: 'bsclaywork@gmail.com',
       prompt: 'select_account'
     });
     try {
@@ -15899,13 +15898,22 @@ export default function App() {
         )}
 
         {activeMainTab === 'admin' && (!user || !isAdmin) && (
-          <div className="max-w-lg mx-auto my-20 p-8 bg-lux-card border border-red-300 rounded-sm text-center space-y-3 shadow-md">
-            <h3 className="text-xl font-serif font-bold text-lux-forest">Verified Admin Authorization Required</h3>
+          <div className="max-w-lg mx-auto my-20 p-8 bg-lux-card border border-lux-border rounded-sm text-center space-y-4 shadow-md">
+            <ShieldCheck size={30} className="mx-auto text-lux-forest" />
+            <h3 className="text-xl font-serif font-bold text-lux-forest">Admin Google Login</h3>
             <p className="text-xs text-lux-muted">
-              {user
-                ? `Signed in as ${user.email}, but this account does not hold verified admin authorization required to access administrative controls.`
-                : 'Please sign in with a verified BS Homez administrator account to access administrative controls.'}
+              Sign in with your authorized Google account to access the BS Homez Admin Vault.
             </p>
+            {!user && (
+              <button
+                type="button"
+                onClick={handleLogin}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-lux-forest text-lux-card rounded-sm text-[10px] uppercase tracking-widest font-bold hover:bg-lux-forest-hover transition-colors cursor-pointer"
+              >
+                <ShieldCheck size={14} /> Continue with Google
+              </button>
+            )}
+            {loginError && <p role="alert" className="text-xs text-red-700">{loginError}</p>}
           </div>
         )}
 
@@ -15918,14 +15926,14 @@ export default function App() {
                  onClick={handleLogin}
                  className="text-[10px] bg-lux-card text-lux-forest border border-lux-border px-6 py-2.5 rounded-sm uppercase tracking-widest font-bold flex items-center gap-2 hover:bg-lux-forest hover:text-lux-card transition-all cursor-pointer shadow-sm"
                >
-                 <ShieldCheck size={14} /> Admin Relationship Login
+                 <ShieldCheck size={14} /> Google Login
                </button>
                {loginError && <p role="alert" className="max-w-md px-4 text-center text-xs text-red-700">{loginError}</p>}
              </>
            ) : (
              <div className="flex flex-col items-center gap-2">
                <span className="text-[10px] uppercase tracking-widest text-lux-muted font-semibold">
-                 Logged in as {user.email} {isAdmin ? '• Verified Admin' : '• Standard User'}
+                 Google account connected {isAdmin ? '• Verified Admin' : '• Admin access not granted'}
                </span>
                <div className="flex gap-4">
                  {isAdmin && (

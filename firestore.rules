@@ -147,7 +147,7 @@ service cloud.firestore {
           (!('isDeleted' in existing()) || existing().isDeleted == false)
         ) ||
         (
-          isValidProject(incoming()) &&
+          isValidProjectUpdate(incoming(), incoming().diff(existing()).affectedKeys()) &&
           incoming().diff(existing()).affectedKeys().hasOnly([
             'id', 'name', 'description', 'price', 'lastPrice', 'lastCheckedPrice', 'priceChanged', 'priceHistory',
             'location', 'locationTarget',
@@ -168,7 +168,9 @@ service cloud.firestore {
             'projectTypeCategory', 'presentStatus', 'vaastuCompliant', 'facingAvailable', 'floorRise', 'totalUnits',
             'floorPlanSize', 'bookingAmount', 'interiorStatus', 'availability', 'floorAvailability', 'saleFrom',
             'aop', 'expectedRentalIncome', 'terrace', 'garden', 'projectWriteUps',
-            'organicViews', 'createdAt', 'updatedAt'
+            'organicViews', 'createdAt', 'updatedAt',
+            'societyType', 'totalAcres', 'possessionDate', 'showImagesOnline',
+            'videoPosterUrl', 'storagePaths', 'seoSyncSource', 'submissionId', 'publicationStatus'
           ])
         )
       );
@@ -177,6 +179,16 @@ service cloud.firestore {
     }
 
     function isValidProject(data) {
+      return isValidProjectIdentity(data) &&
+             isValidProjectPricing(data) &&
+             isValidProjectDetails(data) &&
+             isValidProjectRental(data) &&
+             isValidProjectSeo(data) &&
+             isValidProjectMedia(data) &&
+             isValidProjectCurator(data);
+    }
+
+    function isValidProjectIdentity(data) {
       return data.name is string && data.name.size() <= 200 &&
              data.location is string && data.location.size() <= 200 &&
              (!('locationTarget' in data) || (data.locationTarget is string && data.locationTarget.size() <= 300)) &&
@@ -194,15 +206,29 @@ service cloud.firestore {
              (!('floorPlan' in data) || (data.floorPlan is string && data.floorPlan.size() <= 1000)) &&
              (!('floorPlanImageUrl' in data) || (data.floorPlanImageUrl is string && data.floorPlanImageUrl.size() <= 900000)) &&
              (!('configuration' in data) || (data.configuration is list && data.configuration.size() <= 20)) &&
-             data.price is string && data.price.size() <= 150 &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+             (!('submissionId' in data) || (data.submissionId is string && data.submissionId.size() <= 128)) &&
+             (!('publicationStatus' in data) || data.publicationStatus in ['Pending Review', 'Approved', 'Published', 'Rejected', 'Archived']);
+    }
+
+    function isValidProjectPricing(data) {
+      return data.price is string && data.price.size() <= 150 &&
              (!('lastPrice' in data) || (data.lastPrice is string && data.lastPrice.size() <= 150)) &&
              (!('lastCheckedPrice' in data) || (data.lastCheckedPrice is string && data.lastCheckedPrice.size() <= 150)) &&
              (!('priceChanged' in data) || data.priceChanged is bool) &&
              (!('priceHistory' in data) || (data.priceHistory is list && data.priceHistory.size() <= 20)) &&
              (!('segment' in data) || (data.segment is string && data.segment.size() <= 100)) &&
-             (!('imageUrls' in data) || (data.imageUrls is list && data.imageUrls.size() <= 25)) &&
-             (!('features' in data) || (data.features is list && data.features.size() <= 50)) &&
-             (!('handoverStatus' in data) || (data.handoverStatus is string && data.handoverStatus.size() <= 100)) &&
+             (!('paymentOffers' in data) || (data.paymentOffers is string && data.paymentOffers.size() <= 500)) &&
+             (!('isPaused' in data) || data.isPaused is bool) &&
+             (!('isDeleted' in data) || data.isDeleted is bool) &&
+             (!('sticker' in data) || data.sticker in ['Sold Out', 'Rented Out', 'None']) &&
+             (!('unitsRemaining' in data) || data.unitsRemaining is number) &&
+             (!('isInventorySoldOut' in data) || data.isInventorySoldOut is bool) &&
+             (!('organicViews' in data) || data.organicViews is number);
+    }
+
+    function isValidProjectDetails(data) {
+      return (!('handoverStatus' in data) || (data.handoverStatus is string && data.handoverStatus.size() <= 100)) &&
              (!('reraNumber' in data) || (data.reraNumber is string && data.reraNumber.size() <= 150)) &&
              (!('handoverDate' in data) || (data.handoverDate is string && data.handoverDate.size() <= 100)) &&
              (!('projectSize' in data) || (data.projectSize is string && data.projectSize.size() <= 150)) &&
@@ -210,16 +236,18 @@ service cloud.firestore {
              (!('flatsPerFloor' in data) || (data.flatsPerFloor is string && data.flatsPerFloor.size() <= 100)) &&
              (!('floorsHeight' in data) || (data.floorsHeight is string && data.floorsHeight.size() <= 100)) &&
              (!('mapUrl' in data) || (data.mapUrl is string && data.mapUrl.size() <= 1000)) &&
-             (!('paymentOffers' in data) || (data.paymentOffers is string && data.paymentOffers.size() <= 500)) &&
-             (!('isPaused' in data) || data.isPaused is bool) &&
-             (!('isDeleted' in data) || data.isDeleted is bool) &&
-             (!('sticker' in data) || data.sticker in ['Sold Out', 'Rented Out', 'None']) &&
+             (!('societyType' in data) || (data.societyType is string && data.societyType.size() <= 100)) &&
+             (!('totalAcres' in data) || (data.totalAcres is string && data.totalAcres.size() <= 100)) &&
+             (!('possessionDate' in data) || (data.possessionDate is string && data.possessionDate.size() <= 100)) &&
              (!('availableFrom' in data) || (data.availableFrom is string && data.availableFrom.size() <= 100)) &&
              (!('mainDoorFacing' in data) || (data.mainDoorFacing is string && data.mainDoorFacing.size() <= 100)) &&
              (!('tower' in data) || (data.tower is string && data.tower.size() <= 100)) &&
              (!('floor' in data) || (data.floor is string && data.floor.size() <= 100)) &&
-             (!('residenceType' in data) || (data.residenceType is string && data.residenceType.size() <= 100)) &&
-             (!('tenantType' in data) || (data.tenantType is string && data.tenantType.size() <= 100)) &&
+             (!('residenceType' in data) || (data.residenceType is string && data.residenceType.size() <= 100));
+    }
+
+    function isValidProjectRental(data) {
+      return (!('tenantType' in data) || (data.tenantType is string && data.tenantType.size() <= 100)) &&
              (!('amenitiesAvailability' in data) || (data.amenitiesAvailability is string && data.amenitiesAvailability.size() <= 100)) &&
              (!('petFriendly' in data) || (data.petFriendly is string && data.petFriendly.size() <= 100)) &&
              (!('furnishType' in data) || (data.furnishType is string && data.furnishType.size() <= 100)) &&
@@ -233,43 +261,78 @@ service cloud.firestore {
              (!('comments' in data) || (data.comments is string && data.comments.size() <= 2000)) &&
              (!('handedOverDate' in data) || (data.handedOverDate is string && data.handedOverDate.size() <= 100)) &&
              (!('registrationStatus' in data) || (data.registrationStatus is string && data.registrationStatus.size() <= 100)) &&
-             (!('approvedAuthority' in data) || (data.approvedAuthority is string && data.approvedAuthority.size() <= 100)) &&
-             (!('seoKeywords' in data) || (data.seoKeywords is list && data.seoKeywords.size() <= 30)) &&
+             (!('approvedAuthority' in data) || (data.approvedAuthority is string && data.approvedAuthority.size() <= 100));
+    }
+
+    function isValidProjectSeo(data) {
+      return (!('seoKeywords' in data) || (data.seoKeywords is list && data.seoKeywords.size() <= 30)) &&
              (!('metaTitle' in data) || (data.metaTitle is string && data.metaTitle.size() <= 300)) &&
              (!('metaDescription' in data) || (data.metaDescription is string && data.metaDescription.size() <= 1000)) &&
              (!('canonicalUrl' in data) || (data.canonicalUrl is string && data.canonicalUrl.size() <= 500)) &&
              (!('ogImage' in data) || (data.ogImage is string && data.ogImage.size() <= 900000)) &&
-              (!('imageAltText' in data) || (data.imageAltText is string && data.imageAltText.size() <= 1000)) &&
-              (!('imageAltTexts' in data) || data.imageAltTexts is map) &&
-              (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 300)) &&
-              (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 1000)) &&
-              (!('seoLastSyncedAt' in data) || (data.seoLastSyncedAt is string && data.seoLastSyncedAt.size() <= 100)) &&
-              (!('seoLastEdited' in data) || (data.seoLastEdited is string && data.seoLastEdited.size() <= 100)) &&
-              (!('seoRevisions' in data) || (data.seoRevisions is list && data.seoRevisions.size() <= 50)) &&
-              (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
-              (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 900000)) &&
-              (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 900000)) &&
-              (!('projectTypeCategory' in data) || (data.projectTypeCategory is string && data.projectTypeCategory.size() <= 100)) &&
-              (!('presentStatus' in data) || (data.presentStatus is string && data.presentStatus.size() <= 100)) &&
-              (!('vaastuCompliant' in data) || (data.vaastuCompliant is string && data.vaastuCompliant.size() <= 50)) &&
-              (!('facingAvailable' in data) || data.facingAvailable is list || (data.facingAvailable is string && data.facingAvailable.size() <= 200)) &&
-              (!('floorRise' in data) || (data.floorRise is string && data.floorRise.size() <= 150)) &&
-              (!('totalUnits' in data) || (data.totalUnits is string && data.totalUnits.size() <= 150)) &&
-              (!('floorPlanSize' in data) || (data.floorPlanSize is string && data.floorPlanSize.size() <= 500)) &&
-              (!('bookingAmount' in data) || (data.bookingAmount is string && data.bookingAmount.size() <= 150)) &&
-              (!('interiorStatus' in data) || (data.interiorStatus is string && data.interiorStatus.size() <= 100)) &&
-              (!('availability' in data) || (data.availability is string && data.availability.size() <= 50)) &&
-              (!('floorAvailability' in data) || (data.floorAvailability is string && data.floorAvailability.size() <= 100)) &&
-              (!('saleFrom' in data) || (data.saleFrom is string && data.saleFrom.size() <= 100)) &&
-              (!('aop' in data) || (data.aop is string && data.aop.size() <= 100)) &&
-              (!('expectedRentalIncome' in data) || (data.expectedRentalIncome is string && data.expectedRentalIncome.size() <= 150)) &&
-              (!('terrace' in data) || (data.terrace is string && data.terrace.size() <= 50)) &&
-              (!('garden' in data) || (data.garden is string && data.garden.size() <= 50)) &&
-              (!('projectWriteUps' in data) || (data.projectWriteUps is string && data.projectWriteUps.size() <= 5000)) &&
-              (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
-              (!('unitsRemaining' in data) || data.unitsRemaining is number) &&
-              (!('isInventorySoldOut' in data) || data.isInventorySoldOut is bool) &&
-              (!('organicViews' in data) || data.organicViews is number);
+             (!('imageAltText' in data) || (data.imageAltText is string && data.imageAltText.size() <= 1000)) &&
+             (!('imageAltTexts' in data) || data.imageAltTexts is map) &&
+             (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 300)) &&
+             (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 1000)) &&
+             (!('seoLastSyncedAt' in data) || (data.seoLastSyncedAt is string && data.seoLastSyncedAt.size() <= 100)) &&
+             (!('seoSyncSource' in data) || (data.seoSyncSource is string && data.seoSyncSource.size() <= 100)) &&
+             (!('seoLastEdited' in data) || (data.seoLastEdited is string && data.seoLastEdited.size() <= 100)) &&
+             (!('seoRevisions' in data) || (data.seoRevisions is list && data.seoRevisions.size() <= 50));
+    }
+
+    function isValidProjectMedia(data) {
+      return (!('imageUrls' in data) || (data.imageUrls is list && data.imageUrls.size() <= 25)) &&
+             (!('features' in data) || (data.features is list && data.features.size() <= 50)) &&
+             (!('mobileImageUrl' in data) || (data.mobileImageUrl is string && data.mobileImageUrl.size() <= 900000)) &&
+             (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 900000)) &&
+             (!('mobileVideoUrl' in data) || (data.mobileVideoUrl is string && data.mobileVideoUrl.size() <= 900000)) &&
+             (!('videoPosterUrl' in data) || (data.videoPosterUrl is string && data.videoPosterUrl.size() <= 900000)) &&
+             (!('storagePaths' in data) || (data.storagePaths is list && data.storagePaths.size() <= 50)) &&
+             (!('showImagesOnline' in data) || data.showImagesOnline is bool);
+    }
+
+    function isValidProjectCurator(data) {
+      return (!('projectTypeCategory' in data) || (data.projectTypeCategory is string && data.projectTypeCategory.size() <= 100)) &&
+             (!('presentStatus' in data) || (data.presentStatus is string && data.presentStatus.size() <= 100)) &&
+             (!('vaastuCompliant' in data) || (data.vaastuCompliant is string && data.vaastuCompliant.size() <= 50)) &&
+             (!('facingAvailable' in data) || data.facingAvailable is list || (data.facingAvailable is string && data.facingAvailable.size() <= 200)) &&
+             (!('floorRise' in data) || (data.floorRise is string && data.floorRise.size() <= 150)) &&
+             (!('totalUnits' in data) || (data.totalUnits is string && data.totalUnits.size() <= 150)) &&
+             (!('floorPlanSize' in data) || (data.floorPlanSize is string && data.floorPlanSize.size() <= 500)) &&
+             (!('bookingAmount' in data) || (data.bookingAmount is string && data.bookingAmount.size() <= 150)) &&
+             (!('interiorStatus' in data) || (data.interiorStatus is string && data.interiorStatus.size() <= 100)) &&
+             (!('availability' in data) || (data.availability is string && data.availability.size() <= 50)) &&
+             (!('floorAvailability' in data) || (data.floorAvailability is string && data.floorAvailability.size() <= 100)) &&
+             (!('saleFrom' in data) || (data.saleFrom is string && data.saleFrom.size() <= 100)) &&
+             (!('aop' in data) || (data.aop is string && data.aop.size() <= 100)) &&
+             (!('expectedRentalIncome' in data) || (data.expectedRentalIncome is string && data.expectedRentalIncome.size() <= 150)) &&
+             (!('terrace' in data) || (data.terrace is string && data.terrace.size() <= 50)) &&
+             (!('garden' in data) || (data.garden is string && data.garden.size() <= 50)) &&
+             (!('projectWriteUps' in data) || (data.projectWriteUps is string && data.projectWriteUps.size() <= 5000));
+    }
+
+    // Only the additional Portfolio Curator fields need explicit update checks.
+    // Existing fields remain protected by the admin-only gate and changed-key allowlist.
+    // Full schema validation still applies to every new project document.
+    function isValidProjectUpdate(data, changed) {
+      return (!changed.hasAny(['societyType']) ||
+                ('societyType' in data && data.societyType is string && data.societyType.size() <= 100)) &&
+             (!changed.hasAny(['totalAcres']) ||
+                ('totalAcres' in data && data.totalAcres is string && data.totalAcres.size() <= 100)) &&
+             (!changed.hasAny(['possessionDate']) ||
+                ('possessionDate' in data && data.possessionDate is string && data.possessionDate.size() <= 100)) &&
+             (!changed.hasAny(['showImagesOnline']) ||
+                ('showImagesOnline' in data && data.showImagesOnline is bool)) &&
+             (!changed.hasAny(['videoPosterUrl']) ||
+                ('videoPosterUrl' in data && data.videoPosterUrl is string && data.videoPosterUrl.size() <= 900000)) &&
+             (!changed.hasAny(['storagePaths']) ||
+                ('storagePaths' in data && data.storagePaths is list && data.storagePaths.size() <= 50)) &&
+             (!changed.hasAny(['seoSyncSource']) ||
+                ('seoSyncSource' in data && data.seoSyncSource is string && data.seoSyncSource.size() <= 100)) &&
+             (!changed.hasAny(['submissionId']) ||
+                ('submissionId' in data && data.submissionId is string && data.submissionId.size() <= 128)) &&
+             (!changed.hasAny(['publicationStatus']) ||
+                ('publicationStatus' in data && data.publicationStatus in ['Pending Review', 'Approved', 'Published', 'Rejected', 'Archived']));
     }
 
     // Enquiries: Publicly writable (create only), admin readable
