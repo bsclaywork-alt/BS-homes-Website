@@ -14976,21 +14976,10 @@ export default function App() {
       }, { merge: true });
     }
 
-    // A merge write handles both existing inventory and a missing durable
-    // tombstone. Firestore rules explicitly permit this minimal tombstone shape.
-    const rawType = String(project.type || 'Primary');
-    const safeType: Project['type'] = ['Primary', 'Resale', 'Rental', 'Primary Sale'].includes(rawType)
-      ? rawType as Project['type']
-      : 'Primary';
-    const tombstoneName = String(project.name || 'Deleted listing').trim().slice(0, 200) || 'Deleted listing';
-    const tombstoneLocation = String(project.location || 'Bangalore').trim().slice(0, 200) || 'Bangalore';
-    const tombstonePrice = String(project.price || 'Contact for price').trim().slice(0, 150) || 'Contact for price';
+    // A minimal merge write archives an existing project without touching its
+    // descriptive fields, images, or owner data. If absent, rules permit a
+    // minimal tombstone document to prevent the curated listing reappearing.
     batch.set(projectsRef, {
-      id: projectDocId,
-      name: tombstoneName,
-      location: tombstoneLocation,
-      type: safeType,
-      price: tombstonePrice,
       isDeleted: true,
       isPaused: true,
       updatedAt: serverTimestamp()
