@@ -182,9 +182,9 @@ function cn(...inputs: ClassValue[]) {
 
 const Logo = ({ className = "", animate = true }: { className?: string; animate?: boolean }) => {
   const content = (
-    <div className={cn("inline-flex items-center group select-none bg-transparent relative", className)}>
+    <div className={cn("inline-flex items-center group select-none bg-white relative rounded-sm px-1 py-0.5", className)}>
       <img
-        src="/assets/aistudio/bs_homez_logo_white_border_preview.png"
+        src="/assets/aistudio/bs_homez_logo_transparent.png"
         alt="BS HOMEZ - Turning Key Moments"
         className="h-8 sm:h-10 md:h-12 w-auto max-w-[clamp(7rem,24vw,13rem)] object-contain block transition-all duration-300 group-hover:scale-[1.02]"
       />
