@@ -13985,7 +13985,7 @@ const buildProjectFirestorePayload = (project: Project, updatedAt: any = serverT
     'Marathalli', 'Bellandur', 'South East Bangalore', 'Bangalore East',
     'Bangalore North', 'Bangalore West', 'Bangalore South', 'Bangalore Central', 'All Zone'
   ];
-  const normalizedZone = String(normalized.zone || '').replace(/[-_]+/g, ' ').replace(/\\s+/g, ' ').trim();
+  const normalizedZone = String(normalized.zone || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
   if (allowedZones.includes(normalizedZone)) normalized.zone = normalizedZone;
   else delete normalized.zone;
 
