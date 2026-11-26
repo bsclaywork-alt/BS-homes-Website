@@ -54,7 +54,9 @@ jobs:
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Install Firebase CLI
-        run: npm install --global firebase-tools@14.22.0
+        run: |
+          npm install --global firebase-tools@15.37.0
+          firebase --version
 
       - name: Verify target project and database
         run: |
