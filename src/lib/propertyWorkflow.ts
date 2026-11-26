@@ -379,13 +379,21 @@ export function buildPublicPortfolioCuratorUpdate(
     doorFacing: (['East', 'North', 'West', 'South', 'South East', 'North East'].includes(project.mainDoorFacing || '')
       ? project.mainDoorFacing
       : existing.doorFacing) as PublicPortfolioItem['doorFacing'],
-    furnishing: (project.furnishType === 'Full Furnished' || project.furnishType === 'Fully Furnished'
+    furnishing: (project.furnishType === 'Furnished' || project.furnishType === 'Full Furnished' || project.furnishType === 'Fully Furnished'
       ? 'Furnished'
-      : project.furnishType === 'Un Furnished' ? 'Unfurnished'
+      : project.furnishType === 'Unfurnished' || project.furnishType === 'Un Furnished' ? 'Unfurnished'
       : project.furnishType === 'Semi Furnished' ? 'Semi Furnished' : existing.furnishing) as PublicPortfolioItem['furnishing'],
-    societyType: (project.projectTypeCategory === 'Gated' ? 'Gated'
+    societyType: (project.societyType === 'Gated' || project.societyType === 'Individual'
+      ? project.societyType
+      : project.projectTypeCategory === 'Gated' ? 'Gated'
       : project.projectTypeCategory === 'Individual' || project.projectTypeCategory === 'Stand Alone' ? 'Individual'
       : existing.societyType) as PublicPortfolioItem['societyType'],
+    propertyType: (['Apartment', 'Villa', 'Plot', 'Commercial'].includes(project.propertyType || '')
+      ? project.propertyType : existing.propertyType) as PublicPortfolioItem['propertyType'],
+    possessionDate: String(project.possessionDate ?? project.handoverDate ?? existing.possessionDate ?? '').slice(0, 100),
+    sellerType: (project.saleFrom === 'Builder' ? 'Builder'
+      : project.saleFrom === 'Landlord' || project.saleFrom === 'Land Lord' ? 'Landlord'
+      : project.saleFrom ? 'Resale' : existing.sellerType) as PublicPortfolioItem['sellerType'],
     configuration: (project.configuration?.[0] || existing.configuration) as PublicPortfolioItem['configuration'],
     amenities: Array.isArray(project.features) ? project.features.filter(Boolean).slice(0, 50) : existing.amenities,
     imageUrls: Array.isArray(project.imageUrls) ? project.imageUrls.filter(Boolean).slice(0, 25) : existing.imageUrls,
@@ -399,7 +407,7 @@ export function buildPublicPortfolioCuratorUpdate(
     maintenance: String(project.maintenance || existing.maintenance || '').slice(0, 100),
     advance: String(project.advance || existing.advance || '').slice(0, 100),
     availableFrom: String(project.availableFrom || existing.availableFrom || '').slice(0, 100),
-    projectTypeCategory: String(project.projectTypeCategory || existing.projectTypeCategory || '').slice(0, 100),
+    projectTypeCategory: String(project.societyType || project.projectTypeCategory || existing.projectTypeCategory || '').slice(0, 100),
     presentStatus: String(project.presentStatus || project.handoverStatus || existing.presentStatus || existing.propertyStatus || '').slice(0, 100),
     vaastuCompliant: String(project.vaastuCompliant || existing.vaastuCompliant || '').slice(0, 20),
     facingAvailable: Array.isArray(project.facingAvailable) ? project.facingAvailable.filter(Boolean).slice(0, 16) : existing.facingAvailable,
@@ -480,7 +488,8 @@ export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
     furnishType: furnishMap[item.furnishing] || 'Semi Furnished',
     interiorStatus: item.interiorStatus || item.furnishing,
     projectTypeCategory: item.projectTypeCategory || (item.societyType === 'Gated' ? 'Gated' : 'Individual'),
-    saleFrom: item.sellerType || undefined,
+    societyType: item.societyType,
+    saleFrom: item.saleFrom || item.sellerType || undefined,
     monthlyRental: item.rentPerMonth ? `Rs. ${item.rentPerMonth.toLocaleString('en-IN')}/mo` : '',
     maintenance: item.maintenance || '',
     advance: item.advance || '',
