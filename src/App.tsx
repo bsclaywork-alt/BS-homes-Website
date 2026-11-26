@@ -82,7 +82,6 @@ import {
   MoreVertical,
   Trash2,
   RotateCcw,
-  Share2,
   Archive,
   Copy,
   AlertTriangle,
@@ -127,7 +126,6 @@ import { FAQSection } from './components/FAQSection';
 import { HomeLoanHub } from './components/HomeLoanHub';
 import { InvestmentCalculator } from './components/InvestmentCalculator';
 import { ProjectComparisonModal } from './components/ProjectComparisonModal';
-import { SocialShareButtons } from './components/SocialShareButtons';
 import { SEOPreviewModal } from './components/SEOPreviewModal';
 import { PropertyMetaDataModal } from './components/PropertyMetaDataModal';
 import { MediaUploadCompressor } from './components/MediaUploadCompressor';
@@ -2551,22 +2549,17 @@ const ProjectCard: React.FC<{
                     </div>
                   )}
 
-                  {/* Social Share & Alerts inside Expanded Drawer */}
-                  <div className="pt-2 border-t border-lux-border flex items-center justify-between gap-2 flex-wrap">
+                  {/* Price alerts remain available; public social sharing is intentionally hidden. */}
+                  <div className="pt-2 border-t border-lux-border flex items-center">
                     <button
                       type="button"
                       onClick={() => setIsSubscribeOpen(true)}
-                      className="px-2.5 py-1 rounded-sm border bg-lux-ivory hover:bg-lux-forest hover:text-lux-card text-lux-forest border-lux-border text-[9px] font-mono transition-all cursor-pointer flex items-center gap-1.5 font-semibold"
+                      className="px-3 py-1.5 rounded-sm border bg-lux-ivory hover:bg-lux-forest hover:text-lux-card text-lux-forest border-lux-border text-[9px] font-mono transition-all cursor-pointer flex items-center gap-1.5 font-semibold"
                       title="Subscribe to Price Alerts"
                     >
                       <Bell size={10} />
                       <span>Price Alerts</span>
                     </button>
-                    <SocialShareButtons
-                      propertyTitle={project.name}
-                      propertyHighlights={project.features || []}
-                      propertyLink={`${window.location.origin}/?project=${encodeURIComponent(project.id || project.name)}`}
-                    />
                   </div>
                 </motion.div>
               )}
