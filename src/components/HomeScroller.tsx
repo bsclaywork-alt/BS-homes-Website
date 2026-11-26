@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { addDoc, deleteDoc, doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CheckCircle2, Eye, EyeOff, ImagePlus, Loader2, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { compressPhotoAsset, uploadCloudinaryPhoto } from '../lib/mediaProcessor';
