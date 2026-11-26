@@ -98,35 +98,43 @@ export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelect
   };
 
   return (
-    <section className="relative overflow-hidden bg-[#101914] text-white" aria-label="Featured property projects">
-      <div className="relative min-h-[390px] sm:min-h-[470px] lg:min-h-[560px]">
-        <img src={slide.imageUrl} alt={slide.title || 'Featured BS Homez property'} className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
-        <div className="relative z-10 flex min-h-[390px] sm:min-h-[470px] lg:min-h-[560px] items-end px-6 py-10 sm:px-10 sm:py-14 lg:px-16 lg:py-16">
-          <div className="max-w-3xl space-y-4 sm:space-y-5">
-            <span className="inline-flex rounded-sm border border-[#d8b56d]/70 bg-black/35 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.22em] text-[#f1d18c] backdrop-blur-sm">
+    <section className="relative w-full overflow-hidden bg-[#101914] text-white" aria-label="Featured property projects">
+      <div className="relative min-h-[clamp(430px,58vw,660px)]">
+        <img
+          src={slide.imageUrl}
+          alt={slide.title || 'Featured BS Homez property'}
+          loading="eager"
+          fetchPriority="high"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/25" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-black/15" />
+        <div className="relative z-10 flex min-h-[clamp(430px,58vw,660px)] items-end px-5 py-12 sm:px-10 sm:py-14 lg:px-16 lg:py-16">
+          <div className="w-full max-w-2xl space-y-4 pr-7 sm:space-y-5 sm:pr-0">
+            <span className="inline-flex max-w-full rounded-sm border border-[#d8b56d]/70 bg-black/40 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#f1d18c] backdrop-blur-sm">
               {slide.transactionType}
             </span>
-            <h2 className="max-w-3xl text-3xl font-serif font-bold leading-tight sm:text-5xl lg:text-6xl">{slide.title}</h2>
-            {slide.subtitle && <p className="max-w-2xl text-sm leading-relaxed text-white/85 sm:text-base">{slide.subtitle}</p>}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold uppercase tracking-wider text-white/80">
-              {slide.location && <span>{slide.location}</span>}
-              {slide.priceLabel && <span className="text-[#f1d18c]">{slide.priceLabel}</span>}
-            </div>
-            <button type="button" onClick={openSlide} className="mt-2 inline-flex items-center gap-3 rounded-sm bg-[#d8b56d] px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#17130b] shadow-xl transition hover:bg-white">
+            <h2 className="max-w-2xl break-words font-serif text-3xl font-bold leading-[1.08] sm:text-5xl xl:text-6xl">{slide.title}</h2>
+            {slide.subtitle && <p className="max-w-xl text-sm leading-relaxed text-white/90 sm:text-base">{slide.subtitle}</p>}
+            {(slide.location || slide.priceLabel) && (
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">
+                {slide.location && <span className="rounded-sm border border-white/20 bg-black/30 px-3 py-2 text-white/90 backdrop-blur-sm">{slide.location}</span>}
+                {slide.priceLabel && <span className="rounded-sm border border-[#d8b56d]/50 bg-black/35 px-3 py-2 text-[#f1d18c] backdrop-blur-sm">{slide.priceLabel}</span>}
+              </div>
+            )}
+            <button type="button" onClick={openSlide} className="mt-2 inline-flex min-h-11 items-center gap-3 rounded-sm bg-[#d8b56d] px-5 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#17130b] shadow-xl transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f1d18c] sm:px-6">
               {slide.ctaLabel || 'Explore Project'} <ArrowRight size={15} />
             </button>
           </div>
         </div>
         {slides.length > 1 && (
           <>
-            <button type="button" aria-label="Previous slide" onClick={() => setActiveIndex(i => (i - 1 + slides.length) % slides.length)} className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/40 bg-black/40 p-2.5 text-white backdrop-blur hover:bg-black/70 sm:left-5"><ArrowLeft size={18} /></button>
-            <button type="button" aria-label="Next slide" onClick={() => setActiveIndex(i => (i + 1) % slides.length)} className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/40 bg-black/40 p-2.5 text-white backdrop-blur hover:bg-black/70 sm:right-5"><ArrowRight size={18} /></button>
+            <button type="button" aria-label="Previous slide" onClick={() => setActiveIndex(i => (i - 1 + slides.length) % slides.length)} className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/45 bg-black/45 p-2.5 text-white shadow-lg backdrop-blur transition hover:bg-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:left-5"><ArrowLeft size={18} /></button>
+            <button type="button" aria-label="Next slide" onClick={() => setActiveIndex(i => (i + 1) % slides.length)} className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/45 bg-black/45 p-2.5 text-white shadow-lg backdrop-blur transition hover:bg-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-5"><ArrowRight size={18} /></button>
             <div className="absolute bottom-4 right-5 z-20 flex items-center gap-2 sm:bottom-6 sm:right-8">
-              {slides.map((item, index) => <button key={item.id} type="button" aria-label={`Show slide ${index + 1}`} onClick={() => setActiveIndex(index)} className={`h-1.5 rounded-full transition-all ${index === activeIndex ? 'w-9 bg-[#e4c47e]' : 'w-3 bg-white/65 hover:bg-white'}`} />)}
+              {slides.map((item, index) => <button key={item.id} type="button" aria-label={`Show slide ${index + 1}`} aria-current={index === activeIndex ? 'true' : undefined} onClick={() => setActiveIndex(index)} className={`h-1.5 rounded-full transition-all ${index === activeIndex ? 'w-9 bg-[#e4c47e]' : 'w-3 bg-white/65 hover:bg-white'}`} />)}
             </div>
-            <span className="absolute bottom-5 left-6 z-20 text-[9px] font-mono tracking-widest text-white/70 sm:bottom-7 sm:left-10">{String(activeIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</span>
+            <span className="absolute bottom-5 left-5 z-20 text-[9px] font-mono tracking-widest text-white/75 sm:bottom-7 sm:left-10">{String(activeIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</span>
           </>
         )}
       </div>
