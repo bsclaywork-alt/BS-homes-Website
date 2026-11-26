@@ -7997,6 +7997,8 @@ const AdminView = ({
   const [intentFilter, setIntentFilter] = useState<'all' | 'High' | 'Medium' | 'Low'>('all');
   const [inventoryTab, setInventoryTab] = useState<'all' | 'Primary' | 'Rental' | 'Resale'>('all');
   const [portfolioSearch, setPortfolioSearch] = useState<string>('');
+  const [selectedProjectKeys, setSelectedProjectKeys] = useState<string[]>([]);
+  const [showBulkDeleteConfirmModal, setShowBulkDeleteConfirmModal] = useState(false);
   const [opportunityCategoryFilter, setOpportunityCategoryFilter] = useState<'all' | 'business' | 'property'>('all');
   const [assetSubmissions, setAssetSubmissions] = useState<any[]>([]);
   const [assetSubmissionsLoading, setAssetSubmissionsLoading] = useState(false);
@@ -11051,6 +11053,32 @@ const AdminView = ({
                   <Plus size={13} /> + Resale
                 </button>
                 {displayedProjects.length > 0 && (
+                  <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const visibleKeys = displayedProjects.map(project => String(project.id || project.name));
+                      const allVisibleSelected = visibleKeys.every(key => selectedProjectKeys.includes(key));
+                      setSelectedProjectKeys(allVisibleSelected
+                        ? selectedProjectKeys.filter(key => !visibleKeys.includes(key))
+                        : Array.from(new Set([...selectedProjectKeys, ...visibleKeys])));
+                    }}
+                    className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                    title="Select or deselect all currently filtered projects"
+                  >
+                    <CheckSquare size={13} />
+                    <span>{displayedProjects.every(project => selectedProjectKeys.includes(String(project.id || project.name))) ? 'Deselect All' : 'Select All'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkDeleteConfirmModal(true)}
+                    disabled={displayedProjects.filter(project => selectedProjectKeys.includes(String(project.id || project.name))).length === 0 || isDeletingAllProjects}
+                    className="bg-rose-700/80 hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed text-white border border-rose-500/50 px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                    title="Delete only the selected projects"
+                  >
+                    <Trash2 size={13} />
+                    <span>Delete Selected ({displayedProjects.filter(project => selectedProjectKeys.includes(String(project.id || project.name))).length})</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setShowDeleteAllConfirmModal(true)}
@@ -11060,6 +11088,7 @@ const AdminView = ({
                     <Trash2 size={13} />
                     <span>Delete All ({displayedProjects.length})</span>
                   </button>
+                  </>
                 )}
               </div>
             </div>
@@ -11148,6 +11177,22 @@ const AdminView = ({
                       : "border-white/20 hover:border-art-gold"
                   )}
                 >
+                  <label className="absolute top-3 left-3 z-20 inline-flex items-center gap-1.5 rounded-sm border border-white/20 bg-black/85 px-2 py-1 text-[8px] font-mono font-bold uppercase tracking-wider text-white shadow-lg cursor-pointer">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${p.name} for bulk deletion`}
+                      checked={selectedProjectKeys.includes(String(p.id || p.name))}
+                      disabled={isDeletingAllProjects}
+                      onChange={(event) => {
+                        const key = String(p.id || p.name);
+                        setSelectedProjectKeys(current => event.target.checked
+                          ? Array.from(new Set([...current, key]))
+                          : current.filter(item => item !== key));
+                      }}
+                      className="h-3.5 w-3.5 accent-rose-500 cursor-pointer"
+                    />
+                    Select
+                  </label>
                   {p.isPaused && (
                     <div className="absolute top-3 right-3 z-20 bg-amber-500 text-black text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm shadow-lg">
                       Paused / Hidden
@@ -11607,6 +11652,63 @@ const AdminView = ({
           </div>
         </div>
       )}
+      {/* Selected Projects Batch Delete Confirmation Modal */}
+      {showBulkDeleteConfirmModal && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] flex items-center justify-center p-4">
+          <div className="bg-[#121212] border-2 border-rose-500 rounded-md p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 text-left">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="w-12 h-12 rounded-full bg-rose-500/15 flex items-center justify-center shrink-0 border border-rose-500/30">
+                <Trash2 size={24} className="text-rose-400" />
+              </div>
+              <div>
+                <h4 className="text-white font-serif text-xl font-bold">Delete Selected Projects</h4>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-rose-400 font-bold">Confirm selected inventory only</p>
+              </div>
+            </div>
+            <p className="text-xs text-white/80 leading-relaxed font-sans">
+              You are about to permanently remove <strong className="text-white">{displayedProjects.filter(project => selectedProjectKeys.includes(String(project.id || project.name))).length} selected project(s)</strong> from the active portfolio. Unselected projects will not be affected.
+            </p>
+            <div className="max-h-48 overflow-y-auto rounded-sm border border-white/10 bg-white/[0.03] p-3 space-y-1">
+              {displayedProjects.filter(project => selectedProjectKeys.includes(String(project.id || project.name))).map(project => (
+                <div key={String(project.id || project.name)} className="text-[11px] text-white/75 font-mono">• {project.name} <span className="text-white/40">({project.type || 'Primary'})</span></div>
+              ))}
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button type="button" onClick={() => setShowBulkDeleteConfirmModal(false)} disabled={isDeletingAllProjects} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 rounded-sm text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50">Cancel</button>
+              <button
+                type="button"
+                disabled={isDeletingAllProjects || displayedProjects.filter(project => selectedProjectKeys.includes(String(project.id || project.name))).length === 0}
+                onClick={async () => {
+                  const toDelete = displayedProjects.filter(project => selectedProjectKeys.includes(String(project.id || project.name)));
+                  if (!toDelete.length || !onDeleteAllProjects) return;
+                  setIsDeletingAllProjects(true);
+                  setDeleteProjectError(null);
+                  try {
+                    await onDeleteAllProjects(toDelete);
+                    const deletedKeys = toDelete.map(project => String(project.id || project.name));
+                    setSelectedProjectKeys(current => current.filter(key => !deletedKeys.includes(key)));
+                    setShowBulkDeleteConfirmModal(false);
+                    setLeadActionToast(`Successfully removed ${toDelete.length} selected project(s).`);
+                  } catch (error: any) {
+                    const reason = error?.message || error?.code || 'Unknown error. Please retry.';
+                    setDeleteProjectError(reason);
+                    setLeadActionToast(`Bulk delete failed: ${reason}`);
+                  } finally {
+                    setIsDeletingAllProjects(false);
+                    window.setTimeout(() => setLeadActionToast(null), 7000);
+                  }
+                }}
+                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition-colors shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeletingAllProjects ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                <span>{isDeletingAllProjects ? 'Deleting…' : 'Confirm Delete Selected'}</span>
+              </button>
+            </div>
+            {deleteProjectError && <p role="alert" className="text-[11px] text-red-300 font-mono">{deleteProjectError}</p>}
+          </div>
+        </div>
+      )}
+
       {/* Batch Delete All Projects Confirmation Modal */}
       {showDeleteAllConfirmModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
@@ -14122,7 +14224,14 @@ export default function App() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [publicPortfolioItems, setPublicPortfolioItems] = useState<PublicPortfolioItem[]>([]);
-  const [dbTombstoneIds, setDbTombstoneIds] = useState<string[]>([]);
+  const [dbTombstoneIds, setDbTombstoneIds] = useState<string[]>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('bs_homez_db_deleted_projects') || '[]');
+      return Array.isArray(stored) ? stored.filter((value): value is string => typeof value === 'string') : [];
+    } catch {
+      return [];
+    }
+  });
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -14892,14 +15001,22 @@ export default function App() {
       const publicRef = doc(db, 'public_portfolio', targetDocId);
       const snapshot = await getDoc(publicRef);
       if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and try again.');
+      if (snapshot.data().isDeleted === true || snapshot.data().publicationStatus === 'Archived' || snapshot.data().publicationStatus === 'Rejected') {
+        throw new Error('This listing has already been deleted or archived. Create a new listing instead of restoring this record.');
+      }
       const existing = { ...snapshot.data(), id: targetDocId } as PublicPortfolioItem;
       const safeUpdate = buildPublicPortfolioCuratorUpdate(projectWithId, existing);
       await setDoc(publicRef, { ...safeUpdate, updatedAt: serverTimestamp() }, { merge: true });
     } else {
       // Persist every inventory item, including formerly browser-only local_ drafts.
       // The Firestore document becomes the authoritative source after this save.
+      const projectRef = doc(db, 'projects', targetDocId);
+      const existingSnapshot = await getDoc(projectRef);
+      if (existingSnapshot.exists() && existingSnapshot.data().isDeleted === true) {
+        throw new Error('This listing has already been deleted. Create a new listing with a new ID instead of restoring it.');
+      }
       const payload = buildProjectFirestorePayload(projectWithId);
-      await setDoc(doc(db, 'projects', targetDocId), payload, { merge: true });
+      await setDoc(projectRef, payload, { merge: true });
     }
 
     // Update local cache and UI only after the persistent write succeeds.
@@ -15071,6 +15188,11 @@ export default function App() {
     await batch.commit();
 
     const keys = [projectId, tombstoneId, project.name].filter(Boolean);
+    setDbTombstoneIds(prev => {
+      const next = Array.from(new Set([...prev, projectDocId, tombstoneId, project.name].filter(Boolean).map(value => value.toLowerCase())));
+      try { localStorage.setItem('bs_homez_db_deleted_projects', JSON.stringify(next)); } catch {}
+      return next;
+    });
     setDeletedProjectIds(prev => {
       const next = Array.from(new Set([...prev, ...keys]));
       try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
@@ -15302,9 +15424,22 @@ export default function App() {
         }
       }
 
-      // Reuse the already-readable projects collection as the durable tombstone
-      // source for public_portfolio and static catalogue filtering.
-      setDbTombstoneIds(Array.from(deletedFromDb));
+      // Preserve previously confirmed tombstones when Firestore first emits a
+      // cached snapshot. A cache can predate a deletion; only a server snapshot
+      // is allowed to replace the persisted tombstone set.
+      let persistedTombstones = new Set<string>();
+      try {
+        const stored = JSON.parse(localStorage.getItem('bs_homez_db_deleted_projects') || '[]');
+        if (Array.isArray(stored)) {
+          persistedTombstones = new Set(stored.filter((value): value is string => typeof value === 'string').map(value => value.trim().toLowerCase()).filter(Boolean));
+        }
+      } catch {}
+      const confirmedTombstones = snapshot.metadata.fromCache
+        ? new Set([...persistedTombstones, ...deletedFromDb])
+        : deletedFromDb;
+      const confirmedTombstoneList = Array.from(confirmedTombstones);
+      setDbTombstoneIds(confirmedTombstoneList);
+      try { localStorage.setItem('bs_homez_db_deleted_projects', JSON.stringify(confirmedTombstoneList)); } catch {}
 
       dbDocs.sort((a, b) => {
         const tB = getTimestampMs(b.createdAt) || getTimestampMs(b.updatedAt);
@@ -15312,7 +15447,7 @@ export default function App() {
         return tB - tA;
       });
 
-      const merged = getMergedWithLocal(dbDocs, deletedFromDb);
+      const merged = getMergedWithLocal(dbDocs, confirmedTombstones);
       setProjects(merged);
       setIsLoading(false);
       try {
@@ -15334,7 +15469,15 @@ export default function App() {
       } else {
         console.warn('Realtime projects listener fallback notice:', errMsg);
       }
-      const fallback = getMergedWithLocal([]);
+      let persistedTombstones = new Set<string>();
+      try {
+        const stored = JSON.parse(localStorage.getItem('bs_homez_db_deleted_projects') || '[]');
+        if (Array.isArray(stored)) {
+          persistedTombstones = new Set(stored.filter((value): value is string => typeof value === 'string').map(value => value.trim().toLowerCase()).filter(Boolean));
+        }
+      } catch {}
+      setDbTombstoneIds(Array.from(persistedTombstones));
+      const fallback = getMergedWithLocal([], persistedTombstones);
       setProjects(fallback);
       setIsLoading(false);
     });
