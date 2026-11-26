@@ -111,6 +111,7 @@ export const AdminPrimaryResaleForm: React.FC<AdminPrimaryResaleFormProps> = ({ 
         societyType: form.societyType,
         possessionDate: form.possessionDate || '',
         handoverStatus: form.propertyStatus,
+        presentStatus: form.propertyStatus,
         handoverDate: form.possessionDate || '',
         mainDoorFacing: form.doorFacing,
         floor: form.floorNumber,
