@@ -125,7 +125,10 @@ service cloud.firestore {
     // Projects: public read; all inventory writes are restricted to verified admins.
     match /projects/{projectId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidId(projectId) && isValidProject(incoming());
+      allow create: if isAdmin() && isValidId(projectId) && (
+        isValidProject(incoming()) ||
+        isProjectDeletionTombstone(incoming(), projectId)
+      );
       // Allow verified admins to archive legacy inventory records even when
       // older documents no longer satisfy today's full project schema. This
       // exception is deliberately limited to a one-way soft-delete flag and
@@ -176,6 +179,25 @@ service cloud.firestore {
       );
       // Inventory removal must use the audited soft-archive workflow.
       allow delete: if false;
+    }
+
+    // Minimal, immutable-by-policy tombstone used when deleting a static curated
+    // catalogue item that has no projects/{id} document yet. It intentionally
+    // contains no publishable listing content and can only be created as deleted.
+    function isProjectDeletionTombstone(data, projectId) {
+      return data.keys().hasAll([
+        'id', 'name', 'location', 'type', 'price', 'isDeleted', 'isPaused', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'name', 'location', 'type', 'price', 'isDeleted', 'isPaused', 'updatedAt'
+      ]) &&
+      data.id == projectId &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 200 &&
+      data.location is string && data.location.size() >= 2 && data.location.size() <= 200 &&
+      data.type in ['Primary', 'Resale', 'Rental', 'Primary Sale'] &&
+      data.price is string && data.price.size() <= 150 &&
+      data.isDeleted == true && data.isPaused == true &&
+      data.updatedAt == request.time;
     }
 
     function isValidProject(data) {
