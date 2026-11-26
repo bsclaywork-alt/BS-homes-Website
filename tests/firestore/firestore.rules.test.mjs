@@ -474,3 +474,47 @@ describe('Offer Your Asset Firestore rules', () => {
   });
 
 });
+
+describe('Homepage Home Scroller Firestore rules', () => {
+  it('allows public reads and limits Home Scroller management to admins with at most six slides', async () => {
+    const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
+    const configRef = doc(adminDb, 'site_settings/home_scroller');
+    const slide = {
+      id: 'slide-1',
+      title: 'Featured Bengaluru Homes',
+      subtitle: 'A curated project showcase',
+      transactionType: 'Primary Sale',
+      location: 'Whitefield',
+      priceLabel: 'Starting from Rs. 1 Cr',
+      imageUrl: 'https://images.example.test/home-slide.webp',
+      ctaLabel: 'Explore Project',
+      projectId: '',
+      enabled: true
+    };
+
+    await assertSucceeds(setDoc(configRef, {
+      isEnabled: true,
+      slides: [slide],
+      updatedAt: serverTimestamp()
+    }));
+
+    const visitorDb = testEnv.unauthenticatedContext().firestore();
+    const publicConfig = await assertSucceeds(getDoc(doc(visitorDb, 'site_settings/home_scroller')));
+    assert.equal(publicConfig.data().slides.length, 1);
+
+    const ordinaryDb = testEnv.authenticatedContext('ordinary-user').firestore();
+    await assertFails(setDoc(doc(ordinaryDb, 'site_settings/home_scroller'), {
+      isEnabled: true,
+      slides: [slide],
+      updatedAt: serverTimestamp()
+    }));
+
+    await assertFails(setDoc(configRef, {
+      isEnabled: true,
+      slides: Array.from({ length: 7 }, (_, index) => ({ ...slide, id: `slide-${index}` })),
+      updatedAt: serverTimestamp()
+    }));
+
+    await assertSucceeds(deleteDoc(configRef));
+  });
+});

@@ -500,6 +500,20 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Homepage scroller configuration: public read, verified-admin-only management.
+    // This document contains only public slide content and externally hosted image URLs.
+    match /site_settings/{settingId} {
+      allow read: if settingId == 'home_scroller';
+      allow create, update: if isAdmin() &&
+        settingId == 'home_scroller' &&
+        request.resource.data.keys().hasOnly(['isEnabled', 'slides', 'updatedAt']) &&
+        request.resource.data.isEnabled is bool &&
+        request.resource.data.slides is list &&
+        request.resource.data.slides.size() <= 6 &&
+        request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin() && settingId == 'home_scroller';
+    }
+
     // Referrals: Publicly writable (create only), admin readable
     match /referrals/{referralId} {
       allow create: if isValidId(referralId) && isValidReferral(incoming());
