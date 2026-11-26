@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'firestore.rules'
+      - 'firebase.json'
+      - '.firebaserc'
+      - '.github/workflows/deploy-firestore-rules.yml'
       - 'tests/firestore/**'
       - '.github/workflows/verify-firestore-rules.yml'
   push:
@@ -11,6 +14,9 @@ on:
       - main
     paths:
       - 'firestore.rules'
+      - 'firebase.json'
+      - '.firebaserc'
+      - '.github/workflows/deploy-firestore-rules.yml'
       - 'tests/firestore/**'
       - '.github/workflows/verify-firestore-rules.yml'
   workflow_dispatch:
@@ -44,6 +50,9 @@ jobs:
         working-directory: tests/firestore
         run: cp ../../firestore.rules firestore.rules
 
+      - name: Verify production deployment target
+        run: |
+          node -e "const c=require('./firebase-applet-config.json'); const f=require('./firebase.json'); const r=f.firestore.find(x=>x.database===c.firestoreDatabaseId); if(c.projectId!=='smartbiz-26213'||!r||r.rules!=='firestore.rules') process.exit(1); console.log('Verified Firestore deployment target:', c.projectId, c.firestoreDatabaseId);"
       - name: Run Firestore rules tests in emulator
         working-directory: tests/firestore
         run: npx firebase emulators:exec --only firestore --project demo-bshomez-rules-test "npm test"
