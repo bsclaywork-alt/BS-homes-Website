@@ -6,6 +6,7 @@ on:
       - 'firestore.rules'
       - 'firebase.json'
       - '.firebaserc'
+      - '.github/workflows/deploy-firestore-rules.yml'
       - 'tests/firestore/**'
       - '.github/workflows/verify-firestore-rules.yml'
   push:
@@ -13,6 +14,9 @@ on:
       - main
     paths:
       - 'firestore.rules'
+      - 'firebase.json'
+      - '.firebaserc'
+      - '.github/workflows/deploy-firestore-rules.yml'
       - 'tests/firestore/**'
       - '.github/workflows/verify-firestore-rules.yml'
   workflow_dispatch:
