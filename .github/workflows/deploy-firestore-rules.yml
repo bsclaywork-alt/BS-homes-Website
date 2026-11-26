@@ -50,4 +50,4 @@ jobs:
           node -e "const c=require('./firebase-applet-config.json'); if(c.projectId!=='smartbiz-26213'||c.firestoreDatabaseId!=='ai-studio-803a5529-5181-465b-9588-692caecb00ba') process.exit(1); console.log('Verified production Firestore target:', c.projectId, c.firestoreDatabaseId);"
 
       - name: Deploy only Firestore security rules
-        run: firebase deploy --only firestore:rules --project smartbiz-26213 --non-interactive
+        run: firebase deploy --only firestore:ai-studio-803a5529-5181-465b-9588-692caecb00ba --project smartbiz-26213 --non-interactive
