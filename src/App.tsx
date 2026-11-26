@@ -441,7 +441,7 @@ const Navbar = ({
         </div>
 
         {/* Dedicated Multi-Tab Navigation Bar - Visible on desktop, removed on mobile */}
-        <div className="w-full min-w-0 border-t border-white/15 pt-1">
+        <div className="hidden sm:block w-full min-w-0 border-t border-white/15 pt-1">
           <div className="flex flex-wrap items-center justify-center gap-1 pb-0.5">
             {visibleLinks.map(link => {
               const isActive = activeMainTab === link.id;
