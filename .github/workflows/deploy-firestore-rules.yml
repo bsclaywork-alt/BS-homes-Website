@@ -109,10 +109,13 @@ jobs:
 
             const releaseName = `projects/${project}/releases/cloud.firestore/${database}`;
             const releaseUrl = `${api}/projects/${project}/releases/cloud.firestore/${database}`;
-            const releaseBody = { release: { name: releaseName, rulesetName: ruleset.name } };
+            const releaseBody = {
+              release: { name: releaseName, rulesetName: ruleset.name },
+              updateMask: "rulesetName",
+            };
 
             let release;
-            const update = await fetch(`${releaseUrl}?updateMask=rulesetName`, {
+            const update = await fetch(releaseUrl, {
               method: "PATCH",
               headers,
               body: JSON.stringify(releaseBody),
