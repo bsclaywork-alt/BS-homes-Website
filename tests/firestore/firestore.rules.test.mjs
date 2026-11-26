@@ -237,6 +237,10 @@ describe('Offer Your Asset Firestore rules', () => {
       isDeleted: false,
       updatedAt: serverTimestamp()
     }));
+    await assertFails(updateDoc(portfolioRef, {
+      propertyType: 'Unknown Property Type',
+      updatedAt: serverTimestamp()
+    }));
 
     const ordinaryDb = testEnv.authenticatedContext('ordinary-user').firestore();
     await assertFails(updateDoc(doc(ordinaryDb, 'projects/legacy-project-minimal'), {
