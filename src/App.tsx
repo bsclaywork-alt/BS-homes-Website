@@ -14224,7 +14224,14 @@ export default function App() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [publicPortfolioItems, setPublicPortfolioItems] = useState<PublicPortfolioItem[]>([]);
-  const [dbTombstoneIds, setDbTombstoneIds] = useState<string[]>([]);
+  const [dbTombstoneIds, setDbTombstoneIds] = useState<string[]>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('bs_homez_db_deleted_projects') || '[]');
+      return Array.isArray(stored) ? stored.filter((value): value is string => typeof value === 'string') : [];
+    } catch {
+      return [];
+    }
+  });
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -14994,14 +15001,22 @@ export default function App() {
       const publicRef = doc(db, 'public_portfolio', targetDocId);
       const snapshot = await getDoc(publicRef);
       if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and try again.');
+      if (snapshot.data().isDeleted === true || snapshot.data().publicationStatus === 'Archived' || snapshot.data().publicationStatus === 'Rejected') {
+        throw new Error('This listing has already been deleted or archived. Create a new listing instead of restoring this record.');
+      }
       const existing = { ...snapshot.data(), id: targetDocId } as PublicPortfolioItem;
       const safeUpdate = buildPublicPortfolioCuratorUpdate(projectWithId, existing);
       await setDoc(publicRef, { ...safeUpdate, updatedAt: serverTimestamp() }, { merge: true });
     } else {
       // Persist every inventory item, including formerly browser-only local_ drafts.
       // The Firestore document becomes the authoritative source after this save.
+      const projectRef = doc(db, 'projects', targetDocId);
+      const existingSnapshot = await getDoc(projectRef);
+      if (existingSnapshot.exists() && existingSnapshot.data().isDeleted === true) {
+        throw new Error('This listing has already been deleted. Create a new listing with a new ID instead of restoring it.');
+      }
       const payload = buildProjectFirestorePayload(projectWithId);
-      await setDoc(doc(db, 'projects', targetDocId), payload, { merge: true });
+      await setDoc(projectRef, payload, { merge: true });
     }
 
     // Update local cache and UI only after the persistent write succeeds.
@@ -15173,6 +15188,11 @@ export default function App() {
     await batch.commit();
 
     const keys = [projectId, tombstoneId, project.name].filter(Boolean);
+    setDbTombstoneIds(prev => {
+      const next = Array.from(new Set([...prev, projectDocId, tombstoneId, project.name].filter(Boolean).map(value => value.toLowerCase())));
+      try { localStorage.setItem('bs_homez_db_deleted_projects', JSON.stringify(next)); } catch {}
+      return next;
+    });
     setDeletedProjectIds(prev => {
       const next = Array.from(new Set([...prev, ...keys]));
       try { localStorage.setItem('bs_homez_deleted_projects', JSON.stringify(next)); } catch {}
@@ -15404,9 +15424,22 @@ export default function App() {
         }
       }
 
-      // Reuse the already-readable projects collection as the durable tombstone
-      // source for public_portfolio and static catalogue filtering.
-      setDbTombstoneIds(Array.from(deletedFromDb));
+      // Preserve previously confirmed tombstones when Firestore first emits a
+      // cached snapshot. A cache can predate a deletion; only a server snapshot
+      // is allowed to replace the persisted tombstone set.
+      let persistedTombstones = new Set<string>();
+      try {
+        const stored = JSON.parse(localStorage.getItem('bs_homez_db_deleted_projects') || '[]');
+        if (Array.isArray(stored)) {
+          persistedTombstones = new Set(stored.filter((value): value is string => typeof value === 'string').map(value => value.trim().toLowerCase()).filter(Boolean));
+        }
+      } catch {}
+      const confirmedTombstones = snapshot.metadata.fromCache
+        ? new Set([...persistedTombstones, ...deletedFromDb])
+        : deletedFromDb;
+      const confirmedTombstoneList = Array.from(confirmedTombstones);
+      setDbTombstoneIds(confirmedTombstoneList);
+      try { localStorage.setItem('bs_homez_db_deleted_projects', JSON.stringify(confirmedTombstoneList)); } catch {}
 
       dbDocs.sort((a, b) => {
         const tB = getTimestampMs(b.createdAt) || getTimestampMs(b.updatedAt);
@@ -15414,7 +15447,7 @@ export default function App() {
         return tB - tA;
       });
 
-      const merged = getMergedWithLocal(dbDocs, deletedFromDb);
+      const merged = getMergedWithLocal(dbDocs, confirmedTombstones);
       setProjects(merged);
       setIsLoading(false);
       try {
@@ -15436,7 +15469,15 @@ export default function App() {
       } else {
         console.warn('Realtime projects listener fallback notice:', errMsg);
       }
-      const fallback = getMergedWithLocal([]);
+      let persistedTombstones = new Set<string>();
+      try {
+        const stored = JSON.parse(localStorage.getItem('bs_homez_db_deleted_projects') || '[]');
+        if (Array.isArray(stored)) {
+          persistedTombstones = new Set(stored.filter((value): value is string => typeof value === 'string').map(value => value.trim().toLowerCase()).filter(Boolean));
+        }
+      } catch {}
+      setDbTombstoneIds(Array.from(persistedTombstones));
+      const fallback = getMergedWithLocal([], persistedTombstones);
       setProjects(fallback);
       setIsLoading(false);
     });
