@@ -470,7 +470,7 @@ service cloud.firestore {
         (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'publicationStatus', 'isPublished', 'isDeleted', 'updatedAt',
-            'name', 'location', 'category', 'formattedPrice', 'expectedPrice', 'rentPerMonth',
+            'name', 'location', 'category', 'propertyType', 'possessionDate', 'formattedPrice', 'expectedPrice', 'rentPerMonth',
             'propertyStatus', 'doorFacing', 'furnishing', 'societyType', 'sellerType', 'others',
             'configuration', 'amenities', 'imageUrls', 'mainImageUrl', 'videoUrl', 'googleMapUrl',
             'reraNumber', 'totalAcres', 'floorNumber', 'towerNumber', 'maintenance', 'advance',
@@ -488,6 +488,12 @@ service cloud.firestore {
           request.resource.data.location is string && request.resource.data.location.size() <= 200 &&
           request.resource.data.formattedPrice is string && request.resource.data.formattedPrice.size() <= 150 &&
           request.resource.data.category in ['Primary', 'Resale', 'Rental'] &&
+          (!('propertyType' in request.resource.data) || request.resource.data.propertyType in ['Apartment', 'Villa', 'Plot', 'Commercial']) &&
+          (!('possessionDate' in request.resource.data) || (request.resource.data.possessionDate is string && request.resource.data.possessionDate.size() <= 100)) &&
+          (!('societyType' in request.resource.data) || request.resource.data.societyType in ['Gated', 'Individual']) &&
+          (!('sellerType' in request.resource.data) || request.resource.data.sellerType in ['Resale', 'Builder', 'Landlord']) &&
+          (!('furnishing' in request.resource.data) || request.resource.data.furnishing in ['Semi Furnished', 'Furnished', 'Unfurnished']) &&
+          (!('propertyStatus' in request.resource.data) || request.resource.data.propertyStatus in ['Ready to Move', 'Under Construction', 'EOI', 'Nearing Completion']) &&
           request.resource.data.updatedAt == request.time
         )
       );
