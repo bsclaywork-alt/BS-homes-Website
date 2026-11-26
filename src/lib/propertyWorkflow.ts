@@ -470,6 +470,7 @@ export function publicPortfolioToProject(item: PublicPortfolioItem): Project {
     segment: item.category === 'Rental' ? 'Curated Rental' : 'Verified Owner Listing',
     handoverStatus,
     reraNumber: item.reraNumber || '',
+    possessionDate: item.possessionDate || item.availableFrom || '',
     handoverDate: item.possessionDate || item.availableFrom || 'Available',
     availableFrom: item.availableFrom || item.possessionDate || '',
     projectSize: item.totalAcres ? `${item.totalAcres} Acres` : '',
