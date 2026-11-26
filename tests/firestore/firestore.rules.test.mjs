@@ -237,11 +237,6 @@ describe('Offer Your Asset Firestore rules', () => {
       isDeleted: false,
       updatedAt: serverTimestamp()
     }));
-    await assertFails(updateDoc(portfolioRef, {
-      propertyType: 'Unknown Property Type',
-      updatedAt: serverTimestamp()
-    }));
-
     const ordinaryDb = testEnv.authenticatedContext('ordinary-user').firestore();
     await assertFails(updateDoc(doc(ordinaryDb, 'projects/legacy-project-minimal'), {
       isPaused: false,
@@ -271,6 +266,10 @@ describe('Offer Your Asset Firestore rules', () => {
       formattedPrice: 'Rs. 1.40 Cr*',
       expectedPrice: 14000000,
       projectWriteUps: 'Admin-approved public description',
+      updatedAt: serverTimestamp()
+    }));
+    await assertFails(updateDoc(portfolioRef, {
+      propertyType: 'Unknown Property Type',
       updatedAt: serverTimestamp()
     }));
 
