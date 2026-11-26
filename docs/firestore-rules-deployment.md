@@ -19,7 +19,8 @@ GitHub Pages website deployment.
 2. Select **Run workflow**.
 3. Enter `DEPLOY` in the confirmation field and run it.
 4. The workflow runs the Firestore emulator regression suite first. It deploys only
-   Firestore rules to the named database above if those tests pass.
+   Firestore rules to the named database above if those tests pass. The CLI target is
+   explicitly scoped to that database (`firestore:ai-studio-803a5529-5181-465b-9588-692caecb00ba`).
 
 This workflow is manual-only. Website pushes do not publish Firestore rules, and this
 workflow does not deploy hosting, functions, indexes, or change Firestore data.
