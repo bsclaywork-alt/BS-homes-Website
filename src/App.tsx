@@ -120,7 +120,7 @@ import {
   Cell,
   Legend
 } from 'recharts';
-import { Project, Enquiry, Opportunity, Referral, PublicTabKey, TabVisibilityConfig, DEFAULT_TAB_VISIBILITY, PublicPortfolioItem } from './types';
+import { Project, Enquiry, Opportunity, Referral, PublicTabKey, TabVisibilityConfig, DEFAULT_TAB_VISIBILITY, PublicPortfolioItem, OFFER_AMENITIES } from './types';
 import { Testimonials } from './components/Testimonials';
 import { ReferralSection } from './components/ReferralSection';
 import { FAQSection } from './components/FAQSection';
@@ -5562,15 +5562,34 @@ const ProjectForm = ({
                 </div>
               </div>
 
-              {/* Row 9: Amenities */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Amenities (Comma-separated)</label>
-                <input
-                  className="w-full bg-white/5 border border-white/15 p-3.5 text-white outline-none focus:border-cyan-400 transition-all text-xs rounded-sm font-mono"
-                  value={amenitiesInput}
-                  onChange={e => handleAmenitiesChange(e.target.value)}
-                  placeholder="Swimming pool, 24/7 Security, Gymnasium, Power backup, Club house, Children play area..."
-                />
+              {/* Row 9: Amenities — shared selectable options, matching Primary & Resale */}
+              <div className="space-y-2.5">
+                <div>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/70">Amenities</label>
+                  <p className="mt-1 text-[10px] text-white/55">Select all amenities available at this rental property.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {OFFER_AMENITIES.map(amenity => {
+                    const selected = (formData.features || []).includes(amenity);
+                    return (
+                      <label key={amenity} className={`flex cursor-pointer items-center gap-2 rounded-sm border p-2.5 text-[11px] transition-colors ${selected ? 'border-cyan-400/70 bg-cyan-400/10 text-white' : 'border-white/15 bg-white/5 text-white/75 hover:border-white/30'}`}>
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => {
+                            const next = selected
+                              ? (formData.features || []).filter(item => item !== amenity)
+                              : [...(formData.features || []), amenity];
+                            setFormData(prev => ({ ...prev, features: next }));
+                            setAmenitiesInput(next.join(', '));
+                          }}
+                          className="accent-cyan-400"
+                        />
+                        <span>{amenity}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Row 10: Project Write Ups */}
