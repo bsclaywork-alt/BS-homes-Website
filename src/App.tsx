@@ -136,6 +136,7 @@ import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
 import { OfferYourAssetForm } from './components/OfferYourAssetForm';
 import { AdminPrimaryResaleForm } from './components/AdminPrimaryResaleForm';
 import { HomepageShowcase } from './components/HomepageShowcase';
+import { HomeScrollerManager } from './components/HomeScroller';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { PhoneInputWithCountry, validateMobileNumber } from './components/PhoneInputWithCountry';
@@ -7987,7 +7988,7 @@ const AdminView = ({
   onTogglePauseProject?: (p: Project) => Promise<void>,
   onBatchUpdateProjects?: (updated: Project[]) => void
 }) => {
-  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility' | 'submissions'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'portfolio' | 'opportunities' | 'referrals' | 'tab_visibility' | 'submissions' | 'home_scroller'>('leads');
   const [tabVisibilityToast, setTabVisibilityToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
   const [isUpdatingTabVis, setIsUpdatingTabVis] = useState(false);
   const [leadStatusFilter, setLeadStatusFilter] = useState<'active' | 'trash'>('active');
@@ -9553,6 +9554,24 @@ const AdminView = ({
            </button>
            <button
              type="button"
+             aria-pressed={activeTab === 'home_scroller'}
+             onClick={(event) => {
+               event.preventDefault();
+               event.stopPropagation();
+               setActiveTab('home_scroller');
+             }}
+             className={cn(
+               "min-w-0 w-full flex flex-col items-center justify-center gap-1.5 px-2 py-3 text-center text-[9px] sm:flex-row sm:gap-2 sm:px-2.5 sm:py-3 sm:text-[10px] lg:text-[11px] uppercase tracking-[0.08em] sm:tracking-[0.1em] font-extrabold leading-tight whitespace-normal break-words transition-all duration-300 cursor-pointer rounded-sm outline-none border",
+               activeTab === 'home_scroller'
+                 ? "bg-gradient-to-r from-art-gold to-[#e4c07a] text-black border-art-gold font-black shadow-[0_4px_20px_rgba(197,160,89,0.4)] scale-[1.02] transform"
+                 : "bg-[#141414]/80 text-white/55 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10"
+             )}
+           >
+             <ImageIcon size={15} />
+             <span>Home Scroller</span>
+           </button>
+           <button
+             type="button"
              aria-pressed={activeTab === 'tab_visibility'}
              onClick={(event) => {
                event.preventDefault();
@@ -9610,6 +9629,8 @@ const AdminView = ({
             </div>
           )}
         </section>
+      ) : activeTab === 'home_scroller' ? (
+        <HomeScrollerManager projects={projects} />
       ) : activeTab === 'leads' ? (
         <div className="space-y-4">
           {leadActionToast && (
