@@ -23,5 +23,7 @@ jobs:
         run: npm run lint
       - name: Inventory mode regression tests
         run: npm run test:inventory-mode
+      - name: Portfolio Curator edit/save field-mapping tests
+        run: npm run test:portfolio-curator-save
       - name: GitHub Pages build
         run: npm run build:pages
