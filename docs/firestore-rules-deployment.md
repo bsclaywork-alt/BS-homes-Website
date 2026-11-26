@@ -8,7 +8,7 @@ GitHub Pages website deployment.
 
 1. Create a Google Cloud service account for the project `smartbiz-26213`.
 2. Grant only the permissions needed to create and publish Firestore rulesets
-   (Firebase Rules Admin, plus Service Usage Consumer if required by the project).
+   (Firebase Rules Admin (`roles/firebaserules.admin`). If the CLI reports a service-usage permission error, also grant Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`).
 3. Create a JSON key for that service account and add its full JSON contents as the
    GitHub Actions repository secret `FIREBASE_SERVICE_ACCOUNT_JSON`.
 4. Do not commit the key or paste it into source files.
