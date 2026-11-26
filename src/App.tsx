@@ -11072,12 +11072,12 @@ const AdminView = ({
                   <button
                     type="button"
                     onClick={() => setShowBulkDeleteConfirmModal(true)}
-                    disabled={selectedProjectKeys.length === 0 || isDeletingAllProjects}
+                    disabled={displayedProjects.filter(project => selectedProjectKeys.includes(String(project.id || project.name))).length === 0 || isDeletingAllProjects}
                     className="bg-rose-700/80 hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed text-white border border-rose-500/50 px-3.5 py-2 text-[9px] font-black uppercase tracking-widest rounded-sm transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
                     title="Delete only the selected projects"
                   >
                     <Trash2 size={13} />
-                    <span>Delete Selected ({selectedProjectKeys.length})</span>
+                    <span>Delete Selected ({displayedProjects.filter(project => selectedProjectKeys.includes(String(project.id || project.name))).length})</span>
                   </button>
                   <button
                     type="button"
