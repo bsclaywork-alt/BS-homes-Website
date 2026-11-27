@@ -40,11 +40,20 @@ jobs:
       - name: Build application
         run: npm run build:pages
 
-      - name: Verify production build
+      - name: Verify production build and all SEO location pages
         run: |
           test -s dist/index.html
           test -n "$(find dist/assets -type f -name '*.js' -size +0c -print -quit)"
           test -n "$(find dist/assets -type f -name '*.css' -size +0c -print -quit)"
+          # Every location URL in the sitemap must have a real static HTML file.
+          locations=(whitefield hoskote varthur gunjur hosa-road kasavanahalli off-sarjapur-road sarjapur electronic-city marathalli bellandur east-bangalore)
+          for slug in "${locations[@]}"; do
+            page="dist/locations/$slug/index.html"
+            test -s "$page" || { echo "Missing generated location page: $page"; exit 1; }
+            grep -Fq "<link rel=\"canonical\" href=\"https://bshomez.in/locations/$slug/\"" "$page" || { echo "Missing or incorrect canonical URL in $page"; exit 1; }
+            grep -Fq "<loc>https://bshomez.in/locations/$slug/</loc>" dist/sitemap.xml || { echo "Location URL missing from sitemap: $slug"; exit 1; }
+          done
+          echo "Verified all 12 static location pages, canonical URLs, and sitemap entries."
           cp dist/index.html dist/404.html
           echo "bshomez.in" > dist/CNAME
           touch dist/.nojekyll
