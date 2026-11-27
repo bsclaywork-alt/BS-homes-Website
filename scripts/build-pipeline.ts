@@ -280,7 +280,7 @@ async function runBuildPipeline() {
     a{color:inherit;text-decoration:none}.site-header{background:#101512;border-bottom:1px solid rgba(197,164,109,.35)}
     .header-inner,main,.site-footer{width:min(1200px,calc(100% - 40px));margin:0 auto}
     .header-inner{min-height:88px;display:flex;align-items:center;justify-content:space-between;gap:24px}
-    .brand img{display:block;width:auto;height:48px;max-width:min(48vw,220px);object-fit:contain}
+    .brand{display:inline-flex;align-items:center;flex:0 0 auto}.brand-mark{display:inline-flex;align-items:center;background:#fff;border-radius:3px;padding:4px 8px;box-shadow:0 1px 5px rgba(0,0,0,.12)}.brand img{display:block;width:auto;height:40px;max-width:min(48vw,220px);object-fit:contain}
     nav{display:flex;align-items:center;gap:26px;font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#F7F5EF}
     nav a:hover,.text-link:hover{color:var(--gold)}
     main{padding:64px 0 82px}.intro{max-width:820px;margin-bottom:42px}
@@ -300,12 +300,12 @@ async function runBuildPipeline() {
     .empty-state h2{margin:0 0 10px;font-family:"Cormorant Garamond",Georgia,serif;font-size:32px;color:var(--green)}.empty-state p{color:var(--muted)}
     .cta{display:inline-block;margin-top:12px;padding:13px 22px;background:var(--green);color:#fff;border:1px solid var(--green);border-radius:2px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
     .cta:hover{background:#245747}.site-footer{padding:28px 0 42px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}.site-footer a{color:var(--green);font-weight:700}
-    @media(max-width:600px){.header-inner{min-height:76px;gap:12px}.brand img{height:38px}.header-inner nav{gap:12px;font-size:9px;letter-spacing:.7px}main{padding:42px 0 56px}.property-image{height:195px}.property-copy{padding:19px}.listing-heading{font-size:29px}}
+    @media(max-width:600px){.header-inner{min-height:76px;gap:12px}.brand img{height:34px}.brand-mark{padding:3px 6px}.header-inner nav{gap:12px;font-size:9px;letter-spacing:.7px}main{padding:42px 0 56px}.property-image{height:195px}.property-copy{padding:19px}.listing-heading{font-size:29px}}
   </style>
 </head>
 <body>
   <header class="site-header"><div class="header-inner">
-    <a class="brand" href="/" aria-label="BS Homez home"><img src="/assets/aistudio/bs_homez_logo_transparent.png" alt="BS Homez"></a>
+    <a class="brand" href="/" aria-label="BS Homez home"><span class="brand-mark"><img src="/assets/aistudio/bs_homez_logo_transparent.png" alt="BS Homez - Turning Key Moments"></span></a>
     <nav aria-label="Main navigation"><a href="/">Home</a><a href="/#projects">All Properties</a><a href="mailto:contact@bshomez.in">Contact</a></nav>
   </div></header>
   <main>
