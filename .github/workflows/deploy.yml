@@ -21,7 +21,7 @@ jobs:
   build-and-deploy:
     environment:
       name: github-pages
-      url: \u0024{{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
@@ -43,15 +43,15 @@ jobs:
       - name: Verify production build and all SEO location pages
         run: |
           test -s dist/index.html
-          test -n "\u0024(find dist/assets -type f -name '*.js' -size +0c -print -quit)"
-          test -n "\u0024(find dist/assets -type f -name '*.css' -size +0c -print -quit)"
+          test -n "$(find dist/assets -type f -name '*.js' -size +0c -print -quit)"
+          test -n "$(find dist/assets -type f -name '*.css' -size +0c -print -quit)"
           # Every location URL in the sitemap must have a real static HTML file.
           locations=(whitefield hoskote varthur gunjur hosa-road kasavanahalli off-sarjapur-road sarjapur electronic-city marathalli bellandur east-bangalore)
-          for slug in "\u0024{locations[@]}"; do
-            page="dist/locations/\u0024slug/index.html"
-            test -s "\u0024page" || { echo "Missing generated location page: \u0024page"; exit 1; }
-            grep -Fq "<link rel=\"canonical\" href=\"https://bshomez.in/locations/\u0024slug/\"" "\u0024page" || { echo "Missing or incorrect canonical URL in \u0024page"; exit 1; }
-            grep -Fq "<loc>https://bshomez.in/locations/\u0024slug/</loc>" dist/sitemap.xml || { echo "Location URL missing from sitemap: \u0024slug"; exit 1; }
+          for slug in "${locations[@]}"; do
+            page="dist/locations/$slug/index.html"
+            test -s "$page" || { echo "Missing generated location page: $page"; exit 1; }
+            grep -Fq "<link rel=\"canonical\" href=\"https://bshomez.in/locations/$slug/\"" "$page" || { echo "Missing or incorrect canonical URL in $page"; exit 1; }
+            grep -Fq "<loc>https://bshomez.in/locations/$slug/</loc>" dist/sitemap.xml || { echo "Location URL missing from sitemap: $slug"; exit 1; }
           done
           echo "Verified all 12 static location pages, canonical URLs, and sitemap entries."
           cp dist/index.html dist/404.html
@@ -65,13 +65,13 @@ jobs:
       # leave duplicate github-pages artifacts for deploy-pages to discover.
       - name: Remove stale Pages artifacts
         env:
-          GH_TOKEN: \u0024{{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          ids="\u0024(gh api --paginate "repos/\u0024{GITHUB_REPOSITORY}/actions/runs/\u0024{GITHUB_RUN_ID}/artifacts" --jq '.artifacts[] | select(.name == "github-pages") | .id')"
-          if [ -n "\u0024ids" ]; then
+          ids="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" --jq '.artifacts[] | select(.name == "github-pages") | .id')"
+          if [ -n "$ids" ]; then
             while IFS= read -r id; do
-              [ -z "\u0024id" ] || gh api --method DELETE "repos/\u0024{GITHUB_REPOSITORY}/actions/artifacts/\u0024id"
-            done <<< "\u0024ids"
+              [ -z "$id" ] || gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/$id"
+            done <<< "$ids"
           fi
 
       - name: Upload Pages artifact
