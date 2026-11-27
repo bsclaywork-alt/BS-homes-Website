@@ -79,7 +79,21 @@ async function runStagingVerification() {
 
   SITEMAP_PROJECTS.forEach(p => {
     const meta = generatePropertyMetaTags(p, "https://bshomez.in");
-    if (!meta.title || !meta.canonical || !meta.schemaJson) failures.push(`Incomplete generated project metadata: ${p.name}`);
+    if (!meta.title || !meta.canonical || !meta.schemaJson) {
+      failures.push(`Incomplete generated project metadata: ${p.name}`);
+      return;
+    }
+
+    const slug = new URL(meta.canonical).pathname.split('/').filter(Boolean).pop();
+    const projectPath = path.join(process.cwd(), 'dist', 'projects', slug, 'index.html');
+    if (!fs.existsSync(projectPath)) {
+      failures.push(`Missing pre-rendered curated project page: ${p.name} (${slug})`);
+      return;
+    }
+
+    const html = fs.readFileSync(projectPath, 'utf-8');
+    if (!html.includes(`<title>${meta.title}</title>`)) failures.push(`Curated project title mismatch: ${p.name}`);
+    if (!html.includes(`<link rel="canonical" href="${meta.canonical}"`)) failures.push(`Curated project canonical mismatch: ${p.name}`);
   });
 
   if (failures.length) {
