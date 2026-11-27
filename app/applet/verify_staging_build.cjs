@@ -92,7 +92,8 @@ async function runStagingVerification() {
     }
 
     const html = fs.readFileSync(projectPath, 'utf-8');
-    if (!html.includes(`<title>${meta.title}</title>`)) failures.push(`Curated project title mismatch: ${p.name}`);
+    const escapedTitle = meta.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    if (!html.includes(`<title>${escapedTitle}</title>`)) failures.push(`Curated project title mismatch: ${p.name}`);
     if (!html.includes(`<link rel="canonical" href="${meta.canonical}"`)) failures.push(`Curated project canonical mismatch: ${p.name}`);
   });
 
