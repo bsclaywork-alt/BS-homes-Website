@@ -70,9 +70,11 @@ interface SharedProps {
 export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelectProject, onExploreProperties }) => {
   const [slides, setSlides] = useState<HomeScrollerSlide[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [contentPlacement, setContentPlacement] = useState<'below' | 'overlay'>('below');
 
   useEffect(() => onSnapshot(SETTINGS_REF, snapshot => {
     const data = snapshot.exists() ? snapshot.data() : {};
+    setContentPlacement(data.contentPlacement === 'overlay' ? 'overlay' : 'below');
     setSlides(data.isEnabled === false ? [] : normalizeSlides(data.slides).filter(slide => slide.enabled && slide.imageUrl));
   }, error => console.error('Home Scroller could not be loaded:', error)), []);
 
@@ -91,50 +93,19 @@ export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelect
   const openSlide = () => {
     const linkedProject = projects.find(project =>
       (slide.projectId && project.id === slide.projectId) ||
-      project.name.trim().toLowerCase() === slide.title.trim().toLowerCase()
-    );
-    if (linkedProject) onSelectProject(linkedProject);
-    else onExploreProperties();
-  };
-
-  return (
-    <section className="relative w-full overflow-hidden bg-[#101914] text-white" aria-label="Featured property projects">
-      <div className="relative min-h-[clamp(300px,38vw,500px)]">
-        <img
-          src={slide.imageUrl}
-          alt={slide.title || 'Featured BS Homez property'}
-          loading="eager"
-          fetchPriority="high"
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/25" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-black/15" />
-        <div className="relative z-10 flex min-h-[clamp(300px,38vw,500px)] items-end px-4 py-7 sm:px-7 sm:py-9 lg:px-8 lg:py-10">
-          <div className="w-full max-w-xl space-y-3 pr-7 sm:space-y-4 sm:pr-0">
-            <span className="inline-flex max-w-full rounded-sm border border-[#d8b56d]/70 bg-black/40 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#f1d18c] backdrop-blur-sm">
-              {slide.transactionType}
-            </span>
-            <h2 className="max-w-2xl break-words font-serif text-2xl font-bold leading-[1.08] sm:text-3xl xl:text-4xl">{slide.title}</h2>
-            {slide.subtitle && <p className="max-w-xl text-xs leading-relaxed text-white/90 sm:text-sm">{slide.subtitle}</p>}
-            {(slide.location || slide.priceLabel) && (
-              <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">
-                {slide.location && <span className="rounded-sm border border-white/20 bg-black/30 px-3 py-2 text-white/90 backdrop-blur-sm">{slide.location}</span>}
-                {slide.priceLabel && <span className="rounded-sm border border-[#d8b56d]/50 bg-black/35 px-3 py-2 text-[#f1d18c] backdrop-blur-sm">{slide.priceLabel}</span>}
-              </div>
-            )}
-            <button type="button" onClick={openSlide} className="mt-2 inline-flex min-h-11 items-center gap-3 rounded-sm bg-[#d8b56d] px-5 py-3.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#17130b] shadow-xl transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f1d18c] sm:px-6">
-              {slide.ctaLabel || 'Explore Project'} <ArrowRight size={15} />
-            </button>
-          </div>
+     return (
+    <section className="relative w-full overflow-hidden rounded-sm bg-[#101914] text-white" aria-label="Featured property projects">
+      <div className={contentPlacement === 'below' ? 'flex flex-col' : 'relative'}>
+        <div className={contentPlacement === 'below' ? 'relative aspect-[16/9] max-h-[340px] min-h-[190px] w-full overflow-hidden' : 'relative min-h-[280px] overflow-hidden'}>
+          <img src={slide.imageUrl} alt={slide.title || 'Featured BS Homez property'} loading="eager" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover object-center" />
+          {contentPlacement === 'overlay' && <><div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/15" /><div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" /><div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6"><span className="rounded-sm border border-[#d8b56d]/70 bg-black/40 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#f1d18c]">{slide.transactionType}</span><h2 className="mt-2 max-w-xl break-words font-serif text-xl font-bold leading-tight sm:text-2xl">{slide.title}</h2></div></>}
+          {slides.length > 1 && <><button type="button" aria-label="Previous slide" onClick={() => setActiveIndex(i => (i - 1 + slides.length) % slides.length)} className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/50 bg-black/55 p-2 text-white"><ArrowLeft size={16}/></button><button type="button" aria-label="Next slide" onClick={() => setActiveIndex(i => (i + 1) % slides.length)} className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/50 bg-black/55 p-2 text-white"><ArrowRight size={16}/></button><div className="absolute bottom-3 right-3 z-20 flex gap-1.5">{slides.map((item,index) => <button key={item.id} type="button" aria-label={'Show slide ' + (index + 1)} onClick={() => setActiveIndex(index)} className={index === activeIndex ? 'h-1.5 w-7 rounded-full bg-[#e4c47e]' : 'h-1.5 w-2.5 rounded-full bg-white/75'} />)}</div></>}
         </div>
-        {slides.length > 1 && (
-          <>
-            <button type="button" aria-label="Previous slide" onClick={() => setActiveIndex(i => (i - 1 + slides.length) % slides.length)} className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/45 bg-black/45 p-2.5 text-white shadow-lg backdrop-blur transition hover:bg-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:left-5"><ArrowLeft size={18} /></button>
-            <button type="button" aria-label="Next slide" onClick={() => setActiveIndex(i => (i + 1) % slides.length)} className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/45 bg-black/45 p-2.5 text-white shadow-lg backdrop-blur transition hover:bg-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-5"><ArrowRight size={18} /></button>
-            <div className="absolute bottom-4 right-5 z-20 flex items-center gap-2 sm:bottom-6 sm:right-8">
-              {slides.map((item, index) => <button key={item.id} type="button" aria-label={`Show slide ${index + 1}`} aria-current={index === activeIndex ? 'true' : undefined} onClick={() => setActiveIndex(index)} className={`h-1.5 rounded-full transition-all ${index === activeIndex ? 'w-9 bg-[#e4c47e]' : 'w-3 bg-white/65 hover:bg-white'}`} />)}
-            </div>
-            <span className="absolute bottom-5 left-5 z-20 text-[9px] font-mono tracking-widest text-white/75 sm:bottom-7 sm:left-10">{String(activeIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</span>
+        {contentPlacement === 'below' && <div className="space-y-2 border-t border-[#d8b56d]/25 bg-[#101914] px-4 py-4 sm:px-5 sm:py-5"><div className="flex flex-wrap items-center gap-2"><span className="rounded-sm border border-[#d8b56d]/60 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#f1d18c]">{slide.transactionType}</span><span className="text-[9px] font-mono text-white/55">{String(activeIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</span></div><h2 className="break-words font-serif text-xl font-bold leading-tight text-white sm:text-2xl">{slide.title}</h2>{slide.subtitle && <p className="max-w-2xl text-xs leading-relaxed text-white/75 sm:text-sm">{slide.subtitle}</p>}{(slide.location || slide.priceLabel) && <div className="flex flex-wrap gap-2 pt-1 text-[10px] font-semibold uppercase tracking-wider">{slide.location && <span className="rounded-sm border border-white/20 px-2.5 py-1.5 text-white/80">{slide.location}</span>}{slide.priceLabel && <span className="rounded-sm border border-[#d8b56d]/45 px-2.5 py-1.5 text-[#f1d18c]">{slide.priceLabel}</span>}</div>}<button type="button" onClick={openSlide} className="mt-1 inline-flex min-h-10 items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-[#17130b]">{slide.ctaLabel || 'Explore Project'} <ArrowRight size={14}/></button></div>}
+        {contentPlacement === 'overlay' && <div className="bg-[#101914] px-4 py-3"><button type="button" onClick={openSlide} className="inline-flex min-h-10 items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-[#17130b]">{slide.ctaLabel || 'Explore Project'} <ArrowRight size={14}/></button></div>}
+      </div>
+    </section>
+  );sm:bottom-7 sm:left-10">{String(activeIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</span>
           </>
         )}
       </div>
@@ -150,6 +121,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
   const [slides, setSlides] = useState<HomeScrollerSlide[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [isEnabled, setIsEnabled] = useState(true);
+  const [contentPlacement, setContentPlacement] = useState<'below' | 'overlay'>('below');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -161,6 +133,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
     const loaded = normalizeSlides(data.slides);
     setSlides(loaded);
     setIsEnabled(data.isEnabled !== false);
+    setContentPlacement(data.contentPlacement === 'overlay' ? 'overlay' : 'below');
     setSelectedId(current => loaded.some(slide => slide.id === current) ? current : (loaded[0]?.id || ''));
     setLoading(false);
   }, error => {
@@ -237,6 +210,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
     try {
       await setDoc(SETTINGS_REF, {
         isEnabled,
+        contentPlacement,
         slides: slides.slice(0, 6).map((slide, index) => ({ ...slide, order: index + 1 })),
         updatedAt: serverTimestamp()
       });
@@ -293,6 +267,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
           <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/55">Manage up to six large homepage project slides. Upload a banner image, choose the transaction type, link an existing portfolio project, and publish when ready.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 rounded-sm border border-white/15 bg-black/20 px-3 py-2 text-[9px] font-bold uppercase tracking-wider text-white/65">Text placement<select value={contentPlacement} onChange={event => setContentPlacement(event.target.value as "below" | "overlay")} className="rounded-sm border border-white/15 bg-[#1c1c1c] px-2 py-2 text-[10px] normal-case tracking-normal text-white"><option value="below">Below image (recommended)</option><option value="overlay">On image</option></select></label>
           <button type="button" onClick={() => setIsEnabled(value => !value)} className={`inline-flex items-center gap-2 rounded-sm border px-4 py-3 text-[10px] font-black uppercase tracking-wider ${isEnabled ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300' : 'border-white/15 bg-white/5 text-white/60'}`}>
             {isEnabled ? <Eye size={14} /> : <EyeOff size={14} />} {isEnabled ? 'Visible on homepage' : 'Hidden on homepage'}
           </button>
