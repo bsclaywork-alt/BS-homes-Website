@@ -146,11 +146,13 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
   const selected = useMemo(() => slides.find(slide => slide.id === selectedId) || null, [slides, selectedId]);
   const updateSelected = (patch: Partial<HomeScrollerSlide>) => {
     if (!selectedId) return;
+    hasLocalChanges.current = true;
     setSlides(current => current.map(slide => slide.id === selectedId ? { ...slide, ...patch } : slide));
   };
 
   const addSlide = () => {
     if (slides.length >= 6) return;
+    hasLocalChanges.current = true;
     const next = makeSlide(slides.length + 1);
     setSlides(current => [...current, next]);
     setSelectedId(next.id);
@@ -159,7 +161,8 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
 
   const removeSlide = (id: string) => {
     if (!window.confirm('Delete this slide from the Home Scroller?')) return;
-    hasLocalChanges.current = true;\n    const next = slides.filter(slide => slide.id !== id);
+    hasLocalChanges.current = true;
+    const next = slides.filter(slide => slide.id !== id);
     setSlides(next);
     setSelectedId(next[0]?.id || '');
   };
@@ -168,6 +171,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
     const index = slides.findIndex(slide => slide.id === id);
     const target = index + direction;
     if (index < 0 || target < 0 || target >= slides.length) return;
+    hasLocalChanges.current = true;
     const next = [...slides];
     [next[index], next[target]] = [next[target], next[index]];
     setSlides(next);
@@ -206,19 +210,32 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
   };
 
   const save = async () => {
+    if (uploading) {
+      setNotice({ type: 'error', message: 'Please wait until the image upload finishes before saving.' });
+      return;
+    }
     setSaving(true);
     setNotice(null);
     try {
+      const slidesToSave = slides.slice(0, 6).map((slide, index) => ({ ...slide, order: index + 1 }));
       await setDoc(SETTINGS_REF, {
         isEnabled,
         contentPlacement,
-        slides: slides.slice(0, 6).map((slide, index) => ({ ...slide, order: index + 1 })),
+        slides: slidesToSave,
         updatedAt: serverTimestamp()
       });
-      setNotice({ type: 'success', message: 'Home Scroller saved. The homepage will show the updated slides.' });
+      const verifiedSnapshot = await getDocFromServer(SETTINGS_REF);
+      if (!verifiedSnapshot.exists()) throw new Error('Save verification failed: settings document was not found.');
+      const verifiedSlides = normalizeSlides(verifiedSnapshot.data().slides);
+      const missingImage = slidesToSave.find(slide => slide.imageUrl && !verifiedSlides.some(saved => saved.id === slide.id && saved.imageUrl === slide.imageUrl));
+      if (missingImage) throw new Error(`Save verification failed for the image in "${missingImage.title || 'this slide'}". Your editor content has been kept; please retry.`);
+      hasLocalChanges.current = false;
+      setSlides(verifiedSlides);
+      setNotice({ type: 'success', message: `✓ Saved successfully! ${verifiedSlides.length} slide(s) and all uploaded images are verified in the cloud. Homepage changes are published.` });
     } catch (error) {
       console.error('Home Scroller save failed:', error);
-      setNotice({ type: 'error', message: 'Save failed. Check admin permissions and the Firestore rules deployment, then retry.' });
+      hasLocalChanges.current = true;
+      setNotice({ type: 'error', message: error instanceof Error ? error.message : 'Save failed. Your changes are still in the editor. Please retry.' });
     } finally {
       setSaving(false);
     }
