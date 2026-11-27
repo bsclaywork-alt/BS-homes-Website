@@ -158,6 +158,18 @@ async function runBuildPipeline() {
   </head>`;
     html = html.replace(/<\/head>/i, propertyJsonLdSnippet);
 
+    // Add crawlable, visible related links to the static project page.
+    // This gives visitors and search crawlers a route back to the matching area and portfolio.
+    const projectLocation = CORRIDOR_SLUGS.find((corridor) =>
+      slugify(project.zone) === slugify(corridor) ||
+      slugify(project.location).includes(slugify(corridor))
+    );
+    const locationNavigation = projectLocation
+      ? `<a href="/locations/${slugify(projectLocation)}/">Properties in ${escapeHtml(projectLocation.replace(/-/g, ' '))}</a>`
+      : '';
+    const relatedNavigation = `<nav aria-label="Related property links" style="max-width:1120px;margin:24px auto;padding:16px 20px;border-top:1px solid #e5e2d8;display:flex;flex-wrap:wrap;gap:18px;font:600 13px Arial,sans-serif;color:#153d32"><a href="/">BS Homez Home</a><a href="/#projects">Browse all properties</a>${locationNavigation}</nav>`;
+    html = html.replace(/<\/body>/i, `${relatedNavigation}</body>`);
+
     fs.writeFileSync(path.join(projectDir, 'index.html'), html, 'utf-8');
     generatedCount++;
   }
