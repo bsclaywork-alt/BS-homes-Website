@@ -717,7 +717,7 @@ const WhyChoose = ({ onConsult }: { onConsult?: () => void }) => {
     },
     {
       title: "Trusted by Builders, Owners & Tenants",
-      description: "Established relationships with all major Cat A+, A, B & C builders as well as verified property owners for seamless Primary, Resale, and Rental inventory.",
+      description: "Established relationships with leading builders and verified property owners for seamless Primary, Resale, and Rental inventory.",
       icon: <Handshake size={24} />,
       id: "02"
     },
@@ -9352,7 +9352,7 @@ const AdminView = ({
   };
 
   return (
-    <div className="py-24 px-8 max-w-7xl mx-auto">
+    <div className="admin-vault py-24 px-8 max-w-7xl mx-auto rounded-2xl bg-[#111c27] text-slate-100 border border-[#d4b16a]/40 shadow-2xl">
       <div className="mb-12 border-b border-white/10 pb-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
           <h2 className="text-5xl font-serif italic text-white flex items-center gap-6">
