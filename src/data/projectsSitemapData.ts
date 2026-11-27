@@ -583,10 +583,9 @@ export const SITEMAP_PROJECTS: SitemapProjectItem[] = [
     type: 'Primary',
     zone: 'Whitefield',
     location: 'Whitefield - Borewell Road, Bangalore',
-    price: 'Rs. 1.45 Cr - Rs. 2.60 Cr*',
-    description: '83% open-space high-rise enclave close to ITPL, featuring 5 distinct themed zones and cantilevered rooftop observation deck.',
-    reraNumber: 'PRM/KA/RERA/1251/446/PR/220601/004944',
-    handoverDate: 'Under Construction (December 2026)',
+    price: 'Price on request',
+    description: 'Sumadhura Folium is a multi-phase residential community in Whitefield, Bengaluru, beside Sheelavanthakere Lake. The developer describes a 16.5-acre master plan with seven towers, around 1,280 residences and 83% open greens. The project offers 3, 3.5 and 4 BHK homes, supported by a 54,000 sq. ft. clubhouse and more than 120 lifestyle, sports, wellness and community amenities. Facilities listed by the developer include swimming and fitness spaces, badminton and squash, landscaped gardens, a co-working studio, children\'s areas and a pet park. The developer currently lists ongoing development and March 2028 possession. Confirm the exact phase, applicable RERA registration, configuration, price and possession details before booking.',
+    handoverDate: 'March 2028',
     imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'
   },
   {
