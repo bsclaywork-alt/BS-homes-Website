@@ -717,7 +717,7 @@ const WhyChoose = ({ onConsult }: { onConsult?: () => void }) => {
     },
     {
       title: "Trusted by Builders, Owners & Tenants",
-      description: "Established relationships with all major Cat A+, A, B & C builders as well as verified property owners for seamless Primary, Resale, and Rental inventory.",
+      description: "Established relationships with leading builders as well as verified property owners for seamless Primary, Resale, and Rental inventory.",
       icon: <Handshake size={24} />,
       id: "02"
     },
@@ -2156,7 +2156,7 @@ const ProjectCard: React.FC<{
                   </span>
                   {project.builderName && (
                     <span className="px-1.5 py-0.5 rounded-sm bg-lux-ivory text-lux-forest border border-lux-border font-mono text-[8.5px] font-semibold">
-                      {project.builderName} {project.builderCategory ? `(Cat ${project.builderCategory})` : ''}
+                      {project.builderName}
                     </span>
                   )}
                 </div>
@@ -2164,18 +2164,20 @@ const ProjectCard: React.FC<{
 
               {/* Actions & Admin Controls */}
               <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenMetaData?.(project);
-                  }}
-                  className="add-meta-data-btn px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border flex items-center gap-1 cursor-pointer transition-colors shadow-sm"
-                  title="Add Meta Data & SEO"
-                >
-                  <Sparkles size={9} />
-                  <span>Add Meta Data</span>
-                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenMetaData?.(project);
+                    }}
+                    className="add-meta-data-btn px-2 py-0.5 rounded-sm text-[8.5px] uppercase tracking-wider font-black bg-lux-ivory hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border flex items-center gap-1 cursor-pointer transition-colors shadow-sm"
+                    title="Add Meta Data & SEO"
+                  >
+                    <Sparkles size={9} />
+                    <span>Add Meta Data</span>
+                  </button>
+                )}
 
                 {isAdmin && (
                   <div className="flex items-center gap-1">
@@ -3295,25 +3297,29 @@ const ProjectGrid = ({
                 Whitefield · Hoskote · Varthur · Gunjur · Hosa Road · Kasavanahalli · Sarjapur · Electronic City · Bellandur
               </p>
               <div className="flex flex-wrap items-center gap-1.5 justify-start sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => onOpenMetaData?.(displayedProjects[0])}
-                  className="add-meta-data-btn bg-lux-card hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-sm flex items-center gap-1 cursor-pointer w-max"
-                  title="Add or edit SEO meta titles, meta descriptions, and keywords"
-                >
-                  <Sparkles size={11} />
-                  <span>Add Meta Data</span>
-                </button>
-                <button
-                  type="button"
-                  data-testid="generate-seo-audit-report-grid-btn"
-                  onClick={() => onOpenMetaData?.(displayedProjects[0])}
-                  className="generate-seo-audit-report-btn bg-lux-forest/10 hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all flex items-center gap-1 cursor-pointer w-max shadow-sm"
-                  title="Compile summary of missing alt text for all images in the project and provide a downloadable CSV report for the admin"
-                >
-                  <FileSpreadsheet size={11} />
-                  <span>Generate SEO Audit Report</span>
-                </button>
+                {isAdmin && (
+                  <>
+                  <button
+                    type="button"
+                    onClick={() => onOpenMetaData?.(displayedProjects[0])}
+                    className="add-meta-data-btn bg-lux-card hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all shadow-sm flex items-center gap-1 cursor-pointer w-max"
+                    title="Add or edit SEO meta titles, meta descriptions, and keywords"
+                  >
+                    <Sparkles size={11} />
+                    <span>Add Meta Data</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="generate-seo-audit-report-grid-btn"
+                    onClick={() => onOpenMetaData?.(displayedProjects[0])}
+                    className="generate-seo-audit-report-btn bg-lux-forest/10 hover:bg-lux-forest text-lux-forest hover:text-lux-card border border-lux-border px-3 py-1 rounded-sm text-[8.5px] uppercase tracking-[0.16em] font-black transition-all flex items-center gap-1 cursor-pointer w-max shadow-sm"
+                    title="Compile summary of missing alt text for all images in the project and provide a downloadable CSV report for the admin"
+                  >
+                    <FileSpreadsheet size={11} />
+                    <span>Generate SEO Audit Report</span>
+                  </button>
+                  </>
+                )}
                 {isAdmin && (
                   <div className="flex flex-wrap items-center gap-1.5">
                     {onToggleShowHidden && (
@@ -9352,7 +9358,7 @@ const AdminView = ({
   };
 
   return (
-    <div className="py-24 px-8 max-w-7xl mx-auto">
+    <div className="admin-vault py-12 sm:py-16 px-3 sm:px-6 max-w-7xl mx-auto rounded-xl">
       <div className="mb-12 border-b border-white/10 pb-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
           <h2 className="text-5xl font-serif italic text-white flex items-center gap-6">
