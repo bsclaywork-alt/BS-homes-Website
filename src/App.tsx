@@ -145,7 +145,7 @@ import { autoEnhanceAllProjects, generateOptimizedSeoMetadata } from './lib/auto
 import { publicPortfolioToProject, buildPublicPortfolioCuratorUpdate } from './lib/propertyWorkflow';
 import { ProjectDetailView } from './components/ProjectDetailView';
 import { OptimizedImage } from './components/OptimizedImage';
-import { slugify } from './data/projectsSitemapData';
+import { slugify, getProjectSlug, SITEMAP_PROJECTS } from './data/projectsSitemapData';
 import { getProjectInventoryModeDefaults, resolveProjectInventoryMode, transitionProjectInventoryMode, type ProjectInventoryMode } from './lib/projectInventoryMode';
 import { isProjectDeletionLocked } from './lib/projectDeletionGuard';
 
@@ -14489,7 +14489,19 @@ export default function App() {
       ? decodeURIComponent(projectQuery).trim().toLowerCase()
       : '';
 
-    const activeProjectTarget = selectedProject || (
+    // Resolve clean /projects/:slug/ URLs from the curated registry first.
+    // This prevents React hydration from replacing static project metadata with homepage metadata.
+    const projectPathMatch = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/i);
+    const projectPathSlug = projectPathMatch?.[1]?.toLowerCase() || '';
+    const projectFromPath = projectPathSlug
+      ? (SITEMAP_PROJECTS.find(project =>
+          getProjectSlug(project, SITEMAP_PROJECTS) === projectPathSlug
+        ) || effectiveProjects.find(project =>
+          createProjectSlug(project.name || '') === projectPathSlug
+        ))
+      : null;
+
+    const activeProjectTarget = projectFromPath || selectedProject || (
       normalizedProjectQuery
         ? effectiveProjects.find(p => {
             const projectId = (p.id || '').toLowerCase();
@@ -14503,14 +14515,8 @@ export default function App() {
         : null
     );
 
-    // Clean project URLs are pre-rendered by the build pipeline. If a project is
-    // not yet present in the live Firestore-backed list, preserve that page's
-    // verified static SEO metadata instead of replacing it with homepage metadata.
-    const isCleanProjectPath = /^\/projects\/[^/]+\/?$/.test(window.location.pathname);
-    if (!activeProjectTarget && isCleanProjectPath) return;
-
     if (activeProjectTarget) {
-      const seoData = generateOptimizedSeoMetadata(activeProjectTarget, baseUrl);
+      const seoData = generateOptimizedSeoMetadata(activeProjectTarget as Project, baseUrl);
 
       // 1. Update Document Title
       document.title = seoData.metaTitle;
@@ -14605,7 +14611,7 @@ export default function App() {
 
     // Case 3: Other Main Tabs
     let tabTitle = "BS Homez | Buy, Sell & Rent Property in Bengaluru";
-    let tabDesc = "Buy, sell, rent and resell apartments, villas and plots in Bengaluru with BS Homez. Explore property options and expert real estate support.";
+    let tabDesc = "Buy, sell, resell or rent apartments, villas and plots across Bengaluru with property guidance from BS Homez.";
     let tabUrl = `${baseUrl}/`;
 
     if (activeMainTab === 'loans') {
@@ -14907,13 +14913,51 @@ export default function App() {
   const matchedProjectDetail = useMemo(() => {
     if (!activePropertyUrlId) return null;
     const cleanQuery = decodeURIComponent(activePropertyUrlId).trim().toLowerCase();
-    return effectiveProjects.find(p =>
+    const liveProject = effectiveProjects.find(p =>
       slugify(p.name) === cleanQuery ||
       (p.id && p.id.toLowerCase() === cleanQuery) ||
       slugify(p.id || '') === cleanQuery ||
       p.name.toLowerCase() === cleanQuery
     );
-  }, [activePropertyUrlId, effectiveProjects]);
+    if (liveProject) return liveProject;
+
+    // Static SEO pages are also generated for curated registry entries. Resolve
+    // those routes to their matching detail data when no live record is present.
+    // Explicit deletion/hidden markers still take precedence and are never bypassed.
+    const curatedProject = SITEMAP_PROJECTS.find(project =>
+      getProjectSlug(project, SITEMAP_PROJECTS) === cleanQuery ||
+      slugify(project.name) === cleanQuery ||
+      slugify(project.id) === cleanQuery
+    );
+    if (!curatedProject) return null;
+
+    const blockedKeys = new Set(
+      [...deletedProjectIds, ...dbTombstoneIds, ...hiddenProjectIds]
+        .map(value => String(value).trim().toLowerCase())
+    );
+    const curatedId = (curatedProject.id || '').trim().toLowerCase();
+    const curatedName = curatedProject.name.trim().toLowerCase();
+    if (blockedKeys.has(curatedId) || blockedKeys.has(curatedName)) return null;
+
+    return {
+      ...curatedProject,
+      locationTarget: curatedProject.location,
+      configuration: [],
+      segment: `${curatedProject.propertyType} in ${curatedProject.zone}`,
+      imageUrls: curatedProject.imageUrl ? [curatedProject.imageUrl] : [],
+      features: [
+        '16.5-acre master plan with landscaped open greens',
+        '54,000 sq. ft. clubhouse and 120+ amenities',
+        'Swimming pool, fitness, badminton and squash facilities',
+        'Co-working studio, crèche and pet park'
+      ],
+      handoverStatus: 'Under Construction',
+      handoverDate: 'March 2028',
+      // The developer lists separate registrations by phase; avoid showing an
+      // outdated single-phase RERA number as if it covered the entire project.
+      reraNumber: undefined
+    } as unknown as Project;
+  }, [activePropertyUrlId, effectiveProjects, deletedProjectIds, dbTombstoneIds, hiddenProjectIds]);
 
   const handleSaveProject = async (updated: Project) => {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
@@ -15724,6 +15768,34 @@ export default function App() {
                     );
                   })}
                 </div>
+              </section>
+
+              <section aria-labelledby="location-directory-heading" className="px-3 sm:px-8 md:px-12 py-7 sm:py-9 border-t border-lux-border bg-lux-ivory">
+                <div className="max-w-4xl">
+                  <span className="text-lux-gold text-[9px] sm:text-[10px] uppercase tracking-[0.25em] font-black block mb-2">Bengaluru Property Locations</span>
+                  <h2 id="location-directory-heading" className="text-2xl sm:text-3xl font-serif italic text-lux-forest mb-2">Explore Homes by Location</h2>
+                  <p className="text-xs sm:text-sm text-lux-muted leading-relaxed mb-5">Browse published apartments, villas and plots by area. Check each listing for current price, availability and property details.</p>
+                </div>
+                <nav aria-label="Bengaluru property locations" className="flex flex-wrap gap-2">
+                  {[
+                    ['Whitefield', 'whitefield'],
+                    ['Sarjapur', 'sarjapur'],
+                    ['Varthur', 'varthur'],
+                    ['Gunjur', 'gunjur'],
+                    ['Hosa Road', 'hosa-road'],
+                    ['Hoskote', 'hoskote'],
+                    ['Kasavanahalli', 'kasavanahalli'],
+                    ['East Bangalore', 'east-bangalore'],
+                    ['Electronic City', 'electronic-city'],
+                    ['Marathahalli', 'marathalli'],
+                    ['Off Sarjapur Road', 'off-sarjapur-road'],
+                    ['Bellandur', 'bellandur']
+                  ].map(([label, slug]) => (
+                    <a key={slug} href={`/locations/${slug}/`} className="px-3 py-2 border border-lux-border bg-lux-card text-lux-forest text-[10px] sm:text-xs font-semibold rounded-sm hover:border-lux-gold hover:bg-white transition-colors">
+                      {label}
+                    </a>
+                  ))}
+                </nav>
               </section>
             </div>
           </div>

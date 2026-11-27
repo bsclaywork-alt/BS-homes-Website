@@ -201,6 +201,16 @@ async function runBuildPipeline() {
     const safeDescription = escapeHtml(description);
     const safeCanonical = escapeHtml(locationUrl);
     const safeCorridor = escapeHtml(corridorName);
+    // Add locally useful context only where it can be stated accurately without
+    // implying that BS Homez has a current listing in the neighbourhood.
+    const locationContext = locationSlug === 'bellandur'
+      ? `<section class="location-context" aria-labelledby="location-context-heading">
+          <h2 id="location-context-heading">Living and looking for property in Bellandur</h2>
+          <p>Bellandur is a southeast Bengaluru neighbourhood connected with the Outer Ring Road and Sarjapur Road corridors. People comparing homes in this area often consider access to nearby work locations, schools, healthcare, daily shopping and routes towards Marathahalli, HSR Layout and Sarjapur.</p>
+          <p>Convenience can vary considerably by the exact street, building entrance and time of travel. Visit the property at your usual commute time and compare the route rather than relying only on a neighbourhood name.</p>
+          <p>Before shortlisting a home, review the applicable RERA details, approvals and occupancy documents, water supply, parking, maintenance charges, association rules and the full cost of ownership or rent. Contact BS Homez to discuss your requirements and check current availability.</p>
+        </section>`
+      : '';
 
     const cardsHtml = locationProjects.map((project) => {
       const projectKey = project.id || project.name;
@@ -253,6 +263,19 @@ async function runBuildPipeline() {
           <h2>Looking for a property in ${safeCorridor}?</h2>
           <p>There are no matching projects in the current published portfolio for this area. Contact BS Homez to discuss your requirements and check current availability.</p>
           <a class="cta" href="mailto:contact@bshomez.in?subject=${encodeURIComponent(`Property enquiry - ${corridorName}`)}">Contact BS Homez</a>
+        </section>
+        <section class="inventory-overview" aria-labelledby="buyer-checklist-heading">
+          <h2 id="buyer-checklist-heading">A practical property checklist for ${safeCorridor}</h2>
+          <p>Before shortlisting a home in ${safeCorridor}, compare the details that affect day-to-day ownership and long-term value. The right choice depends on your commute, budget, intended use and the documents available for the specific property.</p>
+          <ul>
+            <li><strong>Location and commute:</strong> Check your regular routes at the times you normally travel, and visit the exact property location.</li>
+            <li><strong>Water and drainage:</strong> Ask about the property's water source, sewage arrangements and any past waterlogging at the site.</li>
+            <li><strong>Approvals and title:</strong> Review applicable project approvals, RERA details where required, title documents and the sanctioned plan with a qualified professional.</li>
+            <li><strong>Total cost:</strong> Compare the quoted price with maintenance, parking, taxes, registration and any other charges.</li>
+            <li><strong>Resale or rental:</strong> If relevant, check occupancy, lease terms, association rules and the documents needed for transfer.</li>
+          </ul>
+          <p>These are general due-diligence points, not claims about every property in ${safeCorridor}. Ask for property-specific records and verify them independently before paying an advance.</p>
+          <a class="cta" href="mailto:contact@bshomez.in?subject=${encodeURIComponent(`Property requirement - ${corridorName}`)}">Discuss your property requirement</a>
         </section>`
       : '';
 
@@ -308,7 +331,8 @@ async function runBuildPipeline() {
     .eyebrow{margin:0 0 12px;color:#A9874D;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
     h1{margin:0 0 18px;font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(40px,6vw,66px);font-weight:500;line-height:1.02;color:var(--green)}
     .lead{margin:0;color:var(--muted);font-size:15px;line-height:1.9;max-width:720px}
-    .listing-heading{margin:46px 0 20px;font-family:"Cormorant Garamond",Georgia,serif;font-size:34px;font-weight:600;color:var(--green)}
+    .location-context{max-width:900px;margin:30px 0 40px;padding:26px 30px;background:#fff;border:1px solid var(--line);border-radius:3px}.location-context h2{margin:0 0 12px;font-family:"Cormorant Garamond",Georgia,serif;font-size:30px;font-weight:600;color:var(--green)}.location-context p{margin:10px 0;color:var(--muted);font-size:13px;line-height:1.85}
+     .listing-heading{margin:46px 0 20px;font-family:"Cormorant Garamond",Georgia,serif;font-size:34px;font-weight:600;color:var(--green)}
     .property-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:26px}
     .property-card{overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:3px;box-shadow:0 12px 32px rgba(21,61,50,.08);transition:transform .25s ease,box-shadow .25s ease}
     .property-card:hover{transform:translateY(-3px);box-shadow:0 18px 38px rgba(21,61,50,.12)}
@@ -336,6 +360,7 @@ async function runBuildPipeline() {
       <h1>Properties in ${safeCorridor}, Bengaluru</h1>
       <p class="lead">${safeDescription}</p>
     </section>
+    ${locationContext}
     ${inventorySummary}
     ${locationProjects.length > 0 ? `<h2 class="listing-heading">Published projects in ${safeCorridor}</h2><section class="property-grid" aria-label="Property projects">${cardsHtml}</section>` : emptyState}
   </main>
