@@ -14456,7 +14456,7 @@ export default function App() {
 
   // --- Dynamic SEO Meta Tags & Schema.org JSON-LD Injection for Google, Meta & Social Spiders ---
   useEffect(() => {
-    const baseUrl = "https://www.bshomez.in";
+    const baseUrl = "https://bshomez.in";
     const defaultImage = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85";
 
     // Helper to set or create meta tag
@@ -14502,6 +14502,12 @@ export default function App() {
           })
         : null
     );
+
+    // Clean project URLs are pre-rendered by the build pipeline. If a project is
+    // not yet present in the live Firestore-backed list, preserve that page's
+    // verified static SEO metadata instead of replacing it with homepage metadata.
+    const isCleanProjectPath = /^\/projects\/[^/]+\/?$/.test(window.location.pathname);
+    if (!activeProjectTarget && isCleanProjectPath) return;
 
     if (activeProjectTarget) {
       const seoData = generateOptimizedSeoMetadata(activeProjectTarget, baseUrl);
@@ -14598,8 +14604,8 @@ export default function App() {
     }
 
     // Case 3: Other Main Tabs
-    let tabTitle = "BS Homez – Buy, Sale, Resale & Rent Luxury Properties in Bangalore";
-    let tabDesc = "BS Homez: Buy, Sale, Resale & Rent RERA-verified Apartments, Villas & Plots in Whitefield, Hoskote, Varthur, Gunjur, Hosa Road, Kasavanahalli & Sarjapur, Bangalore.";
+    let tabTitle = "BS Homez | Buy, Sell & Rent Property in Bengaluru";
+    let tabDesc = "Buy, sell, rent and resell apartments, villas and plots in Bengaluru with BS Homez. Explore property options and expert real estate support.";
     let tabUrl = `${baseUrl}/`;
 
     if (activeMainTab === 'loans') {
