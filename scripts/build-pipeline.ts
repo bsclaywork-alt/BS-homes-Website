@@ -54,7 +54,7 @@ async function runBuildPipeline() {
 
   const baseTemplate = fs.readFileSync(templatePath, 'utf-8');
   // Reuse Vite's built stylesheet so static SEO pages inherit BS Homez brand typography and tokens.
-  const sharedStylesheets = (baseTemplate.match(/<link\\b(?=[^>]*\\brel=[\"']stylesheet[\"'])[^>]*>/gi) || []).join('\\n');
+  const sharedStylesheets = (baseTemplate.match(/<link\b(?=[^>]*\brel=["']stylesheet["'])[^>]*>/gi) || []).join('\n');
 
   // STEP 1: Load the committed Firestore snapshot only. Builds must be deterministic
   // and must never depend on or access live Firestore credentials/network state.
@@ -264,7 +264,8 @@ async function runBuildPipeline() {
   <meta name="description" content="${safeDescription}">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <link rel="canonical" href="${safeCanonical}">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n  ${sharedStylesheets}
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  ${sharedStylesheets}
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="BS Homez">
   <meta property="og:title" content="${safeTitle}">
