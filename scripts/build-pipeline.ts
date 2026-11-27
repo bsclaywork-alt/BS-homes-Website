@@ -227,6 +227,27 @@ async function runBuildPipeline() {
       </article>`;
     }).join('');
 
+    // Summarize only the published inventory fields already present in the committed build snapshot.
+    // This adds useful, verifiable comparison context without inventing neighbourhood claims.
+    const countValues = (values: string[]) => {
+      const counts = new Map<string, number>();
+      values.filter(Boolean).forEach((value) => counts.set(value, (counts.get(value) || 0) + 1));
+      return Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    };
+    const propertyTypeCounts = countValues(locationProjects.map((project) => project.propertyType || 'Property'));
+    const listingTypeCounts = countValues(locationProjects.map((project) => project.type || 'Listing'));
+    const inventorySummary = locationProjects.length > 0
+      ? `<section class="inventory-overview" aria-labelledby="inventory-overview-heading">
+          <h2 id="inventory-overview-heading">Explore the published property mix in ${safeCorridor}</h2>
+          <p>The current BS Homez published portfolio includes ${locationProjects.length} ${projectLabel} matched to ${safeCorridor}. Use the listings below to compare the property type, listing category, developer, published price and project description where those details are available.</p>
+          <ul>
+            ${propertyTypeCounts.map(([name, count]) => `<li><strong>${escapeHtml(name)}:</strong> ${count} ${count === 1 ? 'listing' : 'listings'}</li>`).join('')}
+            ${listingTypeCounts.map(([name, count]) => `<li><strong>Listing category — ${escapeHtml(name)}:</strong> ${count} ${count === 1 ? 'listing' : 'listings'}</li>`).join('')}
+          </ul>
+          <p>Published prices and availability can change. Please confirm the latest price, unit availability, approvals and documentation with BS Homez before making a property decision.</p>
+        </section>`
+      : '';
+
     const emptyState = locationProjects.length === 0
       ? `<section class="empty-state">
           <h2>Looking for a property in ${safeCorridor}?</h2>
@@ -296,7 +317,7 @@ async function runBuildPipeline() {
     .property-copy h2{margin:5px 0 8px;font-family:"Cormorant Garamond",Georgia,serif;font-size:29px;font-weight:600;line-height:1.15;color:var(--green)}
     .builder,.description{margin:9px 0;color:var(--muted);font-size:13px;line-height:1.75}.price{margin:14px 0;color:#98763E;font-size:15px;font-weight:700}
     .text-link{display:inline-block;margin-top:10px;color:var(--green);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
-    .empty-state{margin-top:30px;padding:34px;background:#fff;border:1px solid var(--line);border-radius:3px}
+    .inventory-overview{margin:34px 0 42px;padding:26px 30px;background:#fff;border:1px solid var(--line);border-radius:3px}.inventory-overview h2{margin:0 0 12px;font-family:"Cormorant Garamond",Georgia,serif;font-size:30px;font-weight:600;color:var(--green)}.inventory-overview p,.inventory-overview li{color:var(--muted);font-size:13px;line-height:1.8}.inventory-overview ul{display:flex;flex-wrap:wrap;gap:8px 28px;padding-left:20px}.inventory-overview li{min-width:220px}\n    .empty-state{margin-top:30px;padding:34px;background:#fff;border:1px solid var(--line);border-radius:3px}
     .empty-state h2{margin:0 0 10px;font-family:"Cormorant Garamond",Georgia,serif;font-size:32px;color:var(--green)}.empty-state p{color:var(--muted)}
     .cta{display:inline-block;margin-top:12px;padding:13px 22px;background:var(--green);color:#fff;border:1px solid var(--green);border-radius:2px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
     .cta:hover{background:#245747}.site-footer{padding:28px 0 42px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}.site-footer a{color:var(--green);font-weight:700}
@@ -314,7 +335,7 @@ async function runBuildPipeline() {
       <h1>Properties in ${safeCorridor}, Bengaluru</h1>
       <p class="lead">${safeDescription}</p>
     </section>
-    ${locationProjects.length > 0 ? `<h2 class="listing-heading">Published projects in ${safeCorridor}</h2><section class="property-grid" aria-label="Property projects">${cardsHtml}</section>` : emptyState}
+    ${inventorySummary}\n    ${locationProjects.length > 0 ? `<h2 class="listing-heading">Published projects in ${safeCorridor}</h2><section class="property-grid" aria-label="Property projects">${cardsHtml}</section>` : emptyState}
   </main>
   <footer class="site-footer">BS Homez · Bengaluru real estate assistance · <a href="mailto:contact@bshomez.in">contact@bshomez.in</a></footer>
 </body>
