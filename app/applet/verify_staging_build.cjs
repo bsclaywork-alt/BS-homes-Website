@@ -64,6 +64,28 @@ async function runStagingVerification() {
     locationPageCount++;
   });
 
+  const bellandurPath = path.join(process.cwd(), 'dist', 'locations', 'bellandur', 'index.html');
+  if (fs.existsSync(bellandurPath)) {
+    const bellandurHtml = fs.readFileSync(bellandurPath, 'utf-8');
+    if (!bellandurHtml.includes('Living and looking for property in Bellandur')) failures.push('Missing Bellandur location guidance');
+    if (!bellandurHtml.includes('Outer Ring Road and Sarjapur Road corridors')) failures.push('Missing Bellandur corridor context');
+  }
+
+  const sumadhuraPath = path.join(process.cwd(), 'dist', 'projects', 'sumadhura-folium', 'index.html');
+  if (!fs.existsSync(sumadhuraPath)) {
+    failures.push('Missing curated Sumadhura Folium static project page');
+  } else {
+    const sumadhuraHtml = fs.readFileSync(sumadhuraPath, 'utf-8');
+    if (!sumadhuraHtml.includes('<link rel="canonical" href="https://bshomez.in/projects/sumadhura-folium/"')) failures.push('Incorrect Sumadhura Folium canonical');
+    if (!/<title>Sumadhura Folium[^<]*<\/title>/.test(sumadhuraHtml)) failures.push('Sumadhura Folium page has incorrect title');
+  }
+
+  const appSourcePath = path.join(process.cwd(), 'src', 'App.tsx');
+  const appSource = fs.readFileSync(appSourcePath, 'utf-8');
+  if (!appSource.includes('const baseUrl = "https://bshomez.in";')) failures.push('Dynamic SEO must use the non-www canonical domain');
+  if (!appSource.includes('window.location.pathname.match(/^\\/projects\\/([^/]+)\\/?$/i)')) failures.push('Dynamic SEO must resolve clean project detail paths');
+  if (!appSource.includes('href={`/locations/${slug}/`}')) failures.push('Homepage must expose crawlable location links');
+
   const projectsRoot = path.join(process.cwd(), 'dist', 'projects');
   if (fs.existsSync(projectsRoot)) {
     for (const slug of fs.readdirSync(projectsRoot)) {
