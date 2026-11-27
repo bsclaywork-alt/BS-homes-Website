@@ -4,9 +4,8 @@ import { getStorage } from 'firebase/storage';
 import { 
   getFirestore, 
   initializeFirestore,
-  setLogLevel,
-  doc,
-  getDocFromServer
+  setLogLevel
+
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -25,8 +24,6 @@ if (typeof window !== 'undefined') {
       text.includes("RPC 'Listen' stream") ||
       text.includes("GrpcConnection RPC") ||
       text.includes("Code: 1 Message: 1 CANCELLED") ||
-      text.includes('Quota limit exceeded') ||
-      text.includes('resource-exhausted') ||
       text.includes('Live Firestore fetch failed') ||
       text.includes('Free daily read units per project') ||
       (text.includes('@firebase/firestore') && (text.includes('CANCELLED') || text.includes('Code: 1')))
@@ -85,18 +82,6 @@ export const db = (() => {
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-// Connection test per Firebase skill guidelines
-async function testConnection() {
-  try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn("Firestore client is operating offline.");
-    }
-  }
-}
-testConnection().catch(() => {});
-
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -132,8 +117,6 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     errMsg.includes('Timed out waiting for new targets') ||
     errMsg.includes('unavailable') ||
     errMsg.includes('offline') ||
-    errMsg.includes('Quota') ||
-    errMsg.includes('resource-exhausted') ||
     errMsg.includes('Could not reach Cloud Firestore backend')
   ) {
     console.info(`Firestore listener reconnecting / cached fallback active for ${path || 'collection'}.`);
