@@ -178,9 +178,10 @@ async function runBuildPipeline() {
       slugify(project.location).includes(locationSlug)
     );
 
-    const title = `Properties in ${corridorName}, Bengaluru | Apartments, Villas & Plots - BS Homez`;
+    const title = `Properties in ${corridorName}, Bengaluru | BS Homez`;
+    const projectLabel = locationProjects.length === 1 ? 'listed project' : 'listed projects';
     const description = locationProjects.length > 0
-      ? `Explore ${locationProjects.length} listed property projects in ${corridorName}, Bengaluru. Compare apartments, villas and plots with BS Homez.`
+      ? `Explore ${locationProjects.length} ${projectLabel} in ${corridorName}, Bengaluru. Compare apartments, villas and plots with BS Homez.`
       : `Looking for property in ${corridorName}, Bengaluru? Contact BS Homez to check current availability and discuss your requirements.`;
     const safeTitle = escapeHtml(title);
     const safeDescription = escapeHtml(description);
