@@ -717,7 +717,7 @@ const WhyChoose = ({ onConsult }: { onConsult?: () => void }) => {
     },
     {
       title: "Trusted by Builders, Owners & Tenants",
-      description: "Established relationships with all major Cat A+, A, B & C builders as well as verified property owners for seamless Primary, Resale, and Rental inventory.",
+      description: "Established relationships with leading builders as well as verified property owners for seamless Primary, Resale, and Rental inventory.",
       icon: <Handshake size={24} />,
       id: "02"
     },
@@ -2156,7 +2156,7 @@ const ProjectCard: React.FC<{
                   </span>
                   {project.builderName && (
                     <span className="px-1.5 py-0.5 rounded-sm bg-lux-ivory text-lux-forest border border-lux-border font-mono text-[8.5px] font-semibold">
-                      {project.builderName} {project.builderCategory ? `(Cat ${project.builderCategory})` : ''}
+                      {project.builderName}
                     </span>
                   )}
                 </div>
@@ -9352,7 +9352,7 @@ const AdminView = ({
   };
 
   return (
-    <div className="py-24 px-8 max-w-7xl mx-auto">
+    <div className="admin-vault py-12 sm:py-16 px-3 sm:px-6 max-w-7xl mx-auto">
       <div className="mb-12 border-b border-white/10 pb-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div>
           <h2 className="text-5xl font-serif italic text-white flex items-center gap-6">
