@@ -11,6 +11,7 @@ import fs from 'fs';
 import path from 'path';
 import { 
   SITEMAP_PROJECTS, 
+  CORRIDOR_SLUGS,
   SitemapProjectItem, 
   generateSitemapXml, 
   generatePropertyMetaTags, 
@@ -160,6 +161,152 @@ async function runBuildPipeline() {
     fs.writeFileSync(path.join(projectDir, 'index.html'), html, 'utf-8');
     generatedCount++;
   }
+
+
+  // STEP 5: Pre-render every sitemap location as a real static HTML page.
+  // GitHub Pages does not execute the Express location route, so these files
+  // must exist under dist/locations/<slug>/index.html to return HTTP 200.
+  let generatedLocationCount = 0;
+  const emptyLocationSlugs: string[] = [];
+
+  for (const corridor of CORRIDOR_SLUGS) {
+    const locationSlug = slugify(corridor);
+    const corridorName = corridor.replace(/-/g, ' ');
+    const locationUrl = `${baseUrl}/locations/${locationSlug}/`;
+    const locationProjects = masterProjects.filter((project) =>
+      slugify(project.zone) === locationSlug ||
+      slugify(project.location).includes(locationSlug)
+    );
+
+    const title = `Properties in ${corridorName}, Bengaluru | Apartments, Villas & Plots - BS Homez`;
+    const description = locationProjects.length > 0
+      ? `Explore ${locationProjects.length} listed property projects in ${corridorName}, Bengaluru. Compare apartments, villas and plots with BS Homez.`
+      : `Looking for property in ${corridorName}, Bengaluru? Contact BS Homez to check current availability and discuss your requirements.`;
+    const safeTitle = escapeHtml(title);
+    const safeDescription = escapeHtml(description);
+    const safeCanonical = escapeHtml(locationUrl);
+    const safeCorridor = escapeHtml(corridorName);
+
+    const cardsHtml = locationProjects.map((project) => {
+      const projectKey = project.id || project.name;
+      const projectSlug = slugMap.get(projectKey) || slugify(project.name);
+      const projectUrl = `/projects/${projectSlug}/`;
+      const image = escapeHtml(project.imageUrl || `${baseUrl}/og-cover.jpg`);
+      const projectName = escapeHtml(project.name);
+      const builder = escapeHtml(project.builderName || 'Builder details available on request');
+      const type = escapeHtml([project.propertyType, project.type].filter(Boolean).join(' · '));
+      const price = escapeHtml(project.price || 'Price on request');
+      const projectDescription = escapeHtml((project.description || '').slice(0, 260));
+      return `<article class="property-card">
+        <a class="property-image" href="${projectUrl}" aria-label="View ${projectName}">
+          <img src="${image}" alt="${projectName} in ${safeCorridor}, Bengaluru" loading="lazy">
+        </a>
+        <div class="property-copy">
+          <p class="eyebrow">${type}</p>
+          <h2><a href="${projectUrl}">${projectName}</a></h2>
+          <p class="builder">By ${builder}</p>
+          <p class="price">${price}</p>
+          <p class="description">${projectDescription}</p>
+          <a class="text-link" href="${projectUrl}">View project details <span aria-hidden="true">→</span></a>
+        </div>
+      </article>`;
+    }).join('');
+
+    const emptyState = locationProjects.length === 0
+      ? `<section class="empty-state">
+          <h2>Looking for a property in ${safeCorridor}?</h2>
+          <p>There are no matching projects in the current published portfolio for this area. Contact BS Homez to discuss your requirements and check current availability.</p>
+          <a class="cta" href="mailto:contact@bshomez.in?subject=${encodeURIComponent(`Property enquiry - ${corridorName}`)}">Contact BS Homez</a>
+        </section>`
+      : '';
+
+    const itemList = locationProjects.map((project, index) => {
+      const projectKey = project.id || project.name;
+      const projectSlug = slugMap.get(projectKey) || slugify(project.name);
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        url: `${baseUrl}/projects/${projectSlug}/`,
+        name: project.name
+      };
+    });
+    const locationSchema = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: title,
+      description,
+      url: locationUrl,
+      provider: { "@type": "RealEstateAgent", name: "BS Homez", url: `${baseUrl}/` },
+      mainEntity: { "@type": "ItemList", numberOfItems: itemList.length, itemListElement: itemList }
+    });
+
+    const locationHtml = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${safeTitle}</title>
+  <meta name="description" content="${safeDescription}">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="${safeCanonical}">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="BS Homez">
+  <meta property="og:title" content="${safeTitle}">
+  <meta property="og:description" content="${safeDescription}">
+  <meta property="og:url" content="${safeCanonical}">
+  <meta property="og:image" content="${escapeHtml(locationProjects[0]?.imageUrl || `${baseUrl}/og-cover.jpg`)}">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">${locationSchema}</script>
+  <style>
+    :root{color-scheme:light;--ink:#202923;--green:#153d32;--gold:#c5a059;--paper:#f7f6f1;--muted:#68716b}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 Arial,Helvetica,sans-serif}
+    a{color:inherit;text-decoration:none}.site-header{background:#fff;border-bottom:1px solid #e5e2d8}
+    .header-inner,main,.site-footer{width:min(1120px,calc(100% - 40px));margin:0 auto}
+    .header-inner{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{font-size:22px;font-weight:800;letter-spacing:2px;color:var(--green)}.brand span{color:var(--gold)}
+    nav{display:flex;gap:22px;font-size:13px;font-weight:700;color:var(--green)}
+    main{padding:54px 0 72px}.intro{max-width:760px;margin-bottom:34px}.eyebrow{margin:0 0 8px;color:#98763e;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+    h1{margin:0 0 14px;font-family:Georgia,serif;font-size:clamp(32px,5vw,48px);line-height:1.12;color:var(--green)}
+    .lead{margin:0;color:var(--muted);font-size:17px}.listing-heading{margin:36px 0 18px;font-family:Georgia,serif;font-size:25px;color:var(--green)}
+    .property-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:22px}
+    .property-card{overflow:hidden;background:#fff;border:1px solid #e8e4da;border-radius:12px;box-shadow:0 8px 24px rgba(24,42,32,.06)}
+    .property-image{display:block;height:210px;background:#e9e7df}.property-image img{width:100%;height:100%;object-fit:cover;display:block}
+    .property-copy{padding:20px}.property-copy h2{margin:4px 0;font:700 21px/1.25 Georgia,serif;color:var(--green)}
+    .builder,.description{margin:8px 0;color:var(--muted);font-size:14px}.price{margin:10px 0;color:#886a36;font-weight:800}
+    .text-link{display:inline-block;margin-top:8px;color:var(--green);font-size:13px;font-weight:800}
+    .empty-state{margin-top:30px;padding:28px;background:#fff;border:1px solid #e8e4da;border-radius:12px}
+    .empty-state h2{margin:0 0 8px;font:700 24px Georgia,serif;color:var(--green)}.empty-state p{color:var(--muted)}
+    .cta{display:inline-block;margin-top:10px;padding:11px 18px;background:var(--green);color:#fff;border-radius:5px;font-weight:700;font-size:13px}
+    .site-footer{padding:24px 0 38px;border-top:1px solid #e2ded3;color:var(--muted);font-size:13px}
+    @media(max-width:560px){.header-inner{align-items:flex-start;flex-direction:column;padding:16px 0}.header-inner nav{gap:16px}.property-image{height:185px}main{padding-top:38px}}
+  </style>
+</head>
+<body>
+  <header class="site-header"><div class="header-inner">
+    <a class="brand" href="/">BS <span>HOMEZ</span></a>
+    <nav aria-label="Main navigation"><a href="/">Home</a><a href="/#projects">All Properties</a><a href="mailto:contact@bshomez.in">Contact</a></nav>
+  </div></header>
+  <main>
+    <section class="intro">
+      <p class="eyebrow">Bengaluru Property Guide</p>
+      <h1>Properties in ${safeCorridor}, Bengaluru</h1>
+      <p class="lead">${safeDescription}</p>
+    </section>
+    ${locationProjects.length > 0 ? `<h2 class="listing-heading">Published projects in ${safeCorridor}</h2><section class="property-grid" aria-label="Property projects">${cardsHtml}</section>` : emptyState}
+  </main>
+  <footer class="site-footer">BS Homez · Bengaluru real estate assistance · <a href="mailto:contact@bshomez.in">contact@bshomez.in</a></footer>
+</body>
+</html>`;
+
+    const locationDir = path.join(distDir, 'locations', locationSlug);
+    fs.mkdirSync(locationDir, { recursive: true });
+    fs.writeFileSync(path.join(locationDir, 'index.html'), locationHtml, 'utf-8');
+    generatedLocationCount++;
+    if (locationProjects.length === 0) emptyLocationSlugs.push(locationSlug);
+  }
+
+  console.log(`[Build Pipeline] Generated ${generatedLocationCount} static location pages. No matching published projects: ${emptyLocationSlugs.join(', ') || 'none'}.`);
 
   const durationMs = Date.now() - startTime;
 
