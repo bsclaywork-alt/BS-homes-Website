@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { deleteDoc, doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { deleteDoc, doc, getDocFromServer, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CheckCircle2, Eye, EyeOff, ImagePlus, Loader2, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { compressPhotoAsset, uploadCloudinaryPhoto } from '../lib/mediaProcessor';
@@ -127,7 +127,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);\n  const hasLocalChanges = useRef(false);
 
   useEffect(() => onSnapshot(SETTINGS_REF, snapshot => {
     const data = snapshot.exists() ? snapshot.data() : {};
@@ -159,7 +159,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
 
   const removeSlide = (id: string) => {
     if (!window.confirm('Delete this slide from the Home Scroller?')) return;
-    const next = slides.filter(slide => slide.id !== id);
+    hasLocalChanges.current = true;\n    const next = slides.filter(slide => slide.id !== id);
     setSlides(next);
     setSelectedId(next[0]?.id || '');
   };
@@ -228,7 +228,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
     if (!window.confirm('Delete the entire Home Scroller? This removes all slides from the homepage.')) return;
     setSaving(true);
     try {
-      await deleteDoc(SETTINGS_REF);
+      await deleteDoc(SETTINGS_REF);\n      hasLocalChanges.current = false;
       setSlides([]);
       setSelectedId('');
       setIsEnabled(false);
@@ -268,8 +268,8 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
           <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/55">Manage up to six large homepage project slides. Upload a banner image, choose the transaction type, link an existing portfolio project, and publish when ready.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-2 rounded-sm border border-white/15 bg-black/20 px-3 py-2 text-[9px] font-bold uppercase tracking-wider text-white/65">Text placement<select value={contentPlacement} onChange={event => setContentPlacement(event.target.value as "below" | "overlay")} className="rounded-sm border border-white/15 bg-[#1c1c1c] px-2 py-2 text-[10px] normal-case tracking-normal text-white"><option value="below">Below image (recommended)</option><option value="overlay">On image</option></select></label>
-          <button type="button" onClick={() => setIsEnabled(value => !value)} className={`inline-flex items-center gap-2 rounded-sm border px-4 py-3 text-[10px] font-black uppercase tracking-wider ${isEnabled ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300' : 'border-white/15 bg-white/5 text-white/60'}`}>
+          <label className="flex items-center gap-2 rounded-sm border border-white/15 bg-black/20 px-3 py-2 text-[9px] font-bold uppercase tracking-wider text-white/65">Text placement<select value={contentPlacement} onChange={event => { hasLocalChanges.current = true; setContentPlacement(event.target.value as "below" | "overlay"); }} className="rounded-sm border border-white/15 bg-[#1c1c1c] px-2 py-2 text-[10px] normal-case tracking-normal text-white"><option value="below">Below image (recommended)</option><option value="overlay">On image</option></select></label>
+          <button type="button" onClick={() => { hasLocalChanges.current = true; setIsEnabled(value => !value); }} className={`inline-flex items-center gap-2 rounded-sm border px-4 py-3 text-[10px] font-black uppercase tracking-wider ${isEnabled ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300' : 'border-white/15 bg-white/5 text-white/60'}`}>
             {isEnabled ? <Eye size={14} /> : <EyeOff size={14} />} {isEnabled ? 'Visible on homepage' : 'Hidden on homepage'}
           </button>
           <button type="button" onClick={addSlide} disabled={slides.length >= 6 || loading} className="inline-flex items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-3 text-[10px] font-black uppercase tracking-wider text-black disabled:opacity-40"><Plus size={14} /> Add Slide ({slides.length}/6)</button>
