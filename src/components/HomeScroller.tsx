@@ -61,6 +61,64 @@ const normalizeSlides = (value: unknown): HomeScrollerSlide[] => {
   }));
 };
 
+const HOME_SCROLLER_CACHE_KEY = 'bshomez-home-scroller-cache-v1';
+
+interface HomeScrollerCache {
+  isEnabled: boolean;
+  contentPlacement: 'below' | 'overlay';
+  slides: HomeScrollerSlide[];
+}
+
+const readHomeScrollerCache = (): HomeScrollerCache | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(HOME_SCROLLER_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return {
+      isEnabled: parsed?.isEnabled !== false,
+      contentPlacement: parsed?.contentPlacement === 'overlay' ? 'overlay' : 'below',
+      slides: normalizeSlides(parsed?.slides)
+    };
+  } catch {
+    return null;
+  }
+};
+
+const writeHomeScrollerCache = (cache: HomeScrollerCache) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(HOME_SCROLLER_CACHE_KEY, JSON.stringify(cache));
+  } catch (error) {
+    console.warn('Home Scroller local fallback could not be updated:', error);
+  }
+};
+
+const clearHomeScrollerCache = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(HOME_SCROLLER_CACHE_KEY);
+  } catch {
+    // A cache cleanup failure must never affect the saved Firestore settings.
+  }
+};
+
+const projectFallbackSlides = (projects: Project[]): HomeScrollerSlide[] => projects
+  .filter(project => Boolean(project.imageUrls?.[0] || project.mobileImageUrl))
+  .slice(0, 6)
+  .map((project, index) => ({
+    id: `fallback-${project.id || index}`,
+    title: project.name,
+    subtitle: project.description || '',
+    transactionType: project.type === 'Rental' ? 'Rental' : project.type === 'Resale' ? 'Resale' : project.propertyType === 'Plot' ? 'Plots' : project.propertyType === 'Commercial' ? 'Commercial' : 'Primary Sale',
+    location: project.location || '',
+    priceLabel: project.price || '',
+    imageUrl: project.imageUrls?.[0] || project.mobileImageUrl || '',
+    ctaLabel: 'Explore Project',
+    projectId: project.id || '',
+    enabled: true
+  }));
+
 interface SharedProps {
   projects: Project[];
   onSelectProject: (project: Project) => void;
@@ -68,28 +126,52 @@ interface SharedProps {
 }
 
 export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelectProject, onExploreProperties }) => {
-  const [slides, setSlides] = useState<HomeScrollerSlide[]>([]);
+  const [slides, setSlides] = useState<HomeScrollerSlide[]>(() => {
+    const cached = readHomeScrollerCache();
+    return cached?.isEnabled === false ? [] : (cached?.slides || []).filter(slide => slide.enabled && slide.imageUrl);
+  });
+  const [isEnabled, setIsEnabled] = useState(() => readHomeScrollerCache()?.isEnabled !== false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [contentPlacement, setContentPlacement] = useState<'below' | 'overlay'>('below');
+  const [contentPlacement, setContentPlacement] = useState<'below' | 'overlay'>(() => readHomeScrollerCache()?.contentPlacement || 'below');
+  const fallbackSlides = useMemo(() => projectFallbackSlides(projects), [projects]);
+  const visibleSlides = slides.length ? slides : (loadFailed && isEnabled ? fallbackSlides : []);
 
   useEffect(() => onSnapshot(SETTINGS_REF, snapshot => {
-    const data = snapshot.exists() ? snapshot.data() : {};
-    setContentPlacement(data.contentPlacement === 'overlay' ? 'overlay' : 'below');
-    setSlides(data.isEnabled === false ? [] : normalizeSlides(data.slides).filter(slide => slide.enabled && slide.imageUrl));
-  }, error => console.error('Home Scroller could not be loaded:', error)), []);
+    if (!snapshot.exists()) {
+      clearHomeScrollerCache();
+      setSlides([]);
+      setIsEnabled(true);
+      setContentPlacement('below');
+      setLoadFailed(false);
+      return;
+    }
+    const data = snapshot.data();
+    const enabled = data.isEnabled !== false;
+    const placement = data.contentPlacement === 'overlay' ? 'overlay' : 'below';
+    const savedSlides = normalizeSlides(data.slides);
+    writeHomeScrollerCache({ isEnabled: enabled, contentPlacement: placement, slides: savedSlides });
+    setIsEnabled(enabled);
+    setContentPlacement(placement);
+    setSlides(enabled ? savedSlides.filter(slide => slide.enabled && slide.imageUrl) : []);
+    setLoadFailed(false);
+  }, error => {
+    console.error('Home Scroller could not be loaded; keeping the last available slides:', error);
+    setLoadFailed(true);
+  }), []);
 
   useEffect(() => {
-    if (slides.length < 2) return;
-    const timer = window.setInterval(() => setActiveIndex(current => (current + 1) % slides.length), 6500);
+    if (visibleSlides.length < 2) return;
+    const timer = window.setInterval(() => setActiveIndex(current => (current + 1) % visibleSlides.length), 6500);
     return () => window.clearInterval(timer);
-  }, [slides.length]);
+  }, [visibleSlides.length]);
 
   useEffect(() => {
-    if (activeIndex >= slides.length) setActiveIndex(0);
-  }, [activeIndex, slides.length]);
+    if (activeIndex >= visibleSlides.length) setActiveIndex(0);
+  }, [activeIndex, visibleSlides.length]);
 
-  if (!slides.length) return null;
-  const slide = slides[activeIndex];
+  if (!visibleSlides.length) return null;
+  const slide = visibleSlides[activeIndex];
   const openSlide = () => {
     const linkedProject = projects.find(project =>
       (slide.projectId && project.id === slide.projectId) ||
@@ -105,9 +187,9 @@ export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelect
         <div className="relative aspect-[16/9] min-h-[190px] max-h-[520px] w-full overflow-hidden bg-[#0b100e] sm:min-h-[260px] lg:max-h-[560px]">
           <img src={slide.imageUrl} alt={slide.title || 'Featured BS Homez property'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-contain object-center" />
           {contentPlacement === 'overlay' && <><div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/15" /><div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" /><div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6"><span className="rounded-sm border border-[#d8b56d]/70 bg-black/40 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#f1d18c]">{slide.transactionType}</span><h2 className="mt-2 max-w-xl break-words font-serif text-xl font-bold leading-tight sm:text-2xl">{slide.title}</h2></div></>}
-          {slides.length > 1 && <><button type="button" aria-label="Previous slide" onClick={() => setActiveIndex(i => (i - 1 + slides.length) % slides.length)} className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/50 bg-black/55 p-2 text-white"><ArrowLeft size={16}/></button><button type="button" aria-label="Next slide" onClick={() => setActiveIndex(i => (i + 1) % slides.length)} className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/50 bg-black/55 p-2 text-white"><ArrowRight size={16}/></button><div className="absolute bottom-3 right-3 z-20 flex gap-1.5">{slides.map((item,index) => <button key={item.id} type="button" aria-label={'Show slide ' + (index + 1)} onClick={() => setActiveIndex(index)} className={index === activeIndex ? 'h-1.5 w-7 rounded-full bg-[#e4c47e]' : 'h-1.5 w-2.5 rounded-full bg-white/75'} />)}</div></>}
+          {visibleSlides.length > 1 && <><button type="button" aria-label="Previous slide" onClick={() => setActiveIndex(i => (i - 1 + visibleSlides.length) % visibleSlides.length)} className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/50 bg-black/55 p-2 text-white"><ArrowLeft size={16}/></button><button type="button" aria-label="Next slide" onClick={() => setActiveIndex(i => (i + 1) % visibleSlides.length)} className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/50 bg-black/55 p-2 text-white"><ArrowRight size={16}/></button><div className="absolute bottom-3 right-3 z-20 flex gap-1.5">{visibleSlides.map((item,index) => <button key={item.id} type="button" aria-label={'Show slide ' + (index + 1)} onClick={() => setActiveIndex(index)} className={index === activeIndex ? 'h-1.5 w-7 rounded-full bg-[#e4c47e]' : 'h-1.5 w-2.5 rounded-full bg-white/75'} />)}</div></>}
         </div>
-        {contentPlacement === 'below' && <div className="space-y-2 border-t border-[#d8b56d]/25 bg-[#101914] px-4 py-4 sm:px-5 sm:py-5"><div className="flex flex-wrap items-center gap-2"><span className="rounded-sm border border-[#d8b56d]/60 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#f1d18c]">{slide.transactionType}</span><span className="text-[9px] font-mono text-white/55">{String(activeIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</span></div><h2 className="break-words font-serif text-xl font-bold leading-tight text-white sm:text-2xl">{slide.title}</h2>{slide.subtitle && <p className="max-w-2xl text-xs leading-relaxed text-white/75 sm:text-sm">{slide.subtitle}</p>}{(slide.location || slide.priceLabel) && <div className="flex flex-wrap gap-2 pt-1 text-[10px] font-semibold uppercase tracking-wider">{slide.location && <span className="rounded-sm border border-white/20 px-2.5 py-1.5 text-white/80">{slide.location}</span>}{slide.priceLabel && <span className="rounded-sm border border-[#d8b56d]/45 px-2.5 py-1.5 text-[#f1d18c]">{slide.priceLabel}</span>}</div>}<button type="button" onClick={openSlide} className="mt-1 inline-flex min-h-10 items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-[#17130b]">{slide.ctaLabel || 'Explore Project'} <ArrowRight size={14}/></button></div>}
+        {contentPlacement === 'below' && <div className="space-y-2 border-t border-[#d8b56d]/25 bg-[#101914] px-4 py-4 sm:px-5 sm:py-5"><div className="flex flex-wrap items-center gap-2"><span className="rounded-sm border border-[#d8b56d]/60 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#f1d18c]">{slide.transactionType}</span><span className="text-[9px] font-mono text-white/55">{String(activeIndex + 1).padStart(2, '0')} / {String(visibleSlides.length).padStart(2, '0')}</span></div><h2 className="break-words font-serif text-xl font-bold leading-tight text-white sm:text-2xl">{slide.title}</h2>{slide.subtitle && <p className="max-w-2xl text-xs leading-relaxed text-white/75 sm:text-sm">{slide.subtitle}</p>}{(slide.location || slide.priceLabel) && <div className="flex flex-wrap gap-2 pt-1 text-[10px] font-semibold uppercase tracking-wider">{slide.location && <span className="rounded-sm border border-white/20 px-2.5 py-1.5 text-white/80">{slide.location}</span>}{slide.priceLabel && <span className="rounded-sm border border-[#d8b56d]/45 px-2.5 py-1.5 text-[#f1d18c]">{slide.priceLabel}</span>}</div>}<button type="button" onClick={openSlide} className="mt-1 inline-flex min-h-10 items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-[#17130b]">{slide.ctaLabel || 'Explore Project'} <ArrowRight size={14}/></button></div>}
         {contentPlacement === 'overlay' && <div className="bg-[#101914] px-4 py-3"><button type="button" onClick={openSlide} className="inline-flex min-h-10 items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-[#17130b]">{slide.ctaLabel || 'Explore Project'} <ArrowRight size={14}/></button></div>}
       </div>
     </section>
@@ -119,10 +201,10 @@ interface ManagerProps {
 }
 
 export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
-  const [slides, setSlides] = useState<HomeScrollerSlide[]>([]);
+  const [slides, setSlides] = useState<HomeScrollerSlide[]>(() => readHomeScrollerCache()?.slides || []);
   const [selectedId, setSelectedId] = useState('');
-  const [isEnabled, setIsEnabled] = useState(true);
-  const [contentPlacement, setContentPlacement] = useState<'below' | 'overlay'>('below');
+  const [isEnabled, setIsEnabled] = useState(() => readHomeScrollerCache()?.isEnabled !== false);
+  const [contentPlacement, setContentPlacement] = useState<'below' | 'overlay'>(() => readHomeScrollerCache()?.contentPlacement || 'below');
   const [loading, setLoading] = useState(true);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -137,9 +219,12 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
       if (hasLocalChanges.current) return;
       const data = snapshot.exists() ? snapshot.data() : {};
       const loaded = normalizeSlides(data.slides);
+      const enabled = data.isEnabled !== false;
+      const placement = data.contentPlacement === 'overlay' ? 'overlay' : 'below';
+      writeHomeScrollerCache({ isEnabled: enabled, contentPlacement: placement, slides: loaded });
       setSlides(loaded);
-      setIsEnabled(data.isEnabled !== false);
-      setContentPlacement(data.contentPlacement === 'overlay' ? 'overlay' : 'below');
+      setIsEnabled(enabled);
+      setContentPlacement(placement);
       setSelectedId(current => loaded.some(slide => slide.id === current) ? current : (loaded[0]?.id || ''));
       setNotice(null);
       setLoading(false);
@@ -154,7 +239,19 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
           : code === 'unavailable' || code === 'deadline-exceeded'
             ? 'Firestore is temporarily unreachable. Check your connection and retry.'
             : `Home Scroller settings could not load (${code}): ${detail}`;
-      setNotice({ type: 'error', message });
+      const cached = readHomeScrollerCache();
+      if (cached) {
+        setSlides(cached.slides);
+        setIsEnabled(cached.isEnabled);
+        setContentPlacement(cached.contentPlacement);
+        setSelectedId(current => cached.slides.some(slide => slide.id === current) ? current : (cached.slides[0]?.id || ''));
+      }
+      setNotice({
+        type: 'error',
+        message: cached
+          ? `${message} Showing the last saved copy available on this device; do not delete slides while the database is unavailable.`
+          : message
+      });
       setLoading(false);
     });
     return unsubscribe;
@@ -249,6 +346,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
       const verifiedSlides = normalizeSlides(verifiedSnapshot.data().slides);
       const missingImage = slidesToSave.find(slide => slide.imageUrl && !verifiedSlides.some(saved => saved.id === slide.id && saved.imageUrl === slide.imageUrl));
       if (missingImage) throw new Error(`Save verification failed for the image in "${missingImage.title || 'this slide'}". Your editor content has been kept; please retry.`);
+      writeHomeScrollerCache({ isEnabled, contentPlacement, slides: verifiedSlides });
       hasLocalChanges.current = false;
       setSlides(verifiedSlides);
       setNotice({ type: 'success', message: `✓ Saved successfully! ${verifiedSlides.length} slide(s) and all uploaded images are verified in the cloud. Homepage changes are published.` });
@@ -266,6 +364,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
     setSaving(true);
     try {
       await deleteDoc(SETTINGS_REF);
+      clearHomeScrollerCache();
       hasLocalChanges.current = false;
       setSlides([]);
       setSelectedId('');
