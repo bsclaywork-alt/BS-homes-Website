@@ -53,6 +53,8 @@ async function runBuildPipeline() {
   }
 
   const baseTemplate = fs.readFileSync(templatePath, 'utf-8');
+  // Reuse Vite's built stylesheet so static SEO pages inherit BS Homez brand typography and tokens.
+  const sharedStylesheets = (baseTemplate.match(/<link\\b(?=[^>]*\\brel=[\"']stylesheet[\"'])[^>]*>/gi) || []).join('\\n');
 
   // STEP 1: Load the committed Firestore snapshot only. Builds must be deterministic
   // and must never depend on or access live Firestore credentials/network state.
@@ -262,7 +264,7 @@ async function runBuildPipeline() {
   <meta name="description" content="${safeDescription}">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <link rel="canonical" href="${safeCanonical}">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">\n  ${sharedStylesheets}
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="BS Homez">
   <meta property="og:title" content="${safeTitle}">
@@ -272,32 +274,37 @@ async function runBuildPipeline() {
   <meta name="twitter:card" content="summary_large_image">
   <script type="application/ld+json">${locationSchema}</script>
   <style>
-    :root{color-scheme:light;--ink:#202923;--green:#153d32;--gold:#c5a059;--paper:#f7f6f1;--muted:#68716b}
-    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 Arial,Helvetica,sans-serif}
-    a{color:inherit;text-decoration:none}.site-header{background:#fff;border-bottom:1px solid #e5e2d8}
-    .header-inner,main,.site-footer{width:min(1120px,calc(100% - 40px));margin:0 auto}
-    .header-inner{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-    .brand{font-size:22px;font-weight:800;letter-spacing:2px;color:var(--green)}.brand span{color:var(--gold)}
-    nav{display:flex;gap:22px;font-size:13px;font-weight:700;color:var(--green)}
-    main{padding:54px 0 72px}.intro{max-width:760px;margin-bottom:34px}.eyebrow{margin:0 0 8px;color:#98763e;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
-    h1{margin:0 0 14px;font-family:Georgia,serif;font-size:clamp(32px,5vw,48px);line-height:1.12;color:var(--green)}
-    .lead{margin:0;color:var(--muted);font-size:17px}.listing-heading{margin:36px 0 18px;font-family:Georgia,serif;font-size:25px;color:var(--green)}
-    .property-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:22px}
-    .property-card{overflow:hidden;background:#fff;border:1px solid #e8e4da;border-radius:12px;box-shadow:0 8px 24px rgba(24,42,32,.06)}
-    .property-image{display:block;height:210px;background:#e9e7df}.property-image img{width:100%;height:100%;object-fit:cover;display:block}
-    .property-copy{padding:20px}.property-copy h2{margin:4px 0;font:700 21px/1.25 Georgia,serif;color:var(--green)}
-    .builder,.description{margin:8px 0;color:var(--muted);font-size:14px}.price{margin:10px 0;color:#886a36;font-weight:800}
-    .text-link{display:inline-block;margin-top:8px;color:var(--green);font-size:13px;font-weight:800}
-    .empty-state{margin-top:30px;padding:28px;background:#fff;border:1px solid #e8e4da;border-radius:12px}
-    .empty-state h2{margin:0 0 8px;font:700 24px Georgia,serif;color:var(--green)}.empty-state p{color:var(--muted)}
-    .cta{display:inline-block;margin-top:10px;padding:11px 18px;background:var(--green);color:#fff;border-radius:5px;font-weight:700;font-size:13px}
-    .site-footer{padding:24px 0 38px;border-top:1px solid #e2ded3;color:var(--muted);font-size:13px}
-    @media(max-width:560px){.header-inner{align-items:flex-start;flex-direction:column;padding:16px 0}.header-inner nav{gap:16px}.property-image{height:185px}main{padding-top:38px}}
+    :root{color-scheme:light;--ink:#252A27;--green:#153D32;--gold:#C5A46D;--paper:#F7F5EF;--muted:#5A625E;--line:rgba(21,61,50,.14)}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Montserrat,Inter,Arial,sans-serif;font-size:15px;line-height:1.7}
+    a{color:inherit;text-decoration:none}.site-header{background:#101512;border-bottom:1px solid rgba(197,164,109,.35)}
+    .header-inner,main,.site-footer{width:min(1200px,calc(100% - 40px));margin:0 auto}
+    .header-inner{min-height:88px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+    .brand img{display:block;width:auto;height:48px;max-width:min(48vw,220px);object-fit:contain}
+    nav{display:flex;align-items:center;gap:26px;font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#F7F5EF}
+    nav a:hover,.text-link:hover{color:var(--gold)}
+    main{padding:64px 0 82px}.intro{max-width:820px;margin-bottom:42px}
+    .eyebrow{margin:0 0 12px;color:#A9874D;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
+    h1{margin:0 0 18px;font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(40px,6vw,66px);font-weight:500;line-height:1.02;color:var(--green)}
+    .lead{margin:0;color:var(--muted);font-size:15px;line-height:1.9;max-width:720px}
+    .listing-heading{margin:46px 0 20px;font-family:"Cormorant Garamond",Georgia,serif;font-size:34px;font-weight:600;color:var(--green)}
+    .property-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:26px}
+    .property-card{overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:3px;box-shadow:0 12px 32px rgba(21,61,50,.08);transition:transform .25s ease,box-shadow .25s ease}
+    .property-card:hover{transform:translateY(-3px);box-shadow:0 18px 38px rgba(21,61,50,.12)}
+    .property-image{display:block;height:230px;background:#e9e7df;overflow:hidden}.property-image img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+    .property-card:hover .property-image img{transform:scale(1.035)}.property-copy{padding:24px}
+    .property-copy h2{margin:5px 0 8px;font-family:"Cormorant Garamond",Georgia,serif;font-size:29px;font-weight:600;line-height:1.15;color:var(--green)}
+    .builder,.description{margin:9px 0;color:var(--muted);font-size:13px;line-height:1.75}.price{margin:14px 0;color:#98763E;font-size:15px;font-weight:700}
+    .text-link{display:inline-block;margin-top:10px;color:var(--green);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+    .empty-state{margin-top:30px;padding:34px;background:#fff;border:1px solid var(--line);border-radius:3px}
+    .empty-state h2{margin:0 0 10px;font-family:"Cormorant Garamond",Georgia,serif;font-size:32px;color:var(--green)}.empty-state p{color:var(--muted)}
+    .cta{display:inline-block;margin-top:12px;padding:13px 22px;background:var(--green);color:#fff;border:1px solid var(--green);border-radius:2px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+    .cta:hover{background:#245747}.site-footer{padding:28px 0 42px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}.site-footer a{color:var(--green);font-weight:700}
+    @media(max-width:600px){.header-inner{min-height:76px;gap:12px}.brand img{height:38px}.header-inner nav{gap:12px;font-size:9px;letter-spacing:.7px}main{padding:42px 0 56px}.property-image{height:195px}.property-copy{padding:19px}.listing-heading{font-size:29px}}
   </style>
 </head>
 <body>
   <header class="site-header"><div class="header-inner">
-    <a class="brand" href="/">BS <span>HOMEZ</span></a>
+    <a class="brand" href="/" aria-label="BS Homez home"><img src="/assets/aistudio/bs_homez_logo_transparent.png" alt="BS Homez"></a>
     <nav aria-label="Main navigation"><a href="/">Home</a><a href="/#projects">All Properties</a><a href="mailto:contact@bshomez.in">Contact</a></nav>
   </div></header>
   <main>
