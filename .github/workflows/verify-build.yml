@@ -24,6 +24,8 @@ jobs:
       - run: npm install
       - name: TypeScript validation
         run: npm run lint
+      - name: Portfolio deletion guard tests
+        run: npm run test:portfolio-deletion-guard
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
