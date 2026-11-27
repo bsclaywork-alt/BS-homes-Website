@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { deleteDoc, doc, getDocFromServer, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CheckCircle2, Eye, EyeOff, ImagePlus, Loader2, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { db } from '../lib/firebase';
-import { compressPhotoAsset, uploadCloudinaryPhoto } from '../lib/mediaProcessor';
+import { uploadCloudinaryPhoto } from '../lib/mediaProcessor';
 import { Project } from '../types';
 
 export type HomeScrollerTransaction =
@@ -102,8 +102,8 @@ export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelect
   return (
     <section className="relative w-full overflow-hidden rounded-sm bg-[#101914] text-white" aria-label="Featured property projects">
       <div className={contentPlacement === 'below' ? 'flex flex-col' : 'relative'}>
-        <div className={contentPlacement === 'below' ? 'relative aspect-[16/9] max-h-[340px] min-h-[190px] w-full overflow-hidden' : 'relative min-h-[280px] overflow-hidden'}>
-          <img src={slide.imageUrl} alt={slide.title || 'Featured BS Homez property'} loading="eager" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover object-center" />
+        <div className="relative aspect-[16/9] min-h-[190px] max-h-[520px] w-full overflow-hidden bg-[#0b100e] sm:min-h-[260px] lg:max-h-[560px]">
+          <img src={slide.imageUrl} alt={slide.title || 'Featured BS Homez property'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-contain object-center" />
           {contentPlacement === 'overlay' && <><div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/15" /><div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" /><div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6"><span className="rounded-sm border border-[#d8b56d]/70 bg-black/40 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#f1d18c]">{slide.transactionType}</span><h2 className="mt-2 max-w-xl break-words font-serif text-xl font-bold leading-tight sm:text-2xl">{slide.title}</h2></div></>}
           {slides.length > 1 && <><button type="button" aria-label="Previous slide" onClick={() => setActiveIndex(i => (i - 1 + slides.length) % slides.length)} className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/50 bg-black/55 p-2 text-white"><ArrowLeft size={16}/></button><button type="button" aria-label="Next slide" onClick={() => setActiveIndex(i => (i + 1) % slides.length)} className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/50 bg-black/55 p-2 text-white"><ArrowRight size={16}/></button><div className="absolute bottom-3 right-3 z-20 flex gap-1.5">{slides.map((item,index) => <button key={item.id} type="button" aria-label={'Show slide ' + (index + 1)} onClick={() => setActiveIndex(index)} className={index === activeIndex ? 'h-1.5 w-7 rounded-full bg-[#e4c47e]' : 'h-1.5 w-2.5 rounded-full bg-white/75'} />)}</div></>}
         </div>
@@ -193,16 +193,19 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
     setUploadProgress(5);
     setNotice(null);
     try {
-      const optimized = await compressPhotoAsset(file, { maxDimension: 1920, quality: 0.78, applyWatermark: true });
-      setUploadProgress(35);
+      // Preserve the original file bytes, dimensions, format, and visual quality.
+      // Do not resize, recompress, or watermark Home Scroller banner images.
       const uploaded = await uploadCloudinaryPhoto({
-        blob: optimized.blob,
+        blob: file,
         sessionId: 'home-scroller',
-        fileName: file.name.replace(/\.[^.]+$/, optimized.mimeType.includes('webp') ? '.webp' : '.jpg'),
+        fileName: file.name,
         onProgress: setUploadProgress
       });
+      if (!uploaded.url || uploaded.bytes !== file.size) {
+        throw new Error('The original image could not be verified after upload. Please retry.');
+      }
       updateSelected({ imageUrl: uploaded.url });
-      setNotice({ type: 'success', message: 'Image uploaded and attached to this slide. Save changes to publish it.' });
+      setNotice({ type: 'success', message: 'Original full-quality image uploaded. Select Save Changes to publish it.' });
     } catch (error) {
       setNotice({ type: 'error', message: error instanceof Error ? error.message : 'Image upload failed. Please retry.' });
     } finally {
@@ -305,7 +308,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
             {slides.map((slide, index) => (
               <div key={slide.id} className={`flex items-center gap-2 rounded-sm border p-2 ${selectedId === slide.id ? 'border-[#d8b56d]/70 bg-[#d8b56d]/10' : 'border-white/10 bg-black/20'}`}>
                 <button type="button" onClick={() => setSelectedId(slide.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                  <div className="h-14 w-20 shrink-0 overflow-hidden rounded-sm bg-white/5">{slide.imageUrl ? <img src={slide.imageUrl} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-white/25"><ImagePlus size={18} /></div>}</div>
+                  <div className="h-14 w-20 shrink-0 overflow-hidden rounded-sm bg-[#0b100e]">{slide.imageUrl ? <img src={slide.imageUrl} alt="" className="h-full w-full object-contain" /> : <div className="flex h-full items-center justify-center text-white/25"><ImagePlus size={18} /></div>}</div>
                   <span className="min-w-0"><span className="block text-[9px] font-mono text-white/40">SLIDE {index + 1}</span><span className="block truncate text-xs font-bold text-white">{slide.title || 'Untitled slide'}</span><span className="block truncate text-[9px] text-white/45">{slide.transactionType}</span></span>
                 </button>
                 <div className="flex flex-col gap-1">
@@ -351,9 +354,9 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
                 </div>
 
                 <div className="space-y-3 rounded-sm border border-white/10 bg-white/[0.03] p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-widest text-[#d8b56d]">Slide Image</p><p className="mt-1 text-[10px] text-white/45">Wide landscape images work best. Upload JPG, PNG or WebP up to 15 MB.</p></div><label className="inline-flex cursor-pointer items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-black"><Upload size={13} /> {uploading ? 'Uploading…' : 'Upload Image'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={event => { void uploadImage(event.target.files?.[0]); event.currentTarget.value = ''; }} className="hidden" /></label></div>
+                  <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-widest text-[#d8b56d]">Slide Image</p><p className="mt-1 text-[10px] text-white/45">Original image quality and dimensions are preserved (no resizing, compression or watermark). JPG, PNG or WebP up to 15 MB.</p></div><label className="inline-flex cursor-pointer items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-black"><Upload size={13} /> {uploading ? 'Uploading…' : 'Upload Image'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={event => { void uploadImage(event.target.files?.[0]); event.currentTarget.value = ''; }} className="hidden" /></label></div>
                   {uploading && <div className="h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-[#d8b56d] transition-all" style={{ width: `${uploadProgress}%` }} /></div>}
-                  {selected.imageUrl ? <div className="relative overflow-hidden rounded-sm border border-white/10"><img src={selected.imageUrl} alt="Slide preview" className="max-h-[300px] w-full object-cover" /><button type="button" onClick={() => updateSelected({ imageUrl: '' })} className="absolute right-2 top-2 rounded-sm bg-black/80 px-3 py-2 text-[9px] font-black uppercase text-white"><Trash2 size={12} className="inline mr-1" /> Remove image</button></div> : <div className="flex min-h-36 items-center justify-center rounded-sm border border-dashed border-white/20 text-xs text-white/35"><ImagePlus size={18} className="mr-2" /> No image uploaded yet</div>}
+                  {selected.imageUrl ? <div className="relative aspect-[16/9] w-full max-h-[520px] overflow-hidden rounded-sm border border-white/10 bg-[#0b100e]"><img src={selected.imageUrl} alt="Full-quality slide preview" decoding="async" className="h-full w-full object-contain" /><button type="button" onClick={() => updateSelected({ imageUrl: '' })} className="absolute right-2 top-2 rounded-sm bg-black/80 px-3 py-2 text-[9px] font-black uppercase text-white"><Trash2 size={12} className="inline mr-1" /> Remove image</button></div> : <div className="flex min-h-36 items-center justify-center rounded-sm border border-dashed border-white/20 text-xs text-white/35"><ImagePlus size={18} className="mr-2" /> No image uploaded yet</div>}
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
                   <span className="text-[9px] text-white/35">Changes are drafts until you select Save Changes.</span>
