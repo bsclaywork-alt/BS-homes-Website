@@ -11,7 +11,8 @@
     "lint": "tsc --noEmit",
     "sitemap:update": "tsx scripts/update-sitemap.ts",
     "test:inventory-mode": "tsx scripts/test-project-inventory-mode.ts",
-    "test:portfolio-curator-save": "tsx --test tests/portfolio-curator-save.test.ts"
+    "test:portfolio-curator-save": "tsx --test tests/portfolio-curator-save.test.ts",
+    "test:portfolio-deletion-guard": "tsx --test tests/project-deletion-guard.test.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
