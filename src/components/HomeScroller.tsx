@@ -93,7 +93,13 @@ export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelect
   const openSlide = () => {
     const linkedProject = projects.find(project =>
       (slide.projectId && project.id === slide.projectId) ||
-     return (
+      project.name.trim().toLowerCase() === slide.title.trim().toLowerCase()
+    );
+    if (linkedProject) onSelectProject(linkedProject);
+    else onExploreProperties();
+  };
+
+  return (
     <section className="relative w-full overflow-hidden rounded-sm bg-[#101914] text-white" aria-label="Featured property projects">
       <div className={contentPlacement === 'below' ? 'flex flex-col' : 'relative'}>
         <div className={contentPlacement === 'below' ? 'relative aspect-[16/9] max-h-[340px] min-h-[190px] w-full overflow-hidden' : 'relative min-h-[280px] overflow-hidden'}>
@@ -103,11 +109,6 @@ export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelect
         </div>
         {contentPlacement === 'below' && <div className="space-y-2 border-t border-[#d8b56d]/25 bg-[#101914] px-4 py-4 sm:px-5 sm:py-5"><div className="flex flex-wrap items-center gap-2"><span className="rounded-sm border border-[#d8b56d]/60 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#f1d18c]">{slide.transactionType}</span><span className="text-[9px] font-mono text-white/55">{String(activeIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</span></div><h2 className="break-words font-serif text-xl font-bold leading-tight text-white sm:text-2xl">{slide.title}</h2>{slide.subtitle && <p className="max-w-2xl text-xs leading-relaxed text-white/75 sm:text-sm">{slide.subtitle}</p>}{(slide.location || slide.priceLabel) && <div className="flex flex-wrap gap-2 pt-1 text-[10px] font-semibold uppercase tracking-wider">{slide.location && <span className="rounded-sm border border-white/20 px-2.5 py-1.5 text-white/80">{slide.location}</span>}{slide.priceLabel && <span className="rounded-sm border border-[#d8b56d]/45 px-2.5 py-1.5 text-[#f1d18c]">{slide.priceLabel}</span>}</div>}<button type="button" onClick={openSlide} className="mt-1 inline-flex min-h-10 items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-[#17130b]">{slide.ctaLabel || 'Explore Project'} <ArrowRight size={14}/></button></div>}
         {contentPlacement === 'overlay' && <div className="bg-[#101914] px-4 py-3"><button type="button" onClick={openSlide} className="inline-flex min-h-10 items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-[#17130b]">{slide.ctaLabel || 'Explore Project'} <ArrowRight size={14}/></button></div>}
-      </div>
-    </section>
-  );sm:bottom-7 sm:left-10">{String(activeIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</span>
-          </>
-        )}
       </div>
     </section>
   );
