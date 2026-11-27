@@ -43,21 +43,52 @@ async function runStagingVerification() {
   const homeMetaValid = htmlTemplate.includes('canonical') && htmlTemplate.includes('BS Homez');
   if (homeMetaValid) successCount++;
 
+  let locationPageCount = 0;
+  let projectPageCount = 0;
+  const failures = [];
+
   CORRIDOR_SLUGS.forEach(c => {
     const slug = slugify(c);
     const corridorName = getCorridorDisplayName(slug);
-    const title = `Properties in ${corridorName}, Bangalore | Price, Floor Plans & Details – BS Homez`;
-    if (title && slug) successCount++;
+    const locationPath = path.join(process.cwd(), 'dist', 'locations', slug, 'index.html');
+    if (!fs.existsSync(locationPath)) {
+      failures.push(`Missing static location page: ${slug}`);
+      return;
+    }
+    const html = fs.readFileSync(locationPath, 'utf-8');
+    const expectedCanonical = `https://bshomez.in/locations/${slug}/`;
+    if (!html.includes(`<link rel="canonical" href="${expectedCanonical}">`)) failures.push(`Incorrect location canonical: ${slug}`);
+    if (!html.includes(`<h1>Properties in ${corridorName}, Bengaluru</h1>`)) failures.push(`Missing location H1: ${slug}`);
+    if (!html.includes(`<title>Properties in ${corridorName}, Bengaluru | BS Homez</title>`)) failures.push(`Incorrect location title: ${slug}`);
+    if (html.includes('class="property-grid"') && !html.includes('class="inventory-overview"')) failures.push(`Missing data-backed inventory overview: ${slug}`);
+    locationPageCount++;
   });
+
+  const projectsRoot = path.join(process.cwd(), 'dist', 'projects');
+  if (fs.existsSync(projectsRoot)) {
+    for (const slug of fs.readdirSync(projectsRoot)) {
+      const projectPath = path.join(projectsRoot, slug, 'index.html');
+      if (!fs.existsSync(projectPath)) continue;
+      const html = fs.readFileSync(projectPath, 'utf-8');
+      const expectedCanonical = `https://bshomez.in/projects/${slug}/`;
+      if (!html.includes(`<link rel="canonical" href="${expectedCanonical}"`)) failures.push(`Incorrect project canonical: ${slug}`);
+      if (!/<title>[^<]+<\/title>/.test(html)) failures.push(`Missing project title: ${slug}`);
+      projectPageCount++;
+    }
+  }
 
   SITEMAP_PROJECTS.forEach(p => {
     const meta = generatePropertyMetaTags(p, "https://bshomez.in");
-    if (meta.title && meta.canonical && meta.schemaJson) {
-      successCount++;
-    }
+    if (!meta.title || !meta.canonical || !meta.schemaJson) failures.push(`Incomplete generated project metadata: ${p.name}`);
   });
 
-  console.log(`\nVerified metadata and routing parameters for all ${successCount} URLs (Expected: 59).`);
+  if (failures.length) {
+    console.error("\nStaging build verification failures:");
+    failures.forEach(failure => console.error("- " + failure));
+    process.exit(1);
+  }
+
+  console.log(`\nVerified ${locationPageCount} static location pages and ${projectPageCount} generated project pages with canonical and title checks.`);
   console.log("Staging verification completed successfully with 0 errors.");
 }
 
