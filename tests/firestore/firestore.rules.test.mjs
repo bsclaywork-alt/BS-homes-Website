@@ -121,9 +121,12 @@ describe('Irreversible project deletion rules', () => {
   });
 
   it('rejects reactivating an archived public portfolio record', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(doc(context.firestore(), 'public_portfolio/deleted-public-listing'),
+        publicData('submission-4', 'deleted-public-listing'));
+    });
     const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
     const ref = doc(adminDb, 'public_portfolio/deleted-public-listing');
-    await assertSucceeds(setDoc(ref, publicData('deleted-submission', 'deleted-public-listing')));
     await assertSucceeds(updateDoc(ref, {
       publicationStatus: 'Archived',
       isPublished: false,
