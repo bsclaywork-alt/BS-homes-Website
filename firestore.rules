@@ -534,8 +534,10 @@ service cloud.firestore {
       allow read: if settingId == 'home_scroller';
       allow create, update: if isAdmin() &&
         settingId == 'home_scroller' &&
-        request.resource.data.keys().hasOnly(['isEnabled', 'slides', 'updatedAt']) &&
+        request.resource.data.keys().hasOnly(['isEnabled', 'contentPlacement', 'slides', 'updatedAt']) &&
         request.resource.data.isEnabled is bool &&
+        (!('contentPlacement' in request.resource.data) ||
+          request.resource.data.contentPlacement in ['below', 'overlay']) &&
         request.resource.data.slides is list &&
         request.resource.data.slides.size() <= 6 &&
         request.resource.data.updatedAt == request.time;
