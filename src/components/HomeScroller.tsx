@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { deleteDoc, doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { deleteDoc, doc, getDocFromServer, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CheckCircle2, Eye, EyeOff, ImagePlus, Loader2, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { compressPhotoAsset, uploadCloudinaryPhoto } from '../lib/mediaProcessor';
@@ -128,8 +128,10 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const hasLocalChanges = useRef(false);
 
   useEffect(() => onSnapshot(SETTINGS_REF, snapshot => {
+    if (hasLocalChanges.current) return;
     const data = snapshot.exists() ? snapshot.data() : {};
     const loaded = normalizeSlides(data.slides);
     setSlides(loaded);
@@ -146,11 +148,13 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
   const selected = useMemo(() => slides.find(slide => slide.id === selectedId) || null, [slides, selectedId]);
   const updateSelected = (patch: Partial<HomeScrollerSlide>) => {
     if (!selectedId) return;
+    hasLocalChanges.current = true;
     setSlides(current => current.map(slide => slide.id === selectedId ? { ...slide, ...patch } : slide));
   };
 
   const addSlide = () => {
     if (slides.length >= 6) return;
+    hasLocalChanges.current = true;
     const next = makeSlide(slides.length + 1);
     setSlides(current => [...current, next]);
     setSelectedId(next.id);
@@ -159,6 +163,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
 
   const removeSlide = (id: string) => {
     if (!window.confirm('Delete this slide from the Home Scroller?')) return;
+    hasLocalChanges.current = true;
     const next = slides.filter(slide => slide.id !== id);
     setSlides(next);
     setSelectedId(next[0]?.id || '');
@@ -168,6 +173,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
     const index = slides.findIndex(slide => slide.id === id);
     const target = index + direction;
     if (index < 0 || target < 0 || target >= slides.length) return;
+    hasLocalChanges.current = true;
     const next = [...slides];
     [next[index], next[target]] = [next[target], next[index]];
     setSlides(next);
@@ -206,19 +212,32 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
   };
 
   const save = async () => {
+    if (uploading) {
+      setNotice({ type: 'error', message: 'Please wait until the image upload finishes before saving.' });
+      return;
+    }
     setSaving(true);
     setNotice(null);
     try {
+      const slidesToSave = slides.slice(0, 6).map((slide, index) => ({ ...slide, order: index + 1 }));
       await setDoc(SETTINGS_REF, {
         isEnabled,
         contentPlacement,
-        slides: slides.slice(0, 6).map((slide, index) => ({ ...slide, order: index + 1 })),
+        slides: slidesToSave,
         updatedAt: serverTimestamp()
       });
-      setNotice({ type: 'success', message: 'Home Scroller saved. The homepage will show the updated slides.' });
+      const verifiedSnapshot = await getDocFromServer(SETTINGS_REF);
+      if (!verifiedSnapshot.exists()) throw new Error('Save verification failed: settings document was not found.');
+      const verifiedSlides = normalizeSlides(verifiedSnapshot.data().slides);
+      const missingImage = slidesToSave.find(slide => slide.imageUrl && !verifiedSlides.some(saved => saved.id === slide.id && saved.imageUrl === slide.imageUrl));
+      if (missingImage) throw new Error(`Save verification failed for the image in "${missingImage.title || 'this slide'}". Your editor content has been kept; please retry.`);
+      hasLocalChanges.current = false;
+      setSlides(verifiedSlides);
+      setNotice({ type: 'success', message: `✓ Saved successfully! ${verifiedSlides.length} slide(s) and all uploaded images are verified in the cloud. Homepage changes are published.` });
     } catch (error) {
       console.error('Home Scroller save failed:', error);
-      setNotice({ type: 'error', message: 'Save failed. Check admin permissions and the Firestore rules deployment, then retry.' });
+      hasLocalChanges.current = true;
+      setNotice({ type: 'error', message: error instanceof Error ? error.message : 'Save failed. Your changes are still in the editor. Please retry.' });
     } finally {
       setSaving(false);
     }
@@ -229,6 +248,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
     setSaving(true);
     try {
       await deleteDoc(SETTINGS_REF);
+      hasLocalChanges.current = false;
       setSlides([]);
       setSelectedId('');
       setIsEnabled(false);
@@ -268,8 +288,8 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
           <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/55">Manage up to six large homepage project slides. Upload a banner image, choose the transaction type, link an existing portfolio project, and publish when ready.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-2 rounded-sm border border-white/15 bg-black/20 px-3 py-2 text-[9px] font-bold uppercase tracking-wider text-white/65">Text placement<select value={contentPlacement} onChange={event => setContentPlacement(event.target.value as "below" | "overlay")} className="rounded-sm border border-white/15 bg-[#1c1c1c] px-2 py-2 text-[10px] normal-case tracking-normal text-white"><option value="below">Below image (recommended)</option><option value="overlay">On image</option></select></label>
-          <button type="button" onClick={() => setIsEnabled(value => !value)} className={`inline-flex items-center gap-2 rounded-sm border px-4 py-3 text-[10px] font-black uppercase tracking-wider ${isEnabled ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300' : 'border-white/15 bg-white/5 text-white/60'}`}>
+          <label className="flex items-center gap-2 rounded-sm border border-white/15 bg-black/20 px-3 py-2 text-[9px] font-bold uppercase tracking-wider text-white/65">Text placement<select value={contentPlacement} onChange={event => { hasLocalChanges.current = true; setContentPlacement(event.target.value as "below" | "overlay"); }} className="rounded-sm border border-white/15 bg-[#1c1c1c] px-2 py-2 text-[10px] normal-case tracking-normal text-white"><option value="below">Below image (recommended)</option><option value="overlay">On image</option></select></label>
+          <button type="button" onClick={() => { hasLocalChanges.current = true; setIsEnabled(value => !value); }} className={`inline-flex items-center gap-2 rounded-sm border px-4 py-3 text-[10px] font-black uppercase tracking-wider ${isEnabled ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300' : 'border-white/15 bg-white/5 text-white/60'}`}>
             {isEnabled ? <Eye size={14} /> : <EyeOff size={14} />} {isEnabled ? 'Visible on homepage' : 'Hidden on homepage'}
           </button>
           <button type="button" onClick={addSlide} disabled={slides.length >= 6 || loading} className="inline-flex items-center gap-2 rounded-sm bg-[#d8b56d] px-4 py-3 text-[10px] font-black uppercase tracking-wider text-black disabled:opacity-40"><Plus size={14} /> Add Slide ({slides.length}/6)</button>
