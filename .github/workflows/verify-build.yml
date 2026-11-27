@@ -38,11 +38,20 @@ jobs:
           npx firebase emulators:exec --only firestore --project bshomez-rules-test "npm test"
       - name: Build static website and SEO pages
         run: npm run build:pages
-      - name: Verify generated production assets
+      - name: Verify generated production assets and location pages
         run: |
           test -s dist/index.html
           test -s dist/sitemap.xml
           test -s dist/robots.txt
           test -s dist/CNAME || echo "CNAME is added by the production deployment workflow"
-          test -n "$(find dist/assets -type f -name '*.js' -size +0c -print -quit)"
-          test -n "$(find dist/assets -type f -name '*.css' -size +0c -print -quit)"
+          test -n "\u0024(find dist/assets -type f -name '*.js' -size +0c -print -quit)"
+          test -n "\u0024(find dist/assets -type f -name '*.css' -size +0c -print -quit)"
+          # Every location URL in the sitemap must have a real static HTML file.
+          locations=(whitefield hoskote varthur gunjur hosa-road kasavanahalli off-sarjapur-road sarjapur electronic-city marathalli bellandur east-bangalore)
+          for slug in "\u0024{locations[@]}"; do
+            page="dist/locations/\u0024slug/index.html"
+            test -s "\u0024page" || { echo "Missing generated location page: \u0024page"; exit 1; }
+            grep -Fq "<link rel=\"canonical\" href=\"https://bshomez.in/locations/\u0024slug/\"" "\u0024page" || { echo "Missing or incorrect canonical URL in \u0024page"; exit 1; }
+            grep -Fq "<loc>https://bshomez.in/locations/\u0024slug/</loc>" dist/sitemap.xml || { echo "Location URL missing from sitemap: \u0024slug"; exit 1; }
+          done
+          echo "Verified all 12 static location pages, canonical URLs, and sitemap entries."
