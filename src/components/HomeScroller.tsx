@@ -99,7 +99,7 @@ export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelect
 
   return (
     <section className="relative w-full overflow-hidden bg-[#101914] text-white" aria-label="Featured property projects">
-      <div className="relative min-h-[clamp(430px,58vw,660px)]">
+      <div className="relative min-h-[clamp(300px,38vw,500px)]">
         <img
           src={slide.imageUrl}
           alt={slide.title || 'Featured BS Homez property'}
@@ -109,13 +109,13 @@ export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelect
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/25" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-black/15" />
-        <div className="relative z-10 flex min-h-[clamp(430px,58vw,660px)] items-end px-5 py-12 sm:px-10 sm:py-14 lg:px-16 lg:py-16">
-          <div className="w-full max-w-2xl space-y-4 pr-7 sm:space-y-5 sm:pr-0">
+        <div className="relative z-10 flex min-h-[clamp(300px,38vw,500px)] items-end px-4 py-7 sm:px-7 sm:py-9 lg:px-8 lg:py-10">
+          <div className="w-full max-w-xl space-y-3 pr-7 sm:space-y-4 sm:pr-0">
             <span className="inline-flex max-w-full rounded-sm border border-[#d8b56d]/70 bg-black/40 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#f1d18c] backdrop-blur-sm">
               {slide.transactionType}
             </span>
-            <h2 className="max-w-2xl break-words font-serif text-3xl font-bold leading-[1.08] sm:text-5xl xl:text-6xl">{slide.title}</h2>
-            {slide.subtitle && <p className="max-w-xl text-sm leading-relaxed text-white/90 sm:text-base">{slide.subtitle}</p>}
+            <h2 className="max-w-2xl break-words font-serif text-2xl font-bold leading-[1.08] sm:text-3xl xl:text-4xl">{slide.title}</h2>
+            {slide.subtitle && <p className="max-w-xl text-xs leading-relaxed text-white/90 sm:text-sm">{slide.subtitle}</p>}
             {(slide.location || slide.priceLabel) && (
               <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">
                 {slide.location && <span className="rounded-sm border border-white/20 bg-black/30 px-3 py-2 text-white/90 backdrop-blur-sm">{slide.location}</span>}
