@@ -875,6 +875,14 @@ ${projectUrls.join('\n')}
 /**
  * Generates SEO meta tags and Schema.org JSON-LD for a specific property using clean URL
  */
+function truncateMetaDescription(value: string, maxLength = 160): string {
+  const clean = String(value || '').replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxLength) return clean;
+  const clipped = clean.slice(0, maxLength - 1);
+  const lastSpace = clipped.lastIndexOf(' ');
+  return (lastSpace > 0 ? clipped.slice(0, lastSpace) : clipped).trimEnd() + '…';
+}
+
 export function generatePropertyMetaTags(
   project: SitemapProjectItem, 
   baseUrl: string = 'https://bshomez.in',
@@ -883,11 +891,23 @@ export function generatePropertyMetaTags(
   const cleanBase = 'https://bshomez.in';
   const projectSlug = getProjectSlug(project, allProjects);
   const propertyUrl = `${cleanBase}/projects/${projectSlug}/`;
-  const title = `${project.name} in ${project.zone}, Bangalore | Price, Floor Plans & Details – BS Homez`;
+  const locationName = (project.zone || 'Bengaluru').replace(/-/g, ' ');
+  const titleSuffix = ' | ' + locationName + ', Bangalore | BS Homez';
+  const availableNameLength = Math.max(12, 65 - titleSuffix.length);
+  const displayProjectName = project.name.length > availableNameLength
+    ? project.name.slice(0, availableNameLength - 1).trimEnd() + '…'
+    : project.name;
+  const title = displayProjectName + titleSuffix;
   
   // Clean description under 160 characters using only verified project data
-  const reraStr = project.reraNumber ? ` RERA: ${project.reraNumber}.` : '';
-  const shortDesc = `${project.name} by ${project.builderName} in ${project.location}. Price: ${project.price}.${reraStr} Explore floor plans and details with BS Homez.`.slice(0, 160);
+  const descriptionParts = [
+    project.name + ' in ' + locationName + ', Bangalore.',
+    project.propertyType + ' ' + (project.type || 'property').toLowerCase() + ' listing.',
+    project.builderName ? 'By ' + project.builderName + '.' : '',
+    project.price ? 'Price: ' + project.price + '.' : '',
+    'Contact BS Homez for current details.'
+  ].filter(Boolean);
+  const shortDesc = truncateMetaDescription(descriptionParts.join(' '), 160);
 
   const ldJson: any = {
     "@context": "https://schema.org",
