@@ -134,7 +134,7 @@ import { AdminMediaManagerModal } from './components/AdminMediaManagerModal';
 import { OfferYourAssetForm } from './components/OfferYourAssetForm';
 import { AdminPrimaryResaleForm } from './components/AdminPrimaryResaleForm';
 import { HomepageShowcase } from './components/HomepageShowcase';
-import { HomeScrollerManager } from './components/HomeScroller';
+import { HomeScrollerManager, HomeScrollerCarousel } from './components/HomeScroller';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { PhoneInputWithCountry, validateMobileNumber } from './components/PhoneInputWithCountry';
@@ -553,138 +553,61 @@ const Navbar = ({
 };
 
 const Hero = ({
-  onConsult,
-  onExplorePortfolios,
-  onOfferAsset,
-  onReferAndEarn
+  onConsult, onExplorePortfolios, onOfferAsset, onReferAndEarn, projects, onSelectProject
 }: {
-  onConsult?: () => void;
-  onExplorePortfolios?: () => void;
-  onOfferAsset?: () => void;
-  onReferAndEarn?: () => void;
+  onConsult?: () => void; onExplorePortfolios?: () => void; onOfferAsset?: () => void; onReferAndEarn?: () => void;
+  projects: Project[]; onSelectProject: (project: Project) => void;
 }) => {
   const getISTGreeting = () => {
     const now = new Date();
     const istTime = new Date(now.getTime() + (new Date().getTimezoneOffset() * 60000) + (5.5 * 60 * 60 * 1000));
     const hour = istTime.getHours();
-
     if (hour < 12) return "Good Morning";
     if (hour < 17) return "Good Afternoon";
     return "Good Evening";
   };
-
   return (
-    <section className="w-full relative flex items-center py-6 sm:py-16 md:py-20 overflow-hidden bg-lux-ivory border-b border-lux-border">
-      {/* Subtle Luxury Backdrop */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-lux-gold/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-lux-forest/5 rounded-full blur-3xl" />
+    <section className="relative w-full overflow-hidden border-b border-lux-border bg-lux-ivory">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-lux-gold/10 blur-3xl" />
+        <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-lux-forest/5 blur-3xl" />
       </div>
-
-      {/* Vertical Graphic Elements */}
-      <div className="absolute left-6 xl:left-10 bottom-12 z-20 hidden lg:block">
-        <div className="flex flex-col items-center gap-12">
-          <div className="w-[1px] h-24 bg-lux-gold/50" />
-          <span className="vertical-text text-[9px] text-lux-muted/60 font-bold select-none tracking-widest uppercase">Pinnacle Living / Bangalore</span>
-        </div>
-      </div>
-
-      <div className="relative z-20 w-full max-w-7xl mx-auto px-3 sm:px-6 md:px-12">
-        <div className="grid lg:grid-cols-12 gap-6 lg:gap-12 items-end">
-          <div className="lg:col-span-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
-            >
-              <div className="text-lux-forest tracking-wider sm:tracking-[0.25em] uppercase mb-3 sm:mb-5 flex items-center flex-wrap gap-2 sm:gap-3 font-bold text-[10.5px] sm:text-xs leading-normal">
-                <span className="w-5 sm:w-10 h-[1px] bg-lux-gold shrink-0" />
-                <span>{getISTGreeting()} • Primary, Resale &amp; Rental Advisory</span>
-              </div>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif text-lux-forest leading-tight tracking-tight mb-4 sm:mb-7 italic break-words">
-                Your Property. Our Network. <span className="not-italic text-lux-gold">Better Opportunities.</span>
-              </h1>
-
-              {/* Highly Prominent Brokerage Message */}
-              <motion.div
-                 initial={{ opacity: 0, y: 15 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: 0.2, duration: 0.7 }}
-                 className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 p-4 sm:p-6 md:p-7 border border-lux-border bg-lux-card shadow-lg relative overflow-hidden group w-full rounded-sm"
-              >
-                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-lux-forest via-lux-gold to-lux-forest" />
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-4xl sm:text-6xl font-serif text-lux-forest italic leading-none font-bold">0%</span>
-                  <span className="sm:hidden text-lg font-serif tracking-wide italic text-lux-charcoal font-medium">Brokerage Fee</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="hidden sm:block text-xl sm:text-2xl font-serif tracking-wide sm:tracking-widest italic font-medium text-lux-charcoal">Brokerage Fee</span>
-                  <span className="text-lux-gold text-[9.5px] sm:text-[10.5px] uppercase tracking-wider sm:tracking-[0.2em] font-black mt-0.5 sm:mt-1.5">
-                    On All Primary Market Portfolio Acquisitions
-                  </span>
-                  <span className="text-lux-muted text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold mt-1">
-                    Resale: 2% Commission • Rental: 1 Month Rent Commission
-                  </span>
-                </div>
-              </motion.div>
-
-              <div className="flex flex-col gap-4 mb-4 sm:mb-0">
-                <p className="text-lux-muted max-w-2xl text-xs sm:text-sm leading-relaxed font-medium">
-                  Explore curated Primary, Resale, and Rental properties across Bangalore corridors, offer your own residential or commercial asset privately, or connect buyers and owners through our verified referral network.
-                </p>
-                <div className="flex flex-wrap items-center gap-3 w-full">
-                  <button
-                    type="button"
-                    onClick={onExplorePortfolios}
-                    className="bg-lux-forest hover:bg-lux-forest-hover text-lux-card px-6 py-3.5 text-[11px] uppercase font-black tracking-widest text-center cursor-pointer rounded-sm shadow-lg transition-all"
-                  >
-                    Explore Properties
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onOfferAsset}
-                    className="bg-lux-gold hover:bg-lux-card text-lux-charcoal border border-lux-gold px-6 py-3.5 text-[11px] uppercase font-black tracking-widest text-center cursor-pointer rounded-sm shadow-md transition-all"
-                  >
-                    Offer Your Asset
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onReferAndEarn}
-                    className="bg-lux-card hover:bg-lux-ivory text-lux-forest border border-lux-forest/40 px-6 py-3.5 text-[11px] uppercase font-black tracking-widest text-center cursor-pointer rounded-sm transition-all"
-                  >
-                    Refer &amp; Earn
-                  </button>
-                  {onConsult && (
-                    <button
-                      type="button"
-                      onClick={onConsult}
-                      className="text-lux-forest hover:text-lux-forest-hover text-[11px] uppercase font-black tracking-widest border-b border-lux-forest/40 py-2 px-1 transition-all cursor-pointer"
-                    >
-                      Private Consultation
-                    </button>
-                  )}
-                </div>
+      <div className="relative z-10 mx-auto grid w-full max-w-[1600px] grid-cols-1 items-stretch gap-5 px-3 py-5 sm:gap-7 sm:px-6 sm:py-7 lg:grid-cols-2 lg:gap-8 lg:px-8 lg:py-8 xl:gap-10 xl:px-10">
+        <div className="flex min-w-0 flex-col justify-center py-2 sm:py-4 lg:py-5">
+          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, ease: [0.19, 1, 0.22, 1] }}>
+            <div className="mb-3 flex flex-wrap items-center gap-2.5 text-[9px] font-bold uppercase leading-relaxed tracking-[0.16em] text-lux-forest sm:mb-4 sm:text-[10px] sm:tracking-[0.22em]">
+              <span className="h-px w-7 shrink-0 bg-lux-gold sm:w-9" />
+              <span>{getISTGreeting()} · Primary, Resale &amp; Rental Advisory</span>
+            </div>
+            <h1 className="mb-4 max-w-3xl break-words font-serif text-[clamp(2.1rem,4.2vw,4.6rem)] italic leading-[1.02] tracking-tight text-lux-forest sm:mb-5">
+              Your Property. Our Network.<span className="mt-1 block not-italic text-lux-gold">Better Opportunities.</span>
+            </h1>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.6 }} className="relative mb-4 flex items-center gap-3 overflow-hidden rounded-sm border border-lux-border bg-lux-card p-3.5 shadow-md sm:mb-5 sm:gap-4 sm:p-4 md:p-5">
+              <div className="absolute left-0 top-0 h-0.5 w-full bg-gradient-to-r from-lux-forest via-lux-gold to-lux-forest" />
+              <span className="shrink-0 font-serif text-4xl font-bold italic leading-none text-lux-forest sm:text-5xl">0%</span>
+              <div className="min-w-0">
+                <span className="block font-serif text-lg italic tracking-wide text-lux-charcoal sm:text-xl">Brokerage Fee</span>
+                <span className="mt-0.5 block text-[8px] font-black uppercase leading-relaxed tracking-[0.12em] text-lux-gold sm:text-[9px] sm:tracking-[0.16em]">On All Primary Market Portfolio Acquisitions</span>
+                <span className="mt-1 block text-[8px] font-semibold uppercase leading-relaxed tracking-wide text-lux-muted sm:text-[9px]">Resale: 2% Commission · Rental: 1 Month Rent Commission</span>
               </div>
             </motion.div>
-          </div>
-
-          {/* Right Column Metrics Window - Mobile Friendly Non-Merging Grid */}
-          <div className="lg:col-span-4 flex flex-col lg:items-end justify-end gap-3 sm:gap-5 pt-4 lg:pt-0 border-t lg:border-t-0 border-lux-border">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2.5 sm:gap-4 w-full lg:w-auto">
-              <div className="bg-lux-card p-2.5 sm:p-3 rounded-sm border border-lux-border lg:bg-transparent lg:p-0 lg:border-0 lg:text-right shadow-sm lg:shadow-none">
-                <span className="text-lux-forest text-2xl sm:text-3xl font-serif block font-bold">100%</span>
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-lux-gold font-bold block mt-0.5">Verified Direct Inventory</span>
-              </div>
-              <div className="bg-lux-card p-2.5 sm:p-3 rounded-sm border border-lux-border lg:bg-transparent lg:p-0 lg:border-0 lg:text-right shadow-sm lg:shadow-none">
-                <span className="text-[11px] sm:text-xs text-lux-forest font-bold tracking-wider block">EAST & SOUTH-EAST</span>
-                <span className="text-[8.5px] sm:text-[9px] text-lux-muted uppercase tracking-wider block mt-0.5">Primary Jurisdiction</span>
-              </div>
-              <div className="col-span-2 sm:col-span-1 bg-lux-card p-2.5 sm:p-3 rounded-sm border border-lux-border lg:bg-transparent lg:p-0 lg:border-0 lg:text-right shadow-sm lg:shadow-none">
-                <span className="text-[11px] sm:text-xs text-lux-forest font-bold tracking-wider block">PRIMARY • RESALE • RENTAL</span>
-                <span className="text-[8.5px] sm:text-[9px] text-lux-muted uppercase tracking-wider block mt-0.5">Complete Lifecycle Stages</span>
-              </div>
+            <p className="mb-4 max-w-2xl text-[11px] font-medium leading-relaxed text-lux-muted sm:mb-5 sm:text-xs md:text-sm">
+              Explore curated Primary, Resale, and Rental properties across Bangalore corridors, offer your own residential or commercial asset privately, or connect buyers and owners through our verified referral network.
+            </p>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              <button type="button" onClick={onExplorePortfolios} className="rounded-sm bg-lux-forest px-4 py-3 text-[9px] font-black uppercase tracking-wider text-lux-card shadow-md transition-colors hover:bg-lux-forest-hover sm:px-5 sm:text-[10px]">Explore Properties</button>
+              <button type="button" onClick={onOfferAsset} className="rounded-sm border border-lux-gold bg-lux-gold px-4 py-3 text-[9px] font-black uppercase tracking-wider text-lux-charcoal shadow-sm transition-colors hover:bg-lux-card sm:px-5 sm:text-[10px]">Offer Your Asset</button>
+              <button type="button" onClick={onReferAndEarn} className="rounded-sm border border-lux-forest/40 bg-lux-card px-4 py-3 text-[9px] font-black uppercase tracking-wider text-lux-forest transition-colors hover:bg-lux-ivory sm:px-5 sm:text-[10px]">Refer &amp; Earn</button>
+              {onConsult && <button type="button" onClick={onConsult} className="px-1 py-2 text-[9px] font-black uppercase tracking-wider text-lux-forest underline decoration-lux-gold/70 underline-offset-4 sm:text-[10px]">Private Consultation</button>}
             </div>
-          </div>
+            <div className="mt-5 grid grid-cols-2 gap-2 border-t border-lux-border pt-4 sm:mt-6 sm:gap-3 sm:pt-5">
+              <div><span className="block font-serif text-xl font-bold text-lux-forest sm:text-2xl">100%</span><span className="text-[8px] font-bold uppercase tracking-wider text-lux-gold sm:text-[9px]">Verified Direct Inventory</span></div>
+              <div><span className="block text-[9px] font-bold tracking-wide text-lux-forest sm:text-[10px]">EAST &amp; SOUTH-EAST BANGALORE</span><span className="mt-0.5 block text-[8px] uppercase tracking-wider text-lux-muted sm:text-[9px]">Primary Jurisdiction</span></div>
+            </div>
+          </motion.div>
+        </div>
+        <div className="min-w-0 self-stretch overflow-hidden rounded-sm border border-lux-border bg-[#101914] shadow-xl lg:min-h-[440px] xl:min-h-[500px]">
+          <HomeScrollerCarousel projects={projects} onSelectProject={onSelectProject} onExploreProperties={onExplorePortfolios || (() => {})} />
         </div>
       </div>
     </section>
@@ -15670,6 +15593,12 @@ export default function App() {
             {/* Framed Home Window */}
             <div className="border border-lux-border bg-lux-ivory rounded-sm overflow-hidden shadow-xl">
               <Hero
+                projects={effectiveProjects}
+                onSelectProject={(proj) => {
+                  setActivePropertyUrlId(proj.id || proj.name);
+                  setActiveMainTab('projects');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 onConsult={handlePrivateConsultation}
                 onExplorePortfolios={() => {
                   setActiveMainTab('projects');
