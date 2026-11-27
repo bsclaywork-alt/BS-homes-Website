@@ -135,7 +135,7 @@ export const HomeScrollerCarousel: React.FC<SharedProps> = ({ projects, onSelect
   const [activeIndex, setActiveIndex] = useState(0);
   const [contentPlacement, setContentPlacement] = useState<'below' | 'overlay'>(() => readHomeScrollerCache()?.contentPlacement || 'below');
   const fallbackSlides = useMemo(() => projectFallbackSlides(projects), [projects]);
-  const visibleSlides = visibleSlides.length ? slides : (loadFailed && isEnabled ? fallbackSlides : []);
+  const visibleSlides = slides.length ? slides : (loadFailed && isEnabled ? fallbackSlides : []);
 
   useEffect(() => onSnapshot(SETTINGS_REF, snapshot => {
     if (!snapshot.exists()) {
