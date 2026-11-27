@@ -84,7 +84,14 @@ async function runStagingVerification() {
   const appSource = fs.readFileSync(appSourcePath, 'utf-8');
   if (!appSource.includes('const baseUrl = "https://bshomez.in";')) failures.push('Dynamic SEO must use the non-www canonical domain');
   if (!appSource.includes('window.location.pathname.match(/^\\/projects\\/([^/]+)\\/?$/i)')) failures.push('Dynamic SEO must resolve clean project detail paths');
+  if (!appSource.includes('const curatedProject = SITEMAP_PROJECTS.find')) failures.push('Clean project routes must resolve curated project detail records');
+  if (!appSource.includes('blockedKeys.has(curatedId) || blockedKeys.has(curatedName)')) failures.push('Curated project fallback must respect deletion and hidden markers');
   if (!appSource.includes('href={`/locations/${slug}/`}')) failures.push('Homepage must expose crawlable location links');
+
+  const projectRegistryPath = path.join(process.cwd(), 'src', 'data', 'projectsSitemapData.ts');
+  const projectRegistry = fs.readFileSync(projectRegistryPath, 'utf-8');
+  if (!projectRegistry.includes('Sumadhura Folium is a multi-phase residential community')) failures.push('Sumadhura Folium needs current developer-backed project details');
+  if (projectRegistry.includes("reraNumber: 'PRM/KA/RERA/1251/446/PR/220601/004944'")) failures.push('Remove the outdated single-phase Sumadhura Folium RERA value');
 
   const projectsRoot = path.join(process.cwd(), 'dist', 'projects');
   if (fs.existsSync(projectsRoot)) {
