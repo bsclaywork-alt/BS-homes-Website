@@ -164,3 +164,47 @@
   }
 }
 
+
+
+/* Admin Vault readability: retain the dark luxury theme while enforcing readable text contrast. */
+.admin-vault {
+  color: #f8fafc;
+  background: #101820;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.admin-vault [class~="text-white/10"],
+.admin-vault [class~="text-white/15"],
+.admin-vault [class~="text-white/20"] {
+  color: #aebdce !important;
+}
+
+.admin-vault [class~="text-white/25"],
+.admin-vault [class~="text-white/30"],
+.admin-vault [class~="text-white/35"],
+.admin-vault [class~="text-white/40"],
+.admin-vault [class~="text-white/45"],
+.admin-vault [class~="text-white/50"],
+.admin-vault [class~="text-white/55"] {
+  color: #d3dce7 !important;
+}
+
+.admin-vault [class~="text-white/60"],
+.admin-vault [class~="text-white/65"],
+.admin-vault [class~="text-white/70"] {
+  color: #e2e8f0 !important;
+}
+
+.admin-vault input,
+.admin-vault select,
+.admin-vault textarea {
+  color: #f8fafc;
+}
+
+.admin-vault input::placeholder,
+.admin-vault textarea::placeholder {
+  color: #aebdce;
+  opacity: 1;
+}
