@@ -127,9 +127,11 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);\n  const hasLocalChanges = useRef(false);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const hasLocalChanges = useRef(false);
 
   useEffect(() => onSnapshot(SETTINGS_REF, snapshot => {
+    if (hasLocalChanges.current) return;
     const data = snapshot.exists() ? snapshot.data() : {};
     const loaded = normalizeSlides(data.slides);
     setSlides(loaded);
@@ -245,7 +247,8 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
     if (!window.confirm('Delete the entire Home Scroller? This removes all slides from the homepage.')) return;
     setSaving(true);
     try {
-      await deleteDoc(SETTINGS_REF);\n      hasLocalChanges.current = false;
+      await deleteDoc(SETTINGS_REF);
+      hasLocalChanges.current = false;
       setSlides([]);
       setSelectedId('');
       setIsEnabled(false);
