@@ -35,6 +35,7 @@ import {
 } from 'recharts';
 
 import { Project } from '../types';
+import { getProjectSlug, SITEMAP_PROJECTS, SitemapProjectItem } from '../data/projectsSitemapData';
 import { compilePortfolioImageAltAudit, downloadSeoAuditCsv } from '../lib/seoAuditReport';
 import { generateOptimizedSeoMetadata } from '../lib/autoSeoEnhancer';
 import { SeoAuditReportModal } from './SeoAuditReportModal';
@@ -138,7 +139,8 @@ export const AdminSeoAuditPanel: React.FC<AdminSeoAuditPanelProps> = ({
     const descOk = descLen >= 110 && descLen <= 165;
     const health: 'optimized' | 'needs_attention' = (titleOk && descOk && hasImage) ? 'optimized' : 'needs_attention';
 
-    const canonicalUrl = `https://bshomez.in/?project=${encodeURIComponent(p.id || p.name)}`;
+    const projectSlug = getProjectSlug(p as unknown as SitemapProjectItem, SITEMAP_PROJECTS);
+    const canonicalUrl = `https://bshomez.in/projects/${projectSlug}/`;
 
     return {
       metaTitle,

@@ -1,4 +1,5 @@
 import { Project } from '../types';
+import { getProjectSlug, SITEMAP_PROJECTS, SitemapProjectItem } from '../data/projectsSitemapData';
 
 export interface MultiPlatformSeoData {
   metaTitle: string;
@@ -44,7 +45,7 @@ export interface MultiPlatformSeoData {
 }
 
 const DEFAULT_BANNER = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85";
-const BASE_DOMAIN = "https://www.bshomez.in";
+const BASE_DOMAIN = "https://bshomez.in";
 
 /**
  * Calculates a comprehensive SEO Quality Score (0 - 100)
@@ -93,8 +94,8 @@ export function generateOptimizedSeoMetadata(
   project: Project,
   baseUrl: string = BASE_DOMAIN
 ): MultiPlatformSeoData {
-  const targetId = project.id || project.name;
-  const canonicalUrl = `${baseUrl}/?project=${encodeURIComponent(targetId)}`;
+  const projectSlug = getProjectSlug(project as unknown as SitemapProjectItem, SITEMAP_PROJECTS);
+  const canonicalUrl = `https://bshomez.in/projects/${projectSlug}/`;
   // Respect the per-project public photo setting in Open Graph, Twitter and structured data.
   const photosArePublic = project.showImagesOnline ?? (project.type !== 'Primary' && project.type !== 'Primary Sale');
   const coverImage = photosArePublic
@@ -300,7 +301,7 @@ export function autoEnhanceAllProjects(projects: Project[]): Project[] {
       seoDescription: proj.seoDescription || enhanced.metaDescription,
       seoKeywords: (proj.seoKeywords && proj.seoKeywords.length > 0) ? proj.seoKeywords : enhanced.seoKeywords,
       imageAltText: (proj as any).imageAltText || enhanced.imageAltText,
-      canonicalUrl: proj.canonicalUrl || enhanced.canonicalUrl,
+      canonicalUrl: enhanced.canonicalUrl,
       // Never expose a hidden project photo through Open Graph / social previews.
       ogImage: photosArePublic ? (proj.ogImage || enhanced.ogImage) : DEFAULT_BANNER,
       seoLastSyncedAt: proj.seoLastSyncedAt || new Date().toISOString(),
