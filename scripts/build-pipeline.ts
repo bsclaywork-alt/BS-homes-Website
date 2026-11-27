@@ -263,6 +263,19 @@ async function runBuildPipeline() {
           <h2>Looking for a property in ${safeCorridor}?</h2>
           <p>There are no matching projects in the current published portfolio for this area. Contact BS Homez to discuss your requirements and check current availability.</p>
           <a class="cta" href="mailto:contact@bshomez.in?subject=${encodeURIComponent(`Property enquiry - ${corridorName}`)}">Contact BS Homez</a>
+        </section>
+        <section class="inventory-overview" aria-labelledby="buyer-checklist-heading">
+          <h2 id="buyer-checklist-heading">A practical property checklist for ${safeCorridor}</h2>
+          <p>Before shortlisting a home in ${safeCorridor}, compare the details that affect day-to-day ownership and long-term value. The right choice depends on your commute, budget, intended use and the documents available for the specific property.</p>
+          <ul>
+            <li><strong>Location and commute:</strong> Check your regular routes at the times you normally travel, and visit the exact property location.</li>
+            <li><strong>Water and drainage:</strong> Ask about the property's water source, sewage arrangements and any past waterlogging at the site.</li>
+            <li><strong>Approvals and title:</strong> Review applicable project approvals, RERA details where required, title documents and the sanctioned plan with a qualified professional.</li>
+            <li><strong>Total cost:</strong> Compare the quoted price with maintenance, parking, taxes, registration and any other charges.</li>
+            <li><strong>Resale or rental:</strong> If relevant, check occupancy, lease terms, association rules and the documents needed for transfer.</li>
+          </ul>
+          <p>These are general due-diligence points, not claims about every property in ${safeCorridor}. Ask for property-specific records and verify them independently before paying an advance.</p>
+          <a class="cta" href="mailto:contact@bshomez.in?subject=${encodeURIComponent(`Property requirement - ${corridorName}`)}">Discuss your property requirement</a>
         </section>`
       : '';
 
