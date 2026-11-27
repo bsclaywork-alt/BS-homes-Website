@@ -301,7 +301,7 @@ export function autoEnhanceAllProjects(projects: Project[]): Project[] {
       seoDescription: proj.seoDescription || enhanced.metaDescription,
       seoKeywords: (proj.seoKeywords && proj.seoKeywords.length > 0) ? proj.seoKeywords : enhanced.seoKeywords,
       imageAltText: (proj as any).imageAltText || enhanced.imageAltText,
-      canonicalUrl: proj.canonicalUrl || enhanced.canonicalUrl,
+      canonicalUrl: enhanced.canonicalUrl,
       // Never expose a hidden project photo through Open Graph / social previews.
       ogImage: photosArePublic ? (proj.ogImage || enhanced.ogImage) : DEFAULT_BANNER,
       seoLastSyncedAt: proj.seoLastSyncedAt || new Date().toISOString(),
