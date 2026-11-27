@@ -14913,13 +14913,51 @@ export default function App() {
   const matchedProjectDetail = useMemo(() => {
     if (!activePropertyUrlId) return null;
     const cleanQuery = decodeURIComponent(activePropertyUrlId).trim().toLowerCase();
-    return effectiveProjects.find(p =>
+    const liveProject = effectiveProjects.find(p =>
       slugify(p.name) === cleanQuery ||
       (p.id && p.id.toLowerCase() === cleanQuery) ||
       slugify(p.id || '') === cleanQuery ||
       p.name.toLowerCase() === cleanQuery
     );
-  }, [activePropertyUrlId, effectiveProjects]);
+    if (liveProject) return liveProject;
+
+    // Static SEO pages are also generated for curated registry entries. Resolve
+    // those routes to their matching detail data when no live record is present.
+    // Explicit deletion/hidden markers still take precedence and are never bypassed.
+    const curatedProject = SITEMAP_PROJECTS.find(project =>
+      getProjectSlug(project, SITEMAP_PROJECTS) === cleanQuery ||
+      slugify(project.name) === cleanQuery ||
+      slugify(project.id) === cleanQuery
+    );
+    if (!curatedProject) return null;
+
+    const blockedKeys = new Set(
+      [...deletedProjectIds, ...dbTombstoneIds, ...hiddenProjectIds]
+        .map(value => String(value).trim().toLowerCase())
+    );
+    const curatedId = (curatedProject.id || '').trim().toLowerCase();
+    const curatedName = curatedProject.name.trim().toLowerCase();
+    if (blockedKeys.has(curatedId) || blockedKeys.has(curatedName)) return null;
+
+    return {
+      ...curatedProject,
+      locationTarget: curatedProject.location,
+      configuration: [],
+      segment: `${curatedProject.propertyType} in ${curatedProject.zone}`,
+      imageUrls: curatedProject.imageUrl ? [curatedProject.imageUrl] : [],
+      features: [
+        '16.5-acre master plan with landscaped open greens',
+        '54,000 sq. ft. clubhouse and 120+ amenities',
+        'Swimming pool, fitness, badminton and squash facilities',
+        'Co-working studio, crèche and pet park'
+      ],
+      handoverStatus: 'Under Construction',
+      handoverDate: 'March 2028',
+      // The developer lists separate registrations by phase; avoid showing an
+      // outdated single-phase RERA number as if it covered the entire project.
+      reraNumber: undefined
+    } as unknown as Project;
+  }, [activePropertyUrlId, effectiveProjects, deletedProjectIds, dbTombstoneIds, hiddenProjectIds]);
 
   const handleSaveProject = async (updated: Project) => {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
