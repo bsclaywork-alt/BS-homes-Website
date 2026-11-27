@@ -3298,6 +3298,7 @@ const ProjectGrid = ({
               </p>
               <div className="flex flex-wrap items-center gap-1.5 justify-start sm:justify-end">
                 {isAdmin && (
+                  <>
                   <button
                     type="button"
                     onClick={() => onOpenMetaData?.(displayedProjects[0])}
@@ -3317,6 +3318,7 @@ const ProjectGrid = ({
                     <FileSpreadsheet size={11} />
                     <span>Generate SEO Audit Report</span>
                   </button>
+                  </>
                 )}
                 {isAdmin && (
                   <div className="flex flex-wrap items-center gap-1.5">
