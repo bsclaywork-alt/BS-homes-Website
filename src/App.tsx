@@ -145,7 +145,7 @@ import { autoEnhanceAllProjects, generateOptimizedSeoMetadata } from './lib/auto
 import { publicPortfolioToProject, buildPublicPortfolioCuratorUpdate } from './lib/propertyWorkflow';
 import { ProjectDetailView } from './components/ProjectDetailView';
 import { OptimizedImage } from './components/OptimizedImage';
-import { slugify } from './data/projectsSitemapData';
+import { slugify, getProjectSlug, SITEMAP_PROJECTS } from './data/projectsSitemapData';
 import { getProjectInventoryModeDefaults, resolveProjectInventoryMode, transitionProjectInventoryMode, type ProjectInventoryMode } from './lib/projectInventoryMode';
 import { isProjectDeletionLocked } from './lib/projectDeletionGuard';
 
@@ -14456,7 +14456,7 @@ export default function App() {
 
   // --- Dynamic SEO Meta Tags & Schema.org JSON-LD Injection for Google, Meta & Social Spiders ---
   useEffect(() => {
-    const baseUrl = "https://www.bshomez.in";
+    const baseUrl = "https://bshomez.in";
     const defaultImage = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&h=630&q=85";
 
     // Helper to set or create meta tag
@@ -14489,7 +14489,19 @@ export default function App() {
       ? decodeURIComponent(projectQuery).trim().toLowerCase()
       : '';
 
-    const activeProjectTarget = selectedProject || (
+    // Resolve clean /projects/:slug/ URLs from the curated registry first.
+    // This prevents React hydration from replacing static project metadata with homepage metadata.
+    const projectPathMatch = window.location.pathname.match(/^\/projects\/([^/]+)\/?$/i);
+    const projectPathSlug = projectPathMatch?.[1]?.toLowerCase() || '';
+    const projectFromPath = projectPathSlug
+      ? (SITEMAP_PROJECTS.find(project =>
+          getProjectSlug(project, SITEMAP_PROJECTS) === projectPathSlug
+        ) || effectiveProjects.find(project =>
+          createProjectSlug(project.name || '') === projectPathSlug
+        ))
+      : null;
+
+    const activeProjectTarget = projectFromPath || selectedProject || (
       normalizedProjectQuery
         ? effectiveProjects.find(p => {
             const projectId = (p.id || '').toLowerCase();
@@ -14504,7 +14516,7 @@ export default function App() {
     );
 
     if (activeProjectTarget) {
-      const seoData = generateOptimizedSeoMetadata(activeProjectTarget, baseUrl);
+      const seoData = generateOptimizedSeoMetadata(activeProjectTarget as Project, baseUrl);
 
       // 1. Update Document Title
       document.title = seoData.metaTitle;
@@ -14598,8 +14610,8 @@ export default function App() {
     }
 
     // Case 3: Other Main Tabs
-    let tabTitle = "BS Homez – Buy, Sale, Resale & Rent Luxury Properties in Bangalore";
-    let tabDesc = "BS Homez: Buy, Sale, Resale & Rent RERA-verified Apartments, Villas & Plots in Whitefield, Hoskote, Varthur, Gunjur, Hosa Road, Kasavanahalli & Sarjapur, Bangalore.";
+    let tabTitle = "BS Homez | Buy, Sell & Rent Property in Bengaluru";
+    let tabDesc = "Buy, sell, resell or rent apartments, villas and plots across Bengaluru with property guidance from BS Homez.";
     let tabUrl = `${baseUrl}/`;
 
     if (activeMainTab === 'loans') {
@@ -15718,6 +15730,34 @@ export default function App() {
                     );
                   })}
                 </div>
+              </section>
+
+              <section aria-labelledby="location-directory-heading" className="px-3 sm:px-8 md:px-12 py-7 sm:py-9 border-t border-lux-border bg-lux-ivory">
+                <div className="max-w-4xl">
+                  <span className="text-lux-gold text-[9px] sm:text-[10px] uppercase tracking-[0.25em] font-black block mb-2">Bengaluru Property Locations</span>
+                  <h2 id="location-directory-heading" className="text-2xl sm:text-3xl font-serif italic text-lux-forest mb-2">Explore Homes by Location</h2>
+                  <p className="text-xs sm:text-sm text-lux-muted leading-relaxed mb-5">Browse published apartments, villas and plots by area. Check each listing for current price, availability and property details.</p>
+                </div>
+                <nav aria-label="Bengaluru property locations" className="flex flex-wrap gap-2">
+                  {[
+                    ['Whitefield', 'whitefield'],
+                    ['Sarjapur', 'sarjapur'],
+                    ['Varthur', 'varthur'],
+                    ['Gunjur', 'gunjur'],
+                    ['Hosa Road', 'hosa-road'],
+                    ['Hoskote', 'hoskote'],
+                    ['Kasavanahalli', 'kasavanahalli'],
+                    ['East Bangalore', 'east-bangalore'],
+                    ['Electronic City', 'electronic-city'],
+                    ['Marathahalli', 'marathalli'],
+                    ['Off Sarjapur Road', 'off-sarjapur-road'],
+                    ['Bellandur', 'bellandur']
+                  ].map(([label, slug]) => (
+                    <a key={slug} href={`/locations/${slug}/`} className="px-3 py-2 border border-lux-border bg-lux-card text-lux-forest text-[10px] sm:text-xs font-semibold rounded-sm hover:border-lux-gold hover:bg-white transition-colors">
+                      {label}
+                    </a>
+                  ))}
+                </nav>
               </section>
             </div>
           </div>
