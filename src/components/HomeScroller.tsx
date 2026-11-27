@@ -124,26 +124,41 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
   const [isEnabled, setIsEnabled] = useState(true);
   const [contentPlacement, setContentPlacement] = useState<'below' | 'overlay'>('below');
   const [loading, setLoading] = useState(true);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const hasLocalChanges = useRef(false);
 
-  useEffect(() => onSnapshot(SETTINGS_REF, snapshot => {
-    if (hasLocalChanges.current) return;
-    const data = snapshot.exists() ? snapshot.data() : {};
-    const loaded = normalizeSlides(data.slides);
-    setSlides(loaded);
-    setIsEnabled(data.isEnabled !== false);
-    setContentPlacement(data.contentPlacement === 'overlay' ? 'overlay' : 'below');
-    setSelectedId(current => loaded.some(slide => slide.id === current) ? current : (loaded[0]?.id || ''));
-    setLoading(false);
-  }, error => {
-    console.error('Home Scroller settings could not be read:', error);
-    setNotice({ type: 'error', message: 'Could not load Home Scroller settings. Check Firestore access and refresh.' });
-    setLoading(false);
-  }), []);
+  useEffect(() => {
+    setLoading(true);
+    const unsubscribe = onSnapshot(SETTINGS_REF, snapshot => {
+      if (hasLocalChanges.current) return;
+      const data = snapshot.exists() ? snapshot.data() : {};
+      const loaded = normalizeSlides(data.slides);
+      setSlides(loaded);
+      setIsEnabled(data.isEnabled !== false);
+      setContentPlacement(data.contentPlacement === 'overlay' ? 'overlay' : 'below');
+      setSelectedId(current => loaded.some(slide => slide.id === current) ? current : (loaded[0]?.id || ''));
+      setNotice(null);
+      setLoading(false);
+    }, error => {
+      const code = (error as { code?: string }).code || 'unknown';
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error('Home Scroller settings read failed:', { code, detail });
+      const message = code === 'permission-denied'
+        ? 'Firestore denied access to site_settings/home_scroller (permission-denied). Check that the Home Scroller read rule is deployed to the configured database.'
+        : code === 'resource-exhausted'
+          ? 'Firestore usage quota has been reached (resource-exhausted). The settings cannot load until the quota resets or the Firebase plan limit is increased.'
+          : code === 'unavailable' || code === 'deadline-exceeded'
+            ? 'Firestore is temporarily unreachable. Check your connection and retry.'
+            : `Home Scroller settings could not load (${code}): ${detail}`;
+      setNotice({ type: 'error', message });
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, [loadAttempt]);
 
   const selected = useMemo(() => slides.find(slide => slide.id === selectedId) || null, [slides, selectedId]);
   const updateSelected = (patch: Partial<HomeScrollerSlide>) => {
@@ -299,7 +314,7 @@ export const HomeScrollerManager: React.FC<ManagerProps> = ({ projects }) => {
         </div>
       </div>
 
-      {notice && <div role="status" className={`rounded-sm border p-3 text-xs ${notice.type === 'success' ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300' : 'border-red-400/30 bg-red-400/10 text-red-200'}`}>{notice.message}</div>}
+      {notice && <div role="status" className={`flex flex-wrap items-center justify-between gap-3 rounded-sm border p-3 text-xs ${notice.type === 'success' ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300' : 'border-red-400/30 bg-red-400/10 text-red-200'}`}><span>{notice.message}</span>{notice.type === 'error' && <button type="button" onClick={() => { setNotice(null); setLoadAttempt(attempt => attempt + 1); }} className="rounded-sm border border-white/25 px-3 py-2 font-bold text-white hover:bg-white/10">Retry loading</button>}</div>}
       {loading ? <div className="p-8 text-center text-sm text-white/50">Loading Home Scroller…</div> : (
         <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
           <aside className="space-y-3">
