@@ -169,8 +169,103 @@ async function runBuildPipeline() {
     const locationNavigation = projectLocation
       ? `<a href="/locations/${slugify(projectLocation)}/">Properties in ${escapeHtml(projectLocation.replace(/-/g, ' '))}</a>`
       : '';
-    const relatedNavigation = `<nav aria-label="Related property links" style="max-width:1120px;margin:24px auto;padding:16px 20px;border-top:1px solid #e5e2d8;display:flex;flex-wrap:wrap;gap:18px;font:600 13px Arial,sans-serif;color:#153d32"><a href="/">BS Homez Home</a><a href="/#projects">Browse all properties</a>${locationNavigation}</nav>`;
-    html = html.replace(/<\/body>/i, `${relatedNavigation}</body>`);
+    const projectName = escapeHtml(project.name);
+    const builderName = escapeHtml(project.builderName || 'Not specified');
+    const propertyType = escapeHtml(project.propertyType || 'Property');
+    const listingType = escapeHtml(project.type || 'Listing');
+    const zoneName = escapeHtml((project.zone || 'Bengaluru').replace(/-/g, ' '));
+    const fullLocation = escapeHtml(project.location || zoneName + ', Bengaluru');
+    const projectDescription = escapeHtml(project.description || 'Contact BS Homez for current project details and availability.');
+    const publishedPrice = escapeHtml(project.price || 'Price on request');
+    const reraNumber = project.reraNumber ? escapeHtml(project.reraNumber) : '';
+    const handover = project.handoverDate ? escapeHtml(project.handoverDate) : '';
+    const projectImage = escapeHtml(project.imageUrl || baseUrl + '/og-cover.jpg');
+    const detailRows: Array<[string, string]> = [
+      ['Developer', project.builderName || ''],
+      ['Property type', project.propertyType || ''],
+      ['Listing category', project.type || ''],
+      ['Location', project.location || ''],
+      ['Published price', project.price || ''],
+      ['RERA registration number', project.reraNumber || ''],
+      ['Possession / availability', project.handoverDate || '']
+    ].filter((entry): entry is [string, string] => Boolean(entry[1]));
+    const detailsHtml = detailRows.map(([label, value]) =>
+      '<div style="padding:10px 0;border-bottom:1px solid #e7e3d9"><dt style="font-size:12px;color:#6d746e">' +
+      escapeHtml(label) + '</dt><dd style="margin:4px 0 0;font-size:14px;color:#183d32;font-weight:600">' +
+      escapeHtml(value) + '</dd></div>'
+    ).join('');
+    const propertyChecks = /plot|land/i.test(project.propertyType || '')
+      ? [
+          'Review the approved layout plan, land title, encumbrance records, zoning and access rights.',
+          'Confirm the applicable authority approvals, khata status, road access and utility connections.',
+          'Check the exact plot dimensions, boundaries and registration costs before paying an advance.'
+        ]
+      : /villa|house/i.test(project.propertyType || '')
+        ? [
+            'Check the sanctioned building plan, land title, occupancy documents and applicable RERA details.',
+            'Inspect construction quality, water supply, drainage, parking, boundaries and common-area maintenance.',
+            'Compare the full cost, including registration, maintenance and any outstanding dues.'
+          ]
+        : [
+            'Compare carpet area, built-up area, floor, orientation, parking and the actual unit being offered.',
+            'Check water supply, power backup, maintenance charges, association rules and occupancy documents.',
+            'Review the applicable approvals and RERA details for the exact phase or tower.'
+          ];
+    const transactionChecks = String(project.type || '').toLowerCase().includes('rental')
+      ? [
+          'Confirm monthly rent, security deposit, maintenance, furnishing, lease duration and move-in date.',
+          'Read the lease terms and clarify refund conditions, notice period and any additional charges.'
+        ]
+      : String(project.type || '').toLowerCase().includes('resale')
+        ? [
+            'Review the title chain, encumbrance certificate, sale deed, khata, property-tax receipts and association dues.',
+            'Confirm the seller has authority to transfer the property and verify all documents independently.'
+          ]
+        : [
+            'Confirm the current project phase, RERA registration, sanctioned plans and construction status.',
+            'Request the latest payment schedule, possession commitment and a written list of additional charges.'
+          ];
+    const checksHtml = propertyChecks.concat(transactionChecks).map(item =>
+      '<li style="margin:0 0 9px;line-height:1.65">' + escapeHtml(item) + '</li>'
+    ).join('');
+    const projectImageHtml = project.imageUrl
+      ? '<figure style="margin:0"><img src="' + projectImage + '" alt="' + projectName + ' ' + propertyType + ' in ' + zoneName + ', Bengaluru" loading="lazy" style="display:block;width:100%;height:auto;max-height:360px;object-fit:cover;border-radius:4px"><figcaption style="margin-top:7px;color:#6d746e;font-size:12px">Project image supplied in the BS Homez listing.</figcaption></figure>'
+      : '';
+    const enquiryUrl = 'mailto:contact@bshomez.in?subject=' + encodeURIComponent('Property enquiry: ' + project.name);
+    const staticProjectContent =
+      '<main id="seo-project-fallback" aria-label="Project details" style="max-width:1120px;margin:32px auto;padding:24px 20px;color:#24352f;font-family:Arial,sans-serif;line-height:1.7">' +
+        '<nav aria-label="Breadcrumb" style="font-size:13px;margin-bottom:18px"><a href="/" style="color:#315c4d">BS Homez</a> / ' +
+          (projectLocation ? '<a href="/locations/' + slugify(projectLocation) + '/" style="color:#315c4d">' + escapeHtml(projectLocation.replace(/-/g, ' ')) + '</a> / ' : '') +
+          '<span>' + projectName + '</span></nav>' +
+        '<article>' +
+          '<p style="margin:0 0 7px;color:#96743e;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase">' + listingType + ' · ' + propertyType + ' · Bengaluru</p>' +
+          '<h1 style="margin:0 0 14px;color:#153d32;font-family:Georgia,serif;font-size:clamp(30px,4vw,44px);line-height:1.15">' + projectName + ' in ' + zoneName + ', Bengaluru</h1>' +
+          '<p style="font-size:16px;color:#4f5e56;max-width:850px">' + projectDescription + '</p>' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;align-items:start;margin:24px 0">' +
+            '<section><h2 style="font-size:20px;color:#153d32">Project overview</h2>' +
+              '<p><strong>Published price:</strong> ' + publishedPrice + '</p>' +
+              '<p><strong>Developer:</strong> ' + builderName + '</p>' +
+              '<p><strong>Location:</strong> ' + fullLocation + '</p>' +
+              (reraNumber ? '<p><strong>RERA number supplied:</strong> ' + reraNumber + '</p>' : '') +
+              (handover ? '<p><strong>Possession / availability:</strong> ' + handover + '</p>' : '') +
+              '<p style="font-size:13px;color:#68756e">Prices and availability can change. Confirm the latest details with BS Homez before making a decision.</p>' +
+              '<p><a href="' + enquiryUrl + '" style="display:inline-block;padding:11px 18px;background:#153d32;color:#fff;text-decoration:none;border-radius:3px;font-weight:700">Enquire about this property</a></p>' +
+            '</section>' + projectImageHtml +
+          '</div>' +
+          '<section style="margin:30px 0"><h2 style="font-size:22px;color:#153d32">Property details</h2><dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0 22px;margin:0">' + detailsHtml + '</dl></section>' +
+          '<section style="margin:30px 0"><h2 style="font-size:22px;color:#153d32">What to check before proceeding</h2><ul style="padding-left:22px">' + checksHtml + '</ul></section>' +
+          '<p style="font-size:13px;color:#68756e">The information above reflects the details currently supplied in the BS Homez property record. It is for general guidance only. Independently verify the latest price, availability, approvals, title and legal documents with the relevant authorities and qualified professionals.</p>' +
+        '</article>' +
+      '</main>';
+    const rootPlaceholder = /<div id="root"><\/div>/i;
+    if (!rootPlaceholder.test(html)) {
+      throw new Error('Project SEO prerender could not find the empty #root mount point in dist/index.html.');
+    }
+    // React createRoot replaces this fallback on normal page load. Search crawlers
+    // and visitors without JavaScript receive complete, project-specific HTML first.
+    html = html.replace(rootPlaceholder, '<div id="root">' + staticProjectContent + '</div>');
+    const relatedNavigation = '<nav aria-label="Related property links" style="max-width:1120px;margin:24px auto;padding:16px 20px;border-top:1px solid #e5e2d8;display:flex;flex-wrap:wrap;gap:18px;font:600 13px Arial,sans-serif;color:#153d32"><a href="/">BS Homez Home</a><a href="/#projects">Browse all properties</a>' + locationNavigation + '</nav>';
+    html = html.replace(/<\/body>/i, relatedNavigation + '</body>');
 
     fs.writeFileSync(path.join(projectDir, 'index.html'), html, 'utf-8');
     generatedCount++;
