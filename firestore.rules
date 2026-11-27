@@ -133,7 +133,9 @@ service cloud.firestore {
       // older documents no longer satisfy today's full project schema. This
       // exception is deliberately limited to a one-way soft-delete flag and
       // server timestamp; it cannot edit listing content or unarchive records.
-      allow update: if isAdmin() && isValidId(projectId) && (
+      allow update: if isAdmin() && isValidId(projectId) &&
+        // Once deleted, no later update may clear the tombstone marker.
+        (!('isDeleted' in existing()) || existing().isDeleted == false || incoming().isDeleted == true) && (
         (
           isAdmin() &&
           incoming().diff(existing()).affectedKeys().hasOnly(['isDeleted', 'updatedAt']) &&
@@ -466,7 +468,11 @@ service cloud.firestore {
          resource.data.isDeleted == false);
       allow create: if isValidId(portfolioId) &&
         isSafePublicPortfolio(request.resource.data, portfolioId);
-      allow update: if isAdmin() && (
+      allow update: if isAdmin() &&
+        // A deleted or archived/rejected public listing cannot be reactivated by any update path.
+        ((!('isDeleted' in resource.data) || resource.data.isDeleted == false || request.resource.data.isDeleted == true)) &&
+        ((!('publicationStatus' in resource.data) || !(resource.data.publicationStatus in ['Archived', 'Rejected']) ||
+          request.resource.data.publicationStatus == resource.data.publicationStatus)) && (
         (
           // Legacy public portfolio records may not contain today's required
           // display fields. Permit only the irreversible archive transition.

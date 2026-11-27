@@ -97,6 +97,54 @@ after(async () => {
   await testEnv.cleanup();
 });
 
+describe('Irreversible project deletion rules', () => {
+  it('rejects attempts to clear a project tombstone', async () => {
+    const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
+    const projectRef = doc(adminDb, 'projects/deleted-project');
+    await assertSucceeds(setDoc(projectRef, {
+      id: 'deleted-project',
+      name: 'Deleted Project',
+      location: 'Whitefield',
+      type: 'Primary',
+      price: 'Contact for price',
+      isDeleted: true,
+      isPaused: true,
+      updatedAt: serverTimestamp()
+    }));
+    await assertFails(updateDoc(projectRef, {
+      isDeleted: false,
+      isPaused: false,
+      updatedAt: serverTimestamp()
+    }));
+    const saved = await assertSucceeds(getDoc(projectRef));
+    assert.equal(saved.data().isDeleted, true);
+  });
+
+  it('rejects reactivating an archived public portfolio record', async () => {
+    await testEnv.withSecurityRulesDisabled(async context => {
+      await setDoc(doc(context.firestore(), 'public_portfolio/deleted-public-listing'),
+        publicData('submission-4', 'deleted-public-listing'));
+    });
+    const adminDb = testEnv.authenticatedContext('admin-user', { admin: true }).firestore();
+    const ref = doc(adminDb, 'public_portfolio/deleted-public-listing');
+    await assertSucceeds(updateDoc(ref, {
+      publicationStatus: 'Archived',
+      isPublished: false,
+      isDeleted: true,
+      updatedAt: serverTimestamp()
+    }));
+    await assertFails(updateDoc(ref, {
+      publicationStatus: 'Published',
+      isPublished: true,
+      isDeleted: false,
+      updatedAt: serverTimestamp()
+    }));
+    const saved = await assertSucceeds(getDoc(ref));
+    assert.equal(saved.data().publicationStatus, 'Archived');
+    assert.equal(saved.data().isDeleted, true);
+  });
+});
+
 describe('Offer Your Asset Firestore rules', () => {
   it('allows a valid public submission batch while keeping owner details private', async () => {
     const db = testEnv.unauthenticatedContext().firestore();

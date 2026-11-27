@@ -147,6 +147,7 @@ import { ProjectDetailView } from './components/ProjectDetailView';
 import { OptimizedImage } from './components/OptimizedImage';
 import { slugify } from './data/projectsSitemapData';
 import { getProjectInventoryModeDefaults, resolveProjectInventoryMode, transitionProjectInventoryMode, type ProjectInventoryMode } from './lib/projectInventoryMode';
+import { isProjectDeletionLocked } from './lib/projectDeletionGuard';
 
 import imgEastEoi from './assets/images/east_bangalore_eoi_towers_1791731720202.jpg';
 import imgSouthEastConst from './assets/images/southeast_bangalore_construction_1791731732392.jpg';
@@ -14910,6 +14911,10 @@ export default function App() {
       lastPrice: formatPriceWithCondition(updated.lastPrice || updated.price)
     });
     const targetDocId = formattedUpdated.id || `custom_${Date.now()}`;
+    const deletionKeys = new Set([...deletedProjectIds, ...dbTombstoneIds].map(value => String(value).trim().toLowerCase()));
+    if (deletionKeys.has(targetDocId.toLowerCase()) || deletionKeys.has(formattedUpdated.name.trim().toLowerCase())) {
+      throw new Error('This listing has a permanent deletion marker. Create a new listing with a new ID instead of restoring it.');
+    }
     // Forms and older cached records may omit sourceCollection. Resolve the authoritative
     // source by document ID before choosing which Firestore collection to update.
     const isPublicPortfolioRecord = formattedUpdated.sourceCollection === 'public_portfolio' ||
@@ -14924,7 +14929,7 @@ export default function App() {
       const publicRef = doc(db, 'public_portfolio', targetDocId);
       const snapshot = await getDoc(publicRef);
       if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and try again.');
-      if (snapshot.data().isDeleted === true || snapshot.data().publicationStatus === 'Archived' || snapshot.data().publicationStatus === 'Rejected') {
+      if (isProjectDeletionLocked(snapshot.data())) {
         throw new Error('This listing has already been deleted or archived. Create a new listing instead of restoring this record.');
       }
       const existing = { ...snapshot.data(), id: targetDocId } as PublicPortfolioItem;
@@ -14935,7 +14940,7 @@ export default function App() {
       // The Firestore document becomes the authoritative source after this save.
       const projectRef = doc(db, 'projects', targetDocId);
       const existingSnapshot = await getDoc(projectRef);
-      if (existingSnapshot.exists() && existingSnapshot.data().isDeleted === true) {
+      if (existingSnapshot.exists() && isProjectDeletionLocked(existingSnapshot.data())) {
         throw new Error('This listing has already been deleted. Create a new listing with a new ID instead of restoring it.');
       }
       const payload = buildProjectFirestorePayload(projectWithId);
@@ -14987,6 +14992,12 @@ export default function App() {
   const handleTogglePauseProject = async (project: Project) => {
     if (!user || !isAdmin) throw new Error('Unauthorized: verified admin authorization is required.');
     const key = project.id || project.name;
+    const deletionKeys = new Set([...deletedProjectIds, ...dbTombstoneIds].map(value => String(value).trim().toLowerCase()));
+    if (isProjectDeletionLocked(project) ||
+        deletionKeys.has(String(project.id || '').trim().toLowerCase()) ||
+        deletionKeys.has(project.name.trim().toLowerCase())) {
+      throw new Error('This listing is permanently deleted or archived and cannot be unhidden. Create a new listing with a new ID instead.');
+    }
     const nextPaused = !project.isPaused;
     const matchedPublicPortfolioItem = publicPortfolioItems.find(item =>
       (project.id && item.id === project.id) ||
@@ -14998,18 +15009,22 @@ export default function App() {
       const ref = doc(db, 'public_portfolio', publicPortfolioDocId);
       const snapshot = await getDoc(ref);
       if (!snapshot.exists()) throw new Error('Public portfolio listing not found. Refresh and retry.');
+      if (isProjectDeletionLocked(snapshot.data())) {
+        throw new Error('This public portfolio listing is archived or deleted and cannot be restored.');
+      }
       await setDoc(ref, {
         publicationStatus: nextPaused ? 'Approved' : 'Published',
         isPublished: !nextPaused,
-        // Backfill this required workflow flag for older public_portfolio records.
-        // It remains false for ordinary hide/unhide; only Delete sets it true.
         isDeleted: false,
         updatedAt: serverTimestamp()
       }, { merge: true });
-    } else {
+    }else {
       const projectId = project.id || `custom_${Date.now()}`;
       const ref = doc(db, 'projects', projectId);
       const snapshot = await getDoc(ref);
+      if (snapshot.exists() && isProjectDeletionLocked(snapshot.data())) {
+        throw new Error('A Firestore deletion marker exists for this listing. It cannot be restored.');
+      }
       if (snapshot.exists()) {
         await setDoc(ref, { isPaused: nextPaused, updatedAt: serverTimestamp() }, { merge: true });
       } else {
